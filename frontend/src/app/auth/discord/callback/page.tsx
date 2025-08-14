@@ -12,8 +12,8 @@ export default function DiscordCallbackPage() {
 
   useEffect(() => {
     const handleCallback = async () => {
-      const token = searchParams.get('token');
-      const error = searchParams.get('error');
+      const token = searchParams?.get('token');
+      const error = searchParams?.get('error');
 
       if (error) {
         toast.error('Erreur lors de la connexion: ' + error);
