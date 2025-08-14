@@ -195,10 +195,10 @@ export class BotsService {
 
     // If bot is running, queue config update
     if (bot.status === BotStatus.ONLINE) {
-      // await this.queueService.addJob('update-bot-config', {
-      //   botId,
-      //   config: data,
-      // });
+      await this.queueService.addJob('update-bot-config', {
+        botId,
+        config: data,
+      });
     }
 
     return config;
