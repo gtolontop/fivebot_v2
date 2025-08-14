@@ -1,0 +1,135 @@
+import axios from 'axios';
+import Cookies from 'js-cookie';
+import toast from 'react-hot-toast';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+export const api = axios.create({
+  baseURL: `${API_URL}/api`,
+  timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor to add auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = Cookies.get('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor for error handling
+api.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    const { response } = error;
+    
+    if (response?.status === 401) {
+      // Unauthorized - redirect to login
+      Cookies.remove('token');
+      delete api.defaults.headers.common['Authorization'];
+      
+      if (typeof window !== 'undefined') {
+        window.location.href = '/auth/login';
+      }
+      
+      return Promise.reject(error);
+    }
+    
+    if (response?.status === 403) {
+      toast.error('Accès refusé - Permissions insuffisantes');
+      return Promise.reject(error);
+    }
+    
+    if (response?.status >= 500) {
+      toast.error('Erreur serveur - Veuillez réessayer plus tard');
+      return Promise.reject(error);
+    }
+    
+    if (response?.status === 429) {
+      toast.error('Trop de requêtes - Veuillez patienter');
+      return Promise.reject(error);
+    }
+    
+    // Client errors (4xx)
+    if (response?.status >= 400 && response?.status < 500) {
+      const message = response.data?.message || 'Une erreur s\'est produite';
+      if (!error.config?.skipErrorToast) {
+        toast.error(message);
+      }
+      return Promise.reject(error);
+    }
+    
+    // Network errors
+    if (error.code === 'ECONNABORTED') {
+      toast.error('Timeout - La requête a pris trop de temps');
+      return Promise.reject(error);
+    }
+    
+    if (error.code === 'ERR_NETWORK') {
+      toast.error('Erreur réseau - Vérifiez votre connexion');
+      return Promise.reject(error);
+    }
+    
+    console.error('API Error:', error);
+    return Promise.reject(error);
+  }
+);
+
+// API endpoints
+export const authAPI = {
+  me: () => api.get('/auth/me'),
+  logout: () => api.post('/auth/logout'),
+};
+
+export const botsAPI = {
+  getAll: () => api.get('/bots'),
+  getById: (id: string) => api.get(`/bots/${id}`),
+  create: (data: { name: string; token: string; prefix?: string }) => 
+    api.post('/bots', data),
+  updateConfig: (id: string, config: any) => 
+    api.patch(`/bots/${id}/config`, config),
+  start: (id: string) => api.post(`/bots/${id}/start`),
+  stop: (id: string) => api.post(`/bots/${id}/stop`),
+  delete: (id: string) => api.delete(`/bots/${id}`),
+  getInviteLink: (id: string) => api.post(`/bots/${id}/invite-link`),
+  getStatus: (id: string) => api.get(`/bots/${id}/status`),
+};
+
+export const usersAPI = {
+  me: () => api.get('/users/me'),
+  updateMe: (data: { username?: string; email?: string }) => 
+    api.patch('/users/me', data),
+  getAll: (page = 1, limit = 10) => 
+    api.get(`/users?page=${page}&limit=${limit}`),
+  getById: (id: string) => api.get(`/users/${id}`),
+  update: (id: string, data: any) => api.patch(`/users/${id}`, data),
+  addCredits: (id: string, data: { amount: number; reason: string }) => 
+    api.post(`/users/${id}/credits`, data),
+};
+
+export const creditsAPI = {
+  getMyBalance: () => api.get('/credits/me'),
+  getMyHistory: (page = 1, limit = 20) => 
+    api.get(`/credits/me/history?page=${page}&limit=${limit}`),
+  getStats: () => api.get('/credits/stats'),
+  getAllHistory: (page = 1, limit = 50) => 
+    api.get(`/credits/history?page=${page}&limit=${limit}`),
+  getUserHistory: (userId: string, page = 1, limit = 20) => 
+    api.get(`/credits/users/${userId}/history?page=${page}&limit=${limit}`),
+  addCreditsToUser: (userId: string, data: { amount: number; reason: string }) => 
+    api.post(`/credits/users/${userId}/add`, data),
+  getUserBalance: (userId: string) => api.get(`/credits/users/${userId}/balance`),
+};
+
+export default api;
