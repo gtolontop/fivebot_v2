@@ -1,5 +1,5 @@
-import { Process, Processor } from '@nestjs/bull';
-import { Job } from 'bull';
+import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Job } from 'bullmq';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { spawn } from 'child_process';
@@ -11,8 +11,7 @@ import { EncryptionService } from '../../common/encryption/encryption.service';
 import { BotStatus, HostStatus, JobStatus } from '@prisma/client';
 
 @Processor('bot-queue')
-@Injectable()
-export class BotWorker {
+export class BotWorker extends WorkerHost {
   private readonly logger = new Logger(BotWorker.name);
 
   constructor(
