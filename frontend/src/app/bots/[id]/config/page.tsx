@@ -600,6 +600,25 @@ export default function BotConfigPage() {
                               placeholder="https://example.com/logo.png"
                               className="input-field"
                             />
+                            <p className="text-xs text-gray-500 mt-1">
+                              This will be used as the main image in the footer area
+                            </p>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Thumbnail URL (optional)
+                            </label>
+                            <input
+                              type="url"
+                              value={config.welcomeThumbnailUrl || ''}
+                              onChange={(e) => updateConfig({ welcomeThumbnailUrl: e.target.value })}
+                              placeholder="https://example.com/thumbnail.png"
+                              className="input-field"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                              Small image displayed in the top-right corner of the embed
+                            </p>
                           </div>
 
                           {/* Live Preview */}
