@@ -143,4 +143,81 @@ export class DiscordService {
       );
     }
   }
+
+  async getBotGuilds(botToken: string): Promise<any[]> {
+    try {
+      const response = await axios.get(`${this.baseURL}/users/@me/guilds`, {
+        headers: {
+          Authorization: `Bot ${botToken}`,
+        },
+        timeout: 10000,
+      });
+
+      return response.data.map((guild: any) => ({
+        id: guild.id,
+        name: guild.name,
+        icon: guild.icon,
+        owner: guild.owner,
+        permissions: guild.permissions,
+      }));
+    } catch (error) {
+      console.error('Error fetching bot guilds:', error);
+      throw new HttpException(
+        'Failed to fetch bot guilds from Discord',
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
+    }
+  }
+
+  async getGuildChannels(botToken: string, guildId: string): Promise<any[]> {
+    try {
+      const response = await axios.get(`${this.baseURL}/guilds/${guildId}/channels`, {
+        headers: {
+          Authorization: `Bot ${botToken}`,
+        },
+        timeout: 10000,
+      });
+
+      return response.data.map((channel: any) => ({
+        id: channel.id,
+        name: channel.name,
+        type: channel.type,
+        position: channel.position,
+        parent_id: channel.parent_id,
+      }));
+    } catch (error) {
+      console.error('Error fetching guild channels:', error);
+      throw new HttpException(
+        'Failed to fetch guild channels from Discord',
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
+    }
+  }
+
+  async getGuildRoles(botToken: string, guildId: string): Promise<any[]> {
+    try {
+      const response = await axios.get(`${this.baseURL}/guilds/${guildId}/roles`, {
+        headers: {
+          Authorization: `Bot ${botToken}`,
+        },
+        timeout: 10000,
+      });
+
+      return response.data.map((role: any) => ({
+        id: role.id,
+        name: role.name,
+        color: role.color,
+        position: role.position,
+        permissions: role.permissions,
+        managed: role.managed,
+        mentionable: role.mentionable,
+      }));
+    } catch (error) {
+      console.error('Error fetching guild roles:', error);
+      throw new HttpException(
+        'Failed to fetch guild roles from Discord',
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
+    }
+  }
 }
