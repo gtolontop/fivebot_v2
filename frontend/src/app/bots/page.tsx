@@ -114,11 +114,17 @@ export default function BotsPage() {
                     Créé le {new Date(bot.createdAt).toLocaleDateString()}
                   </p>
                   <div className="flex space-x-2">
-                    <button className="btn-secondary text-sm">
+                    <button 
+                      onClick={() => router.push(`/bots/${bot.id}`)}
+                      className="btn-secondary text-sm"
+                    >
                       Configurer
                     </button>
-                    <button className="btn-outline text-sm">
-                      Logs
+                    <button 
+                      onClick={() => router.push(`/bots/${bot.id}`)}
+                      className="btn-outline text-sm"
+                    >
+                      Gérer
                     </button>
                   </div>
                 </div>
