@@ -103,15 +103,25 @@ export class BotsService {
     });
 
     // Spend user credits
+    console.log('Déduction des crédits...');
     await this.usersService.spendCredits(ownerId, creditCost, `Created bot: ${data.name}`);
+    console.log('Crédits déduits');
 
-    // Queue bot creation job
-    await this.queueService.addJob('create-bot', {
-      botId: bot.id,
-      ownerId,
-    });
+    // Queue bot creation job (non-blocking)
+    console.log('Ajout du job en queue...');
+    try {
+      await this.queueService.addJob('create-bot', {
+        botId: bot.id,
+        ownerId,
+      });
+      console.log('Job queued successfully');
+    } catch (error) {
+      console.error('Failed to queue job (non-critical):', error);
+      // Continue anyway, the job queue is not critical for bot creation
+    }
 
     // Log the action
+    console.log('Création du log d\'audit...');
     await this.prisma.auditLog.create({
       data: {
         userId: ownerId,
@@ -124,7 +134,9 @@ export class BotsService {
         },
       },
     });
+    console.log('Log d\'audit créé');
 
+    console.log('=== Bot créé avec succès ===');
     return bot;
   }
 
