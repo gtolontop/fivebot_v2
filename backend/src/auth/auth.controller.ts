@@ -1,4 +1,4 @@
-import { Controller, Get, Post, UseGuards, Req, Res } from '@nestjs/common';
+import { Controller, Get, Post, UseGuards, Req, Res, Query } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
@@ -19,12 +19,57 @@ export class AuthController {
   }
 
   @Get('discord/callback')
-  @UseGuards(AuthGuard('discord'))
-  async discordCallback(@Req() req: any, @Res() res: Response) {
+  async discordCallback(@Query('code') code: string, @Res() res: Response) {
     try {
-      console.log('Discord callback - user:', req.user);
-      const result = await this.authService.login(req.user);
-      console.log('Login result - token exists:', !!result.access_token);
+      console.log('Discord callback - code received:', !!code);
+      
+      if (!code) {
+        throw new Error('No code provided by Discord');
+      }
+
+      // Exchange code for Discord access token
+      const discordTokenResponse = await fetch('https://discord.com/api/oauth2/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          client_id: this.configService.get('DISCORD_CLIENT_ID'),
+          client_secret: this.configService.get('DISCORD_CLIENT_SECRET'),
+          grant_type: 'authorization_code',
+          code: code,
+          redirect_uri: this.configService.get('DISCORD_CALLBACK_URL'),
+        }),
+      });
+
+      const discordTokens = await discordTokenResponse.json();
+      console.log('Discord tokens received:', !!discordTokens.access_token);
+
+      if (!discordTokens.access_token) {
+        throw new Error('Failed to get Discord access token');
+      }
+
+      // Get Discord user info
+      const discordUserResponse = await fetch('https://discord.com/api/users/@me', {
+        headers: {
+          Authorization: `Bearer ${discordTokens.access_token}`,
+        },
+      });
+
+      const discordUser = await discordUserResponse.json();
+      console.log('Discord user received:', discordUser.username);
+
+      // Validate and create/update user in our database
+      const user = await this.authService.validateDiscordUser({
+        id: discordUser.id,
+        username: discordUser.username,
+        email: discordUser.email,
+        avatar: discordUser.avatar,
+      });
+
+      // Generate our JWT token
+      const result = await this.authService.login(user);
+      console.log('JWT token generated:', !!result.access_token);
       
       // Redirect to frontend with token
       const frontendUrl = this.configService.get('FRONTEND_URL') || 'http://localhost:3000';
