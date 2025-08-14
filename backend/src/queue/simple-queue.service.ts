@@ -1,8 +1,5 @@
 import { Injectable } from '@nestjs/common';
-
-interface JobData {
-  [key: string]: any;
-}
+import { IQueueService, JobData } from './queue.interface';
 
 interface QueuedJob {
   id: string;
