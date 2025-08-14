@@ -104,6 +104,9 @@ export const botsAPI = {
   delete: (id: string) => api.delete(`/bots/${id}`),
   getInviteLink: (id: string) => api.post(`/bots/${id}/invite-link`),
   getStatus: (id: string) => api.get(`/bots/${id}/status`),
+  getGuilds: (id: string) => api.get(`/bots/${id}/guilds`),
+  getGuildChannels: (id: string, guildId: string) => api.get(`/bots/${id}/guilds/${guildId}/channels`),
+  getGuildRoles: (id: string, guildId: string) => api.get(`/bots/${id}/guilds/${guildId}/roles`),
 };
 
 export const usersAPI = {
