@@ -248,8 +248,11 @@ export default function BotDetailPage() {
               <div className="card p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold text-gray-900">Configuration</h3>
-                  <button className="btn-secondary text-sm">
-                    Modifier
+                  <button 
+                    onClick={() => router.push(`/bots/${botId}/config`)}
+                    className="btn-secondary text-sm"
+                  >
+                    ⚙️ Configuration
                   </button>
                 </div>
                 <div className="space-y-4">
@@ -310,8 +313,14 @@ export default function BotDetailPage() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Actions rapides</h3>
                 <div className="space-y-3">
                   <button 
-                    onClick={generateInviteLink}
+                    onClick={() => router.push(`/bots/${botId}/config`)}
                     className="w-full btn-primary text-sm"
+                  >
+                    ⚙️ Configuration avancée
+                  </button>
+                  <button 
+                    onClick={generateInviteLink}
+                    className="w-full btn-secondary text-sm"
                   >
                     Générer lien d'invitation
                   </button>
