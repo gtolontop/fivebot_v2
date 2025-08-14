@@ -143,11 +143,20 @@ class ChildBot {
   public async start() {
     try {
       // Connect to database
-      await this.prisma.$connect();
-      console.log('✅ Database connected');
+      try {
+        await this.prisma.$connect();
+        console.log('✅ Database connected');
+      } catch (dbError) {
+        console.warn('⚠️ Database connection failed, continuing without DB:', dbError.message);
+        // Continue without database - the bot can still work for basic functions
+      }
 
-      // Update bot status
-      await this.updateBotStatus('STARTING');
+      // Update bot status (only if DB is available)
+      try {
+        await this.updateBotStatus('STARTING');
+      } catch (error) {
+        console.warn('Could not update bot status in DB');
+      }
 
       // Login to Discord
       await this.client.login(process.env.BOT_TOKEN);
@@ -155,7 +164,11 @@ class ChildBot {
       console.log(`🤖 Child bot started for bot ID: ${this.botId}`);
     } catch (error) {
       console.error('❌ Failed to start bot:', error);
-      await this.updateBotStatus('ERROR');
+      try {
+        await this.updateBotStatus('ERROR');
+      } catch (dbError) {
+        // Ignore DB errors during error reporting
+      }
       process.exit(1);
     }
   }
@@ -180,12 +193,14 @@ class ChildBot {
 
   private async updateBotStatus(status: string) {
     try {
+      if (!this.prisma) return;
       await this.prisma.bot.update({
         where: { id: this.botId },
         data: { status },
       });
     } catch (error) {
-      console.error('Failed to update bot status:', error);
+      console.warn('Failed to update bot status:', error.message);
+      // Don't throw - this is not critical for bot operation
     }
   }
 
