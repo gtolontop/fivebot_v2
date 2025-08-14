@@ -183,6 +183,7 @@ export class WelcomeService {
       .replace(/{guild}/g, member.guild.name)
       .replace(/{memberCount}/g, member.guild.memberCount.toString())
       .replace(/{logo}/g, this.config.welcomeLogoUrl || member.guild.iconURL() || '')
+      .replace(/{thumbnail}/g, this.config.welcomeThumbnailUrl || '')
       .replace(/{userAvatar}/g, member.user.displayAvatarURL({ size: 256 }))
       .replace(/{guildIcon}/g, member.guild.iconURL({ size: 256 }) || '')
       .replace(/{date}/g, new Date().toLocaleDateString())
