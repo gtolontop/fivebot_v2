@@ -189,7 +189,7 @@ export class BotsService {
         botId,
         action: 'BOT_CONFIG_UPDATED',
         resource: 'bot_config',
-        metadata: data,
+        metadata: data as any,
       },
     });
 

@@ -39,7 +39,7 @@ export class QueueService {
   }
 
   async cleanJobs(type: 'completed' | 'failed', olderThan: number = 24 * 60 * 60 * 1000): Promise<void> {
-    await this.botQueue.clean(olderThan, type);
+    await this.botQueue.clean(olderThan, type as any);
   }
 
   private getJobPriority(jobType: string): number {
