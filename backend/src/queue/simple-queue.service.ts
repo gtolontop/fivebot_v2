@@ -113,8 +113,10 @@ export class SimpleQueueService implements IQueueService {
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
 
-  async getJobs(status: 'waiting' | 'processing' | 'completed' | 'failed' = 'waiting') {
-    return this.jobs.filter(job => job.status === status);
+  async getJobs(status: 'waiting' | 'active' | 'completed' | 'failed' = 'waiting') {
+    // Map 'active' to 'processing' for internal consistency
+    const internalStatus = status === 'active' ? 'processing' : status;
+    return this.jobs.filter(job => job.status === internalStatus);
   }
 
   async getJobCounts() {
