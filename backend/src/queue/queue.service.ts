@@ -13,12 +13,19 @@ export class QueueService {
   ) {}
 
   async addJob(jobType: string, data: JobData, options?: any): Promise<void> {
-    await this.botQueue.add(jobType, data, {
+    // Add timeout to prevent hanging
+    const addJobPromise = this.botQueue.add(jobType, data, {
       priority: this.getJobPriority(jobType),
       delay: options?.delay || 0,
       ...options,
     });
 
+    // Timeout after 5 seconds
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Queue job timeout')), 5000)
+    );
+
+    await Promise.race([addJobPromise, timeoutPromise]);
     console.log(`📋 Queued job: ${jobType}`, data);
   }
 
