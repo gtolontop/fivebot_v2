@@ -1,0 +1,27 @@
+{
+  "name": "fivebot-manager",
+  "version": "2.0.0",
+  "description": "FiveBot v2 Manager Bot",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "deploy": "node dist/deploy-commands.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.13.0",
+    "@prisma/client": "^5.3.1",
+    "ioredis": "^5.3.2",
+    "axios": "^1.5.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.0",
+    "typescript": "^5.1.6",
+    "tsx": "^3.12.7"
+  },
+  "keywords": ["discord", "bot", "manager"],
+  "author": "FiveBot Team",
+  "license": "MIT"
+}
