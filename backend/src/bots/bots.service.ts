@@ -98,11 +98,11 @@ export class BotsService {
     // Spend user credits
     await this.usersService.spendCredits(ownerId, creditCost, `Created bot: ${data.name}`);
 
-    // Queue bot creation job (disabled for now)
-    // await this.queueService.addJob('create-bot', {
-    //   botId: bot.id,
-    //   ownerId,
-    // });
+    // Queue bot creation job
+    await this.queueService.addJob('create-bot', {
+      botId: bot.id,
+      ownerId,
+    });
 
     // Log the action
     await this.prisma.auditLog.create({
