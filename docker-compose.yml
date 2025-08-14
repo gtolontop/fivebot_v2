@@ -1,0 +1,126 @@
+version: '3.8'
+
+services:
+  # MariaDB Database
+  mariadb:
+    image: mariadb:10.9
+    container_name: fivebot_mariadb
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: fivebot_root_password
+      MYSQL_DATABASE: fivebot
+      MYSQL_USER: fivebot_user
+      MYSQL_PASSWORD: fivebot_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./database/init:/docker-entrypoint-initdb.d
+    networks:
+      - fivebot_network
+
+  # Redis Cache & Queue
+  redis:
+    image: redis:7-alpine
+    container_name: fivebot_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - fivebot_network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fivebot_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: "mysql://fivebot_user:fivebot_password@mariadb:3306/fivebot"
+      REDIS_URL: "redis://redis:6379"
+      NODE_ENV: development
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      - mariadb
+      - redis
+    networks:
+      - fivebot_network
+
+  # Worker Queue
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.worker
+    container_name: fivebot_worker
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: "mysql://fivebot_user:fivebot_password@mariadb:3306/fivebot"
+      REDIS_URL: "redis://redis:6379"
+      NODE_ENV: development
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      - mariadb
+      - redis
+      - backend
+    networks:
+      - fivebot_network
+
+  # Frontend Dashboard
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: fivebot_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: "http://localhost:8000"
+      NODE_ENV: development
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - fivebot_network
+
+  # Main Bot Manager
+  bot-manager:
+    build:
+      context: ./bot-manager
+      dockerfile: Dockerfile
+    container_name: fivebot_manager
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: "mysql://fivebot_user:fivebot_password@mariadb:3306/fivebot"
+      REDIS_URL: "redis://redis:6379"
+      NODE_ENV: development
+    volumes:
+      - ./bot-manager:/app
+      - /app/node_modules
+    depends_on:
+      - mariadb
+      - redis
+      - backend
+    networks:
+      - fivebot_network
+
+networks:
+  fivebot_network:
+    driver: bridge
+
+volumes:
+  mariadb_data:
+  redis_data:
