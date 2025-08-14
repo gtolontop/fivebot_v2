@@ -6,6 +6,7 @@ interface Option {
   id: string;
   name: string;
   guildName?: string;
+  isRole?: boolean;
 }
 
 interface SearchableDropdownProps {
@@ -75,7 +76,7 @@ export default function SearchableDropdown({
       >
         <span className={selectedOption ? 'text-gray-900' : 'text-gray-500'}>
           {selectedOption 
-            ? `#${selectedOption.name}${selectedOption.guildName ? ` (${selectedOption.guildName})` : ''}`
+            ? `${selectedOption.isRole ? '@' : '#'}${selectedOption.name}${selectedOption.guildName ? ` (${selectedOption.guildName})` : ''}`
             : placeholder
           }
         </span>
