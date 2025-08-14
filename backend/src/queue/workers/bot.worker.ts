@@ -10,13 +10,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { EncryptionService } from '../../common/encryption/encryption.service';
 import { BotStatus, HostStatus, JobStatus } from '@prisma/client';
 
-@Processor('bot-queue', {
-  connection: {
-    host: process.env.REDIS_HOST || '83.150.218.42',
-    port: parseInt(process.env.REDIS_PORT) || 26078,
-    password: process.env.REDIS_PASSWORD || 'admin',
-  }
-})
+@Processor('bot-queue')
 export class BotWorker extends WorkerHost {
   private readonly logger = new Logger(BotWorker.name);
 
