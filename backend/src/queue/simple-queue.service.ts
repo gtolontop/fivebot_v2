@@ -152,6 +152,18 @@ export class SimpleQueueService implements IQueueService {
       // Store the process
       this.runningBots.set(botId, botProcess);
 
+      // Handle process errors
+      botProcess.on('error', async (error) => {
+        console.error(`[Bot ${botId}] Process error:`, error);
+        this.runningBots.delete(botId);
+        
+        // Update bot status to error
+        await this.prisma.bot.update({
+          where: { id: botId },
+          data: { status: 'ERROR' },
+        });
+      });
+
       // Handle process output
       botProcess.stdout?.on('data', (data) => {
         console.log(`[Bot ${botId}] ${data.toString().trim()}`);
@@ -167,10 +179,14 @@ export class SimpleQueueService implements IQueueService {
         this.runningBots.delete(botId);
         
         // Update bot status to offline
-        await this.prisma.bot.update({
-          where: { id: botId },
-          data: { status: 'OFFLINE' },
-        });
+        try {
+          await this.prisma.bot.update({
+            where: { id: botId },
+            data: { status: 'OFFLINE' },
+          });
+        } catch (dbError) {
+          console.error(`Failed to update bot status:`, dbError);
+        }
       });
 
       // Wait a bit to see if the process starts successfully
