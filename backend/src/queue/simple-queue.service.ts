@@ -197,9 +197,46 @@ export class SimpleQueueService implements IQueueService {
   }
 
   private async handleStopBot(data: JobData): Promise<void> {
-    console.log(`Stopping bot ${data.botId}`);
-    // Simulate work
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    const botId = data.botId;
+    console.log(`Stopping bot ${botId}`);
+
+    try {
+      const botProcess = this.runningBots.get(botId);
+      
+      if (!botProcess) {
+        console.log(`Bot ${botId} is not running`);
+        // Update status anyway
+        await this.prisma.bot.update({
+          where: { id: botId },
+          data: { status: 'OFFLINE' },
+        });
+        return;
+      }
+
+      // Kill the process
+      botProcess.kill('SIGTERM');
+      
+      // Wait for graceful shutdown, then force kill if needed
+      setTimeout(() => {
+        if (this.runningBots.has(botId)) {
+          console.log(`Force killing bot ${botId}`);
+          botProcess.kill('SIGKILL');
+        }
+      }, 10000); // 10 seconds timeout
+
+      this.runningBots.delete(botId);
+
+      // Update bot status
+      await this.prisma.bot.update({
+        where: { id: botId },
+        data: { status: 'OFFLINE' },
+      });
+
+      console.log(`✅ Bot ${botId} stopped successfully`);
+    } catch (error) {
+      console.error(`❌ Failed to stop bot ${botId}:`, error);
+      throw error;
+    }
   }
 
   private async handleDeleteBot(data: JobData): Promise<void> {
