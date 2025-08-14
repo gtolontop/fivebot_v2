@@ -26,12 +26,22 @@ export default function CreateBotPage() {
     setIsSubmitting(true);
     setError('');
 
+    console.log('=== Début création bot ===');
+    console.log('FormData:', formData);
+
     try {
-      await botsAPI.create(formData);
+      console.log('Envoi de la requête API...');
+      const response = await botsAPI.create(formData);
+      console.log('Réponse API:', response);
+      console.log('Bot créé avec succès, redirection...');
       router.push('/bots');
     } catch (error: any) {
-      setError(error.response?.data?.message || 'Erreur lors de la création du bot');
+      console.error('Erreur lors de la création:', error);
+      console.error('Response data:', error.response?.data);
+      console.error('Status:', error.response?.status);
+      setError(error.response?.data?.message || error.message || 'Erreur lors de la création du bot');
     } finally {
+      console.log('=== Fin création bot ===');
       setIsSubmitting(false);
     }
   };
