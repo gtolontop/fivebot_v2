@@ -10,7 +10,6 @@ export default function CreateBotPage() {
   const [formData, setFormData] = useState({
     name: '',
     token: '',
-    prefix: '!',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -144,23 +143,18 @@ export default function CreateBotPage() {
                 </p>
               </div>
 
-              <div>
-                <label htmlFor="prefix" className="block text-sm font-medium text-gray-700 mb-2">
-                  Préfixe des commandes
-                </label>
-                <input
-                  type="text"
-                  id="prefix"
-                  name="prefix"
-                  value={formData.prefix}
-                  onChange={handleChange}
-                  className="input-field"
-                  placeholder="!"
-                  maxLength={3}
-                />
-                <p className="mt-1 text-sm text-gray-500">
-                  Caractère(s) qui précèdent les commandes (ex: !help)
-                </p>
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+                <div className="flex">
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-blue-800">
+                      🔹 Slash Commands uniquement
+                    </h3>
+                    <div className="mt-2 text-sm text-blue-700">
+                      Ce bot utilise uniquement les <strong>slash commands</strong> (ex: <code>/help</code>, <code>/set-welcome</code>).
+                      Aucun préfixe n'est nécessaire.
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="border-t pt-6">

@@ -1,11 +1,15 @@
 import { Client, ActivityType } from 'discord.js';
 import { PrismaClient } from '@prisma/client';
+import { commands } from '../commands';
 
 export async function ready(client: Client, prisma: PrismaClient, botId: string) {
   if (!client.user) return;
   
   console.log(`🚀 Bot logged in as ${client.user.tag}!`);
   console.log(`📊 Serving ${client.guilds.cache.size} guilds with ${client.users.cache.size} users`);
+  
+  // Deploy slash commands
+  await deployCommands(client);
   
   // Set bot activity
   client.user.setActivity('Ready to serve!', { type: ActivityType.Playing });
@@ -77,4 +81,22 @@ export async function ready(client: Client, prisma: PrismaClient, botId: string)
       console.error('Heartbeat failed:', error);
     }
   }, 5 * 60 * 1000); // Every 5 minutes
+}
+
+async function deployCommands(client: Client) {
+  try {
+    const { REST, Routes } = require('discord.js');
+    const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
+
+    console.log('🚀 Started refreshing application (/) commands.');
+
+    await rest.put(
+      Routes.applicationCommands(client.user?.id),
+      { body: commands },
+    );
+
+    console.log('✅ Successfully reloaded application (/) commands.');
+  } catch (error) {
+    console.error('❌ Error deploying commands:', error);
+  }
 }

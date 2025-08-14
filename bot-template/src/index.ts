@@ -7,6 +7,9 @@ import { ready } from './events/ready';
 import { guildMemberAdd } from './events/guildMemberAdd';
 import { interactionCreate } from './events/interactionCreate';
 
+// Import commands
+import { commands } from './commands';
+
 // Import services
 import { ConfigService } from './services/config.service';
 import { WelcomeService } from './services/welcome.service';
@@ -152,6 +155,24 @@ class ChildBot {
       console.error('❌ Failed to start bot:', error);
       await this.updateBotStatus('ERROR');
       process.exit(1);
+    }
+  }
+
+  private async deployCommands() {
+    try {
+      const { REST, Routes } = require('discord.js');
+      const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
+
+      console.log('🚀 Started refreshing application (/) commands.');
+
+      await rest.put(
+        Routes.applicationCommands(this.client.user?.id),
+        { body: commands },
+      );
+
+      console.log('✅ Successfully reloaded application (/) commands.');
+    } catch (error) {
+      console.error('❌ Error deploying commands:', error);
     }
   }
 

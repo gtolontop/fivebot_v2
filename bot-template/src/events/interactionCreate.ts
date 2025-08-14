@@ -55,6 +55,10 @@ async function handleBuiltInCommands(
         await handleReloadConfig(interaction, configService);
         break;
       
+      case 'help':
+        await handleHelp(interaction);
+        break;
+      
       default:
         // Handle custom commands if any
         await handleCustomCommand(interaction, configService);
@@ -186,7 +190,38 @@ async function handleCustomCommand(
   // Handle custom commands logic here
   // This would be implemented based on the custom commands configuration
   await interaction.reply({
-    content: '🚧 Les commandes personnalisées seront bientôt disponibles.',
+    content: '❌ Commande non reconnue.',
     ephemeral: true
   });
+}
+
+async function handleHelp(interaction: ChatInputCommandInteraction) {
+  const embed = new EmbedBuilder()
+    .setColor(0x5865F2)
+    .setTitle('🤖 Aide - FiveBot v2')
+    .setDescription('Voici la liste des commandes disponibles :')
+    .addFields(
+      {
+        name: '⚙️ Configuration',
+        value: '`/set-welcome` - Configure le message de bienvenue\n`/bot-status` - Affiche le statut du bot\n`/reload-config` - Recharge la configuration',
+        inline: false
+      },
+      {
+        name: '❓ Aide',
+        value: '`/help` - Affiche cette aide',
+        inline: false
+      },
+      {
+        name: '📋 Informations',
+        value: 'Seul le propriétaire du bot peut utiliser les commandes de configuration.',
+        inline: false
+      }
+    )
+    .setFooter({
+      text: 'FiveBot v2 - Bot Discord géré',
+      iconURL: interaction.client.user?.displayAvatarURL()
+    })
+    .setTimestamp();
+
+  await interaction.reply({ embeds: [embed], ephemeral: true });
 }
