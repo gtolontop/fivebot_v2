@@ -12,7 +12,7 @@ interface QueuedJob {
 }
 
 @Injectable()
-export class SimpleQueueService {
+export class SimpleQueueService implements IQueueService {
   private jobs: QueuedJob[] = [];
   private processing = false;
 
