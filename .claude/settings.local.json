@@ -6,7 +6,8 @@
       "Bash(npm install:*)",
       "Bash(cp:*)",
       "Bash(telnet:*)",
-      "Bash(nc:*)"
+      "Bash(nc:*)",
+      "Bash(npm start)"
     ],
     "deny": [],
     "ask": [],

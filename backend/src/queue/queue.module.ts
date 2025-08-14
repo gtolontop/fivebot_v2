@@ -12,7 +12,6 @@ import { EncryptionService } from '../common/encryption/encryption.service';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
         const redisUrl = configService.get('REDIS_URL');
-        console.log('REDIS_URL from config:', redisUrl);
         if (redisUrl) {
           return { 
             redis: redisUrl,
