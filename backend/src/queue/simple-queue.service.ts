@@ -93,6 +93,9 @@ export class SimpleQueueService implements IQueueService {
       case 'delete-bot':
         await this.handleDeleteBot(job.data);
         break;
+      case 'update-bot-config':
+        await this.handleUpdateBotConfig(job.data);
+        break;
       default:
         console.log(`Unknown job type: ${job.type}`);
     }
