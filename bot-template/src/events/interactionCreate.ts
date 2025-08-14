@@ -1,0 +1,192 @@
+import { BaseInteraction, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
+import { PrismaClient } from '@prisma/client';
+import { ConfigService } from '../services/config.service';
+
+export async function interactionCreate(
+  interaction: BaseInteraction,
+  prisma: PrismaClient,
+  configService: ConfigService
+) {
+  if (!interaction.isChatInputCommand()) return;
+
+  // Handle built-in configuration commands
+  await handleBuiltInCommands(interaction, configService);
+}
+
+async function handleBuiltInCommands(
+  interaction: ChatInputCommandInteraction,
+  configService: ConfigService
+) {
+  const { commandName } = interaction;
+
+  // Only allow bot owner to use configuration commands
+  const bot = await configService.getBot();
+  if (!bot) {
+    await interaction.reply({ 
+      content: '❌ Configuration du bot non trouvée.',
+      ephemeral: true 
+    });
+    return;
+  }
+
+  const owner = await configService.prisma.user.findUnique({
+    where: { id: bot.ownerId },
+  });
+
+  if (!owner || owner.discordId !== interaction.user.id) {
+    await interaction.reply({
+      content: '❌ Seul le propriétaire du bot peut utiliser cette commande.',
+      ephemeral: true
+    });
+    return;
+  }
+
+  try {
+    switch (commandName) {
+      case 'set-welcome':
+        await handleSetWelcome(interaction, configService);
+        break;
+      
+      case 'bot-status':
+        await handleBotStatus(interaction, configService);
+        break;
+      
+      case 'reload-config':
+        await handleReloadConfig(interaction, configService);
+        break;
+      
+      default:
+        // Handle custom commands if any
+        await handleCustomCommand(interaction, configService);
+    }
+  } catch (error) {
+    console.error(`Error handling command ${commandName}:`, error);
+    
+    const replyMethod = interaction.replied || interaction.deferred ? 'editReply' : 'reply';
+    await interaction[replyMethod]({
+      content: '❌ Une erreur s\'est produite lors de l\'exécution de cette commande.',
+      ephemeral: true
+    });
+  }
+}
+
+async function handleSetWelcome(
+  interaction: ChatInputCommandInteraction,
+  configService: ConfigService
+) {
+  await interaction.deferReply({ ephemeral: true });
+
+  const enabled = interaction.options.getBoolean('enabled') ?? true;
+  const channel = interaction.options.getChannel('channel');
+  const title = interaction.options.getString('title');
+  const description = interaction.options.getString('description');
+  const color = interaction.options.getString('color') || '#5865F2';
+
+  // Build embed JSON
+  const embedJson = {
+    title: title || 'Bienvenue!',
+    description: description || 'Bienvenue sur notre serveur {user}!',
+    color: parseInt(color.replace('#', ''), 16),
+    thumbnail: {
+      url: '{logo}' // Will be replaced with actual logo URL
+    },
+    footer: {
+      text: 'Powered by FiveBot v2'
+    },
+    timestamp: true
+  };
+
+  // Update configuration
+  await configService.updateConfig({
+    welcomeEnabled: enabled,
+    welcomeChannelId: channel?.id,
+    welcomeEmbedJson: embedJson,
+  });
+
+  const embed = new EmbedBuilder()
+    .setColor(0x00FF00)
+    .setTitle('✅ Configuration mise à jour')
+    .setDescription('Les paramètres de bienvenue ont été mis à jour avec succès.')
+    .addFields(
+      { name: 'Activé', value: enabled ? '✅ Oui' : '❌ Non', inline: true },
+      { name: 'Canal', value: channel ? `<#${channel.id}>` : 'Non défini', inline: true },
+      { name: 'Titre', value: title || 'Défaut', inline: true }
+    )
+    .setTimestamp();
+
+  await interaction.editReply({ embeds: [embed] });
+}
+
+async function handleBotStatus(
+  interaction: ChatInputCommandInteraction,
+  configService: ConfigService
+) {
+  await interaction.deferReply({ ephemeral: true });
+
+  const bot = await configService.getBot();
+  const config = await configService.getConfig();
+
+  if (!bot) {
+    await interaction.editReply({ content: '❌ Configuration du bot non trouvée.' });
+    return;
+  }
+
+  const embed = new EmbedBuilder()
+    .setColor(0x5865F2)
+    .setTitle(`🤖 Statut de ${bot.name}`)
+    .setDescription('Informations sur le bot et sa configuration')
+    .addFields(
+      { name: '📋 Informations générales', value: `**Nom:** ${bot.name}\n**ID:** \`${bot.id}\`\n**Préfixe:** ${bot.prefix}\n**Statut:** ${bot.status}`, inline: false },
+      { name: '👋 Bienvenue', value: `**Activé:** ${config.welcomeEnabled ? '✅' : '❌'}\n**Canal:** ${config.welcomeChannelId ? `<#${config.welcomeChannelId}>` : 'Non défini'}`, inline: true },
+      { name: '🛡️ Modération', value: `**Activé:** ${config.moderationEnabled ? '✅' : '❌'}`, inline: true },
+      { name: '🎭 Auto-rôle', value: `**Activé:** ${config.autoRoleEnabled ? '✅' : '❌'}\n**Rôle:** ${config.autoRoleId ? `<@&${config.autoRoleId}>` : 'Non défini'}`, inline: true }
+    )
+    .setFooter({
+      text: `Dernière mise à jour: ${new Date(bot.updatedAt).toLocaleString()}`,
+      iconURL: interaction.client.user?.displayAvatarURL()
+    })
+    .setTimestamp();
+
+  await interaction.editReply({ embeds: [embed] });
+}
+
+async function handleReloadConfig(
+  interaction: ChatInputCommandInteraction,
+  configService: ConfigService
+) {
+  await interaction.deferReply({ ephemeral: true });
+
+  try {
+    await configService.reloadConfig();
+    
+    await interaction.editReply({
+      content: '🔄 Configuration rechargée avec succès!'
+    });
+  } catch (error) {
+    await interaction.editReply({
+      content: '❌ Erreur lors du rechargement de la configuration.'
+    });
+  }
+}
+
+async function handleCustomCommand(
+  interaction: ChatInputCommandInteraction,
+  configService: ConfigService
+) {
+  const config = await configService.getConfig();
+  
+  if (!config.customCommands) {
+    await interaction.reply({
+      content: '❌ Commande non reconnue.',
+      ephemeral: true
+    });
+    return;
+  }
+
+  // Handle custom commands logic here
+  // This would be implemented based on the custom commands configuration
+  await interaction.reply({
+    content: '🚧 Les commandes personnalisées seront bientôt disponibles.',
+    ephemeral: true
+  });
+}
