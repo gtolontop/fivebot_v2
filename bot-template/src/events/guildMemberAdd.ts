@@ -1,6 +1,9 @@
 import { GuildMember } from 'discord.js';
 import { WelcomeService } from '../services/welcome.service';
 
+// Déduplication cache pour éviter les spams
+const recentWelcomes = new Set<string>();
+
 interface BotConfig {
   welcomeEnabled: boolean;
   welcomeChannelId?: string;
