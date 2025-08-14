@@ -33,16 +33,8 @@ export default function BotsPage() {
 
   const fetchBots = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/bots`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setBots(data);
-      }
+      const response = await botsAPI.getAll();
+      setBots(response.data);
     } catch (error) {
       console.error('Erreur lors du chargement des bots:', error);
     } finally {
