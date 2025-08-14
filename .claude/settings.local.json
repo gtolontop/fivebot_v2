@@ -14,7 +14,8 @@
       "Bash(curl:*)",
       "Bash(npm run start:dev:*)",
       "Bash(npx prisma:*)",
-      "Bash(copy:*)"
+      "Bash(copy:*)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": [],
