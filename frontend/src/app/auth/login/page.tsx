@@ -15,7 +15,7 @@ export default function LoginPage() {
   }, [user, loading, router]);
 
   const handleDiscordLogin = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/auth/discord`;
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/auth/discord`;
   };
 
   if (loading) {
