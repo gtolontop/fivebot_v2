@@ -188,6 +188,77 @@ export default function BotConfigPage() {
     }));
   };
 
+  const exportConfig = () => {
+    const configToExport = {
+      ...config,
+      exportedAt: new Date().toISOString(),
+      botName: bot?.name,
+      version: '1.0'
+    };
+    
+    const dataStr = JSON.stringify(configToExport, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    const exportFileDefaultName = `${bot?.name || 'bot'}-config-${new Date().toISOString().split('T')[0]}.json`;
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+    
+    toast.success('Configuration exportée avec succès');
+  };
+
+  const importConfig = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const importedConfig = JSON.parse(e.target?.result as string);
+        
+        // Validate the config structure
+        const validConfig: Partial<BotConfig> = {
+          welcomeEnabled: Boolean(importedConfig.welcomeEnabled),
+          welcomeChannelId: importedConfig.welcomeChannelId || undefined,
+          welcomeEmbedJson: importedConfig.welcomeEmbedJson || undefined,
+          welcomeLogoUrl: importedConfig.welcomeLogoUrl || undefined,
+          moderationEnabled: Boolean(importedConfig.moderationEnabled),
+          autoRoleEnabled: Boolean(importedConfig.autoRoleEnabled),
+          autoRoleId: importedConfig.autoRoleId || undefined,
+          loggingChannelId: importedConfig.loggingChannelId || undefined,
+          customCommands: importedConfig.customCommands || {}
+        };
+        
+        setConfig(prev => ({ ...prev, ...validConfig }));
+        toast.success('Configuration importée avec succès');
+      } catch (error) {
+        toast.error('Erreur lors de l\'importation: fichier JSON invalide');
+      }
+    };
+    
+    reader.readAsText(file);
+    // Reset the input
+    event.target.value = '';
+  };
+
+  const resetConfig = () => {
+    if (!confirm('Êtes-vous sûr de vouloir réinitialiser toute la configuration ? Cette action est irréversible.')) {
+      return;
+    }
+    
+    const defaultConfig: BotConfig = {
+      welcomeEnabled: false,
+      moderationEnabled: false,
+      autoRoleEnabled: false,
+      customCommands: {},
+    };
+    
+    setConfig(defaultConfig);
+    toast.success('Configuration réinitialisée');
+  };
+
   if (loading || botLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -240,20 +311,42 @@ export default function BotConfigPage() {
                 <p className="text-gray-600">Personnalisez votre bot Discord</p>
               </div>
             </div>
-            <button
-              onClick={saveConfig}
-              disabled={saving}
-              className="btn-primary"
-            >
-              {saving ? (
-                <>
-                  <div className="discord-spinner w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                  Sauvegarde...
-                </>
-              ) : (
-                'Sauvegarder'
+            <div className="flex items-center space-x-4">
+              {bot && (
+                <div className="flex items-center space-x-2">
+                  <div className={`w-2 h-2 rounded-full ${
+                    bot.status === 'ONLINE' ? 'bg-green-500' : 
+                    bot.status === 'STARTING' || bot.status === 'STOPPING' ? 'bg-yellow-500' : 
+                    'bg-red-500'
+                  }`}></div>
+                  <span className="text-sm text-gray-600">
+                    {bot.status === 'ONLINE' ? 'En ligne' : 
+                     bot.status === 'STARTING' ? 'Démarrage...' :
+                     bot.status === 'STOPPING' ? 'Arrêt...' :
+                     'Hors ligne'}
+                  </span>
+                  {bot.status === 'ONLINE' && (
+                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                      Redémarrera automatiquement
+                    </span>
+                  )}
+                </div>
               )}
-            </button>
+              <button
+                onClick={saveConfig}
+                disabled={saving}
+                className="btn-primary"
+              >
+                {saving ? (
+                  <>
+                    <div className="discord-spinner w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                    Sauvegarde...
+                  </>
+                ) : (
+                  'Sauvegarder'
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -665,15 +758,27 @@ export default function BotConfigPage() {
                         />
                       </div>
 
-                      <div className="flex space-x-3">
-                        <button className="btn-secondary">
-                          Exporter la configuration
+                      <div className="flex flex-wrap gap-3">
+                        <button 
+                          onClick={exportConfig}
+                          className="btn-secondary"
+                        >
+                          📤 Exporter la configuration
                         </button>
-                        <button className="btn-secondary">
-                          Importer la configuration
-                        </button>
-                        <button className="btn-danger">
-                          Réinitialiser la configuration
+                        <label className="btn-secondary cursor-pointer">
+                          📥 Importer la configuration
+                          <input
+                            type="file"
+                            accept=".json"
+                            className="hidden"
+                            onChange={importConfig}
+                          />
+                        </label>
+                        <button 
+                          onClick={resetConfig}
+                          className="btn-danger"
+                        >
+                          🔄 Réinitialiser la configuration
                         </button>
                       </div>
                     </div>
