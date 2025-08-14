@@ -360,4 +360,49 @@ export class BotsService {
       },
     });
   }
+
+  async getDiscordGuilds(botId: string, ownerId: string): Promise<any[]> {
+    const bot = await this.findOne(botId, ownerId);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    try {
+      const decryptedToken = this.encryptionService.decrypt(bot.tokenEncrypted);
+      return await this.discordService.getBotGuilds(decryptedToken);
+    } catch (error) {
+      console.error('Error fetching Discord guilds:', error);
+      throw new BadRequestException('Failed to fetch Discord guilds');
+    }
+  }
+
+  async getGuildChannels(botId: string, guildId: string, ownerId: string): Promise<any[]> {
+    const bot = await this.findOne(botId, ownerId);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    try {
+      const decryptedToken = this.encryptionService.decrypt(bot.tokenEncrypted);
+      return await this.discordService.getGuildChannels(decryptedToken, guildId);
+    } catch (error) {
+      console.error('Error fetching guild channels:', error);
+      throw new BadRequestException('Failed to fetch guild channels');
+    }
+  }
+
+  async getGuildRoles(botId: string, guildId: string, ownerId: string): Promise<any[]> {
+    const bot = await this.findOne(botId, ownerId);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    try {
+      const decryptedToken = this.encryptionService.decrypt(bot.tokenEncrypted);
+      return await this.discordService.getGuildRoles(decryptedToken, guildId);
+    } catch (error) {
+      console.error('Error fetching guild roles:', error);
+      throw new BadRequestException('Failed to fetch guild roles');
+    }
+  }
 }
