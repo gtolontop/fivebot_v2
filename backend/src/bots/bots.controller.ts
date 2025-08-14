@@ -91,4 +91,27 @@ export class BotsController {
       lastSeen: bot.updatedAt,
     };
   }
+
+  @Get(':id/guilds')
+  async getGuilds(@Param('id') id: string, @Req() req: any) {
+    return this.botsService.getDiscordGuilds(id, req.user.id);
+  }
+
+  @Get(':id/guilds/:guildId/channels')
+  async getGuildChannels(
+    @Param('id') id: string,
+    @Param('guildId') guildId: string,
+    @Req() req: any,
+  ) {
+    return this.botsService.getGuildChannels(id, guildId, req.user.id);
+  }
+
+  @Get(':id/guilds/:guildId/roles')
+  async getGuildRoles(
+    @Param('id') id: string,
+    @Param('guildId') guildId: string,
+    @Req() req: any,
+  ) {
+    return this.botsService.getGuildRoles(id, guildId, req.user.id);
+  }
 }
