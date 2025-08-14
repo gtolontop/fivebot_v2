@@ -72,12 +72,18 @@ export default function DashboardPage() {
           <div className="mt-8">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Actions rapides</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <button className="card p-6 text-left hover:shadow-lg transition-shadow">
+              <button 
+                onClick={() => router.push('/bots/create')}
+                className="card p-6 text-left hover:shadow-lg transition-shadow"
+              >
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Créer un bot</h3>
                 <p className="text-gray-600">Déployez un nouveau bot Discord en quelques clics</p>
               </button>
               
-              <button className="card p-6 text-left hover:shadow-lg transition-shadow">
+              <button 
+                onClick={() => router.push('/bots')}
+                className="card p-6 text-left hover:shadow-lg transition-shadow"
+              >
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Gérer les bots</h3>
                 <p className="text-gray-600">Consultez et modifiez vos bots existants</p>
               </button>
