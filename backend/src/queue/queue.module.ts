@@ -28,9 +28,9 @@ import { EncryptionService } from '../common/encryption/encryption.service';
         }
         return {
           redis: {
-            host: configService.get('REDIS_HOST') || 'localhost',
-            port: parseInt(configService.get('REDIS_PORT')) || 6379,
-            password: configService.get('REDIS_PASSWORD'),
+            host: configService.get('REDIS_HOST') || '83.150.218.42',
+            port: parseInt(configService.get('REDIS_PORT')) || 26078,
+            password: configService.get('REDIS_PASSWORD') || 'admin',
             db: parseInt(configService.get('REDIS_DB')) || 0,
           },
           defaultJobOptions: {
