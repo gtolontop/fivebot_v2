@@ -107,6 +107,63 @@ export default function BotConfigPage() {
     }
   };
 
+  const fetchDiscordGuilds = async () => {
+    if (!botId) return;
+    
+    setGuildsLoading(true);
+    try {
+      const response = await botsAPI.getGuilds(botId);
+      const discordGuilds = response.data;
+      
+      // Fetch channels and roles for each guild
+      const guildData: DiscordGuild[] = [];
+      const channelsData: Record<string, DiscordChannel[]> = {};
+      const rolesData: Record<string, DiscordRole[]> = {};
+      
+      for (const guild of discordGuilds) {
+        try {
+          // Fetch channels
+          const channelsResponse = await botsAPI.getGuildChannels(botId, guild.id);
+          const channels = channelsResponse.data;
+          channelsData[guild.id] = channels;
+          
+          // Fetch roles
+          const rolesResponse = await botsAPI.getGuildRoles(botId, guild.id);
+          const roles = rolesResponse.data;
+          rolesData[guild.id] = roles;
+          
+          guildData.push({
+            id: guild.id,
+            name: guild.name,
+            icon: guild.icon,
+            channels,
+            roles,
+          });
+        } catch (error) {
+          console.error(`Erreur lors du chargement des données pour le serveur ${guild.name}:`, error);
+          // Add guild with empty data if API fails
+          guildData.push({
+            id: guild.id,
+            name: guild.name,
+            icon: guild.icon,
+            channels: [],
+            roles: [],
+          });
+        }
+      }
+      
+      setGuilds(guildData);
+      setGuildChannels(channelsData);
+      setGuildRoles(rolesData);
+      
+    } catch (error) {
+      console.error('Erreur lors du chargement des serveurs Discord:', error);
+      toast.error('Impossible de charger les serveurs Discord');
+    } finally {
+      setGuildsLoading(false);
+    }
+  };
+
   const saveConfig = async () => {
     setSaving(true);
     try {
