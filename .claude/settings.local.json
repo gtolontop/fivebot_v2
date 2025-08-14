@@ -2,10 +2,14 @@
   "permissions": {
     "allow": [
       "Bash(mkdir:*)",
-      "Bash(docker:*)"
+      "Bash(docker:*)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": [],
-    "defaultMode": "acceptEdits"
+    "defaultMode": "acceptEdits",
+    "additionalDirectories": [
+      "C:\\mnt\\c\\Users\\teamr\\Desktop\\fivebot"
+    ]
   }
 }

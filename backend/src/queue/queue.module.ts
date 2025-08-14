@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { BullModule } from '@nestjs/bull';
+import { BullModule } from '@nestjs/bullmq';
 import { ConfigService } from '@nestjs/config';
 
 import { QueueService } from './queue.service';
-import { BotWorker } from './workers/bot.worker';
+// import { BotWorker } from './workers/bot.worker';
 
 @Module({
   imports: [
@@ -33,7 +33,7 @@ import { BotWorker } from './workers/bot.worker';
       },
     ),
   ],
-  providers: [QueueService, BotWorker],
+  providers: [QueueService],
   exports: [QueueService],
 })
 export class QueueModule {}
