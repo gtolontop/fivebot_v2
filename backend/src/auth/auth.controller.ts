@@ -23,17 +23,21 @@ export class AuthController {
   }
 
   @Get('discord/callback')
-  async discordCallback(@Query('code') code: string, @Query() query: any, @Res() res: Response) {
+  async discordCallback(@Query('code') code: string, @Query('error') error: string, @Query('error_description') errorDescription: string, @Res() res: Response) {
     try {
-      console.log('Discord callback - Full query params:', query);
       console.log('Discord callback - code received:', !!code);
+      console.log('Discord callback - error:', error);
+      
+      if (error) {
+        console.error('Discord OAuth error:', error, errorDescription);
+        const frontendUrl = this.configService.get('FRONTEND_URL') || 'http://localhost:3000';
+        return res.redirect(`${frontendUrl}/auth/discord/callback?error=${encodeURIComponent(error)}`);
+      }
       
       if (!code) {
-        console.log('No code in query params - checking for error:', query.error);
-        if (query.error) {
-          throw new Error(`Discord OAuth error: ${query.error} - ${query.error_description || ''}`);
-        }
-        throw new Error('No code provided by Discord');
+        console.error('No code provided by Discord');
+        const frontendUrl = this.configService.get('FRONTEND_URL') || 'http://localhost:3000';
+        return res.redirect(`${frontendUrl}/auth/discord/callback?error=${encodeURIComponent('authorization_failed')}`);
       }
 
       // Exchange code for Discord access token
