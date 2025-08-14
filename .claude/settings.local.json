@@ -10,7 +10,8 @@
       "Bash(npm start)",
       "Bash(npm run build:*)",
       "Bash(npm run dev:*)",
-      "Bash(npm run worker:*)"
+      "Bash(npm run worker:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": [],
