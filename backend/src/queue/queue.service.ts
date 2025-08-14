@@ -1,13 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-
-interface JobData {
-  [key: string]: any;
-}
+import { IQueueService, JobData } from './queue.interface';
 
 @Injectable()
-export class QueueService {
+export class QueueService implements IQueueService {
   constructor(
     @InjectQueue('bot-queue') private botQueue: Queue,
   ) {}
