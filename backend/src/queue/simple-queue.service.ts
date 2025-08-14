@@ -106,9 +106,94 @@ export class SimpleQueueService implements IQueueService {
   }
 
   private async handleStartBot(data: JobData): Promise<void> {
-    console.log(`Starting bot ${data.botId}`);
-    // Simulate work
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    const botId = data.botId;
+    console.log(`Starting bot ${botId}`);
+
+    try {
+      // Get bot info from database
+      const bot = await this.prisma.bot.findUnique({
+        where: { id: botId },
+        include: { config: true },
+      });
+
+      if (!bot) {
+        throw new Error('Bot not found');
+      }
+
+      // Check if bot is already running
+      if (this.runningBots.has(botId)) {
+        console.log(`Bot ${botId} is already running`);
+        return;
+      }
+
+      // Decrypt bot token
+      const decryptedToken = this.encryptionService.decrypt(bot.tokenEncrypted);
+
+      // Path to bot template
+      const botTemplatePath = path.join(process.cwd(), '..', 'bot-template');
+      
+      // Start bot process
+      const botProcess = spawn('npm', ['run', 'dev'], {
+        cwd: botTemplatePath,
+        env: {
+          ...process.env,
+          BOT_ID: botId,
+          BOT_TOKEN: decryptedToken,
+          CONFIG: JSON.stringify(bot.config || {}),
+          DATABASE_URL: process.env.DATABASE_URL,
+        },
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+
+      // Store the process
+      this.runningBots.set(botId, botProcess);
+
+      // Handle process output
+      botProcess.stdout?.on('data', (data) => {
+        console.log(`[Bot ${botId}] ${data.toString().trim()}`);
+      });
+
+      botProcess.stderr?.on('data', (data) => {
+        console.error(`[Bot ${botId} ERROR] ${data.toString().trim()}`);
+      });
+
+      // Handle process exit
+      botProcess.on('exit', async (code) => {
+        console.log(`[Bot ${botId}] Process exited with code ${code}`);
+        this.runningBots.delete(botId);
+        
+        // Update bot status to offline
+        await this.prisma.bot.update({
+          where: { id: botId },
+          data: { status: 'OFFLINE' },
+        });
+      });
+
+      // Wait a bit to see if the process starts successfully
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
+      if (this.runningBots.has(botId)) {
+        // Update bot status to online
+        await this.prisma.bot.update({
+          where: { id: botId },
+          data: { status: 'ONLINE' },
+        });
+        console.log(`✅ Bot ${botId} started successfully`);
+      } else {
+        throw new Error('Bot process failed to start');
+      }
+
+    } catch (error) {
+      console.error(`❌ Failed to start bot ${botId}:`, error);
+      
+      // Update bot status to error
+      await this.prisma.bot.update({
+        where: { id: botId },
+        data: { status: 'ERROR' },
+      });
+
+      throw error;
+    }
   }
 
   private async handleStopBot(data: JobData): Promise<void> {
