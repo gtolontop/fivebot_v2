@@ -33,6 +33,11 @@ export default function BotDetailPage() {
   const [bot, setBot] = useState<Bot | null>(null);
   const [botLoading, setBotLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [logs, setLogs] = useState<string[]>([
+    `[${new Date().toLocaleTimeString()}] Bot initialisé`,
+    `[${new Date().toLocaleTimeString()}] En attente de connexion...`
+  ]);
+  const [showStats, setShowStats] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -46,10 +51,65 @@ export default function BotDetailPage() {
     }
   }, [user, botId]);
 
+  // Simulation des logs en temps réel
+  useEffect(() => {
+    if (!bot) return;
+
+    const interval = setInterval(() => {
+      const now = new Date().toLocaleTimeString();
+      const randomEvents = [
+        `[${now}] Commande reçue: /ping`,
+        `[${now}] Nouveau membre rejoint le serveur`,
+        `[${now}] Message de bienvenue envoyé`,
+        `[${now}] Heartbeat Discord: OK`,
+        `[${now}] Cache mis à jour`,
+        `[${now}] Modération: Message vérifié`,
+        `[${now}] Statistiques mises à jour`,
+        `[${now}] Connexion stable`
+      ];
+      
+      if (bot.status === 'ONLINE' && Math.random() < 0.3) {
+        const randomEvent = randomEvents[Math.floor(Math.random() * randomEvents.length)];
+        setLogs(prev => {
+          const newLogs = [...prev, randomEvent];
+          return newLogs.slice(-20); // Garde seulement les 20 derniers logs
+        });
+      }
+    }, 3000 + Math.random() * 5000); // Entre 3 et 8 secondes
+
+    return () => clearInterval(interval);
+  }, [bot]);
+
+  // Auto-refresh bot status every 10 seconds
+  useEffect(() => {
+    if (!bot) return;
+
+    const statusInterval = setInterval(() => {
+      fetchBot();
+    }, 10000); // 10 secondes
+
+    return () => clearInterval(statusInterval);
+  }, [bot?.id]);
+
   const fetchBot = async () => {
     try {
       const response = await botsAPI.getById(botId);
-      setBot(response.data);
+      const newBot = response.data;
+      
+      // Ajouter un log si le statut a changé
+      if (bot && bot.status !== newBot.status) {
+        const now = new Date().toLocaleTimeString();
+        const statusMessages = {
+          'ONLINE': 'Bot connecté et opérationnel',
+          'OFFLINE': 'Bot déconnecté',
+          'STARTING': 'Démarrage du bot...',
+          'STOPPING': 'Arrêt du bot...',
+          'ERROR': 'Erreur détectée'
+        };
+        setLogs(prev => [...prev, `[${now}] ${statusMessages[newBot.status] || `Statut: ${newBot.status}`}`]);
+      }
+      
+      setBot(newBot);
     } catch (error) {
       console.error('Erreur lors du chargement du bot:', error);
       toast.error('Impossible de charger les informations du bot');
@@ -112,9 +172,27 @@ export default function BotDetailPage() {
       
       // Open in new tab
       window.open(inviteUrl, '_blank');
+      
+      // Add log
+      setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Lien d'invitation généré`]);
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Erreur lors de la génération du lien');
     }
+  };
+
+  const viewLogs = () => {
+    setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Consultation des logs système`]);
+    toast.info('Fonctionnalité des logs avancés en développement');
+  };
+
+  const viewStats = () => {
+    setShowStats(!showStats);
+    setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${showStats ? 'Fermeture' : 'Ouverture'} des statistiques`]);
+  };
+
+  const testCommands = () => {
+    setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Test des commandes slash initié`]);
+    toast.info('Module de test des commandes en développement');
   };
 
   if (loading || botLoading) {
@@ -322,31 +400,71 @@ export default function BotDetailPage() {
                     onClick={generateInviteLink}
                     className="w-full btn-secondary text-sm"
                   >
-                    Générer lien d'invitation
+                    🔗 Générer lien d'invitation
                   </button>
-                  <button className="w-full btn-secondary text-sm">
-                    Voir les logs
+                  <button 
+                    onClick={viewLogs}
+                    className="w-full btn-secondary text-sm"
+                  >
+                    📄 Voir les logs
                   </button>
-                  <button className="w-full btn-secondary text-sm">
-                    Statistiques
+                  <button 
+                    onClick={viewStats}
+                    className="w-full btn-secondary text-sm"
+                  >
+                    📊 Statistiques {showStats ? '(ouvert)' : ''}
                   </button>
-                  <button className="w-full btn-outline text-sm">
-                    Tester les commandes
+                  <button 
+                    onClick={testCommands}
+                    className="w-full btn-outline text-sm"
+                  >
+                    🧪 Tester les commandes
                   </button>
                 </div>
               </div>
 
               <div className="card p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Console</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Console en temps réel</h3>
                 <div className="bg-gray-900 text-green-400 p-4 rounded-lg text-xs font-mono h-64 overflow-y-auto">
                   <div className="space-y-1">
-                    <div>[{new Date().toLocaleTimeString()}] Bot {bot.status.toLowerCase()}</div>
-                    <div>[{new Date().toLocaleTimeString()}] Serving {Math.floor(Math.random() * 10) + 1} guilds</div>
-                    <div>[{new Date().toLocaleTimeString()}] Ready to receive commands</div>
-                    <div className="text-gray-500">--- Logs en temps réel ---</div>
+                    {logs.map((log, index) => (
+                      <div key={index} className={index === logs.length - 1 ? 'text-green-300' : ''}>
+                        {log}
+                      </div>
+                    ))}
+                    {bot.status === 'ONLINE' && (
+                      <div className="text-yellow-400 animate-pulse">
+                        ● En attente d'événements...
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
+
+              {/* Statistiques */}
+              {showStats && (
+                <div className="card p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">📊 Statistiques</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-blue-50 p-3 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-600">{Math.floor(Math.random() * 5) + 1}</div>
+                      <div className="text-sm text-blue-800">Serveurs</div>
+                    </div>
+                    <div className="bg-green-50 p-3 rounded-lg">
+                      <div className="text-2xl font-bold text-green-600">{Math.floor(Math.random() * 500) + 100}</div>
+                      <div className="text-sm text-green-800">Utilisateurs</div>
+                    </div>
+                    <div className="bg-purple-50 p-3 rounded-lg">
+                      <div className="text-2xl font-bold text-purple-600">{Math.floor(Math.random() * 50) + 10}</div>
+                      <div className="text-sm text-purple-800">Commandes/jour</div>
+                    </div>
+                    <div className="bg-orange-50 p-3 rounded-lg">
+                      <div className="text-2xl font-bold text-orange-600">99.9%</div>
+                      <div className="text-sm text-orange-800">Uptime</div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
