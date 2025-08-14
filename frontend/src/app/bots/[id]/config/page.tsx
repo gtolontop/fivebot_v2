@@ -727,18 +727,13 @@ export default function BotConfigPage() {
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                               Role to assign automatically
                             </label>
-                            <select
+                            <SearchableDropdown
+                              options={allRoles.map(role => ({ ...role, isRole: true }))}
                               value={config.autoRoleId || ''}
-                              onChange={(e) => updateConfig({ autoRoleId: e.target.value })}
-                              className="input-field"
-                            >
-                              <option value="">Select a role</option>
-                              {allRoles.map((role) => (
-                                <option key={role.id} value={role.id}>
-                                  @{role.name} ({role.guildName})
-                                </option>
-                              ))}
-                            </select>
+                              onChange={(value) => updateConfig({ autoRoleId: value })}
+                              placeholder="Select a role to assign automatically"
+                              emptyMessage="No roles available"
+                            />
                           </div>
 
                           <div className="bg-green-50 border border-green-200 rounded-md p-4">
