@@ -3,6 +3,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { botsAPI } from '@/utils/api';
 
 export default function CreateBotPage() {
   const { user, loading } = useAuth();
@@ -26,23 +27,10 @@ export default function CreateBotPage() {
     setError('');
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/bots`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (response.ok) {
-        router.push('/bots');
-      } else {
-        const errorData = await response.json();
-        setError(errorData.message || 'Erreur lors de la création du bot');
-      }
-    } catch (error) {
-      setError('Erreur de connexion au serveur');
+      await botsAPI.create(formData);
+      router.push('/bots');
+    } catch (error: any) {
+      setError(error.response?.data?.message || 'Erreur lors de la création du bot');
     } finally {
       setIsSubmitting(false);
     }
