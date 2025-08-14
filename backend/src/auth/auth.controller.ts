@@ -13,9 +13,13 @@ export class AuthController {
   ) {}
 
   @Get('discord')
-  @UseGuards(AuthGuard('discord'))
-  async discordAuth() {
-    // Initiates Discord OAuth2 flow
+  async discordAuth(@Res() res: Response) {
+    const clientId = this.configService.get('DISCORD_CLIENT_ID');
+    const redirectUri = this.configService.get('DISCORD_CALLBACK_URL');
+    
+    const discordAuthUrl = `https://discord.com/oauth2/authorize?response_type=code&client_id=${clientId}&scope=identify%20email&redirect_uri=${encodeURIComponent(redirectUri)}`;
+    
+    res.redirect(discordAuthUrl);
   }
 
   @Get('discord/callback')
