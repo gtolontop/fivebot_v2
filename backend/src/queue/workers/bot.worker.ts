@@ -18,7 +18,9 @@ export class BotWorker extends WorkerHost {
     private prisma: PrismaService,
     private encryptionService: EncryptionService,
     private configService: ConfigService,
-  ) {}
+  ) {
+    super();
+  }
 
   async process(job: Job): Promise<any> {
     switch (job.name) {
