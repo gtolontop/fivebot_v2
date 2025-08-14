@@ -681,18 +681,13 @@ export default function BotConfigPage() {
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                               Logs Channel
                             </label>
-                            <select
+                            <SearchableDropdown
+                              options={textChannels}
                               value={config.loggingChannelId || ''}
-                              onChange={(e) => updateConfig({ loggingChannelId: e.target.value })}
-                              className="input-field"
-                            >
-                              <option value="">Select a channel</option>
-                              {textChannels.map((channel) => (
-                                <option key={channel.id} value={channel.id}>
-                                  #{channel.name} ({channel.guildName})
-                                </option>
-                              ))}
-                            </select>
+                              onChange={(value) => updateConfig({ loggingChannelId: value })}
+                              placeholder="Select a logging channel"
+                              emptyMessage="No text channels available"
+                            />
                           </div>
 
                           <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
