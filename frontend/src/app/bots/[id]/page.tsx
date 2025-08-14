@@ -34,8 +34,8 @@ export default function BotDetailPage() {
   const [botLoading, setBotLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [logs, setLogs] = useState<string[]>([
-    `[${new Date().toLocaleTimeString()}] Bot initialisé`,
-    `[${new Date().toLocaleTimeString()}] En attente de connexion...`
+    `[${new Date().toLocaleTimeString()}] Bot initialized`,
+    `[${new Date().toLocaleTimeString()}] Waiting for connection...`
   ]);
   const [showStats, setShowStats] = useState(false);
 
@@ -58,14 +58,14 @@ export default function BotDetailPage() {
     const interval = setInterval(() => {
       const now = new Date().toLocaleTimeString();
       const randomEvents = [
-        `[${now}] Commande reçue: /ping`,
-        `[${now}] Nouveau membre rejoint le serveur`,
-        `[${now}] Message de bienvenue envoyé`,
+        `[${now}] Command received: /ping`,
+        `[${now}] New member joined the server`,
+        `[${now}] Welcome message sent`,
         `[${now}] Heartbeat Discord: OK`,
-        `[${now}] Cache mis à jour`,
-        `[${now}] Modération: Message vérifié`,
-        `[${now}] Statistiques mises à jour`,
-        `[${now}] Connexion stable`
+        `[${now}] Cache updated`,
+        `[${now}] Moderation: Message verified`,
+        `[${now}] Statistics updated`,
+        `[${now}] Stable connection`
       ];
       
       if (bot.status === 'ONLINE' && Math.random() < 0.3) {
@@ -100,11 +100,11 @@ export default function BotDetailPage() {
       if (bot && bot.status !== newBot.status) {
         const now = new Date().toLocaleTimeString();
         const statusMessages = {
-          'ONLINE': 'Bot connecté et opérationnel',
-          'OFFLINE': 'Bot déconnecté',
-          'STARTING': 'Démarrage du bot...',
-          'STOPPING': 'Arrêt du bot...',
-          'ERROR': 'Erreur détectée'
+          'ONLINE': 'Bot connected and operational',
+          'OFFLINE': 'Bot disconnected',
+          'STARTING': 'Bot starting...',
+          'STOPPING': 'Bot stopping...',
+          'ERROR': 'Error detected'
         };
         setLogs(prev => [...prev, `[${now}] ${statusMessages[newBot.status] || `Statut: ${newBot.status}`}`]);
       }
@@ -123,10 +123,10 @@ export default function BotDetailPage() {
     setActionLoading('start');
     try {
       await botsAPI.start(botId);
-      toast.success('Bot démarré avec succès');
+      toast.success('Bot started successfully');
       await fetchBot(); // Refresh bot status
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Erreur lors du démarrage');
+      toast.error(error.response?.data?.message || 'Error starting bot');
     } finally {
       setActionLoading(null);
     }
@@ -136,27 +136,27 @@ export default function BotDetailPage() {
     setActionLoading('stop');
     try {
       await botsAPI.stop(botId);
-      toast.success('Bot arrêté avec succès');
+      toast.success('Bot stopped successfully');
       await fetchBot(); // Refresh bot status
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Erreur lors de l\'arrêt');
+      toast.error(error.response?.data?.message || 'Error stopping bot');
     } finally {
       setActionLoading(null);
     }
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce bot ? Cette action est irréversible.')) {
+    if (!window.confirm('Are you sure you want to delete this bot? This action is irreversible.')) {
       return;
     }
 
     setActionLoading('delete');
     try {
       await botsAPI.delete(botId);
-      toast.success('Bot supprimé avec succès');
+      toast.success('Bot deleted successfully');
       router.push('/bots');
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Erreur lors de la suppression');
+      toast.error(error.response?.data?.message || 'Error deleting bot');
       setActionLoading(null);
     }
   };
@@ -168,7 +168,7 @@ export default function BotDetailPage() {
       
       // Copy to clipboard
       await navigator.clipboard.writeText(inviteUrl);
-      toast.success('Lien d\'invitation copié dans le presse-papiers');
+      toast.success('Invite link copied to clipboard');
       
       // Open in new tab
       window.open(inviteUrl, '_blank');
@@ -176,7 +176,7 @@ export default function BotDetailPage() {
       // Add log
       setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Lien d'invitation généré`]);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Erreur lors de la génération du lien');
+      toast.error(error.response?.data?.message || 'Error generating invite link');
     }
   };
 
@@ -228,7 +228,7 @@ export default function BotDetailPage() {
                   onClick={() => router.push('/bots')}
                   className="text-gray-500 hover:text-gray-700"
                 >
-                  ← Retour
+                  ← Back
                 </button>
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">{bot.name}</h1>
@@ -253,10 +253,10 @@ export default function BotDetailPage() {
                   {actionLoading === 'start' ? (
                     <>
                       <div className="discord-spinner w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                      Démarrage...
+                      Starting...
                     </>
                   ) : (
-                    'Démarrer'
+                    'Start'
                   )}
                 </button>
               ) : (
@@ -268,10 +268,10 @@ export default function BotDetailPage() {
                   {actionLoading === 'stop' ? (
                     <>
                       <div className="discord-spinner w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full mr-2"></div>
-                      Arrêt...
+                      Stopping...
                     </>
                   ) : (
-                    'Arrêter'
+                    'Stop'
                   )}
                 </button>
               )}
@@ -279,14 +279,14 @@ export default function BotDetailPage() {
                 onClick={generateInviteLink}
                 className="btn-outline"
               >
-                Inviter
+                Invite
               </button>
               <button
                 onClick={handleDelete}
                 disabled={actionLoading === 'delete'}
                 className="btn-danger"
               >
-                {actionLoading === 'delete' ? 'Suppression...' : 'Supprimer'}
+                {actionLoading === 'delete' ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>
@@ -299,14 +299,14 @@ export default function BotDetailPage() {
             {/* Informations principales */}
             <div className="lg:col-span-2 space-y-6">
               <div className="card p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Informations</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Information</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Nom</label>
+                    <label className="block text-sm font-medium text-gray-700">Name</label>
                     <p className="mt-1 text-sm text-gray-900">{bot.name}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Statut</label>
+                    <label className="block text-sm font-medium text-gray-700">Status</label>
                     <span className={`mt-1 inline-flex px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(bot.status)}`}>
                       {bot.status}
                     </span>
@@ -316,7 +316,7 @@ export default function BotDetailPage() {
                     <p className="mt-1 text-sm text-gray-900 font-mono">{bot.clientId || 'N/A'}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Créé le</label>
+                    <label className="block text-sm font-medium text-gray-700">Created</label>
                     <p className="mt-1 text-sm text-gray-900">{new Date(bot.createdAt).toLocaleDateString()}</p>
                   </div>
                 </div>
@@ -336,8 +336,8 @@ export default function BotDetailPage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <label className="text-sm font-medium text-gray-700">Message de bienvenue</label>
-                      <p className="text-xs text-gray-500">Envoie un message aux nouveaux membres</p>
+                      <label className="text-sm font-medium text-gray-700">Welcome Message</label>
+                      <p className="text-xs text-gray-500">Send a message to new members</p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -352,8 +352,8 @@ export default function BotDetailPage() {
                   
                   <div className="flex items-center justify-between">
                     <div>
-                      <label className="text-sm font-medium text-gray-700">Modération</label>
-                      <p className="text-xs text-gray-500">Fonctionnalités de modération automatique</p>
+                      <label className="text-sm font-medium text-gray-700">Moderation</label>
+                      <p className="text-xs text-gray-500">Automatic moderation features</p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -368,8 +368,8 @@ export default function BotDetailPage() {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <label className="text-sm font-medium text-gray-700">Attribution automatique de rôle</label>
-                      <p className="text-xs text-gray-500">Attribue un rôle aux nouveaux membres</p>
+                      <label className="text-sm font-medium text-gray-700">Automatic Role Assignment</label>
+                      <p className="text-xs text-gray-500">Assign a role to new members</p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -388,37 +388,37 @@ export default function BotDetailPage() {
             {/* Console/Actions */}
             <div className="space-y-6">
               <div className="card p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Actions rapides</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
                 <div className="space-y-3">
                   <button 
                     onClick={() => router.push(`/bots/${botId}/config`)}
                     className="w-full btn-primary text-sm"
                   >
-                    ⚙️ Configuration avancée
+                    ⚙️ Advanced Configuration
                   </button>
                   <button 
                     onClick={generateInviteLink}
                     className="w-full btn-secondary text-sm"
                   >
-                    🔗 Générer lien d'invitation
+                    🔗 Generate Invite Link
                   </button>
                   <button 
                     onClick={viewLogs}
                     className="w-full btn-secondary text-sm"
                   >
-                    📄 Voir les logs
+                    📄 View Logs
                   </button>
                   <button 
                     onClick={viewStats}
                     className="w-full btn-secondary text-sm"
                   >
-                    📊 Statistiques {showStats ? '(ouvert)' : ''}
+                    📊 Statistics {showStats ? '(open)' : ''}
                   </button>
                   <button 
                     onClick={testCommands}
                     className="w-full btn-outline text-sm"
                   >
-                    🧪 Tester les commandes
+                    🧪 Test Commands
                   </button>
                 </div>
               </div>
@@ -434,7 +434,7 @@ export default function BotDetailPage() {
                     ))}
                     {bot.status === 'ONLINE' && (
                       <div className="text-yellow-400 animate-pulse">
-                        ● En attente d'événements...
+                        ● Waiting for events...
                       </div>
                     )}
                   </div>
