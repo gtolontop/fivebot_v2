@@ -98,11 +98,11 @@ export class BotsService {
     // Spend user credits
     await this.usersService.spendCredits(ownerId, creditCost, `Created bot: ${data.name}`);
 
-    // Queue bot creation job
-    await this.queueService.addJob('create-bot', {
-      botId: bot.id,
-      ownerId,
-    });
+    // Queue bot creation job (disabled for now)
+    // await this.queueService.addJob('create-bot', {
+    //   botId: bot.id,
+    //   ownerId,
+    // });
 
     // Log the action
     await this.prisma.auditLog.create({
@@ -195,10 +195,10 @@ export class BotsService {
 
     // If bot is running, queue config update
     if (bot.status === BotStatus.ONLINE) {
-      await this.queueService.addJob('update-bot-config', {
-        botId,
-        config: data,
-      });
+      // await this.queueService.addJob('update-bot-config', {
+      //   botId,
+      //   config: data,
+      // });
     }
 
     return config;

@@ -4,7 +4,7 @@ import * as crypto from 'crypto';
 
 @Injectable()
 export class EncryptionService {
-  private readonly algorithm = 'aes-256-gcm';
+  private readonly algorithm = 'aes-256-cbc';
   private readonly secretKey: Buffer;
 
   constructor(private configService: ConfigService) {
@@ -28,15 +28,13 @@ export class EncryptionService {
   encrypt(text: string): string {
     try {
       const iv = crypto.randomBytes(16);
-      const cipher = crypto.createCipherGCM(this.algorithm, this.secretKey, iv);
+      const cipher = crypto.createCipher(this.algorithm, this.secretKey);
       
       let encrypted = cipher.update(text, 'utf8', 'hex');
       encrypted += cipher.final('hex');
       
-      const authTag = cipher.getAuthTag();
-      
-      // Combine iv, authTag, and encrypted data
-      return iv.toString('hex') + ':' + authTag.toString('hex') + ':' + encrypted;
+      // Combine iv and encrypted data
+      return iv.toString('hex') + ':' + encrypted;
     } catch (error) {
       throw new Error(`Encryption failed: ${error.message}`);
     }
@@ -45,16 +43,14 @@ export class EncryptionService {
   decrypt(encryptedData: string): string {
     try {
       const parts = encryptedData.split(':');
-      if (parts.length !== 3) {
+      if (parts.length !== 2) {
         throw new Error('Invalid encrypted data format');
       }
 
       const iv = Buffer.from(parts[0], 'hex');
-      const authTag = Buffer.from(parts[1], 'hex');
-      const encrypted = parts[2];
+      const encrypted = parts[1];
 
-      const decipher = crypto.createDecipherGCM(this.algorithm, this.secretKey, iv);
-      decipher.setAuthTag(authTag);
+      const decipher = crypto.createDecipher(this.algorithm, this.secretKey);
 
       let decrypted = decipher.update(encrypted, 'hex', 'utf8');
       decrypted += decipher.final('utf8');
