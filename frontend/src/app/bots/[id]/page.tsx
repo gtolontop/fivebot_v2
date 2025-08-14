@@ -174,25 +174,25 @@ export default function BotDetailPage() {
       window.open(inviteUrl, '_blank');
       
       // Add log
-      setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Lien d'invitation généré`]);
+      setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Invite link generated`]);
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Error generating invite link');
     }
   };
 
   const viewLogs = () => {
-    setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Consultation des logs système`]);
-    toast('Fonctionnalité des logs avancés en développement', { icon: 'ℹ️' });
+    setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] System logs consultation`]);
+    toast('Advanced logs feature in development', { icon: 'ℹ️' });
   };
 
   const viewStats = () => {
     setShowStats(!showStats);
-    setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${showStats ? 'Fermeture' : 'Ouverture'} des statistiques`]);
+    setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${showStats ? 'Closing' : 'Opening'} statistics`]);
   };
 
   const testCommands = () => {
-    setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Test des commandes slash initié`]);
-    toast('Module de test des commandes en développement', { icon: '🧪' });
+    setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Slash commands test initiated`]);
+    toast('Command testing module in development', { icon: '🧪' });
   };
 
   if (loading || botLoading) {
@@ -424,7 +424,7 @@ export default function BotDetailPage() {
               </div>
 
               <div className="card p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Console en temps réel</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Real-time Console</h3>
                 <div className="bg-gray-900 text-green-400 p-4 rounded-lg text-xs font-mono h-64 overflow-y-auto">
                   <div className="space-y-1">
                     {logs.map((log, index) => (
@@ -444,19 +444,19 @@ export default function BotDetailPage() {
               {/* Statistiques */}
               {showStats && (
                 <div className="card p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">📊 Statistiques</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">📊 Statistics</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-blue-50 p-3 rounded-lg">
                       <div className="text-2xl font-bold text-blue-600">{Math.floor(Math.random() * 5) + 1}</div>
-                      <div className="text-sm text-blue-800">Serveurs</div>
+                      <div className="text-sm text-blue-800">Servers</div>
                     </div>
                     <div className="bg-green-50 p-3 rounded-lg">
                       <div className="text-2xl font-bold text-green-600">{Math.floor(Math.random() * 500) + 100}</div>
-                      <div className="text-sm text-green-800">Utilisateurs</div>
+                      <div className="text-sm text-green-800">Users</div>
                     </div>
                     <div className="bg-purple-50 p-3 rounded-lg">
                       <div className="text-2xl font-bold text-purple-600">{Math.floor(Math.random() * 50) + 10}</div>
-                      <div className="text-sm text-purple-800">Commandes/jour</div>
+                      <div className="text-sm text-purple-800">Commands/day</div>
                     </div>
                     <div className="bg-orange-50 p-3 rounded-lg">
                       <div className="text-2xl font-bold text-orange-600">99.9%</div>
