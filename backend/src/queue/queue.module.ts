@@ -12,6 +12,7 @@ import { EncryptionService } from '../common/encryption/encryption.service';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
         const redisUrl = configService.get('REDIS_URL');
+        console.log('REDIS_URL from config:', redisUrl);
         if (redisUrl) {
           return { 
             redis: redisUrl,
@@ -51,7 +52,7 @@ import { EncryptionService } from '../common/encryption/encryption.service';
       },
     ),
   ],
-  providers: [QueueService, /* BotWorker, */ EncryptionService],
+  providers: [QueueService, BotWorker, EncryptionService],
   exports: [QueueService],
 })
 export class QueueModule {}
