@@ -25,7 +25,7 @@ export class AuthController {
     
     // Redirect to frontend with token
     const frontendUrl = this.configService.get('FRONTEND_URL') || 'http://localhost:3000';
-    res.redirect(`${frontendUrl}/auth/callback?token=${result.access_token}`);
+    res.redirect(`${frontendUrl}/auth/discord/callback?token=${result.access_token}`);
   }
 
   @Post('logout')
