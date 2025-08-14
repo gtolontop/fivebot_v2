@@ -182,7 +182,7 @@ export default function BotDetailPage() {
 
   const viewLogs = () => {
     setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Consultation des logs système`]);
-    toast.info('Fonctionnalité des logs avancés en développement');
+    toast('Fonctionnalité des logs avancés en développement', { icon: 'ℹ️' });
   };
 
   const viewStats = () => {
@@ -192,7 +192,7 @@ export default function BotDetailPage() {
 
   const testCommands = () => {
     setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Test des commandes slash initié`]);
-    toast.info('Module de test des commandes en développement');
+    toast('Module de test des commandes en développement', { icon: '🧪' });
   };
 
   if (loading || botLoading) {
