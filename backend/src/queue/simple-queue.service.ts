@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { IQueueService, JobData } from './queue.interface';
+import { PrismaService } from '../common/prisma/prisma.service';
+import { EncryptionService } from '../common/encryption/encryption.service';
+import { spawn, ChildProcess } from 'child_process';
+import * as path from 'path';
 
 interface QueuedJob {
   id: string;
@@ -15,6 +19,12 @@ interface QueuedJob {
 export class SimpleQueueService implements IQueueService {
   private jobs: QueuedJob[] = [];
   private processing = false;
+  private runningBots = new Map<string, ChildProcess>(); // botId -> process
+
+  constructor(
+    private prisma: PrismaService,
+    private encryptionService: EncryptionService,
+  ) {}
 
   async addJob(jobType: string, data: JobData, options?: any): Promise<void> {
     const job: QueuedJob = {
