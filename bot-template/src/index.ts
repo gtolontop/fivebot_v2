@@ -38,8 +38,9 @@ class ChildBot {
       intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMembers,
-        GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent,
+        // Suppression de GuildMessages et MessageContent pour utiliser uniquement les slash commands
+        // GatewayIntentBits.GuildMessages,
+        // GatewayIntentBits.MessageContent,
       ],
     });
 
