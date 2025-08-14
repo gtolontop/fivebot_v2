@@ -293,19 +293,44 @@ export default function BotConfigPage() {
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Serveurs Discord
                           </label>
-                          <div className="space-y-2">
-                            {guilds.map((guild) => (
-                              <div key={guild.id} className="flex items-center justify-between p-3 border rounded-lg">
-                                <div>
-                                  <p className="font-medium">{guild.name}</p>
-                                  <p className="text-sm text-gray-500">ID: {guild.id}</p>
+                          {guildsLoading ? (
+                            <div className="flex items-center justify-center p-8">
+                              <div className="discord-spinner w-6 h-6 border-4 border-discord-200 border-t-discord-500 rounded-full mr-3"></div>
+                              <span className="text-gray-600">Chargement des serveurs Discord...</span>
+                            </div>
+                          ) : guilds.length > 0 ? (
+                            <div className="space-y-2">
+                              {guilds.map((guild) => (
+                                <div key={guild.id} className="flex items-center justify-between p-3 border rounded-lg">
+                                  <div className="flex items-center space-x-3">
+                                    {guild.icon && (
+                                      <img 
+                                        src={`https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`}
+                                        alt={guild.name}
+                                        className="w-8 h-8 rounded-full"
+                                      />
+                                    )}
+                                    <div>
+                                      <p className="font-medium">{guild.name}</p>
+                                      <p className="text-sm text-gray-500">
+                                        {guild.channels.length} canaux • {guild.roles.length} rôles
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                                    Connecté
+                                  </span>
                                 </div>
-                                <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                                  Connecté
-                                </span>
-                              </div>
-                            ))}
-                          </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-center p-8 bg-gray-50 rounded-lg">
+                              <p className="text-gray-600">Aucun serveur Discord trouvé</p>
+                              <p className="text-sm text-gray-500 mt-1">
+                                Assurez-vous que votre bot a été invité sur des serveurs
+                              </p>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -401,6 +426,43 @@ export default function BotConfigPage() {
                               placeholder="https://example.com/logo.png"
                               className="input-field"
                             />
+                          </div>
+
+                          {/* Live Preview */}
+                          <div className="mt-6">
+                            <h4 className="text-sm font-medium text-gray-700 mb-3">Aperçu du message</h4>
+                            <div className="bg-gray-800 rounded-lg p-4">
+                              <div className="bg-gray-700 rounded-md p-3" style={{
+                                borderLeft: `4px solid ${config.welcomeEmbedJson?.color || '#5865F2'}`
+                              }}>
+                                {config.welcomeEmbedJson?.title && (
+                                  <h5 className="text-white font-medium mb-2">
+                                    {config.welcomeEmbedJson.title}
+                                  </h5>
+                                )}
+                                {config.welcomeEmbedJson?.description && (
+                                  <p className="text-gray-300 text-sm mb-2">
+                                    {config.welcomeEmbedJson.description
+                                      .replace(/{user}/g, '@NouveauMembre')
+                                      .replace(/{username}/g, 'NouveauMembre')
+                                      .replace(/{guild}/g, guilds[0]?.name || 'Mon Serveur')}
+                                  </p>
+                                )}
+                                {config.welcomeLogoUrl && (
+                                  <img 
+                                    src={config.welcomeLogoUrl} 
+                                    alt="Logo" 
+                                    className="w-16 h-16 rounded mt-2"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = 'none';
+                                    }}
+                                  />
+                                )}
+                                <div className="text-xs text-gray-400 mt-2">
+                                  FiveBot • aujourd'hui à {new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       )}
@@ -510,33 +572,64 @@ export default function BotConfigPage() {
                   <div className="space-y-6">
                     <h3 className="text-lg font-semibold text-gray-900">Canaux Discord</h3>
                     
-                    {guilds.map((guild) => (
-                      <div key={guild.id} className="border rounded-lg p-4">
-                        <h4 className="font-medium text-gray-900 mb-3">{guild.name}</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <h5 className="text-sm font-medium text-gray-700 mb-2">Canaux texte</h5>
-                            <div className="space-y-1">
-                              {guild.channels.filter(c => c.type === 0).map((channel) => (
-                                <div key={channel.id} className="text-sm text-gray-600">
-                                  # {channel.name}
-                                </div>
-                              ))}
-                            </div>
+                    {guildsLoading ? (
+                      <div className="flex items-center justify-center p-8">
+                        <div className="discord-spinner w-6 h-6 border-4 border-discord-200 border-t-discord-500 rounded-full mr-3"></div>
+                        <span className="text-gray-600">Chargement des canaux...</span>
+                      </div>
+                    ) : guilds.length > 0 ? (
+                      guilds.map((guild) => (
+                        <div key={guild.id} className="border rounded-lg p-4">
+                          <div className="flex items-center space-x-3 mb-3">
+                            {guild.icon && (
+                              <img 
+                                src={`https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`}
+                                alt={guild.name}
+                                className="w-6 h-6 rounded-full"
+                              />
+                            )}
+                            <h4 className="font-medium text-gray-900">{guild.name}</h4>
                           </div>
-                          <div>
-                            <h5 className="text-sm font-medium text-gray-700 mb-2">Canaux vocaux</h5>
-                            <div className="space-y-1">
-                              {guild.channels.filter(c => c.type === 2).map((channel) => (
-                                <div key={channel.id} className="text-sm text-gray-600">
-                                  🔊 {channel.name}
-                                </div>
-                              ))}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <h5 className="text-sm font-medium text-gray-700 mb-2">Canaux texte</h5>
+                              <div className="space-y-1 max-h-32 overflow-y-auto">
+                                {guild.channels.filter(c => c.type === 0).length > 0 ? (
+                                  guild.channels.filter(c => c.type === 0).map((channel) => (
+                                    <div key={channel.id} className="text-sm text-gray-600">
+                                      # {channel.name}
+                                    </div>
+                                  ))
+                                ) : (
+                                  <p className="text-sm text-gray-400">Aucun canal texte</p>
+                                )}
+                              </div>
+                            </div>
+                            <div>
+                              <h5 className="text-sm font-medium text-gray-700 mb-2">Canaux vocaux</h5>
+                              <div className="space-y-1 max-h-32 overflow-y-auto">
+                                {guild.channels.filter(c => c.type === 2).length > 0 ? (
+                                  guild.channels.filter(c => c.type === 2).map((channel) => (
+                                    <div key={channel.id} className="text-sm text-gray-600">
+                                      🔊 {channel.name}
+                                    </div>
+                                  ))
+                                ) : (
+                                  <p className="text-sm text-gray-400">Aucun canal vocal</p>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
+                      ))
+                    ) : (
+                      <div className="text-center p-8 bg-gray-50 rounded-lg">
+                        <p className="text-gray-600">Aucun serveur Discord trouvé</p>
+                        <p className="text-sm text-gray-500 mt-1">
+                          Invitez votre bot sur des serveurs pour voir les canaux
+                        </p>
                       </div>
-                    ))}
+                    )}
                   </div>
                 )}
 
