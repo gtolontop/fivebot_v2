@@ -126,7 +126,7 @@ export default function SearchableDropdown({
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span>#{option.name}</span>
+                      <span>{option.isRole ? '@' : '#'}{option.name}</span>
                       {option.guildName && (
                         <span className="text-xs text-gray-500">
                           {option.guildName}
