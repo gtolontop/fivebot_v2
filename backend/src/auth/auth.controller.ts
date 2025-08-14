@@ -17,8 +17,12 @@ export class AuthController {
     const clientId = this.configService.get('DISCORD_CLIENT_ID');
     const redirectUri = this.configService.get('DISCORD_CALLBACK_URL');
     
+    console.log('Discord Auth - Client ID:', clientId);
+    console.log('Discord Auth - Redirect URI:', redirectUri);
+    
     const discordAuthUrl = `https://discord.com/oauth2/authorize?response_type=code&client_id=${clientId}&scope=identify%20email&redirect_uri=${encodeURIComponent(redirectUri)}`;
     
+    console.log('Discord Auth URL:', discordAuthUrl);
     res.redirect(discordAuthUrl);
   }
 
@@ -86,11 +90,11 @@ export class AuthController {
       
       // Redirect to frontend with token
       const frontendUrl = this.configService.get('FRONTEND_URL') || 'http://localhost:3000';
-      res.redirect(`${frontendUrl}/api/auth/discord/callback?token=${result.access_token}`);
+      res.redirect(`${frontendUrl}/auth/discord/callback?token=${result.access_token}`);
     } catch (error) {
       console.error('Discord callback error:', error);
       const frontendUrl = this.configService.get('FRONTEND_URL') || 'http://localhost:3000';
-      res.redirect(`${frontendUrl}/api/auth/discord/callback?error=${encodeURIComponent(error.message)}`);
+      res.redirect(`${frontendUrl}/auth/discord/callback?error=${encodeURIComponent('authentication_failed')}`);
     }
   }
 
