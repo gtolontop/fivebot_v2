@@ -178,21 +178,79 @@ async function handleCustomCommand(
   configService: ConfigService
 ) {
   const config = await configService.getConfig();
+  const { commandName } = interaction;
   
   if (!config.customCommands) {
     await interaction.reply({
-      content: '❌ Commande non reconnue.',
+      content: '❌ Command not recognized.',
       ephemeral: true
     });
     return;
   }
 
-  // Handle custom commands logic here
-  // This would be implemented based on the custom commands configuration
-  await interaction.reply({
-    content: '❌ Commande non reconnue.',
-    ephemeral: true
-  });
+  const customCommand = config.customCommands[commandName];
+  
+  if (!customCommand) {
+    await interaction.reply({
+      content: '❌ Command not recognized.',
+      ephemeral: true
+    });
+    return;
+  }
+
+  try {
+    if (customCommand.type === 'simple' && customCommand.response) {
+      // Simple text response
+      await interaction.reply({
+        content: customCommand.response,
+        ephemeral: false
+      });
+    } else if (customCommand.type === 'embed' && customCommand.embed) {
+      // Embed response
+      const embed = new EmbedBuilder();
+      
+      if (customCommand.embed.title) {
+        embed.setTitle(customCommand.embed.title);
+      }
+      
+      if (customCommand.embed.description) {
+        embed.setDescription(customCommand.embed.description);
+      }
+      
+      if (customCommand.embed.color) {
+        // Handle both hex string and number formats
+        let color = customCommand.embed.color;
+        if (typeof color === 'string' && color.startsWith('#')) {
+          color = parseInt(color.replace('#', ''), 16);
+        }
+        embed.setColor(color);
+      }
+      
+      if (customCommand.embed.thumbnail) {
+        embed.setThumbnail(customCommand.embed.thumbnail);
+      }
+      
+      if (customCommand.embed.footer && customCommand.embed.footer.text) {
+        embed.setFooter({ text: customCommand.embed.footer.text });
+      }
+      
+      await interaction.reply({
+        embeds: [embed],
+        ephemeral: false
+      });
+    } else {
+      await interaction.reply({
+        content: '❌ Invalid command configuration.',
+        ephemeral: true
+      });
+    }
+  } catch (error) {
+    console.error(`Error executing custom command ${commandName}:`, error);
+    await interaction.reply({
+      content: '❌ Error executing custom command.',
+      ephemeral: true
+    });
+  }
 }
 
 async function handleHelp(interaction: ChatInputCommandInteraction) {

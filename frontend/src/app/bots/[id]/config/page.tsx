@@ -26,6 +26,7 @@ interface BotConfig {
     footer?: { text?: string };
   };
   welcomeLogoUrl?: string;
+  welcomeThumbnailUrl?: string;
   moderationEnabled: boolean;
   autoRoleEnabled: boolean;
   autoRoleId?: string;
