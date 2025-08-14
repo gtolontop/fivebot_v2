@@ -21,11 +21,19 @@ export class AuthController {
   @Get('discord/callback')
   @UseGuards(AuthGuard('discord'))
   async discordCallback(@Req() req: any, @Res() res: Response) {
-    const result = await this.authService.login(req.user);
-    
-    // Redirect to frontend with token
-    const frontendUrl = this.configService.get('FRONTEND_URL') || 'http://localhost:3000';
-    res.redirect(`${frontendUrl}/auth/discord/callback?token=${result.access_token}`);
+    try {
+      console.log('Discord callback - user:', req.user);
+      const result = await this.authService.login(req.user);
+      console.log('Login result - token exists:', !!result.access_token);
+      
+      // Redirect to frontend with token
+      const frontendUrl = this.configService.get('FRONTEND_URL') || 'http://localhost:3000';
+      res.redirect(`${frontendUrl}/auth/discord/callback?token=${result.access_token}`);
+    } catch (error) {
+      console.error('Discord callback error:', error);
+      const frontendUrl = this.configService.get('FRONTEND_URL') || 'http://localhost:3000';
+      res.redirect(`${frontendUrl}/auth/discord/callback?error=${encodeURIComponent(error.message)}`);
+    }
   }
 
   @Post('logout')
