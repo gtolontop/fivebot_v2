@@ -12,7 +12,8 @@
       "Bash(npm run dev:*)",
       "Bash(npm run worker:*)",
       "Bash(curl:*)",
-      "Bash(npm run start:dev:*)"
+      "Bash(npm run start:dev:*)",
+      "Bash(npx prisma:*)"
     ],
     "deny": [],
     "ask": [],
