@@ -10,23 +10,40 @@ import { EncryptionService } from '../common/encryption/encryption.service';
   imports: [
     BullModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        redis: {
-          host: configService.get('REDIS_HOST') || 'localhost',
-          port: parseInt(configService.get('REDIS_PORT')) || 6379,
-          password: configService.get('REDIS_PASSWORD'),
-          db: parseInt(configService.get('REDIS_DB')) || 0,
-        },
-        defaultJobOptions: {
-          attempts: 3,
-          backoff: {
-            type: 'exponential',
-            delay: 2000,
+      useFactory: (configService: ConfigService) => {
+        const redisUrl = configService.get('REDIS_URL');
+        if (redisUrl) {
+          return { 
+            redis: redisUrl,
+            defaultJobOptions: {
+              attempts: 3,
+              backoff: {
+                type: 'exponential',
+                delay: 2000,
+              },
+              removeOnComplete: 100,
+              removeOnFail: 50,
+            },
+          };
+        }
+        return {
+          redis: {
+            host: configService.get('REDIS_HOST') || 'localhost',
+            port: parseInt(configService.get('REDIS_PORT')) || 6379,
+            password: configService.get('REDIS_PASSWORD'),
+            db: parseInt(configService.get('REDIS_DB')) || 0,
           },
-          removeOnComplete: 100,
-          removeOnFail: 50,
-        },
-      }),
+          defaultJobOptions: {
+            attempts: 3,
+            backoff: {
+              type: 'exponential',
+              delay: 2000,
+            },
+            removeOnComplete: 100,
+            removeOnFail: 50,
+          },
+        };
+      },
     }),
     BullModule.registerQueue(
       {
