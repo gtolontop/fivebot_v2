@@ -110,8 +110,7 @@ export class BotWorker extends WorkerHost {
     }
   }
 
-  @Process('start-bot')
-  async handleStartBot(job: Job) {
+  private async handleStartBot(job: Job) {
     const { botId } = job.data;
     
     try {
@@ -146,8 +145,7 @@ export class BotWorker extends WorkerHost {
     }
   }
 
-  @Process('stop-bot')
-  async handleStopBot(job: Job) {
+  private async handleStopBot(job: Job) {
     const { botId } = job.data;
     
     try {
@@ -191,8 +189,7 @@ export class BotWorker extends WorkerHost {
     }
   }
 
-  @Process('delete-bot')
-  async handleDeleteBot(job: Job) {
+  private async handleDeleteBot(job: Job) {
     const { botId } = job.data;
     
     try {
