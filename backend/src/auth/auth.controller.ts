@@ -23,11 +23,16 @@ export class AuthController {
   }
 
   @Get('discord/callback')
-  async discordCallback(@Query('code') code: string, @Res() res: Response) {
+  async discordCallback(@Query('code') code: string, @Query() query: any, @Res() res: Response) {
     try {
+      console.log('Discord callback - Full query params:', query);
       console.log('Discord callback - code received:', !!code);
       
       if (!code) {
+        console.log('No code in query params - checking for error:', query.error);
+        if (query.error) {
+          throw new Error(`Discord OAuth error: ${query.error} - ${query.error_description || ''}`);
+        }
         throw new Error('No code provided by Discord');
       }
 
