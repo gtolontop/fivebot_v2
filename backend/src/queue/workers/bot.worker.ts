@@ -20,8 +20,22 @@ export class BotWorker extends WorkerHost {
     private configService: ConfigService,
   ) {}
 
-  @Process('create-bot')
-  async handleCreateBot(job: Job) {
+  async process(job: Job): Promise<any> {
+    switch (job.name) {
+      case 'create-bot':
+        return this.handleCreateBot(job);
+      case 'start-bot':
+        return this.handleStartBot(job);
+      case 'stop-bot':
+        return this.handleStopBot(job);
+      case 'delete-bot':
+        return this.handleDeleteBot(job);
+      default:
+        throw new Error(`Unknown job type: ${job.name}`);
+    }
+  }
+
+  private async handleCreateBot(job: Job) {
     const { botId, ownerId } = job.data;
     
     try {
