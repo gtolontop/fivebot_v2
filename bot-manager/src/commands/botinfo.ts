@@ -109,14 +109,14 @@ export const botInfo = {
 
       // Recent logs
       const recentLogs = bot.jobLogs.length > 0
-        ? bot.jobLogs.map(log => 
+        ? bot.jobLogs.map((log: any) => 
             `\`${log.createdAt.toLocaleTimeString()}\` ${log.status === 'COMPLETED' ? '✅' : log.status === 'FAILED' ? '❌' : '⏳'} ${log.message || log.jobType}`
           ).join('\n')
         : 'Aucun log récent';
 
       const embed = new EmbedBuilder()
-        .setColor(statusColor)
-        .setTitle(`${statusEmoji} ${bot.name}`)
+        .setColor(color)
+        .setTitle(`${emoji} ${bot.name}`)
         .setDescription(`Informations détaillées pour le bot **${bot.name}**`)
         .addFields(
           { name: '📋 Informations générales', value: `**ID:** \`${bot.id}\`\n**Préfixe:** ${bot.prefix}\n**Propriétaire:** ${bot.owner.username}\n**Statut:** ${bot.status}\n**Client ID:** \`${bot.clientId || 'N/A'}\`\n**Créé:** <t:${Math.floor(new Date(bot.createdAt).getTime() / 1000)}:F>`, inline: false },

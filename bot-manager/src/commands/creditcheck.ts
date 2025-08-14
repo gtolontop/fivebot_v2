@@ -55,15 +55,15 @@ export const creditCheck = {
 
       // Calculate spending stats
       const totalSpent = user.creditsHistory
-        .filter(h => h.amount < 0)
-        .reduce((sum, h) => sum + Math.abs(h.amount), 0);
+        .filter((h: any) => h.amount < 0)
+        .reduce((sum: number, h: any) => sum + Math.abs(h.amount), 0);
 
       const totalEarned = user.creditsHistory
-        .filter(h => h.amount > 0)
-        .reduce((sum, h) => sum + h.amount, 0);
+        .filter((h: any) => h.amount > 0)
+        .reduce((sum: number, h: any) => sum + h.amount, 0);
 
       // Recent transactions
-      const recentTransactions = user.creditsHistory.slice(0, 5).map(h => {
+      const recentTransactions = user.creditsHistory.slice(0, 5).map((h: any) => {
         const emoji = h.amount > 0 ? '💰' : '💸';
         const sign = h.amount > 0 ? '+' : '';
         return `${emoji} ${sign}${h.amount} - ${h.reason} (<t:${Math.floor(new Date(h.createdAt).getTime() / 1000)}:R>)`;
