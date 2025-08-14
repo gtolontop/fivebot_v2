@@ -4,7 +4,8 @@
       "Bash(mkdir:*)",
       "Bash(docker:*)",
       "Bash(npm install:*)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(telnet:*)"
     ],
     "deny": [],
     "ask": [],
