@@ -73,6 +73,20 @@ export default function BotConfigPage() {
     customCommands: {},
   });
 
+  // Command builder state
+  const [showCommandBuilder, setShowCommandBuilder] = useState(false);
+  const [newCommand, setNewCommand] = useState({
+    name: '',
+    description: '',
+    type: 'simple', // 'simple' or 'embed'
+    response: '',
+    embedTitle: '',
+    embedDescription: '',
+    embedColor: '#5865F2',
+    embedThumbnail: '',
+    embedFooter: ''
+  });
+
   // Discord data state
   const [guilds, setGuilds] = useState<DiscordGuild[]>([]);
   const [guildChannels, setGuildChannels] = useState<Record<string, DiscordChannel[]>>({});
@@ -257,6 +271,72 @@ export default function BotConfigPage() {
     
     setConfig(defaultConfig);
     toast.success('Configuration reset');
+  };
+
+  const addCommand = () => {
+    if (!newCommand.name.trim()) {
+      toast.error('Command name is required');
+      return;
+    }
+
+    if (!newCommand.response.trim() && newCommand.type === 'simple') {
+      toast.error('Response text is required');
+      return;
+    }
+
+    if (newCommand.type === 'embed' && !newCommand.embedTitle.trim() && !newCommand.embedDescription.trim()) {
+      toast.error('Embed title or description is required');
+      return;
+    }
+
+    const commandData = {
+      name: newCommand.name.toLowerCase().replace(/\s+/g, ''),
+      description: newCommand.description || `Custom command: ${newCommand.name}`,
+      type: newCommand.type,
+      response: newCommand.type === 'simple' ? newCommand.response : undefined,
+      embed: newCommand.type === 'embed' ? {
+        title: newCommand.embedTitle,
+        description: newCommand.embedDescription,
+        color: newCommand.embedColor,
+        thumbnail: newCommand.embedThumbnail || undefined,
+        footer: newCommand.embedFooter ? { text: newCommand.embedFooter } : undefined,
+      } : undefined,
+    };
+
+    const updatedCommands = {
+      ...config.customCommands,
+      [commandData.name]: commandData
+    };
+
+    setConfig(prev => ({ ...prev, customCommands: updatedCommands }));
+    
+    // Reset form
+    setNewCommand({
+      name: '',
+      description: '',
+      type: 'simple',
+      response: '',
+      embedTitle: '',
+      embedDescription: '',
+      embedColor: '#5865F2',
+      embedThumbnail: '',
+      embedFooter: ''
+    });
+    
+    setShowCommandBuilder(false);
+    toast.success(`Command /${commandData.name} added successfully`);
+  };
+
+  const deleteCommand = (commandName: string) => {
+    if (!confirm(`Are you sure you want to delete the command /${commandName}?`)) {
+      return;
+    }
+
+    const updatedCommands = { ...config.customCommands };
+    delete updatedCommands[commandName];
+    
+    setConfig(prev => ({ ...prev, customCommands: updatedCommands }));
+    toast.success(`Command /${commandName} deleted`);
   };
 
   if (loading || botLoading) {
@@ -728,36 +808,286 @@ export default function BotConfigPage() {
 
                 {activeTab === 'advanced' && (
                   <div className="space-y-6">
-                    <h3 className="text-lg font-semibold text-gray-900">Advanced Configuration</h3>
-                    
-                    <div className="space-y-4">
-                      <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-                        <h4 className="text-sm font-medium text-yellow-900 mb-2">⚠️ Danger Zone</h4>
-                        <p className="text-sm text-yellow-800">
-                          These settings can affect your bot's functionality. Only modify them if you know what you're doing.
-                        </p>
+                    {/* Custom Commands Section */}
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold text-gray-900">Custom Commands</h3>
+                        <button 
+                          onClick={() => setShowCommandBuilder(true)}
+                          className="btn-primary text-sm"
+                        >
+                          ➕ Add Command
+                        </button>
                       </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Custom Commands (JSON)
-                        </label>
-                        <textarea
-                          value={JSON.stringify(config.customCommands || {}, null, 2)}
-                          onChange={(e) => {
-                            try {
-                              const parsed = JSON.parse(e.target.value);
-                              updateConfig({ customCommands: parsed });
-                            } catch (error) {
-                              // Invalid JSON, don't update
-                            }
-                          }}
-                          rows={6}
-                          className="input-field font-mono"
-                          placeholder='{"ping": {"response": "Pong!", "description": "Connection test"}}'
-                        />
+                      {/* Existing Commands List */}
+                      <div className="space-y-3 mb-6">
+                        {Object.entries(config.customCommands || {}).map(([commandName, command]: [string, any]) => (
+                          <div key={commandName} className="border rounded-lg p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-3">
+                                  <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">/{commandName}</span>
+                                  <span className={`px-2 py-1 text-xs rounded-full ${
+                                    command.type === 'embed' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
+                                  }`}>
+                                    {command.type === 'embed' ? 'Embed' : 'Simple'}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-gray-600 mt-1">
+                                  {command.description || 'No description'}
+                                </p>
+                                {command.type === 'simple' && command.response && (
+                                  <p className="text-sm text-gray-500 mt-1 italic">
+                                    "{command.response.length > 100 ? command.response.substring(0, 100) + '...' : command.response}"
+                                  </p>
+                                )}
+                                {command.type === 'embed' && command.embed && (
+                                  <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
+                                    {command.embed.title && <div className="font-medium">{command.embed.title}</div>}
+                                    {command.embed.description && <div className="text-gray-600">{command.embed.description}</div>}
+                                  </div>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => deleteCommand(commandName)}
+                                className="text-red-600 hover:text-red-800 text-sm"
+                              >
+                                🗑️ Delete
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        
+                        {Object.keys(config.customCommands || {}).length === 0 && (
+                          <div className="text-center p-8 bg-gray-50 rounded-lg">
+                            <p className="text-gray-600">No custom commands yet</p>
+                            <p className="text-sm text-gray-500 mt-1">
+                              Click "Add Command" to create your first custom command
+                            </p>
+                          </div>
+                        )}
                       </div>
 
+                      {/* Command Builder Modal */}
+                      {showCommandBuilder && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                          <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                            <div className="flex items-center justify-between mb-4">
+                              <h4 className="text-lg font-semibold">Create Custom Command</h4>
+                              <button 
+                                onClick={() => setShowCommandBuilder(false)}
+                                className="text-gray-500 hover:text-gray-700"
+                              >
+                                ✕
+                              </button>
+                            </div>
+
+                            <div className="space-y-4">
+                              {/* Command Name */}
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Command Name
+                                </label>
+                                <div className="flex items-center">
+                                  <span className="bg-gray-100 px-3 py-2 border border-r-0 rounded-l text-sm">/</span>
+                                  <input
+                                    type="text"
+                                    value={newCommand.name}
+                                    onChange={(e) => setNewCommand(prev => ({ ...prev, name: e.target.value }))}
+                                    placeholder="salut"
+                                    className="input-field rounded-l-none"
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Description */}
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Description (optional)
+                                </label>
+                                <input
+                                  type="text"
+                                  value={newCommand.description}
+                                  onChange={(e) => setNewCommand(prev => ({ ...prev, description: e.target.value }))}
+                                  placeholder="Say hello to someone"
+                                  className="input-field"
+                                />
+                              </div>
+
+                              {/* Response Type */}
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Response Type
+                                </label>
+                                <div className="flex space-x-4">
+                                  <label className="flex items-center">
+                                    <input
+                                      type="radio"
+                                      value="simple"
+                                      checked={newCommand.type === 'simple'}
+                                      onChange={(e) => setNewCommand(prev => ({ ...prev, type: e.target.value }))}
+                                      className="mr-2"
+                                    />
+                                    Simple Text
+                                  </label>
+                                  <label className="flex items-center">
+                                    <input
+                                      type="radio"
+                                      value="embed"
+                                      checked={newCommand.type === 'embed'}
+                                      onChange={(e) => setNewCommand(prev => ({ ...prev, type: e.target.value }))}
+                                      className="mr-2"
+                                    />
+                                    Embed Message
+                                  </label>
+                                </div>
+                              </div>
+
+                              {/* Simple Response */}
+                              {newCommand.type === 'simple' && (
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Response Text
+                                  </label>
+                                  <textarea
+                                    value={newCommand.response}
+                                    onChange={(e) => setNewCommand(prev => ({ ...prev, response: e.target.value }))}
+                                    placeholder="Salut ! Comment ça va ?"
+                                    rows={3}
+                                    className="input-field"
+                                  />
+                                </div>
+                              )}
+
+                              {/* Embed Response */}
+                              {newCommand.type === 'embed' && (
+                                <div className="space-y-4">
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                      Embed Title
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={newCommand.embedTitle}
+                                      onChange={(e) => setNewCommand(prev => ({ ...prev, embedTitle: e.target.value }))}
+                                      placeholder="👋 Salut !"
+                                      className="input-field"
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                      Embed Description
+                                    </label>
+                                    <textarea
+                                      value={newCommand.embedDescription}
+                                      onChange={(e) => setNewCommand(prev => ({ ...prev, embedDescription: e.target.value }))}
+                                      placeholder="Comment ça va ? J'espère que tu passes une bonne journée !"
+                                      rows={3}
+                                      className="input-field"
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                      Embed Color
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={newCommand.embedColor}
+                                      onChange={(e) => setNewCommand(prev => ({ ...prev, embedColor: e.target.value }))}
+                                      placeholder="#5865F2"
+                                      className="input-field"
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                      Thumbnail URL (optional)
+                                    </label>
+                                    <input
+                                      type="url"
+                                      value={newCommand.embedThumbnail}
+                                      onChange={(e) => setNewCommand(prev => ({ ...prev, embedThumbnail: e.target.value }))}
+                                      placeholder="https://example.com/image.png"
+                                      className="input-field"
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                      Footer Text (optional)
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={newCommand.embedFooter}
+                                      onChange={(e) => setNewCommand(prev => ({ ...prev, embedFooter: e.target.value }))}
+                                      placeholder="FiveBot - Custom Command"
+                                      className="input-field"
+                                    />
+                                  </div>
+
+                                  {/* Preview */}
+                                  <div>
+                                    <h5 className="text-sm font-medium text-gray-700 mb-2">Preview</h5>
+                                    <div className="bg-gray-800 rounded-lg p-4">
+                                      <div className="bg-gray-700 rounded-md p-3" style={{
+                                        borderLeft: `4px solid ${newCommand.embedColor || '#5865F2'}`
+                                      }}>
+                                        {newCommand.embedTitle && (
+                                          <h6 className="text-white font-medium mb-2">
+                                            {newCommand.embedTitle}
+                                          </h6>
+                                        )}
+                                        {newCommand.embedDescription && (
+                                          <p className="text-gray-300 text-sm mb-2">
+                                            {newCommand.embedDescription}
+                                          </p>
+                                        )}
+                                        {newCommand.embedThumbnail && (
+                                          <img 
+                                            src={newCommand.embedThumbnail} 
+                                            alt="Thumbnail" 
+                                            className="w-16 h-16 rounded mt-2"
+                                            onError={(e) => {
+                                              e.currentTarget.style.display = 'none';
+                                            }}
+                                          />
+                                        )}
+                                        <div className="text-xs text-gray-400 mt-2">
+                                          {newCommand.embedFooter || 'FiveBot'} • today at {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Buttons */}
+                              <div className="flex space-x-3 pt-4">
+                                <button 
+                                  onClick={addCommand}
+                                  className="btn-primary"
+                                >
+                                  Create Command
+                                </button>
+                                <button 
+                                  onClick={() => setShowCommandBuilder(false)}
+                                  className="btn-secondary"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Configuration Management */}
+                    <div className="border-t pt-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Configuration Management</h3>
                       <div className="flex flex-wrap gap-3">
                         <button 
                           onClick={exportConfig}
