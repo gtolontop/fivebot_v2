@@ -5,6 +5,7 @@ interface BotConfig {
   welcomeChannelId?: string;
   welcomeEmbedJson?: any;
   welcomeLogoUrl?: string;
+  welcomeThumbnailUrl?: string;
   moderationEnabled: boolean;
   autoRoleEnabled: boolean;
   autoRoleId?: string;
@@ -106,7 +107,11 @@ export class WelcomeService {
           embed.setColor(customEmbed.color);
         }
         
-        if (customEmbed.thumbnail && !this.config.welcomeLogoUrl) {
+        // Set thumbnail with priority: welcomeThumbnailUrl > custom embed thumbnail > logo
+        if (this.config.welcomeThumbnailUrl) {
+          const thumbnailUrl = this.replacePlaceholders(this.config.welcomeThumbnailUrl, member);
+          embed.setThumbnail(thumbnailUrl);
+        } else if (customEmbed.thumbnail && !this.config.welcomeLogoUrl) {
           const thumbnailUrl = this.replacePlaceholders(customEmbed.thumbnail.url, member);
           embed.setThumbnail(thumbnailUrl);
         }
