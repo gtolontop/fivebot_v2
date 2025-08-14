@@ -49,6 +49,8 @@ class ChildBot {
 
     this.prisma = new PrismaClient({
       log: ['error'],
+      // Simplify configuration to avoid compatibility issues
+      errorFormat: 'minimal',
     });
 
     this.botId = process.env.BOT_ID!;
