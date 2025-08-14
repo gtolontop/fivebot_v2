@@ -79,7 +79,8 @@ export const botInfo = {
         STARTING: '🟡',
         STOPPING: '🟡',
         ERROR: '💥'
-      }[bot.status] || '⚪';
+      } as Record<string, string>;
+      const emoji = statusEmoji[bot.status as string] || '⚪';
 
       const statusColor = {
         ONLINE: 0x00FF00,
@@ -87,7 +88,8 @@ export const botInfo = {
         STARTING: 0xFFFF00,
         STOPPING: 0xFF9500,
         ERROR: 0xFF0000
-      }[bot.status] || 0x808080;
+      } as Record<string, number>;
+      const color = statusColor[bot.status as string] || 0x808080;
 
       // Host information
       const currentHost = bot.hosts[0];
