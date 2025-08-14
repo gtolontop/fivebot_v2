@@ -51,7 +51,7 @@ import { EncryptionService } from '../common/encryption/encryption.service';
       },
     ),
   ],
-  providers: [QueueService, BotWorker, EncryptionService],
+  providers: [QueueService, /* BotWorker, */ EncryptionService],
   exports: [QueueService],
 })
 export class QueueModule {}
