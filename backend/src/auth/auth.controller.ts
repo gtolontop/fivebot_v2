@@ -77,11 +77,11 @@ export class AuthController {
       
       // Redirect to frontend with token
       const frontendUrl = this.configService.get('FRONTEND_URL') || 'http://localhost:3000';
-      res.redirect(`${frontendUrl}/auth/discord/callback?token=${result.access_token}`);
+      res.redirect(`${frontendUrl}/api/auth/discord/callback?token=${result.access_token}`);
     } catch (error) {
       console.error('Discord callback error:', error);
       const frontendUrl = this.configService.get('FRONTEND_URL') || 'http://localhost:3000';
-      res.redirect(`${frontendUrl}/auth/discord/callback?error=${encodeURIComponent(error.message)}`);
+      res.redirect(`${frontendUrl}/api/auth/discord/callback?error=${encodeURIComponent(error.message)}`);
     }
   }
 
