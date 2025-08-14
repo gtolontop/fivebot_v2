@@ -87,7 +87,7 @@ export const creditCheck = {
           },
           { 
             name: '🤖 Bots actifs', 
-            value: `${user.bots.length}/5 bots\n${user.bots.filter(b => b.status === 'ONLINE').length} en ligne`, 
+            value: `${user.bots.length}/5 bots\n${user.bots.filter((b: any) => b.status === 'ONLINE').length} en ligne`, 
             inline: true 
           },
           { 
