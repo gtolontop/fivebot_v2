@@ -268,6 +268,49 @@ export class SimpleQueueService implements IQueueService {
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
 
+  private async handleUpdateBotConfig(data: JobData): Promise<void> {
+    const botId = data.botId;
+    console.log(`Updating config for bot ${botId}`);
+
+    try {
+      // Check if bot is running
+      const botProcess = this.runningBots.get(botId);
+      if (!botProcess) {
+        console.log(`Bot ${botId} is not running - config will be applied on next start`);
+        return;
+      }
+
+      // Get the updated bot configuration from database
+      const bot = await this.prisma.bot.findUnique({
+        where: { id: botId },
+        include: { config: true },
+      });
+
+      if (!bot) {
+        throw new Error('Bot not found');
+      }
+
+      // For now, we'll restart the bot to apply the new configuration
+      // In a more advanced implementation, we could send live config updates via IPC
+      console.log(`Restarting bot ${botId} to apply new configuration...`);
+      
+      // Stop the current process
+      botProcess.kill('SIGTERM');
+      this.runningBots.delete(botId);
+
+      // Wait a moment for clean shutdown
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Restart with new config
+      await this.handleStartBot({ botId });
+
+      console.log(`✅ Bot ${botId} configuration updated and restarted`);
+    } catch (error) {
+      console.error(`❌ Failed to update config for bot ${botId}:`, error);
+      throw error;
+    }
+  }
+
   async getJobs(status: 'waiting' | 'active' | 'completed' | 'failed' = 'waiting') {
     // Map 'active' to 'processing' for internal consistency
     const internalStatus = status === 'active' ? 'processing' : status;
