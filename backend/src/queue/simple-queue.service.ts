@@ -132,8 +132,11 @@ export class SimpleQueueService implements IQueueService {
       // Path to bot template
       const botTemplatePath = path.join(process.cwd(), '..', 'bot-template');
       
+      // Determine npm command based on platform
+      const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+      
       // Start bot process
-      const botProcess = spawn('npm', ['run', 'dev'], {
+      const botProcess = spawn(npmCmd, ['run', 'dev'], {
         cwd: botTemplatePath,
         env: {
           ...process.env,
@@ -143,6 +146,7 @@ export class SimpleQueueService implements IQueueService {
           DATABASE_URL: process.env.DATABASE_URL,
         },
         stdio: ['ignore', 'pipe', 'pipe'],
+        shell: true, // Use shell on Windows
       });
 
       // Store the process
