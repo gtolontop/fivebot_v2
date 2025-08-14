@@ -51,10 +51,12 @@ import { EncryptionService } from '../common/encryption/encryption.service';
       useFactory: (configService: ConfigService) => {
         const redisUrl = configService.get('REDIS_URL');
         if (redisUrl) {
-          return { redis: redisUrl };
+          return { 
+            connection: redisUrl 
+          };
         }
         return {
-          redis: {
+          connection: {
             host: configService.get('REDIS_HOST') || '83.150.218.42',
             port: parseInt(configService.get('REDIS_PORT')) || 26078,
             password: configService.get('REDIS_PASSWORD') || 'admin',
