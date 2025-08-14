@@ -70,11 +70,7 @@ export default function HomePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    if (!loading && user) {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
+  // Suppression de la redirection automatique pour permettre de voir la landing page
 
   if (loading) {
     return (
@@ -96,18 +92,32 @@ export default function HomePage() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Link
-                href="/auth/login"
-                className="btn-secondary"
-              >
-                Se connecter
-              </Link>
-              <Link
-                href="/auth/login"
-                className="btn-primary"
-              >
-                Commencer
-              </Link>
+              {user ? (
+                <>
+                  <span className="text-gray-700">Bonjour, {user.username}!</span>
+                  <Link
+                    href="/dashboard"
+                    className="btn-primary"
+                  >
+                    Dashboard
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/auth/login"
+                    className="btn-secondary"
+                  >
+                    Se connecter
+                  </Link>
+                  <Link
+                    href="/auth/login"
+                    className="btn-primary"
+                  >
+                    Commencer
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -127,10 +137,10 @@ export default function HomePage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                href="/auth/login"
+                href={user ? "/dashboard" : "/auth/login"}
                 className="btn-primary text-lg px-8 py-3"
               >
-                Commencer gratuitement
+                {user ? "Aller au Dashboard" : "Commencer gratuitement"}
                 <ArrowRightIcon className="ml-2 h-5 w-5" />
               </Link>
               <Link
@@ -243,10 +253,10 @@ export default function HomePage() {
             pour gérer leurs bots Discord.
           </p>
           <Link
-            href="/auth/login"
+            href={user ? "/dashboard" : "/auth/login"}
             className="btn bg-white text-discord-600 hover:bg-gray-100 text-lg px-8 py-3"
           >
-            Commencer maintenant
+            {user ? "Aller au Dashboard" : "Commencer maintenant"}
             <ArrowRightIcon className="ml-2 h-5 w-5" />
           </Link>
         </div>
