@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
+import SearchableDropdown from '@/components/SearchableDropdown';
 
 interface Bot {
   id: string;
