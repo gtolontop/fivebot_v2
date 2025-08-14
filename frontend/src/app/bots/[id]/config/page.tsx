@@ -63,6 +63,7 @@ export default function BotConfigPage() {
   const [botLoading, setBotLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
+  const [guildsLoading, setGuildsLoading] = useState(false);
   
   // Bot configuration state
   const [config, setConfig] = useState<BotConfig>({
@@ -72,37 +73,10 @@ export default function BotConfigPage() {
     customCommands: {},
   });
 
-  // Mock Discord data (you can replace with real Discord API calls)
-  const [guilds] = useState<DiscordGuild[]>([
-    {
-      id: '1234567890',
-      name: 'Mon Serveur Cool',
-      channels: [
-        { id: '1', name: 'général', type: 0 },
-        { id: '2', name: 'bienvenue', type: 0 },
-        { id: '3', name: 'logs', type: 0 },
-        { id: '4', name: 'Vocal Général', type: 2 },
-      ],
-      roles: [
-        { id: '1', name: '@everyone', color: 0 },
-        { id: '2', name: 'Membre', color: 3447003 },
-        { id: '3', name: 'Modérateur', color: 15844367 },
-        { id: '4', name: 'Admin', color: 15158332 },
-      ]
-    },
-    {
-      id: '0987654321',
-      name: 'Serveur de Test',
-      channels: [
-        { id: '5', name: 'test', type: 0 },
-        { id: '6', name: 'bot-commands', type: 0 },
-      ],
-      roles: [
-        { id: '5', name: '@everyone', color: 0 },
-        { id: '6', name: 'Testeur', color: 65280 },
-      ]
-    }
-  ]);
+  // Discord data state
+  const [guilds, setGuilds] = useState<DiscordGuild[]>([]);
+  const [guildChannels, setGuildChannels] = useState<Record<string, DiscordChannel[]>>({});
+  const [guildRoles, setGuildRoles] = useState<Record<string, DiscordRole[]>>({});
 
   useEffect(() => {
     if (!loading && !user) {
@@ -113,6 +87,7 @@ export default function BotConfigPage() {
   useEffect(() => {
     if (user && botId) {
       fetchBot();
+      fetchDiscordGuilds();
     }
   }, [user, botId]);
 
