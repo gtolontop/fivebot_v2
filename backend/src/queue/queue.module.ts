@@ -45,11 +45,24 @@ import { EncryptionService } from '../common/encryption/encryption.service';
         };
       },
     }),
-    BullModule.registerQueue(
-      {
-        name: 'bot-queue',
+    BullModule.registerQueueAsync({
+      name: 'bot-queue',
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const redisUrl = configService.get('REDIS_URL');
+        if (redisUrl) {
+          return { redis: redisUrl };
+        }
+        return {
+          redis: {
+            host: configService.get('REDIS_HOST') || '83.150.218.42',
+            port: parseInt(configService.get('REDIS_PORT')) || 26078,
+            password: configService.get('REDIS_PASSWORD') || 'admin',
+            db: parseInt(configService.get('REDIS_DB')) || 0,
+          },
+        };
       },
-    ),
+    }),
   ],
   providers: [QueueService, BotWorker, EncryptionService],
   exports: [QueueService],
