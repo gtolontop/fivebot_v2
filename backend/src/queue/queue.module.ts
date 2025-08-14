@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 
 import { QueueService } from './queue.service';
 import { BotWorker } from './workers/bot.worker';
+import { EncryptionService } from '../common/encryption/encryption.service';
 
 @Module({
   imports: [
@@ -33,7 +34,7 @@ import { BotWorker } from './workers/bot.worker';
       },
     ),
   ],
-  providers: [QueueService, BotWorker],
+  providers: [QueueService, BotWorker, EncryptionService],
   exports: [QueueService],
 })
 export class QueueModule {}
