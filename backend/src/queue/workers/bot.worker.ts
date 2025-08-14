@@ -74,8 +74,11 @@ export class BotWorker {
         data: { status: BotStatus.ONLINE },
       });
 
-      await this.prisma.host.update({
-        where: { containerId },
+      await this.prisma.host.updateMany({
+        where: { 
+          botId,
+          containerId 
+        },
         data: { status: HostStatus.UP },
       });
 
