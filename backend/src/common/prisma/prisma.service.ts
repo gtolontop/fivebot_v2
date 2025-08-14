@@ -12,6 +12,31 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   async onModuleInit() {
     await this.$connect();
     console.log('✅ Database connected successfully');
+    
+    // Auto-create tables if they don't exist
+    await this.ensureTablesExist();
+  }
+
+  private async ensureTablesExist() {
+    try {
+      // Check if tables exist by trying to query the users table
+      await this.$queryRaw`SELECT 1 FROM users LIMIT 1`;
+      console.log('✅ Database tables already exist');
+    } catch (error) {
+      console.log('⚠️ Tables not found, creating database schema...');
+      try {
+        // Deploy the Prisma schema to create all tables
+        const { execSync } = require('child_process');
+        execSync('npx prisma db push --force-reset', { 
+          cwd: process.cwd(),
+          stdio: 'inherit'
+        });
+        console.log('✅ Database schema created successfully');
+      } catch (pushError) {
+        console.error('❌ Failed to create database schema:', pushError);
+        throw pushError;
+      }
+    }
   }
 
   async onModuleDestroy() {
