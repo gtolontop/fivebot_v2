@@ -43,6 +43,8 @@ export class DiscordService {
     error?: string;
   }> {
     try {
+      console.log('Discord API: Validation du token...');
+      
       // Test the token by fetching bot user info
       const userResponse = await axios.get<DiscordUser>(`${this.baseURL}/users/@me`, {
         headers: {
@@ -50,6 +52,8 @@ export class DiscordService {
         },
         timeout: 10000,
       });
+
+      console.log('Discord API: Réponse user obtenue');
 
       const user = userResponse.data;
 
