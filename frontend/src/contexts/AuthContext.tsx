@@ -43,11 +43,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      // S'assurer que le token est bien configuré pour l'API
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
       const response = await api.get('/auth/me');
       setUser(response.data.user);
     } catch (error) {
       console.error('Auth check failed:', error);
       Cookies.remove('token');
+      delete api.defaults.headers.common['Authorization'];
     } finally {
       setLoading(false);
     }
