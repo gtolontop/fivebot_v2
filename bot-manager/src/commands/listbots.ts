@@ -56,19 +56,20 @@ export const listBots = {
       }
 
       // Create bot list
-      const botFields = user.bots.map(bot => {
+      const botFields = user.bots.map((bot: any) => {
         const statusEmoji = {
           ONLINE: '🟢',
           OFFLINE: '🔴',
           STARTING: '🟡',
           STOPPING: '🟡',
           ERROR: '💥'
-        }[bot.status] || '⚪';
+        } as Record<string, string>;
+        const emoji = statusEmoji[bot.status] || '⚪';
 
         const hostInfo = bot.hosts.length > 0 ? '🌐 Hébergé' : '📦 Conteneur arrêté';
 
         return {
-          name: `${statusEmoji} ${bot.name}`,
+          name: `${emoji} ${bot.name}`,
           value: [
             `**ID:** \`${bot.id}\``,
             `**Statut:** ${bot.status}`,
