@@ -32,7 +32,7 @@ export default function BotsPage() {
 
   const fetchBots = async () => {
     try {
-      const response = await fetch('/api/bots', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/bots`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },

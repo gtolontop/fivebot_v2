@@ -27,7 +27,7 @@ export default function CreateBotPage() {
     setError('');
 
     try {
-      const response = await fetch('/api/bots', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/bots`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
