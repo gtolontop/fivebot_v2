@@ -1,0 +1,192 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String   @id @default(uuid())
+  discordId  String   @unique @map("discord_id")
+  username   String
+  email      String?
+  avatar     String?
+  role       UserRole @default(USER)
+  credits    Int      @default(100)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  bots           Bot[]
+  creditsHistory CreditsHistory[]
+  auditLogs      AuditLog[]
+
+  @@map("users")
+}
+
+model Bot {
+  id              String    @id @default(uuid())
+  ownerId         String    @map("owner_id")
+  name            String
+  tokenEncrypted  String    @map("token_encrypted") @db.Text
+  clientId        String?   @map("client_id")
+  prefix          String    @default("!")
+  isActive        Boolean   @default(false) @map("is_active")
+  containerId     String?   @map("container_id")
+  instanceId      String?   @map("instance_id")
+  status          BotStatus @default(OFFLINE)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  owner       User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  config      BotConfig?
+  hosts       Host[]
+  jobLogs     JobLog[]
+  auditLogs   AuditLog[]
+
+  @@map("bots")
+}
+
+model BotConfig {
+  id                  String  @id @default(uuid())
+  botId               String  @unique @map("bot_id")
+  welcomeEnabled      Boolean @default(false) @map("welcome_enabled")
+  welcomeChannelId    String? @map("welcome_channel_id")
+  welcomeEmbedJson    Json?   @map("welcome_embed_json")
+  welcomeLogoUrl      String? @map("welcome_logo_url")
+  moderationEnabled   Boolean @default(false) @map("moderation_enabled")
+  autoRoleEnabled     Boolean @default(false) @map("auto_role_enabled")
+  autoRoleId          String? @map("auto_role_id")
+  loggingChannelId    String? @map("logging_channel_id")
+  customCommands      Json?   @map("custom_commands")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  bot Bot @relation(fields: [botId], references: [id], onDelete: Cascade)
+
+  @@map("bot_configs")
+}
+
+model CreditsHistory {
+  id        String      @id @default(uuid())
+  userId    String      @map("user_id")
+  amount    Int
+  reason    String
+  type      CreditType
+  metadata  Json?
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("credits_history")
+}
+
+model Host {
+  id          String     @id @default(uuid())
+  botId       String     @map("bot_id")
+  host        String
+  containerId String?    @map("container_id")
+  status      HostStatus @default(DOWN)
+  cpuLimit    String?    @map("cpu_limit")
+  memLimit    String?    @map("mem_limit")
+  startedAt   DateTime?  @map("started_at")
+  stoppedAt   DateTime?  @map("stopped_at")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  bot Bot @relation(fields: [botId], references: [id], onDelete: Cascade)
+
+  @@map("hosts")
+}
+
+model JobLog {
+  id        String    @id @default(uuid())
+  botId     String?   @map("bot_id")
+  jobId     String    @map("job_id")
+  jobType   String    @map("job_type")
+  status    JobStatus
+  message   String?   @db.Text
+  metadata  Json?
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  bot Bot? @relation(fields: [botId], references: [id], onDelete: SetNull)
+
+  @@map("job_logs")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  botId     String?  @map("bot_id")
+  action    String
+  resource  String?
+  metadata  Json?
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  bot  Bot?  @relation(fields: [botId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}
+
+model SecurityKey {
+  id        String   @id @default(uuid())
+  purpose   String   @unique
+  keyMeta   Json?    @map("key_meta")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("security_keys")
+}
+
+// Enums
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum BotStatus {
+  OFFLINE
+  STARTING
+  ONLINE
+  ERROR
+  STOPPING
+}
+
+enum HostStatus {
+  UP
+  DOWN
+  STARTING
+  STOPPING
+  ERROR
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum CreditType {
+  PURCHASE
+  BONUS
+  SPEND
+  REFUND
+  ADMIN_ADJUSTMENT
+}
