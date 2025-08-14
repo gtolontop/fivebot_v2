@@ -24,6 +24,22 @@ export async function guildMemberAdd(
   try {
     console.log(`👋 New member joined: ${member.user.tag} in ${member.guild.name}`);
 
+    // Créer une clé unique pour éviter les doublons
+    const welcomeKey = `${member.user.id}-${member.guild.id}-${Date.now()}`;
+    const dedupeKey = `${member.user.id}-${member.guild.id}`;
+    
+    // Vérifier si on a déjà traité ce membre récemment (dans les 30 dernières secondes)
+    if (recentWelcomes.has(dedupeKey)) {
+      console.log(`⚠️ Duplicate welcome detected for ${member.user.tag}, skipping...`);
+      return;
+    }
+    
+    // Ajouter à la cache et nettoyer après 30 secondes
+    recentWelcomes.add(dedupeKey);
+    setTimeout(() => {
+      recentWelcomes.delete(dedupeKey);
+    }, 30000);
+
     // Send welcome message if enabled
     if (config.welcomeEnabled) {
       await welcomeService.sendWelcomeMessage(member);
