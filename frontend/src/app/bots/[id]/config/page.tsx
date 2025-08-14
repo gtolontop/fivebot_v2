@@ -621,16 +621,26 @@ export default function BotConfigPage() {
                           <div className="mt-6">
                             <h4 className="text-sm font-medium text-gray-700 mb-3">Message Preview</h4>
                             <div className="bg-gray-800 rounded-lg p-4">
-                              <div className="bg-gray-700 rounded-md p-3" style={{
+                              <div className="bg-gray-700 rounded-md p-3 relative" style={{
                                 borderLeft: `4px solid ${config.welcomeEmbedJson?.color || '#5865F2'}`
                               }}>
+                                {config.welcomeThumbnailUrl && (
+                                  <img 
+                                    src={config.welcomeThumbnailUrl} 
+                                    alt="Thumbnail" 
+                                    className="absolute top-3 right-3 w-12 h-12 rounded"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = 'none';
+                                    }}
+                                  />
+                                )}
                                 {config.welcomeEmbedJson?.title && (
-                                  <h5 className="text-white font-medium mb-2">
+                                  <h5 className="text-white font-medium mb-2 pr-16">
                                     {config.welcomeEmbedJson.title}
                                   </h5>
                                 )}
                                 {config.welcomeEmbedJson?.description && (
-                                  <p className="text-gray-300 text-sm mb-2">
+                                  <p className="text-gray-300 text-sm mb-2 pr-16">
                                     {config.welcomeEmbedJson.description
                                       .replace(/{user}/g, '@NewMember')
                                       .replace(/{username}/g, 'NewMember')
