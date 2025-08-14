@@ -1,44 +1,66 @@
 import { SlashCommandBuilder } from 'discord.js';
 
-export const commands = [
+// Default bot commands
+const defaultCommands = [
   new SlashCommandBuilder()
     .setName('set-welcome')
-    .setDescription('Configure le message de bienvenue')
+    .setDescription('Configure welcome messages')
     .addBooleanOption(option =>
       option.setName('enabled')
-        .setDescription('Activer ou désactiver le message de bienvenue')
+        .setDescription('Enable or disable welcome messages')
         .setRequired(true)
     )
     .addChannelOption(option =>
       option.setName('channel')
-        .setDescription('Canal où envoyer le message de bienvenue')
+        .setDescription('Channel to send welcome messages')
         .setRequired(false)
     )
     .addStringOption(option =>
       option.setName('title')
-        .setDescription('Titre du message de bienvenue')
+        .setDescription('Welcome message title')
         .setRequired(false)
     )
     .addStringOption(option =>
       option.setName('description')
-        .setDescription('Description du message de bienvenue (utilisez {user} pour mentionner)')
+        .setDescription('Welcome message description (use {user} to mention)')
         .setRequired(false)
     )
     .addStringOption(option =>
       option.setName('color')
-        .setDescription('Couleur de l\'embed (format hex: #5865F2)')
+        .setDescription('Embed color (hex format: #5865F2)')
         .setRequired(false)
     ),
 
   new SlashCommandBuilder()
     .setName('bot-status')
-    .setDescription('Affiche le statut et la configuration du bot'),
+    .setDescription('Show bot status and configuration'),
 
   new SlashCommandBuilder()
     .setName('reload-config')
-    .setDescription('Recharge la configuration du bot depuis la base de données'),
+    .setDescription('Reload bot configuration from database'),
 
   new SlashCommandBuilder()
     .setName('help')
-    .setDescription('Affiche l\'aide du bot'),
-].map(command => command.toJSON());
+    .setDescription('Show bot help'),
+];
+
+// Function to build commands dynamically including custom commands
+export function buildCommands(customCommands: Record<string, any> = {}) {
+  const commands = [...defaultCommands];
+  
+  // Add custom commands
+  Object.entries(customCommands).forEach(([commandName, commandData]) => {
+    if (commandData && commandData.name && (commandData.response || commandData.embed)) {
+      const command = new SlashCommandBuilder()
+        .setName(commandData.name)
+        .setDescription(commandData.description || `Custom command: ${commandData.name}`);
+      
+      commands.push(command);
+    }
+  });
+  
+  return commands.map(command => command.toJSON());
+}
+
+// Export default commands for backwards compatibility
+export const commands = defaultCommands.map(command => command.toJSON());
