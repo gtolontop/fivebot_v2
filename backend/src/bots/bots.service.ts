@@ -35,10 +35,17 @@ export class BotsService {
   ) {}
 
   async create(ownerId: string, data: CreateBotDto): Promise<Bot> {
+    console.log('=== Début création bot backend ===');
+    console.log('Owner ID:', ownerId);
+    console.log('Bot data:', { name: data.name, tokenLength: data.token?.length });
+
     // Validate bot token with Discord API
+    console.log('Validation du token Discord...');
     const tokenValidation = await this.discordService.validateBotToken(data.token);
+    console.log('Résultat validation:', { isValid: tokenValidation.isValid, error: tokenValidation.error });
     
     if (!tokenValidation.isValid) {
+      console.log('Token invalide, arrêt');
       throw new BadRequestException(tokenValidation.error || 'Invalid bot token');
     }
 
