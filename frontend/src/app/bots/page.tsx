@@ -14,6 +14,11 @@ interface Bot {
   createdAt: string;
 }
 
+interface BotStats {
+  servers: number;
+  users: number;
+}
+
 export default function BotsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -21,6 +26,7 @@ export default function BotsPage() {
   const [botsLoading, setBotsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [botStats, setBotStats] = useState<{ [botId: string]: BotStats }>({});
 
   useEffect(() => {
     if (!loading && !user) {
@@ -37,12 +43,52 @@ export default function BotsPage() {
   const fetchBots = async () => {
     try {
       const response = await botsAPI.getAll();
-      setBots(response.data);
+      const botsData = response.data;
+      setBots(botsData);
+      
+      // Fetch stats for each bot
+      await fetchBotStats(botsData);
     } catch (error) {
       console.error('Erreur lors du chargement des bots:', error);
       toast.error('Failed to load bots');
     } finally {
       setBotsLoading(false);
+    }
+  };
+
+  const fetchBotStats = async (botsData: Bot[]) => {
+    const stats: { [botId: string]: BotStats } = {};
+    
+    // Only fetch stats for online bots to avoid rate limits
+    const onlineBots = botsData.filter(bot => bot.status === 'ONLINE');
+    
+    const statsPromises = onlineBots.map(async (bot) => {
+      try {
+        const guildsResponse = await botsAPI.getGuilds(bot.id);
+        const guilds = guildsResponse.data || [];
+        const totalUsers = guilds.reduce((acc: number, guild: any) => 
+          acc + (guild.memberCount || 0), 0
+        );
+        
+        stats[bot.id] = {
+          servers: guilds.length,
+          users: totalUsers
+        };
+      } catch (error) {
+        console.log(`Could not fetch stats for bot ${bot.name}`);
+        // Use default values for bots we can't fetch stats for
+        stats[bot.id] = {
+          servers: 0,
+          users: 0
+        };
+      }
+    });
+    
+    try {
+      await Promise.allSettled(statsPromises);
+      setBotStats(stats);
+    } catch (error) {
+      console.log('Error fetching bot stats');
     }
   };
 
@@ -309,13 +355,27 @@ export default function BotsPage() {
                     <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"/>
                     </svg>
-                    <span>Active in {Math.floor(Math.random() * 10) + 1} servers</span>
+                    <span>
+                      {bot.status === 'ONLINE' && botStats[bot.id] 
+                        ? `Active in ${botStats[bot.id].servers} server${botStats[bot.id].servers !== 1 ? 's' : ''}`
+                        : bot.status === 'ONLINE'
+                        ? 'Loading server data...'
+                        : 'Bot offline'
+                      }
+                    </span>
                   </div>
                   <div className="flex items-center text-sm text-gray-600">
                     <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
                     </svg>
-                    <span>{(Math.floor(Math.random() * 500) + 50).toLocaleString()} users reached</span>
+                    <span>
+                      {bot.status === 'ONLINE' && botStats[bot.id]
+                        ? `${botStats[bot.id].users.toLocaleString()} users reached`
+                        : bot.status === 'ONLINE'
+                        ? 'Loading user data...'
+                        : 'No active users'
+                      }
+                    </span>
                   </div>
                 </div>
 
