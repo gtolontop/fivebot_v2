@@ -30,6 +30,7 @@ export default function BotsPage() {
   const [botStats, setBotStats] = useState<{ [botId: string]: BotStats }>({});
   const [openMenus, setOpenMenus] = useState<{ [botId: string]: boolean }>({});
   const [verifyingStatuses, setVerifyingStatuses] = useState(false);
+  const [startingAllBots, setStartingAllBots] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -185,6 +186,48 @@ export default function BotsPage() {
       toast.error('Error verifying bot statuses');
     } finally {
       setVerifyingStatuses(false);
+    }
+  };
+
+  const startAllBots = async () => {
+    setStartingAllBots(true);
+    try {
+      const offlineBots = bots.filter(bot => bot.status === 'OFFLINE');
+      
+      if (offlineBots.length === 0) {
+        toast.info('No offline bots to start');
+        return;
+      }
+
+      let started = 0;
+      let errors = 0;
+
+      for (const bot of offlineBots) {
+        try {
+          await botsAPI.start(bot.id);
+          started++;
+          toast.success(`${bot.name} started`);
+        } catch (error: any) {
+          errors++;
+          console.error(`Error starting bot ${bot.name}:`, error);
+          toast.error(`Failed to start ${bot.name}`);
+        }
+      }
+
+      if (started > 0) {
+        toast.success(`Started ${started} bots successfully`);
+        await fetchBots(); // Refresh the list
+      }
+      
+      if (errors > 0) {
+        toast.error(`${errors} bots failed to start`);
+      }
+
+    } catch (error) {
+      console.error('Error starting all bots:', error);
+      toast.error('Error starting bots');
+    } finally {
+      setStartingAllBots(false);
     }
   };
 
