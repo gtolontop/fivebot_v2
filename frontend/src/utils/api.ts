@@ -146,4 +146,10 @@ export const creditsAPI = {
   getUserBalance: (userId: string) => api.get(`/credits/users/${userId}/balance`),
 };
 
+export const cacheAPI = {
+  getStats: () => api.get('/cache/stats'),
+  clear: () => api.delete('/cache/clear'),
+  cleanup: () => api.delete('/cache/cleanup'),
+};
+
 export default api;

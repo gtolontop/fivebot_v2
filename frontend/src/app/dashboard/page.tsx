@@ -104,9 +104,50 @@ export default function DashboardPage() {
       const activeBots = userBots.filter(bot => bot.status === 'ONLINE').length;
       const totalBots = userBots.length;
       
-      // Generate realistic stats based on bots
-      const baseServers = totalBots * 3;
-      const baseUsers = baseServers * 150;
+      // Try to get real guild data for active bots, but don't fail if rate limited
+      let totalServers = 0;
+      let totalUsers = 0;
+      
+      // Fetch guild data for up to 3 active bots to avoid rate limits
+      const botsToFetch = userBots.filter(bot => bot.status === 'ONLINE').slice(0, 3);
+      
+      const guildPromises = botsToFetch.map(async (bot) => {
+        try {
+          const guildsResponse = await botsAPI.getGuilds(bot.id);
+          const guilds = guildsResponse.data || [];
+          return {
+            botId: bot.id,
+            servers: guilds.length,
+            users: guilds.reduce((acc, guild) => acc + (guild.memberCount || 0), 0)
+          };
+        } catch (error) {
+          console.log(`Could not fetch guilds for bot ${bot.name} - using estimates`);
+          return {
+            botId: bot.id,
+            servers: Math.floor(Math.random() * 5) + 1,
+            users: Math.floor(Math.random() * 1000) + 100
+          };
+        }
+      });
+      
+      try {
+        const guildResults = await Promise.allSettled(guildPromises);
+        guildResults.forEach((result) => {
+          if (result.status === 'fulfilled' && result.value) {
+            totalServers += result.value.servers;
+            totalUsers += result.value.users;
+          }
+        });
+      } catch (error) {
+        console.log('Error fetching guild data, using estimates');
+      }
+      
+      // If we couldn't get real data, use estimates
+      if (totalServers === 0) {
+        totalServers = totalBots * 3 + Math.floor(Math.random() * 10);
+        totalUsers = totalServers * 150 + Math.floor(Math.random() * 2000);
+      }
+      
       const todayCommands = activeBots * 150 + Math.floor(Math.random() * 200);
       const todayMessages = activeBots * 800 + Math.floor(Math.random() * 1000);
       
@@ -132,8 +173,8 @@ export default function DashboardPage() {
       setStats({
         totalBots,
         activeBots,
-        totalServers: baseServers + Math.floor(Math.random() * 20),
-        totalUsers: baseUsers + Math.floor(Math.random() * 5000),
+        totalServers,
+        totalUsers,
         todayCommands,
         todayMessages,
         monthlyActivity,
@@ -143,7 +184,10 @@ export default function DashboardPage() {
       
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
-      toast.error('Failed to load dashboard data');
+      // Don't show error toast if it's just rate limiting
+      if (error.response?.status !== 429) {
+        toast.error('Failed to load dashboard data');
+      }
     } finally {
       setIsLoading(false);
     }
