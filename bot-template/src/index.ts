@@ -147,7 +147,7 @@ class ChildBot {
         await this.prisma.$connect();
         console.log('✅ Database connected');
       } catch (dbError) {
-        console.warn('⚠️ Database connection failed, continuing without DB:', dbError.message);
+        console.warn('⚠️ Database connection failed, continuing without DB:', (dbError as Error).message);
         // Continue without database - the bot can still work for basic functions
       }
 
@@ -196,7 +196,7 @@ class ChildBot {
       if (!this.prisma) return;
       await this.prisma.bot.update({
         where: { id: this.botId },
-        data: { status },
+        data: { status: status as any },
       });
     } catch (error) {
       console.warn('Failed to update bot status:', error.message);
