@@ -5,6 +5,10 @@ import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
 import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
+import PerformanceMonitor from '@/components/PerformanceMonitor';
+import NotificationsCenter from '@/components/NotificationsCenter';
+import BotPlayground from '@/components/BotPlayground';
+import AnalyticsDashboard from '@/components/AnalyticsDashboard';
 
 interface Bot {
   id: string;
