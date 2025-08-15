@@ -146,4 +146,22 @@ export class BotsController {
     await this.setupMetricsService.seedInitialMetrics();
     return { message: 'Metrics setup completed' };
   }
+
+  @Get(':id/logs/recent')
+  async getRecentLogs(
+    @Param('id') id: string,
+    @Req() req: any,
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new Error('Bot not found');
+    }
+    
+    // For now, return recent job logs as these are the closest thing to "real" logs we have
+    return {
+      logs: bot.jobLogs?.slice(-20).map(log => 
+        `[${new Date(log.createdAt).toLocaleTimeString()}] ${log.message || `${log.jobType}: ${log.status}`}`
+      ) || []
+    };
+  }
 }
