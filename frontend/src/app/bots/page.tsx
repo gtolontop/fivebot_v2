@@ -162,6 +162,11 @@ export default function BotsPage() {
   const verifyAllStatuses = async () => {
     setVerifyingStatuses(true);
     try {
+      // First fix any concurrency issues
+      console.log('🔧 Fixing concurrency issues first...');
+      await fixConcurrencyIssues();
+      
+      // Then sync statuses
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/bots/setup/metrics`, {
         method: 'POST',
         headers: {
@@ -173,7 +178,7 @@ export default function BotsPage() {
 
       if (response.ok) {
         const result = await response.json();
-        toast.success(`Status verification completed: ${result.updated} bots updated`);
+        toast.success(`Status verification completed: ${result.updated} bots synced`);
         await fetchBots(); // Refresh the list to show updated statuses
       } else {
         console.error('Verify statuses failed:', response.status, response.statusText);
@@ -228,6 +233,30 @@ export default function BotsPage() {
       toast.error('Error starting bots');
     } finally {
       setStartingAllBots(false);
+    }
+  };
+
+  const fixConcurrencyIssues = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/bots/setup/metrics`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${Cookies.get('token') || ''}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ action: 'fix-concurrency' })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        toast.success(`Fixed concurrency issues: ${result.updated} bots reset`);
+        await fetchBots(); // Refresh the list
+      } else {
+        toast.error('Failed to fix concurrency issues');
+      }
+    } catch (error) {
+      console.error('Error fixing concurrency:', error);
+      toast.error('Error fixing concurrency issues');
     }
   };
 
