@@ -167,14 +167,14 @@ export class BotMetricsService {
 
     // Top performing bots
     const topBots = todayMetrics
-      .sort((a, b) => b.commandsUsed - a.commandsUsed)
+      .sort((a, b) => (b.commands_used || 0) - (a.commands_used || 0))
       .slice(0, 5)
       .map(metric => {
-        const bot = bots.find(b => b.id === metric.botId);
+        const bot = bots.find(b => b.id === metric.bot_id);
         return {
           name: bot?.name || 'Unknown',
-          servers: metric.guildsCount,
-          users: metric.usersCount,
+          servers: metric.guilds_count || 0,
+          users: metric.users_count || 0,
         };
       });
 
