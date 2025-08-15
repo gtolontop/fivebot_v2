@@ -12,6 +12,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { BotsService } from './bots.service';
 import { BotMetricsService } from './bot-metrics.service';
+import { SetupMetricsService } from './setup-metrics.service';
 
 interface CreateBotDto {
   name: string;
@@ -38,6 +39,7 @@ export class BotsController {
   constructor(
     private botsService: BotsService,
     private botMetricsService: BotMetricsService,
+    private setupMetricsService: SetupMetricsService,
   ) {}
 
   @Post()
