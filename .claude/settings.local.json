@@ -19,7 +19,8 @@
       "Bash(node:*)",
       "Bash(chmod:*)",
       "Bash(find:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(set PORT=8001)"
     ],
     "deny": [],
     "ask": [],
