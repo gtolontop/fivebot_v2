@@ -15,7 +15,8 @@
       "Bash(npm run start:dev:*)",
       "Bash(npx prisma:*)",
       "Bash(copy:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": [],
