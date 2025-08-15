@@ -40,6 +40,22 @@ export class BotsService {
     console.log('Owner ID:', ownerId);
     console.log('Bot data:', { name: data.name, tokenLength: data.token?.length });
 
+    // Check if user already has a bot with the same token
+    console.log('Vérification des tokens dupliqués...');
+    const encryptedTokenToCheck = this.encryptionService.encrypt(data.token);
+    const existingBotWithToken = await this.prisma.bot.findFirst({
+      where: { 
+        ownerId,
+        tokenEncrypted: encryptedTokenToCheck,
+        isActive: true
+      },
+    });
+    
+    if (existingBotWithToken) {
+      console.log('Token déjà utilisé, arrêt');
+      throw new BadRequestException('You already have a bot with this token');
+    }
+
     // Validate bot token with Discord API
     console.log('Validation du token Discord...');
     const tokenValidation = await this.discordService.validateBotToken(data.token);
