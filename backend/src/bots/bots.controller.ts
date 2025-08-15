@@ -111,6 +111,32 @@ export class BotsController {
     };
   }
 
+  @Post(':id/force-stop')
+  async forceStopBot(@Param('id') id: string, @Req() req: any) {
+    try {
+      const bot = await this.botsService.findOne(id, req.user.id);
+      if (!bot) {
+        throw new Error('Bot not found');
+      }
+
+      const queueService = this.botsService['queueService'];
+      if (queueService.forceStopBot) {
+        await queueService.forceStopBot(id);
+        console.log(`🚨 Force stopped bot ${bot.name} (${id})`);
+        
+        return {
+          message: `Bot ${bot.name} force stopped successfully`,
+          botId: id
+        };
+      } else {
+        throw new Error('Force stop not available in current queue implementation');
+      }
+    } catch (error) {
+      console.error(`Error force stopping bot ${id}:`, error);
+      throw error;
+    }
+  }
+
   @Get(':id/guilds')
   async getGuilds(@Param('id') id: string, @Req() req: any) {
     return this.botsService.getDiscordGuilds(id, req.user.id);
@@ -430,32 +456,6 @@ export class BotsController {
       };
     } catch (error) {
       console.error('Error getting running bots:', error);
-      throw error;
-    }
-  }
-
-  @Post(':id/force-stop')
-  async forceStopBot(@Param('id') id: string, @Req() req: any) {
-    try {
-      const bot = await this.botsService.findOne(id, req.user.id);
-      if (!bot) {
-        throw new Error('Bot not found');
-      }
-
-      const queueService = this.botsService['queueService'];
-      if (queueService.forceStopBot) {
-        await queueService.forceStopBot(id);
-        console.log(`🚨 Force stopped bot ${bot.name} (${id})`);
-        
-        return {
-          message: `Bot ${bot.name} force stopped successfully`,
-          botId: id
-        };
-      } else {
-        throw new Error('Force stop not available in current queue implementation');
-      }
-    } catch (error) {
-      console.error(`Error force stopping bot ${id}:`, error);
       throw error;
     }
   }
