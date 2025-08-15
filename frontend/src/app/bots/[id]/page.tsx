@@ -189,8 +189,9 @@ export default function BotDetailPage() {
   };
 
   const viewLogs = () => {
-    setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] System logs consultation`]);
-    toast('Advanced logs feature in development', { icon: 'ℹ️' });
+    setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Opening advanced logs viewer`]);
+    // Open logs in a new modal or redirect to logs page
+    window.open(`/bots/${botId}/logs`, '_blank');
   };
 
   const viewStats = () => {
