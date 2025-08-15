@@ -123,7 +123,7 @@ export class BotsController {
   }
 
   @Get('dashboard/stats')
-  async getDashboardStats(@Req() req: any) {
+  async getDashboardStats(@Req() req: any): Promise<DashboardStats> {
     return this.botMetricsService.getDashboardStats(req.user.id);
   }
 
@@ -131,7 +131,7 @@ export class BotsController {
   async getBotMetrics(
     @Param('id') id: string,
     @Req() req: any,
-  ) {
+  ): Promise<DailyMetrics[]> {
     const bot = await this.botsService.findOne(id, req.user.id);
     if (!bot) {
       throw new Error('Bot not found');
