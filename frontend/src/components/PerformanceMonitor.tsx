@@ -35,6 +35,21 @@ interface PerformanceMonitorProps {
 export default function PerformanceMonitor({ botId, isOnline }: PerformanceMonitorProps) {
   const [performanceData, setPerformanceData] = useState<PerformanceData[]>([]);
   const [alerts, setAlerts] = useState<string[]>([]);
+  const [chartsReady, setChartsReady] = useState(false);
+
+  // Register Chart.js components
+  useEffect(() => {
+    ChartJS.register(
+      CategoryScale,
+      LinearScale,
+      PointElement,
+      LineElement,
+      Title,
+      Tooltip,
+      Legend
+    );
+    setChartsReady(true);
+  }, []);
 
   // Generate realistic performance data
   useEffect(() => {
@@ -203,7 +218,13 @@ export default function PerformanceMonitor({ botId, isOnline }: PerformanceMonit
 
       {/* Performance Chart */}
       <div className="h-64 mb-4">
-        <Line data={chartData} options={chartOptions} />
+        {chartsReady ? (
+          <Line data={chartData} options={chartOptions} />
+        ) : (
+          <div className="h-64 bg-gray-100 rounded animate-pulse flex items-center justify-center">
+            <span className="text-gray-500">Loading chart...</span>
+          </div>
+        )}
       </div>
 
       {/* Health Status */}
