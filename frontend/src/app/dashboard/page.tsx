@@ -390,8 +390,8 @@ export default function DashboardPage() {
                       {
                         data: Object.values(stats.botStatusDistribution),
                         backgroundColor: [
-                          '#10B981', // green for ONLINE
                           '#6B7280', // gray for OFFLINE
+                          '#10B981', // green for ONLINE
                           '#F59E0B', // yellow for STARTING
                           '#EF4444', // red for ERROR
                         ],
