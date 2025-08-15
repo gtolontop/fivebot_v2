@@ -46,6 +46,16 @@ export class QueueService implements IQueueService {
     await this.botQueue.clean(olderThan, type as any);
   }
 
+  getRunningBots(): string[] {
+    // BullMQ version doesn't track running bots directly
+    return [];
+  }
+
+  async forceStopBot(botId: string): Promise<void> {
+    // BullMQ version - would need to be implemented differently
+    console.log(`Force stop not implemented in BullMQ version for bot ${botId}`);
+  }
+
   private getJobPriority(jobType: string): number {
     const priorities = {
       'create-bot': 10,
