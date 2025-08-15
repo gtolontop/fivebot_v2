@@ -161,6 +161,9 @@ export default function BotDetailPage() {
   }, [bot?.id]);
 
   const fetchBot = async () => {
+    if (fetchingBot) return; // Prevent concurrent fetches
+    setFetchingBot(true);
+    
     try {
       const response = await botsAPI.getById(botId);
       const newBot = response.data;
@@ -196,6 +199,7 @@ export default function BotDetailPage() {
       router.push('/bots');
     } finally {
       setBotLoading(false);
+      setFetchingBot(false);
     }
   };
 
