@@ -372,17 +372,19 @@ export class BotsService {
       data: { status },
     });
 
-    // Log status change
-    await this.prisma.jobLog.create({
-      data: {
-        botId,
-        jobId: `status-${Date.now()}`,
-        jobType: 'STATUS_UPDATE',
-        status: 'COMPLETED',
-        message: `Bot status changed to ${status}`,
-        metadata,
-      },
-    });
+    // Only log significant status changes to avoid spam
+    if (status === 'ONLINE' || status === 'ERROR') {
+      await this.prisma.jobLog.create({
+        data: {
+          botId,
+          jobId: `status-${Date.now()}`,
+          jobType: 'STATUS_UPDATE',
+          status: 'COMPLETED',
+          message: `Bot status changed to ${status}`,
+          metadata,
+        },
+      });
+    }
   }
 
   async getDiscordGuilds(botId: string, ownerId: string): Promise<any[]> {
