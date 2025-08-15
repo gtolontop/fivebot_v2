@@ -418,37 +418,88 @@ export default function BotDetailPage() {
             {/* Console/Actions */}
             <div className="space-y-6">
               <div className="card p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-                <div className="space-y-3">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Premium Features</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  <button 
+                    onClick={() => setActiveFeature('console')}
+                    className={`p-3 rounded-lg border text-sm font-medium transition-colors ${
+                      activeFeature === 'console' 
+                        ? 'bg-blue-50 border-blue-200 text-blue-700' 
+                        : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="text-lg mb-1">📟</div>
+                    Console
+                  </button>
+                  <button 
+                    onClick={() => setActiveFeature('performance')}
+                    className={`p-3 rounded-lg border text-sm font-medium transition-colors ${
+                      activeFeature === 'performance' 
+                        ? 'bg-blue-50 border-blue-200 text-blue-700' 
+                        : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="text-lg mb-1">📊</div>
+                    Performance
+                  </button>
+                  <button 
+                    onClick={() => setActiveFeature('notifications')}
+                    className={`relative p-3 rounded-lg border text-sm font-medium transition-colors ${
+                      activeFeature === 'notifications' 
+                        ? 'bg-blue-50 border-blue-200 text-blue-700' 
+                        : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="text-lg mb-1">🔔</div>
+                    Notifications
+                    {notificationCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                        {notificationCount}
+                      </span>
+                    )}
+                  </button>
+                  <button 
+                    onClick={() => setActiveFeature('playground')}
+                    className={`p-3 rounded-lg border text-sm font-medium transition-colors ${
+                      activeFeature === 'playground' 
+                        ? 'bg-blue-50 border-blue-200 text-blue-700' 
+                        : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="text-lg mb-1">🎮</div>
+                    Playground
+                  </button>
+                </div>
+                <button 
+                  onClick={() => setActiveFeature('analytics')}
+                  className={`w-full mt-2 p-3 rounded-lg border text-sm font-medium transition-colors ${
+                    activeFeature === 'analytics' 
+                      ? 'bg-blue-50 border-blue-200 text-blue-700' 
+                      : 'hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="text-lg mb-1">📈</div>
+                  Advanced Analytics
+                </button>
+                
+                <div className="border-t pt-3 mt-4 space-y-2">
                   <button 
                     onClick={() => router.push(`/bots/${botId}/config`)}
-                    className="w-full btn-primary text-sm"
+                    className="w-full btn-secondary text-sm"
                   >
-                    ⚙️ Advanced Configuration
+                    ⚙️ Configuration
                   </button>
                   <button 
                     onClick={generateInviteLink}
-                    className="w-full btn-secondary text-sm"
+                    className="w-full btn-outline text-sm"
                   >
-                    🔗 Generate Invite Link
+                    🔗 Invite Link
                   </button>
                   <button 
                     onClick={viewLogs}
-                    className="w-full btn-secondary text-sm"
-                  >
-                    📄 View Logs
-                  </button>
-                  <button 
-                    onClick={viewStats}
-                    className="w-full btn-secondary text-sm"
-                  >
-                    📊 Statistics {showStats ? '(open)' : ''}
-                  </button>
-                  <button 
-                    onClick={testCommands}
                     className="w-full btn-outline text-sm"
                   >
-                    🧪 Test Commands
+                    📄 View Logs
                   </button>
                 </div>
               </div>
