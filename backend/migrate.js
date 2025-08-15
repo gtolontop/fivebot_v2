@@ -17,10 +17,14 @@ async function runMigration() {
       config = {
         host: url.hostname,
         port: url.port || 3306,
-        user: url.username,
-        password: url.password,
+        user: decodeURIComponent(url.username),
+        password: decodeURIComponent(url.password),
         database: url.pathname.slice(1), // Remove leading slash
       };
+      
+      console.log(`Host: ${config.host}`);
+      console.log(`User: ${config.user}`);
+      console.log(`Database: ${config.database}`);
     } else {
       config = {
         host: process.env.DB_HOST,
