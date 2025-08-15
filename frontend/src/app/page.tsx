@@ -108,6 +108,7 @@ export default function HomePage() {
               ) : (
                 <>
                   <Link
+                  
                     href="http://localhost:8000/api/auth/discord"
                     className="btn-secondary"
                   >
