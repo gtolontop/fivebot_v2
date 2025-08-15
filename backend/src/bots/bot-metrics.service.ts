@@ -138,13 +138,12 @@ export class BotMetricsService {
     const thirtyDaysAgo = new Date(today);
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const monthlyMetrics = await this.prisma.botMetrics.findMany({
-      where: {
-        botId: { in: bots.map(bot => bot.id) },
-        date: { gte: thirtyDaysAgo },
-      },
-      orderBy: { date: 'asc' },
-    });
+    let monthlyMetrics: any[] = [];
+    if (bots.length > 0) {
+      const placeholders = bots.map(() => '?').join(',');
+      const query = `SELECT * FROM bot_metrics WHERE bot_id IN (${placeholders}) AND date >= ? ORDER BY date ASC`;
+      monthlyMetrics = await this.prisma.$queryRawUnsafe(query, ...bots.map(bot => bot.id), thirtyDaysAgo) as any[];
+    }
 
     // Group by date and sum commands
     const activityByDate = monthlyMetrics.reduce((acc, metric) => {
