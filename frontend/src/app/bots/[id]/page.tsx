@@ -148,13 +148,13 @@ export default function BotDetailPage() {
     return () => clearInterval(statsInterval);
   }, [bot?.status]); // React to status changes
 
-  // Auto-refresh bot status every 10 seconds
+  // Auto-refresh bot status every 30 seconds (reduced frequency)
   useEffect(() => {
     if (!bot) return;
 
     const statusInterval = setInterval(() => {
       fetchBot();
-    }, 10000);
+    }, 30000);
 
     return () => clearInterval(statusInterval);
   }, [bot?.id]);
