@@ -104,11 +104,11 @@ export class BotMetricsService {
 
   async getDashboardStats(userId: string): Promise<DashboardStats> {
     try {
-      // Get user's active bots only
+      // Get user's bots
       const bots = await this.prisma.bot.findMany({
         where: { 
-          ownerId: userId,
-          isActive: true  // Only count active bots
+          ownerId: userId
+          // No need for isActive filter since bots are hard deleted
         },
       });
 
