@@ -34,13 +34,11 @@ export default function BotDetailPage() {
   const [bot, setBot] = useState<Bot | null>(null);
   const [botLoading, setBotLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [logs, setLogs] = useState<string[]>([
-    `[${new Date().toLocaleTimeString()}] Bot initialized`,
-    `[${new Date().toLocaleTimeString()}] Waiting for connection...`
-  ]);
+  const [logs, setLogs] = useState<string[]>([]);
   const [guilds, setGuilds] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [wsConnection, setWsConnection] = useState<WebSocket | null>(null);
   const [realTimeStats, setRealTimeStats] = useState({
     cpuUsage: 0,
     memoryUsage: 0,
