@@ -81,6 +81,13 @@ export default function BotDetailPage() {
     return () => clearInterval(interval);
   }, [bot]);
 
+  // Auto-scroll console to bottom when new logs are added
+  useEffect(() => {
+    if (consoleRef.current) {
+      consoleRef.current.scrollTop = consoleRef.current.scrollHeight;
+    }
+  }, [logs]);
+
   // Auto-refresh bot status every 10 seconds
   useEffect(() => {
     if (!bot) return;
@@ -426,7 +433,10 @@ export default function BotDetailPage() {
 
               <div className="card p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Real-time Console</h3>
-                <div className="bg-gray-900 text-green-400 p-4 rounded-lg text-xs font-mono h-64 overflow-y-auto">
+                <div 
+                  ref={consoleRef}
+                  className="bg-gray-900 text-green-400 p-4 rounded-lg text-xs font-mono h-64 overflow-y-auto"
+                >
                   <div className="space-y-1">
                     {logs.map((log, index) => (
                       <div key={index} className={index === logs.length - 1 ? 'text-green-300' : ''}>
