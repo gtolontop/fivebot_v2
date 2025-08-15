@@ -119,6 +119,16 @@ export default function BotDetailPage() {
       }
       
       setBot(newBot);
+      
+      // Fetch guilds data for statistics
+      if (newBot.status === 'ONLINE') {
+        try {
+          const guildsResponse = await botsAPI.getGuilds(botId);
+          setGuilds(guildsResponse.data || []);
+        } catch (error) {
+          console.log('Could not fetch guilds data');
+        }
+      }
     } catch (error) {
       console.error('Erreur lors du chargement du bot:', error);
       toast.error('Impossible de charger les informations du bot');
