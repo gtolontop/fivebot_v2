@@ -370,10 +370,10 @@ export default function BotsPage() {
                     </svg>
                     <span>
                       {bot.status === 'ONLINE' && botStats[bot.id]
-                        ? `${botStats[bot.id].users.toLocaleString()} users reached`
+                        ? `${botStats[bot.id].users.toLocaleString()} total members`
                         : bot.status === 'ONLINE'
-                        ? 'Loading user data...'
-                        : 'No active users'
+                        ? 'Loading member data...'
+                        : 'No members'
                       }
                     </span>
                   </div>
