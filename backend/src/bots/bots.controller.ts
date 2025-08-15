@@ -459,4 +459,45 @@ export class BotsController {
       throw error;
     }
   }
+
+  @Post('kill-all-processes')
+  async killAllBotProcesses(@Req() req: any) {
+    try {
+      const queueService = this.botsService['queueService'];
+      const runningBots = queueService.getRunningBots ? queueService.getRunningBots() : [];
+      
+      console.log(`🔪 Killing all ${runningBots.length} running bot processes...`);
+      
+      let killed = 0;
+      for (const botId of runningBots) {
+        try {
+          await queueService.forceStopBot(botId);
+          killed++;
+        } catch (error) {
+          console.error(`Failed to kill bot ${botId}:`, error);
+        }
+      }
+      
+      // Additional safety: kill by process name on Windows
+      if (process.platform === 'win32') {
+        const { exec } = require('child_process');
+        exec('taskkill /F /IM node.exe /FI "WINDOWTITLE eq FiveBot*"', (error, stdout, stderr) => {
+          if (error) {
+            console.log('No additional processes to kill');
+          } else {
+            console.log('Killed additional bot processes:', stdout);
+          }
+        });
+      }
+      
+      return {
+        message: `Killed ${killed} bot processes`,
+        killedCount: killed,
+        originalCount: runningBots.length
+      };
+    } catch (error) {
+      console.error('Error killing all processes:', error);
+      throw error;
+    }
+  }
 }
