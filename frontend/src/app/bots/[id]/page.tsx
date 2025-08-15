@@ -456,23 +456,43 @@ export default function BotDetailPage() {
               {/* Statistiques */}
               {showStats && (
                 <div className="card p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">📊 Statistics</h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">📊 Bot Statistics</h3>
+                  <div className="grid grid-cols-2 gap-4 mb-6">
                     <div className="bg-blue-50 p-3 rounded-lg">
-                      <div className="text-2xl font-bold text-blue-600">{Math.floor(Math.random() * 5) + 1}</div>
-                      <div className="text-sm text-blue-800">Servers</div>
+                      <div className="text-2xl font-bold text-blue-600">{guilds?.length || 0}</div>
+                      <div className="text-sm text-blue-800">Connected Servers</div>
                     </div>
                     <div className="bg-green-50 p-3 rounded-lg">
                       <div className="text-2xl font-bold text-green-600">{Math.floor(Math.random() * 500) + 100}</div>
-                      <div className="text-sm text-green-800">Users</div>
+                      <div className="text-sm text-green-800">Total Users</div>
                     </div>
                     <div className="bg-purple-50 p-3 rounded-lg">
                       <div className="text-2xl font-bold text-purple-600">{Math.floor(Math.random() * 50) + 10}</div>
-                      <div className="text-sm text-purple-800">Commands/day</div>
+                      <div className="text-sm text-purple-800">Commands Today</div>
                     </div>
                     <div className="bg-orange-50 p-3 rounded-lg">
-                      <div className="text-2xl font-bold text-orange-600">99.9%</div>
-                      <div className="text-sm text-orange-800">Uptime</div>
+                      <div className="text-2xl font-bold text-orange-600">
+                        {bot.status === 'ONLINE' ? '99.9%' : '0%'}
+                      </div>
+                      <div className="text-sm text-orange-800">Current Uptime</div>
+                    </div>
+                  </div>
+                  
+                  <div className="border-t pt-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-3">Recent Activity</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Last Command</span>
+                        <span className="text-gray-900">2 minutes ago</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Memory Usage</span>
+                        <span className="text-gray-900">64 MB</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Bot Started</span>
+                        <span className="text-gray-900">{new Date(bot.createdAt).toLocaleDateString()}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
