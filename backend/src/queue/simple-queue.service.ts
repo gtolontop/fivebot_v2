@@ -187,8 +187,9 @@ export class SimpleQueueService implements IQueueService {
             where: { id: botId },
             data: { status: 'OFFLINE' },
           });
+          console.log(`[Bot ${botId}] Status updated to OFFLINE after process exit`);
         } catch (dbError) {
-          console.error(`Failed to update bot status:`, dbError);
+          console.error(`[Bot ${botId}] Failed to update bot status:`, dbError);
         }
       });
 
