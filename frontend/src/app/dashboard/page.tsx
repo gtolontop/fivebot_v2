@@ -41,6 +41,8 @@ interface DashboardStats {
   monthlyActivity: number[];
   botStatusDistribution: { [key: string]: number };
   topBots: { name: string; servers: number; users: number }[];
+  avgResponseTime?: number;
+  uptime?: number;
 }
 
 export default function DashboardPage() {
@@ -453,11 +455,11 @@ export default function DashboardPage() {
               </div>
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-gray-600">Avg Response Time</span>
-                <span className="font-semibold text-green-600">45ms</span>
+                <span className="font-semibold text-green-600">{stats.avgResponseTime || 45}ms</span>
               </div>
               <div className="flex justify-between items-center py-2">
                 <span className="text-gray-600">Uptime</span>
-                <span className="font-semibold text-green-600">99.8%</span>
+                <span className="font-semibold text-green-600">{stats.uptime || 99.8}%</span>
               </div>
             </div>
 
