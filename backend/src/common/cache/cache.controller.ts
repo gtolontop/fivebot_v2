@@ -4,7 +4,7 @@ import { CacheService } from './cache.service';
 import { DiscordService } from '../discord/discord.service';
 
 @Controller('cache')
-@UseGuards(JwtAuthGuard)
+@UseGuards(AuthGuard('jwt'))
 export class CacheController {
   constructor(
     private cacheService: CacheService,
