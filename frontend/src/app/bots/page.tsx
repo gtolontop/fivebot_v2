@@ -38,16 +38,6 @@ export default function BotsPage() {
     }
   }, [user, loading, router]);
 
-  useEffect(() => {
-    if (user) {
-      fetchBots();
-      // Auto-sync statuses when page loads
-      setTimeout(() => {
-        verifyAllStatusesQuietly();
-      }, 1000); // Wait 1 second after initial load
-    }
-  }, [user]);
-
   const fetchBots = async () => {
     try {
       const response = await botsAPI.getAll();
@@ -163,6 +153,34 @@ export default function BotsPage() {
     }
   };
 
+  const verifyAllStatusesQuietly = async () => {
+    try {
+      console.log('🔄 Auto-syncing bot statuses...');
+      
+      // First fix any concurrency issues quietly
+      await fixConcurrencyIssues();
+      
+      // Then sync statuses
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/bots/setup/metrics`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${Cookies.get('token') || ''}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ action: 'sync-statuses' })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log(`✅ Auto-sync completed: ${result.updated} bots synced`);
+        await fetchBots(); // Refresh the list to show updated statuses
+      }
+    } catch (error) {
+      console.log('Auto-sync failed (silent):', error);
+      // Don't show error to user for auto-sync
+    }
+  };
+
   const verifyAllStatuses = async () => {
     setVerifyingStatuses(true);
     try {
@@ -263,6 +281,27 @@ export default function BotsPage() {
       toast.error('Error fixing concurrency issues');
     }
   };
+
+  // Auto-sync bot statuses when page loads and periodically
+  useEffect(() => {
+    if (user) {
+      // Auto-sync statuses when page loads
+      const timer = setTimeout(() => {
+        verifyAllStatusesQuietly();
+      }, 1000); // Wait 1 second after initial load
+      
+      // Auto-refresh statuses every 30 seconds
+      const intervalId = setInterval(() => {
+        verifyAllStatusesQuietly();
+      }, 30000); // 30 seconds
+
+      // Cleanup on unmount
+      return () => {
+        clearTimeout(timer);
+        clearInterval(intervalId);
+      };
+    }
+  }, [user]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
