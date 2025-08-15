@@ -121,11 +121,16 @@ export class BotMetricsService {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const todayMetrics: any[] = await this.prisma.$queryRaw`
-      SELECT * FROM bot_metrics 
-      WHERE bot_id IN (${bots.map(bot => `'${bot.id}'`).join(',')})
-      AND date = ${today}
-    `;
+    const botIds = bots.map(bot => bot.id);
+    let todayMetrics: any[] = [];
+    
+    if (botIds.length > 0) {
+      todayMetrics = await this.prisma.$queryRaw`
+        SELECT * FROM bot_metrics 
+        WHERE bot_id IN (${botIds.join("','")})
+        AND date = ${today}
+      ` as any[];
+    }
 
     const todayCommands = todayMetrics.reduce((sum, metric) => sum + metric.commandsUsed, 0);
     const todayMessages = todayMetrics.reduce((sum, metric) => sum + metric.messagesProcessed, 0);
