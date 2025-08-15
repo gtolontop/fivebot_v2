@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
 
@@ -38,6 +38,7 @@ export default function BotDetailPage() {
     `[${new Date().toLocaleTimeString()}] Waiting for connection...`
   ]);
   const [showStats, setShowStats] = useState(false);
+  const consoleRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!loading && !user) {
