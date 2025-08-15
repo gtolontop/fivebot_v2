@@ -50,6 +50,7 @@ model Bot {
   hosts       Host[]
   jobLogs     JobLog[]
   auditLogs   AuditLog[]
+  metrics     BotMetrics[]
 
   @@map("bots")
 }
@@ -142,6 +143,27 @@ model AuditLog {
   bot  Bot?  @relation(fields: [botId], references: [id], onDelete: SetNull)
 
   @@map("audit_logs")
+}
+
+model BotMetrics {
+  id              String   @id @default(uuid())
+  botId           String   @map("bot_id")
+  date            DateTime @map("date") @db.Date
+  commandsUsed    Int      @default(0) @map("commands_used")
+  messagesProcessed Int    @default(0) @map("messages_processed")
+  guildsCount     Int      @default(0) @map("guilds_count")
+  usersCount      Int      @default(0) @map("users_count")
+  uptimeSeconds   Int      @default(0) @map("uptime_seconds")
+  avgResponseTime Int      @default(0) @map("avg_response_time_ms")
+  errorsCount     Int      @default(0) @map("errors_count")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  bot Bot @relation(fields: [botId], references: [id], onDelete: Cascade)
+
+  @@unique([botId, date])
+  @@map("bot_metrics")
 }
 
 model SecurityKey {

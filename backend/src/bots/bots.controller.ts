@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { BotsService } from './bots.service';
+import { BotMetricsService } from './bot-metrics.service';
 
 interface CreateBotDto {
   name: string;
@@ -34,7 +35,10 @@ interface UpdateBotConfigDto {
 @Controller('bots')
 @UseGuards(AuthGuard('jwt'))
 export class BotsController {
-  constructor(private botsService: BotsService) {}
+  constructor(
+    private botsService: BotsService,
+    private botMetricsService: BotMetricsService,
+  ) {}
 
   @Post()
   async create(@Req() req: any, @Body() createBotDto: CreateBotDto) {
@@ -114,5 +118,22 @@ export class BotsController {
     @Req() req: any,
   ) {
     return this.botsService.getGuildRoles(id, guildId, req.user.id);
+  }
+
+  @Get('dashboard/stats')
+  async getDashboardStats(@Req() req: any) {
+    return this.botMetricsService.getDashboardStats(req.user.id);
+  }
+
+  @Get(':id/metrics')
+  async getBotMetrics(
+    @Param('id') id: string,
+    @Req() req: any,
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new Error('Bot not found');
+    }
+    return this.botMetricsService.getBotMetrics(id);
   }
 }
