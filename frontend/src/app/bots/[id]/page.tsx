@@ -5,11 +5,6 @@ import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
 import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
-import PerformanceCard from '@/components/PerformanceCard';
-import PlaygroundCard from '@/components/PlaygroundCard';
-import StatsCard from '@/components/StatsCard';
-import ConsoleCard from '@/components/ConsoleCard';
-import QuickActionsCard from '@/components/QuickActionsCard';
 import NotificationsCenter from '@/components/NotificationsCenter';
 
 interface Bot {
@@ -43,10 +38,19 @@ export default function BotDetailPage() {
     `[${new Date().toLocaleTimeString()}] Bot initialized`,
     `[${new Date().toLocaleTimeString()}] Waiting for connection...`
   ]);
-  const [showStats, setShowStats] = useState(false);
   const [guilds, setGuilds] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [realTimeStats, setRealTimeStats] = useState({
+    cpuUsage: 0,
+    memoryUsage: 0,
+    uptime: 0,
+    eventCount: 0,
+    messageCount: 0,
+    commandCount: 0,
+    responseTime: 0
+  });
+  const consoleRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -90,13 +94,39 @@ export default function BotDetailPage() {
   }, [bot]);
 
 
+  // Auto-scroll console to bottom
+  useEffect(() => {
+    if (consoleRef.current) {
+      consoleRef.current.scrollTop = consoleRef.current.scrollHeight;
+    }
+  }, [logs]);
+
+  // Simulate real-time performance stats
+  useEffect(() => {
+    if (!bot || bot.status !== 'ONLINE') return;
+
+    const statsInterval = setInterval(() => {
+      setRealTimeStats(prev => ({
+        cpuUsage: Math.max(0, Math.min(100, prev.cpuUsage + (Math.random() - 0.5) * 10)),
+        memoryUsage: Math.max(0, Math.min(100, prev.memoryUsage + (Math.random() - 0.5) * 5)),
+        uptime: prev.uptime + 1,
+        eventCount: prev.eventCount + Math.floor(Math.random() * 3),
+        messageCount: prev.messageCount + Math.floor(Math.random() * 5),
+        commandCount: prev.commandCount + (Math.random() < 0.3 ? 1 : 0),
+        responseTime: Math.max(10, Math.min(500, prev.responseTime + (Math.random() - 0.5) * 20))
+      }));
+    }, 2000);
+
+    return () => clearInterval(statsInterval);
+  }, [bot]);
+
   // Auto-refresh bot status every 10 seconds
   useEffect(() => {
     if (!bot) return;
 
     const statusInterval = setInterval(() => {
       fetchBot();
-    }, 10000); // 10 secondes
+    }, 10000);
 
     return () => clearInterval(statusInterval);
   }, [bot?.id]);
@@ -268,7 +298,9 @@ export default function BotDetailPage() {
                 onClick={() => setShowNotifications(!showNotifications)}
                 className="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
               >
-                <span className="text-lg">🔔</span>
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
+                </svg>
                 {notificationCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">
                     {notificationCount}
@@ -281,7 +313,10 @@ export default function BotDetailPage() {
                 className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all disabled:opacity-50"
                 title="Delete Bot"
               >
-                <span className="text-lg">🗑️</span>
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clipRule="evenodd"/>
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414L7.586 12l-1.293 1.293a1 1 0 101.414 1.414L9 13.414l2.293 2.293a1 1 0 001.414-1.414L11.414 12l1.293-1.293z" clipRule="evenodd"/>
+                </svg>
               </button>
             </div>
           </div>
@@ -304,109 +339,298 @@ export default function BotDetailPage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="space-y-6">
           
-          {/* Left Sidebar - Quick Actions */}
-          <div className="lg:col-span-1">
-            <QuickActionsCard
-              botId={botId}
-              botStatus={bot.status}
-              onStart={handleStart}
-              onStop={handleStop}
-              onGenerateInvite={generateInviteLink}
-              actionLoading={actionLoading}
-            />
+          {/* Top Row - Quick Actions */}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <button
+              onClick={bot.status === 'OFFLINE' ? handleStart : handleStop}
+              disabled={actionLoading === 'start' || actionLoading === 'stop'}
+              className={`flex items-center justify-center space-x-3 p-4 rounded-xl border-2 transition-all ${
+                bot.status === 'OFFLINE'
+                  ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
+                  : 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100'
+              } disabled:opacity-50`}
+            >
+              {actionLoading === 'start' || actionLoading === 'stop' ? (
+                <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"/>
+                  <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8v8H4z"/>
+                </svg>
+              ) : bot.status === 'OFFLINE' ? (
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd"/>
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clipRule="evenodd"/>
+                </svg>
+              )}
+              <span className="font-medium">
+                {actionLoading === 'start' ? 'Starting...' : actionLoading === 'stop' ? 'Stopping...' : bot.status === 'OFFLINE' ? 'Start Bot' : 'Stop Bot'}
+              </span>
+            </button>
+
+            <button
+              onClick={() => router.push(`/bots/${botId}/config`)}
+              className="flex items-center justify-center space-x-3 p-4 rounded-xl border-2 border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-all"
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd"/>
+              </svg>
+              <span className="font-medium">Configuration</span>
+            </button>
+
+            <button
+              onClick={generateInviteLink}
+              className="flex items-center justify-center space-x-3 p-4 rounded-xl border-2 border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 transition-all"
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clipRule="evenodd"/>
+              </svg>
+              <span className="font-medium">Generate Invite</span>
+            </button>
+
+            <button
+              onClick={() => router.push(`/bots/${botId}/analytics`)}
+              className="flex items-center justify-center space-x-3 p-4 rounded-xl border-2 border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 transition-all"
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
+              </svg>
+              <span className="font-medium">Analytics</span>
+            </button>
           </div>
 
-          {/* Main Dashboard */}
-          <div className="lg:col-span-3 space-y-6">
+          {/* Main Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            {/* Top Row - Key Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <StatsCard 
-                botStatus={bot.status}
-                guilds={guilds}
-                isOnline={bot.status === 'ONLINE'}
-              />
-              <PerformanceCard 
-                botStatus={bot.status}
-                isOnline={bot.status === 'ONLINE'}
-              />
-            </div>
+            {/* Console - Large Center */}
+            <div className="lg:col-span-2">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 h-96">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">
+                      <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm2 2a1 1 0 000 2h.01a1 1 0 100-2H5zm3 0a1 1 0 000 2h3a1 1 0 100-2H8z" clipRule="evenodd"/>
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900">Live Console</h3>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {bot.status === 'ONLINE' ? (
+                      <>
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span className="text-sm text-green-600 font-medium">Live</span>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                        <span className="text-sm text-gray-500">Offline</span>
+                      </>
+                    )}
+                    <button
+                      onClick={() => router.push(`/bots/${botId}/logs`)}
+                      className="ml-3 px-3 py-1 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors"
+                    >
+                      View Full Logs
+                    </button>
+                  </div>
+                </div>
 
-            {/* Middle Row - Interactive Features */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <PlaygroundCard 
-                botId={botId}
-                botStatus={bot.status}
-                isOnline={bot.status === 'ONLINE'}
-              />
-              <ConsoleCard 
-                logs={logs}
-                botStatus={bot.status}
-                isOnline={bot.status === 'ONLINE'}
-              />
-            </div>
-
-            {/* Bottom Row - Configuration Overview */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-gray-900">Configuration Overview</h3>
-                <button 
-                  onClick={() => router.push(`/bots/${botId}/config`)}
-                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                <div 
+                  ref={consoleRef}
+                  className="bg-gray-900 text-green-400 p-4 rounded-lg text-sm font-mono h-80 overflow-y-auto border border-gray-700"
                 >
-                  <span>⚙️</span>
-                  <span>Manage Configuration</span>
-                </button>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg">
-                  <div>
-                    <h4 className="font-medium text-blue-900">Welcome Messages</h4>
-                    <p className="text-sm text-blue-700">Greet new members</p>
-                  </div>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                    bot.config?.welcomeEnabled ? 'bg-green-500' : 'bg-gray-400'
-                  }`}>
-                    <span className="text-white text-sm">
-                      {bot.config?.welcomeEnabled ? '✓' : '○'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg">
-                  <div>
-                    <h4 className="font-medium text-purple-900">Moderation</h4>
-                    <p className="text-sm text-purple-700">Auto-moderation tools</p>
-                  </div>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                    bot.config?.moderationEnabled ? 'bg-green-500' : 'bg-gray-400'
-                  }`}>
-                    <span className="text-white text-sm">
-                      {bot.config?.moderationEnabled ? '✓' : '○'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-lg">
-                  <div>
-                    <h4 className="font-medium text-green-900">Auto Role</h4>
-                    <p className="text-sm text-green-700">Assign roles automatically</p>
-                  </div>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                    bot.config?.autoRoleEnabled ? 'bg-green-500' : 'bg-gray-400'
-                  }`}>
-                    <span className="text-white text-sm">
-                      {bot.config?.autoRoleEnabled ? '✓' : '○'}
-                    </span>
+                  <div className="space-y-1">
+                    {logs.length === 0 ? (
+                      <div className="text-gray-500">No logs available...</div>
+                    ) : (
+                      logs.slice(-50).map((log, index) => (
+                        <div 
+                          key={index} 
+                          className={`${index === logs.slice(-50).length - 1 ? 'text-green-300' : 'text-green-400'} leading-relaxed`}
+                        >
+                          {log}
+                        </div>
+                      ))
+                    )}
+                    {bot.status === 'ONLINE' && (
+                      <div className="text-yellow-400 animate-pulse flex items-center space-x-1">
+                        <span>●</span>
+                        <span>Waiting for events...</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
 
+            {/* Performance Stats */}
+            <div className="space-y-6">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Performance</h3>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-gray-600">CPU Usage</span>
+                      <span className="font-medium">{bot.status === 'ONLINE' ? `${realTimeStats.cpuUsage.toFixed(1)}%` : '0%'}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className={`h-2 rounded-full transition-all duration-500 ${
+                          realTimeStats.cpuUsage > 80 ? 'bg-red-500' :
+                          realTimeStats.cpuUsage > 60 ? 'bg-yellow-500' : 'bg-green-500'
+                        }`}
+                        style={{ width: bot.status === 'ONLINE' ? `${realTimeStats.cpuUsage}%` : '0%' }}
+                      ></div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-gray-600">Memory Usage</span>
+                      <span className="font-medium">{bot.status === 'ONLINE' ? `${realTimeStats.memoryUsage.toFixed(1)}%` : '0%'}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className={`h-2 rounded-full transition-all duration-500 ${
+                          realTimeStats.memoryUsage > 80 ? 'bg-red-500' :
+                          realTimeStats.memoryUsage > 60 ? 'bg-yellow-500' : 'bg-blue-500'
+                        }`}
+                        style={{ width: bot.status === 'ONLINE' ? `${realTimeStats.memoryUsage}%` : '0%' }}
+                      ></div>
+                    </div>
+                  </div>
+                  
+                  <div className="pt-2 border-t border-gray-100">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Response Time</span>
+                      <span className={`font-medium ${
+                        realTimeStats.responseTime < 100 ? 'text-green-600' :
+                        realTimeStats.responseTime < 300 ? 'text-yellow-600' : 'text-red-600'
+                      }`}>
+                        {bot.status === 'ONLINE' ? `${realTimeStats.responseTime.toFixed(0)}ms` : '0ms'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                    <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Statistics</h3>
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-gray-600">Servers</span>
+                    <span className="font-semibold text-gray-900">{guilds.length}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-gray-600">Total Users</span>
+                    <span className="font-semibold text-gray-900">
+                      {bot.status === 'ONLINE' ? guilds.reduce((acc, guild) => acc + (guild.memberCount || 0), 0).toLocaleString() : '0'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-gray-600">Messages</span>
+                    <span className="font-semibold text-gray-900">{bot.status === 'ONLINE' ? realTimeStats.messageCount.toLocaleString() : '0'}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-gray-600">Commands</span>
+                    <span className="font-semibold text-gray-900">{bot.status === 'ONLINE' ? realTimeStats.commandCount.toLocaleString() : '0'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
+
+          {/* Configuration Overview */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900">Configuration Overview</h3>
+              <button 
+                onClick={() => router.push(`/bots/${botId}/config`)}
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd"/>
+                </svg>
+                <span>Manage Configuration</span>
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg">
+                <div>
+                  <h4 className="font-medium text-blue-900">Welcome Messages</h4>
+                  <p className="text-sm text-blue-700">Greet new members</p>
+                </div>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  bot.config?.welcomeEnabled ? 'bg-green-500' : 'bg-gray-400'
+                }`}>
+                  {bot.config?.welcomeEnabled ? (
+                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                    </svg>
+                  ) : (
+                    <div className="w-3 h-3 border-2 border-white rounded-full"></div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg">
+                <div>
+                  <h4 className="font-medium text-purple-900">Moderation</h4>
+                  <p className="text-sm text-purple-700">Auto-moderation tools</p>
+                </div>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  bot.config?.moderationEnabled ? 'bg-green-500' : 'bg-gray-400'
+                }`}>
+                  {bot.config?.moderationEnabled ? (
+                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                    </svg>
+                  ) : (
+                    <div className="w-3 h-3 border-2 border-white rounded-full"></div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-lg">
+                <div>
+                  <h4 className="font-medium text-green-900">Auto Role</h4>
+                  <p className="text-sm text-green-700">Assign roles automatically</p>
+                </div>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  bot.config?.autoRoleEnabled ? 'bg-green-500' : 'bg-gray-400'
+                }`}>
+                  {bot.config?.autoRoleEnabled ? (
+                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                    </svg>
+                  ) : (
+                    <div className="w-3 h-3 border-2 border-white rounded-full"></div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </main>
     </div>
