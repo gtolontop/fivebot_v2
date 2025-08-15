@@ -6,6 +6,7 @@ import { useEffect, useState, useRef } from 'react';
 import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
 import NotificationsCenter from '@/components/NotificationsCenter';
+import Cookies from 'js-cookie';
 
 interface Bot {
   id: string;
@@ -62,34 +63,47 @@ export default function BotDetailPage() {
     }
   }, [user, botId]);
 
-  // Simulation des logs en temps réel
+  // Polling pour récupérer les vrais logs
   useEffect(() => {
-    if (!bot) return;
+    if (!bot || bot.status !== 'ONLINE') {
+      setWsConnection(null);
+      return;
+    }
 
-    const interval = setInterval(() => {
-      const now = new Date().toLocaleTimeString();
-      const randomEvents = [
-        `[${now}] Command received: /ping`,
-        `[${now}] New member joined the server`,
-        `[${now}] Welcome message sent`,
-        `[${now}] Heartbeat Discord: OK`,
-        `[${now}] Cache updated`,
-        `[${now}] Moderation: Message verified`,
-        `[${now}] Statistics updated`,
-        `[${now}] Stable connection`
-      ];
-      
-      if (bot.status === 'ONLINE' && Math.random() < 0.3) {
-        const randomEvent = randomEvents[Math.floor(Math.random() * randomEvents.length)];
-        setLogs(prev => {
-          const newLogs = [...prev, randomEvent];
-          return newLogs.slice(-20); // Garde seulement les 20 derniers logs
+    // Simulate connection state for UI
+    setWsConnection({} as WebSocket);
+    
+    const pollLogs = async () => {
+      try {
+        const token = Cookies.get('token');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/bots/${botId}/logs/recent`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.logs && data.logs.length > 0) {
+            // Replace logs instead of appending to avoid duplicates
+            setLogs(data.logs.slice(-50));
+          }
+        }
+      } catch (error) {
+        console.log('Could not fetch bot logs:', error);
       }
-    }, 3000 + Math.random() * 5000); // Entre 3 et 8 secondes
+    };
 
-    return () => clearInterval(interval);
-  }, [bot]);
+    // Fetch logs immediately and then every 2 seconds
+    pollLogs();
+    const interval = setInterval(pollLogs, 2000);
+
+    return () => {
+      clearInterval(interval);
+      setWsConnection(null);
+    };
+  }, [bot?.status, botId]);
 
 
   // Auto-scroll console to bottom
@@ -134,17 +148,15 @@ export default function BotDetailPage() {
       const response = await botsAPI.getById(botId);
       const newBot = response.data;
       
-      // Ajouter un log si le statut a changé
+      // Clear logs and reset when status changes
       if (bot && bot.status !== newBot.status) {
-        const now = new Date().toLocaleTimeString();
-        const statusMessages = {
-          'ONLINE': 'Bot connected and operational',
-          'OFFLINE': 'Bot disconnected',
-          'STARTING': 'Bot starting...',
-          'STOPPING': 'Bot stopping...',
-          'ERROR': 'Error detected'
-        };
-        setLogs(prev => [...prev, `[${now}] ${statusMessages[newBot.status] || `Statut: ${newBot.status}`}`]);
+        setLogs([]); // Clear existing logs when status changes
+        
+        if (newBot.status === 'OFFLINE') {
+          setLogs([`[${new Date().toLocaleTimeString()}] Bot is offline`]);
+        } else if (newBot.status === 'STARTING') {
+          setLogs([`[${new Date().toLocaleTimeString()}] Bot is starting...`]);
+        }
       }
       
       setBot(newBot);
@@ -154,7 +166,6 @@ export default function BotDetailPage() {
         try {
           const guildsResponse = await botsAPI.getGuilds(botId);
           setGuilds(guildsResponse.data || []);
-          setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Loaded ${guildsResponse.data?.length || 0} Discord servers`]);
         } catch (error) {
           console.log('Could not fetch guilds data:', error);
           setGuilds([]); // Reset to empty array
@@ -225,15 +236,12 @@ export default function BotDetailPage() {
       // Open in new tab
       window.open(inviteUrl, '_blank');
       
-      // Add log
-      setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Invite link generated`]);
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Error generating invite link');
     }
   };
 
   const viewLogs = () => {
-    setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Opening advanced logs viewer`]);
     // Open logs in a new modal or redirect to logs page
     window.open(`/bots/${botId}/logs`, '_blank');
   };
@@ -416,10 +424,15 @@ export default function BotDetailPage() {
                     <h3 className="text-lg font-semibold text-gray-900">Live Console</h3>
                   </div>
                   <div className="flex items-center space-x-2">
-                    {bot.status === 'ONLINE' ? (
+                    {bot.status === 'ONLINE' && wsConnection ? (
                       <>
                         <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                         <span className="text-sm text-green-600 font-medium">Live</span>
+                      </>
+                    ) : bot.status === 'ONLINE' ? (
+                      <>
+                        <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                        <span className="text-sm text-yellow-600 font-medium">Connecting...</span>
                       </>
                     ) : (
                       <>
