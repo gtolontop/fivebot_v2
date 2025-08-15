@@ -16,7 +16,8 @@
       "Bash(npx prisma:*)",
       "Bash(copy:*)",
       "Bash(rm:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(chmod:*)"
     ],
     "deny": [],
     "ask": [],
