@@ -76,35 +76,26 @@ export class BotMetricsService {
       const startOfDay = new Date(today);
       const uptimeSeconds = Math.floor((now.getTime() - startOfDay.getTime()) / 1000);
 
-      // Upsert metrics for today
-      await this.prisma.botMetrics.upsert({
-        where: {
-          botId_date: {
-            botId,
-            date: today,
-          },
-        },
-        update: {
-          commandsUsed,
-          messagesProcessed,
-          guildsCount,
-          usersCount,
-          uptimeSeconds,
-          avgResponseTime,
-          errorsCount,
-        },
-        create: {
-          botId,
-          date: today,
-          commandsUsed,
-          messagesProcessed,
-          guildsCount,
-          usersCount,
-          uptimeSeconds,
-          avgResponseTime,
-          errorsCount,
-        },
-      });
+      // Use raw SQL for now since Prisma client needs regeneration
+      const uuid = require('crypto').randomUUID();
+      
+      await this.prisma.$executeRaw`
+        INSERT INTO bot_metrics (
+          id, bot_id, date, commands_used, messages_processed, 
+          guilds_count, users_count, uptime_seconds, avg_response_time_ms, errors_count
+        ) VALUES (
+          ${uuid}, ${botId}, ${today}, ${commandsUsed}, ${messagesProcessed},
+          ${guildsCount}, ${usersCount}, ${uptimeSeconds}, ${avgResponseTime}, ${errorsCount}
+        ) ON DUPLICATE KEY UPDATE
+          commands_used = ${commandsUsed},
+          messages_processed = ${messagesProcessed},
+          guilds_count = ${guildsCount},
+          users_count = ${usersCount},
+          uptime_seconds = ${uptimeSeconds},
+          avg_response_time_ms = ${avgResponseTime},
+          errors_count = ${errorsCount},
+          updated_at = CURRENT_TIMESTAMP
+      `;
     } catch (error) {
       console.error(`Error recording metrics for bot ${botId}:`, error);
       // Don't throw - metrics recording shouldn't break other functionality
