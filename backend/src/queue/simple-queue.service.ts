@@ -179,6 +179,7 @@ export class SimpleQueueService implements IQueueService {
       // Handle process exit
       botProcess.on('exit', async (code) => {
         console.log(`[Bot ${botId}] Process exited with code ${code}`);
+        console.log(`🗂️ Removing bot ${botId} from running processes list`);
         this.runningBots.delete(botId);
         
         // Update bot status to offline
@@ -187,9 +188,9 @@ export class SimpleQueueService implements IQueueService {
             where: { id: botId },
             data: { status: 'OFFLINE' },
           });
-          console.log(`[Bot ${botId}] Status updated to OFFLINE after process exit`);
+          console.log(`[Bot ${botId}] ✅ Status updated to OFFLINE after process exit`);
         } catch (dbError) {
-          console.error(`[Bot ${botId}] Failed to update bot status:`, dbError);
+          console.error(`[Bot ${botId}] ❌ Failed to update bot status:`, dbError);
         }
       });
 
