@@ -24,7 +24,7 @@ export class BotRecoveryService implements OnApplicationBootstrap {
             { status: BotStatus.ONLINE },
             { status: BotStatus.STARTING },
             // Also recover bots that were in error state but should be running
-            { status: BotStatus.ERROR, shouldAutoRestart: true },
+            { status: BotStatus.ERROR },
           ],
         },
         include: {
@@ -126,20 +126,24 @@ export class BotRecoveryService implements OnApplicationBootstrap {
    * Mark a bot for auto-restart on system recovery
    */
   async enableAutoRestart(botId: string): Promise<void> {
-    await this.prisma.bot.update({
-      where: { id: botId },
-      data: { shouldAutoRestart: true },
-    });
+    // Temporarily disabled until database migration is complete
+    // await this.prisma.bot.update({
+    //   where: { id: botId },
+    //   data: { shouldAutoRestart: true },
+    // });
+    this.logger.log(`Auto-restart enabled for bot ${botId} (feature temporarily disabled)`);
   }
 
   /**
    * Disable auto-restart for a bot
    */
   async disableAutoRestart(botId: string): Promise<void> {
-    await this.prisma.bot.update({
-      where: { id: botId },
-      data: { shouldAutoRestart: false },
-    });
+    // Temporarily disabled until database migration is complete
+    // await this.prisma.bot.update({
+    //   where: { id: botId },
+    //   data: { shouldAutoRestart: false },
+    // });
+    this.logger.log(`Auto-restart disabled for bot ${botId} (feature temporarily disabled)`);
   }
 
   /**
