@@ -398,8 +398,31 @@ export class SimpleQueueService implements IQueueService {
   async forceStopBot(botId: string): Promise<void> {
     const botProcess = this.runningBots.get(botId);
     if (botProcess) {
-      console.log(`🚨 Force stopping bot ${botId}`);
-      botProcess.kill('SIGKILL');
+      console.log(`🚨 Force stopping bot ${botId} (PID: ${botProcess.pid})`);
+      
+      // Try SIGKILL first
+      try {
+        botProcess.kill('SIGKILL');
+      } catch (error) {
+        console.log(`⚠️ SIGKILL failed, trying taskkill on Windows...`);
+        
+        // On Windows, use taskkill as backup
+        if (process.platform === 'win32') {
+          try {
+            const { exec } = require('child_process');
+            exec(`taskkill /F /PID ${botProcess.pid}`, (error, stdout, stderr) => {
+              if (error) {
+                console.error(`taskkill error: ${error}`);
+              } else {
+                console.log(`✅ Process ${botProcess.pid} killed with taskkill`);
+              }
+            });
+          } catch (execError) {
+            console.error(`Failed to execute taskkill: ${execError}`);
+          }
+        }
+      }
+      
       this.runningBots.delete(botId);
       
       // Update database status
@@ -407,6 +430,8 @@ export class SimpleQueueService implements IQueueService {
         where: { id: botId },
         data: { status: 'OFFLINE' },
       });
+    } else {
+      console.log(`⚠️ Bot ${botId} not found in running processes`);
     }
   }
 
