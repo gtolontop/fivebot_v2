@@ -17,7 +17,8 @@
       "Bash(copy:*)",
       "Bash(rm:*)",
       "Bash(node:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": [],
