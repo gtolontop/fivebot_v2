@@ -39,6 +39,8 @@ export default function BotDetailPage() {
   ]);
   const [showStats, setShowStats] = useState(false);
   const [guilds, setGuilds] = useState<any[]>([]);
+  const [activeFeature, setActiveFeature] = useState<'console' | 'performance' | 'notifications' | 'playground' | 'analytics'>('console');
+  const [notificationCount, setNotificationCount] = useState(0);
   const consoleRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
