@@ -138,6 +138,28 @@ export default function BotsPage() {
           toast.success('Bot stopped successfully');
           await fetchBots(); // Refresh the list
           break;
+        case 'force-stop':
+          if (confirm('Force stop will immediately kill the bot process. Continue?')) {
+            try {
+              const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/bots/${botId}/force-stop`, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${Cookies.get('token')}`,
+                  'Content-Type': 'application/json'
+                }
+              });
+              if (response.ok) {
+                toast.success('Bot force stopped successfully');
+                await fetchBots();
+              } else {
+                throw new Error('Force stop failed');
+              }
+            } catch (error) {
+              toast.error('Failed to force stop bot');
+              console.error('Force stop error:', error);
+            }
+          }
+          break;
         case 'delete':
           if (confirm('Are you sure you want to delete this bot? This action cannot be undone.')) {
             await botsAPI.delete(botId);
@@ -282,7 +304,7 @@ export default function BotsPage() {
     }
   };
 
-  // Auto-sync bot statuses when page loads and periodically
+  // Auto-sync bot statuses when page loads and periodically  
   useEffect(() => {
     if (user) {
       // Auto-sync statuses when page loads
@@ -290,10 +312,10 @@ export default function BotsPage() {
         verifyAllStatusesQuietly();
       }, 1000); // Wait 1 second after initial load
       
-      // Auto-refresh statuses every 30 seconds
+      // Auto-refresh statuses every 60 seconds (reduced frequency to avoid interfering with manual actions)
       const intervalId = setInterval(() => {
         verifyAllStatusesQuietly();
-      }, 30000); // 30 seconds
+      }, 60000); // 60 seconds instead of 30
 
       // Cleanup on unmount
       return () => {
@@ -685,15 +707,27 @@ export default function BotsPage() {
                               <span>Start Bot</span>
                             </button>
                           ) : (
-                            <button
-                              onClick={() => handleAction(bot.id, 'stop')}
-                              className="w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50 flex items-center space-x-2"
-                            >
-                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clipRule="evenodd"/>
-                              </svg>
-                              <span>Stop Bot</span>
-                            </button>
+                            <>
+                              <button
+                                onClick={() => handleAction(bot.id, 'stop')}
+                                className="w-full text-left px-4 py-2 text-sm text-orange-700 hover:bg-orange-50 flex items-center space-x-2"
+                              >
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clipRule="evenodd"/>
+                                </svg>
+                                <span>Stop Bot</span>
+                              </button>
+                              
+                              <button
+                                onClick={() => handleAction(bot.id, 'force-stop')}
+                                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
+                              >
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"/>
+                                </svg>
+                                <span>Kill Process</span>
+                              </button>
+                            </>
                           )}
                           
                           <div className="border-t border-gray-100 my-1"></div>
