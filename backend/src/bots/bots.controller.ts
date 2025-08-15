@@ -138,4 +138,12 @@ export class BotsController {
     }
     return this.botMetricsService.getBotMetrics(id);
   }
+
+  @Post('setup/metrics')
+  async setupMetrics(@Req() req: any) {
+    // Only allow this for development/setup
+    await this.setupMetricsService.createMetricsTable();
+    await this.setupMetricsService.seedInitialMetrics();
+    return { message: 'Metrics setup completed' };
+  }
 }
