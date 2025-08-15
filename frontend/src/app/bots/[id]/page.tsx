@@ -120,14 +120,18 @@ export default function BotDetailPage() {
       
       setBot(newBot);
       
-      // Fetch guilds data for statistics
+      // Fetch guilds data for statistics (only if bot is online)
       if (newBot.status === 'ONLINE') {
         try {
           const guildsResponse = await botsAPI.getGuilds(botId);
           setGuilds(guildsResponse.data || []);
+          setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Loaded ${guildsResponse.data?.length || 0} Discord servers`]);
         } catch (error) {
-          console.log('Could not fetch guilds data');
+          console.log('Could not fetch guilds data:', error);
+          setGuilds([]); // Reset to empty array
         }
+      } else {
+        setGuilds([]); // Clear guilds if bot is offline
       }
     } catch (error) {
       console.error('Erreur lors du chargement du bot:', error);
