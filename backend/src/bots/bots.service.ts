@@ -159,7 +159,10 @@ export class BotsService {
 
   async findAll(ownerId: string): Promise<Bot[]> {
     return this.prisma.bot.findMany({
-      where: { ownerId },
+      where: { 
+        ownerId,
+        isActive: true  // Only return active bots
+      },
       include: {
         config: true,
         hosts: {
@@ -178,7 +181,10 @@ export class BotsService {
   }
 
   async findOne(id: string, ownerId?: string): Promise<Bot | null> {
-    const where: any = { id };
+    const where: any = { 
+      id,
+      isActive: true  // Only return active bots
+    };
     if (ownerId) {
       where.ownerId = ownerId;
     }
