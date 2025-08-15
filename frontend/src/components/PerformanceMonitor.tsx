@@ -1,7 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Line } from 'react-chartjs-2';
+import dynamic from 'next/dynamic';
+
+// Dynamically import Chart component to avoid SSR issues
+const Line = dynamic(() => import('react-chartjs-2').then(mod => mod.Line), {
+  ssr: false,
+  loading: () => <div className="h-64 bg-gray-100 rounded animate-pulse"></div>
+});
 import {
   Chart as ChartJS,
   CategoryScale,
