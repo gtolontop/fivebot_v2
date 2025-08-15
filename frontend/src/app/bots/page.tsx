@@ -41,6 +41,10 @@ export default function BotsPage() {
   useEffect(() => {
     if (user) {
       fetchBots();
+      // Auto-sync statuses when page loads
+      setTimeout(() => {
+        verifyAllStatusesQuietly();
+      }, 1000); // Wait 1 second after initial load
     }
   }, [user]);
 
