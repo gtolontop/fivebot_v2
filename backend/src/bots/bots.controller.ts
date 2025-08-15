@@ -263,14 +263,18 @@ export class BotsController {
                 
                 // If Discord shows bot as offline and we expected it to be offline (manual stop), that's correct
                 if (expectedStatus === 'OFFLINE' && bot.status !== 'OFFLINE') {
-                  await this.botsService.updateStatus(bot.id, 'OFFLINE');
-                  updated++;
-                  console.log(`✅ Confirmed ${bot.name} is offline as expected (manual stop)`);
+                  const wasUpdated = await this.botsService.updateStatusSafe(bot.id, 'OFFLINE', false); // Force update to OFFLINE
+                  if (wasUpdated) {
+                    updated++;
+                    console.log(`✅ Confirmed ${bot.name} is offline as expected (manual stop)`);
+                  }
                 }
               } else {
-                await this.botsService.updateStatus(bot.id, expectedStatus as any);
-                updated++;
-                console.log(`✅ Updated ${bot.name}: ${bot.status} -> ${expectedStatus}`);
+                const wasUpdated = await this.botsService.updateStatusSafe(bot.id, expectedStatus as any, true);
+                if (wasUpdated) {
+                  updated++;
+                  console.log(`✅ Updated ${bot.name}: ${bot.status} -> ${expectedStatus}`);
+                }
               }
             } else {
               console.log(`✨ ${bot.name} status is already correct: ${expectedStatus}`);
@@ -280,9 +284,11 @@ export class BotsController {
             console.error(`❌ Error checking bot ${bot.name}:`, error.message);
             // If we can't check the bot, assume it's offline
             if (bot.status !== 'OFFLINE') {
-              await this.botsService.updateStatus(bot.id, 'OFFLINE');
-              updated++;
-              console.log(`🔄 Set ${bot.name} to OFFLINE (couldn't verify)`);
+              const wasUpdated = await this.botsService.updateStatusSafe(bot.id, 'OFFLINE', true);
+              if (wasUpdated) {
+                updated++;
+                console.log(`🔄 Set ${bot.name} to OFFLINE (couldn't verify)`);
+              }
             }
             errors++;
           }
