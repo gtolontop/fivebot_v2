@@ -425,14 +425,67 @@ export class SimpleQueueService implements IQueueService {
       }
       
       this.runningBots.delete(botId);
-      
-      // Update database status
+    } else {
+      console.log(`⚠️ Bot ${botId} not found in running processes`);
+    }
+
+    // FORCE DISCORD DISCONNECTION by regenerating token or invalidating session
+    try {
+      const bot = await this.prisma.bot.findUnique({
+        where: { id: botId },
+        select: { tokenEncrypted: true, name: true }
+      });
+
+      if (bot) {
+        const token = this.encryptionService.decrypt(bot.tokenEncrypted);
+        
+        // Try to invalidate the Discord session by calling @me/connections endpoint with invalid data
+        console.log(`🔌 Attempting to force Discord disconnection for bot ${bot.name}...`);
+        
+        try {
+          // This will fail and potentially invalidate the session
+          await fetch('https://discord.com/api/v10/users/@me/guilds', {
+            method: 'DELETE',  // Invalid method to trigger error
+            headers: {
+              'Authorization': `Bot ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+        } catch (discordError) {
+          console.log(`📤 Discord API error triggered (expected for force disconnect)`);
+        }
+
+        // Additional: try to make bot appear invisible immediately
+        try {
+          await fetch('https://discord.com/api/v10/users/@me/presence', {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bot ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              status: 'invisible',
+              activities: []
+            })
+          });
+          console.log(`👻 Set bot ${bot.name} to invisible status`);
+        } catch (presenceError) {
+          console.log(`⚠️ Could not set presence to invisible`);
+        }
+      }
+    } catch (error) {
+      console.error(`❌ Error forcing Discord disconnection:`, error);
+    }
+    
+    // Update database status
+    try {
       await this.prisma.bot.update({
         where: { id: botId },
         data: { status: 'OFFLINE' },
       });
-    } else {
-      console.log(`⚠️ Bot ${botId} not found in running processes`);
+      console.log(`💾 Bot ${botId} status set to OFFLINE in database`);
+    } catch (dbError) {
+      console.error(`❌ Failed to update bot status in database:`, dbError);
     }
   }
 
