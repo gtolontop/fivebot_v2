@@ -410,6 +410,38 @@ export class BotsService {
     }
   }
 
+  async updateStatusSafe(botId: string, status: BotStatus, respectUserIntent: boolean = true): Promise<boolean> {
+    if (respectUserIntent) {
+      // Check if bot is manually stopped
+      const bot = await this.prisma.bot.findUnique({
+        where: { id: botId },
+        select: { shouldAutoRestart: true, status: true, name: true }
+      });
+
+      if (!bot) {
+        console.error(`Bot ${botId} not found for status update`);
+        return false;
+      }
+
+      // Don't override status if bot is manually stopped (shouldAutoRestart = false)
+      if (bot.shouldAutoRestart === false && status === 'ONLINE') {
+        console.log(`🚫 Bot ${bot.name} is manually stopped - not setting to ONLINE`);
+        return false;
+      }
+
+      // If bot is manually stopped and Discord shows offline, update to OFFLINE
+      if (bot.shouldAutoRestart === false && status === 'OFFLINE') {
+        await this.updateStatus(botId, 'OFFLINE');
+        console.log(`✅ Confirmed bot ${bot.name} is OFFLINE (manual stop)`);
+        return true;
+      }
+    }
+
+    // Normal update
+    await this.updateStatus(botId, status);
+    return true;
+  }
+
   async getDiscordGuilds(botId: string, ownerId: string): Promise<any[]> {
     const bot = await this.findOne(botId, ownerId);
     if (!bot) {
