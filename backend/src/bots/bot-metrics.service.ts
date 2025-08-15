@@ -129,10 +129,10 @@ export class BotMetricsService {
       todayMetrics = await this.prisma.$queryRawUnsafe(query, ...bots.map(bot => bot.id), today) as any[];
     }
 
-    const todayCommands = todayMetrics.reduce((sum, metric) => sum + metric.commandsUsed, 0);
-    const todayMessages = todayMetrics.reduce((sum, metric) => sum + metric.messagesProcessed, 0);
-    const totalServers = todayMetrics.reduce((sum, metric) => sum + metric.guildsCount, 0);
-    const totalUsers = todayMetrics.reduce((sum, metric) => sum + metric.usersCount, 0);
+    const todayCommands = todayMetrics.reduce((sum, metric) => sum + (metric.commands_used || 0), 0);
+    const todayMessages = todayMetrics.reduce((sum, metric) => sum + (metric.messages_processed || 0), 0);
+    const totalServers = todayMetrics.reduce((sum, metric) => sum + (metric.guilds_count || 0), 0);
+    const totalUsers = todayMetrics.reduce((sum, metric) => sum + (metric.users_count || 0), 0);
 
     // Get monthly activity (last 30 days)
     const thirtyDaysAgo = new Date(today);
