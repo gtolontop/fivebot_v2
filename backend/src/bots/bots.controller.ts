@@ -162,14 +162,9 @@ export class BotsController {
       `[${new Date(log.createdAt).toLocaleTimeString()}] ${log.message || `${log.jobType}: ${log.status}`}`
     ) || [];
 
-    // Add some basic status logs
-    const statusLogs = [
-      `[${new Date().toLocaleTimeString()}] Bot status: ${bot.status}`,
-      `[${new Date().toLocaleTimeString()}] Bot "${bot.name}" is ${bot.status.toLowerCase()}`
-    ];
-
+    // Only return the actual logs, no duplicate status messages
     return {
-      logs: [...statusLogs, ...recentLogs].slice(-20)
+      logs: recentLogs
     };
   }
 }

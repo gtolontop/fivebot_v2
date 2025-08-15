@@ -24,25 +24,11 @@ export class AppService implements OnApplicationBootstrap {
 
       console.log(`✅ Reset ${result.count} bots to OFFLINE status`);
 
-      // Also create logs for the status changes
-      const affectedBots = await this.prisma.bot.findMany({
-        where: {
-          status: 'OFFLINE'
-        },
-        select: { id: true }
-      });
-
-      // Create job logs for each reset bot
-      for (const bot of affectedBots) {
-        await this.prisma.jobLog.create({
-          data: {
-            botId: bot.id,
-            jobId: `startup-reset-${Date.now()}`,
-            jobType: 'SYSTEM_STARTUP',
-            status: 'COMPLETED',
-            message: 'Bot status reset to OFFLINE due to backend restart'
-          }
-        });
+      // Only create one system log instead of individual bot logs
+      if (result.count > 0) {
+        console.log(`📝 Created system startup log for ${result.count} bots reset`);
+        // You could create a single system log entry here if needed
+        // instead of spamming individual logs for each bot
       }
 
     } catch (error) {

@@ -95,9 +95,9 @@ export default function BotDetailPage() {
       }
     };
 
-    // Fetch logs immediately and then every 2 seconds
+    // Fetch logs immediately and then every 5 seconds (less frequent)
     pollLogs();
-    const interval = setInterval(pollLogs, 2000);
+    const interval = setInterval(pollLogs, 5000);
 
     return () => {
       clearInterval(interval);
