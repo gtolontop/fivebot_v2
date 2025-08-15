@@ -38,6 +38,7 @@ export default function BotDetailPage() {
     `[${new Date().toLocaleTimeString()}] Waiting for connection...`
   ]);
   const [showStats, setShowStats] = useState(false);
+  const [guilds, setGuilds] = useState<any[]>([]);
   const consoleRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
