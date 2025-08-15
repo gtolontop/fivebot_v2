@@ -119,7 +119,7 @@ export class BotsController {
         throw new Error('Bot not found');
       }
 
-      const queueService = this.botsService['queueService'];
+      const queueService = this.botsService['queueService'] as any;
       if (queueService.forceStopBot) {
         await queueService.forceStopBot(id);
         console.log(`🚨 Force stopped bot ${bot.name} (${id})`);
