@@ -444,7 +444,7 @@ export class BotsController {
   @Get('debug/running')
   async getRunningBots(@Req() req: any) {
     try {
-      const queueService = this.botsService['queueService'];
+      const queueService = this.botsService['queueService'] as any;
       const runningBots = queueService.getRunningBots ? queueService.getRunningBots() : [];
       
       console.log(`🔍 Debug: ${runningBots.length} bots currently running in process manager`);
@@ -463,7 +463,7 @@ export class BotsController {
   @Post('kill-all-processes')
   async killAllBotProcesses(@Req() req: any) {
     try {
-      const queueService = this.botsService['queueService'];
+      const queueService = this.botsService['queueService'] as any;
       const runningBots = queueService.getRunningBots ? queueService.getRunningBots() : [];
       
       console.log(`🔪 Killing all ${runningBots.length} running bot processes...`);
