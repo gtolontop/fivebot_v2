@@ -4,6 +4,8 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { ScheduleModule } from '@nestjs/schedule';
 
 import { PrismaModule } from './common/prisma/prisma.module';
+import { CacheModule } from './common/cache/cache.module';
+import { DiscordModule } from './common/discord/discord.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { BotsModule } from './bots/bots.module';
@@ -21,6 +23,8 @@ import { QueueModule } from './queue/queue.module';
     }),
     ScheduleModule.forRoot(),
     PrismaModule,
+    CacheModule,
+    DiscordModule,
     AuthModule,
     UsersModule,
     BotsModule,
