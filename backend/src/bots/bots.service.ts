@@ -238,7 +238,7 @@ export class BotsService {
       where: { id: botId },
       data: { 
         status: BotStatus.STARTING,
-        shouldAutoRestart: true, // Enable auto-restart when user manually starts
+        // shouldAutoRestart: true, // Enable auto-restart when user manually starts (temporarily disabled)
       },
     });
 
