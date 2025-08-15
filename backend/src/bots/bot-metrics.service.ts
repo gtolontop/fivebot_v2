@@ -106,12 +106,6 @@ export class BotMetricsService {
     // Get user's bots
     const bots = await this.prisma.bot.findMany({
       where: { ownerId: userId },
-      include: {
-        metrics: {
-          orderBy: { date: 'desc' },
-          take: 30, // Last 30 days
-        },
-      },
     });
 
     const totalBots = bots.length;
