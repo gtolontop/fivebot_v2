@@ -367,23 +367,46 @@ export class BotsService {
   }
 
   async updateStatus(botId: string, status: BotStatus, metadata?: any): Promise<void> {
-    await this.prisma.bot.update({
-      where: { id: botId },
-      data: { status },
-    });
+    let retries = 3;
+    
+    while (retries > 0) {
+      try {
+        await this.prisma.bot.update({
+          where: { id: botId },
+          data: { status },
+        });
+        break; // Success, exit retry loop
+      } catch (error: any) {
+        if (error.code === 'P2034' || (error.message && error.message.includes('Record has changed'))) {
+          // Concurrency conflict, retry after a short delay
+          retries--;
+          if (retries > 0) {
+            await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 200)); // Random delay 100-300ms
+            continue;
+          }
+        }
+        // Re-throw if it's not a concurrency error or we're out of retries
+        console.error('Failed to update bot status after retries:', error);
+        return; // Don't throw, just log and continue
+      }
+    }
 
     // Only log significant status changes to avoid spam
     if (status === 'ONLINE' || status === 'ERROR') {
-      await this.prisma.jobLog.create({
-        data: {
-          botId,
-          jobId: `status-${Date.now()}`,
-          jobType: 'STATUS_UPDATE',
-          status: 'COMPLETED',
-          message: `Bot status changed to ${status}`,
-          metadata,
-        },
-      });
+      try {
+        await this.prisma.jobLog.create({
+          data: {
+            botId,
+            jobId: `status-${Date.now()}`,
+            jobType: 'STATUS_UPDATE',
+            status: 'COMPLETED',
+            message: `Bot status changed to ${status}`,
+            metadata,
+          },
+        });
+      } catch (error) {
+        console.error('Failed to create status log (non-critical):', error);
+      }
     }
   }
 
