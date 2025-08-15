@@ -5,10 +5,12 @@ import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
 import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
-import PerformanceMonitor from '@/components/PerformanceMonitor';
+import PerformanceCard from '@/components/PerformanceCard';
+import PlaygroundCard from '@/components/PlaygroundCard';
+import StatsCard from '@/components/StatsCard';
+import ConsoleCard from '@/components/ConsoleCard';
+import QuickActionsCard from '@/components/QuickActionsCard';
 import NotificationsCenter from '@/components/NotificationsCenter';
-import BotPlayground from '@/components/BotPlayground';
-import AnalyticsDashboard from '@/components/AnalyticsDashboard';
 
 interface Bot {
   id: string;
@@ -43,9 +45,8 @@ export default function BotDetailPage() {
   ]);
   const [showStats, setShowStats] = useState(false);
   const [guilds, setGuilds] = useState<any[]>([]);
-  const [activeFeature, setActiveFeature] = useState<'console' | 'performance' | 'notifications' | 'playground' | 'analytics'>('console');
+  const [showNotifications, setShowNotifications] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
-  const consoleRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -88,12 +89,6 @@ export default function BotDetailPage() {
     return () => clearInterval(interval);
   }, [bot]);
 
-  // Auto-scroll console to bottom when new logs are added
-  useEffect(() => {
-    if (consoleRef.current) {
-      consoleRef.current.scrollTop = consoleRef.current.scrollHeight;
-    }
-  }, [logs]);
 
   // Auto-refresh bot status every 10 seconds
   useEffect(() => {
@@ -239,317 +234,178 @@ export default function BotDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Header */}
+      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div>
-              <div className="flex items-center space-x-4">
-                <button
-                  onClick={() => router.push('/bots')}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  ← Back
-                </button>
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">{bot.name}</h1>
-                  <div className="flex items-center space-x-2 mt-1">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(bot.status)}`}>
-                      {bot.status}
-                    </span>
-                    <span className="text-sm text-gray-500">
-                      ID: {bot.id}
-                    </span>
-                  </div>
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => router.push('/bots')}
+                className="flex items-center space-x-2 text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <span>←</span>
+                <span className="font-medium">Back to Bots</span>
+              </button>
+              <div className="h-6 w-px bg-gray-300"></div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">{bot.name}</h1>
+                <div className="flex items-center space-x-3 mt-1">
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(bot.status)}`}>
+                    <div className="w-1.5 h-1.5 bg-current rounded-full mr-1.5"></div>
+                    {bot.status}
+                  </span>
+                  <span className="text-xs text-gray-500 font-mono">
+                    {bot.id.substring(0, 8)}...
+                  </span>
                 </div>
               </div>
             </div>
-            <div className="flex space-x-3">
-              {bot.status === 'OFFLINE' ? (
-                <button
-                  onClick={handleStart}
-                  disabled={actionLoading === 'start'}
-                  className="btn-primary"
-                >
-                  {actionLoading === 'start' ? (
-                    <>
-                      <div className="discord-spinner w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                      Starting...
-                    </>
-                  ) : (
-                    'Start'
-                  )}
-                </button>
-              ) : (
-                <button
-                  onClick={handleStop}
-                  disabled={actionLoading === 'stop'}
-                  className="btn-secondary"
-                >
-                  {actionLoading === 'stop' ? (
-                    <>
-                      <div className="discord-spinner w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full mr-2"></div>
-                      Stopping...
-                    </>
-                  ) : (
-                    'Stop'
-                  )}
-                </button>
-              )}
+
+            {/* Action Buttons */}
+            <div className="flex items-center space-x-2">
               <button
-                onClick={generateInviteLink}
-                className="btn-outline"
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
               >
-                Invite
+                <span className="text-lg">🔔</span>
+                {notificationCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                    {notificationCount}
+                  </span>
+                )}
               </button>
               <button
                 onClick={handleDelete}
                 disabled={actionLoading === 'delete'}
-                className="btn-danger"
+                className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all disabled:opacity-50"
+                title="Delete Bot"
               >
-                {actionLoading === 'delete' ? 'Deleting...' : 'Delete'}
+                <span className="text-lg">🗑️</span>
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Informations principales */}
-            <div className="lg:col-span-2 space-y-6">
-              <div className="card p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Information</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* Notifications Overlay */}
+      {showNotifications && (
+        <div className="fixed inset-0 z-50 overflow-hidden">
+          <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={() => setShowNotifications(false)}></div>
+          <div className="absolute right-4 top-20 w-96 max-h-[80vh] overflow-hidden">
+            <NotificationsCenter 
+              botId={botId} 
+              botStatus={bot.status}
+              onNotificationUpdate={setNotificationCount}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          
+          {/* Left Sidebar - Quick Actions */}
+          <div className="lg:col-span-1">
+            <QuickActionsCard
+              botId={botId}
+              botStatus={bot.status}
+              onStart={handleStart}
+              onStop={handleStop}
+              onGenerateInvite={generateInviteLink}
+              actionLoading={actionLoading}
+            />
+          </div>
+
+          {/* Main Dashboard */}
+          <div className="lg:col-span-3 space-y-6">
+            
+            {/* Top Row - Key Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <StatsCard 
+                botStatus={bot.status}
+                guilds={guilds}
+                isOnline={bot.status === 'ONLINE'}
+              />
+              <PerformanceCard 
+                botStatus={bot.status}
+                isOnline={bot.status === 'ONLINE'}
+              />
+            </div>
+
+            {/* Middle Row - Interactive Features */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <PlaygroundCard 
+                botId={botId}
+                botStatus={bot.status}
+                isOnline={bot.status === 'ONLINE'}
+              />
+              <ConsoleCard 
+                logs={logs}
+                botStatus={bot.status}
+                isOnline={bot.status === 'ONLINE'}
+              />
+            </div>
+
+            {/* Bottom Row - Configuration Overview */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">Configuration Overview</h3>
+                <button 
+                  onClick={() => router.push(`/bots/${botId}/config`)}
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <span>⚙️</span>
+                  <span>Manage Configuration</span>
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Name</label>
-                    <p className="mt-1 text-sm text-gray-900">{bot.name}</p>
+                    <h4 className="font-medium text-blue-900">Welcome Messages</h4>
+                    <p className="text-sm text-blue-700">Greet new members</p>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Status</label>
-                    <span className={`mt-1 inline-flex px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(bot.status)}`}>
-                      {bot.status}
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                    bot.config?.welcomeEnabled ? 'bg-green-500' : 'bg-gray-400'
+                  }`}>
+                    <span className="text-white text-sm">
+                      {bot.config?.welcomeEnabled ? '✓' : '○'}
                     </span>
                   </div>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Client ID</label>
-                    <p className="mt-1 text-sm text-gray-900 font-mono">{bot.clientId || 'N/A'}</p>
+                    <h4 className="font-medium text-purple-900">Moderation</h4>
+                    <p className="text-sm text-purple-700">Auto-moderation tools</p>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Created</label>
-                    <p className="mt-1 text-sm text-gray-900">{new Date(bot.createdAt).toLocaleDateString()}</p>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                    bot.config?.moderationEnabled ? 'bg-green-500' : 'bg-gray-400'
+                  }`}>
+                    <span className="text-white text-sm">
+                      {bot.config?.moderationEnabled ? '✓' : '○'}
+                    </span>
                   </div>
                 </div>
-              </div>
 
-              {/* Configuration */}
-              <div className="card p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Configuration</h3>
-                  <button 
-                    onClick={() => router.push(`/bots/${botId}/config`)}
-                    className="btn-secondary text-sm"
-                  >
-                    ⚙️ Configuration
-                  </button>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <label className="text-sm font-medium text-gray-700">Welcome Message</label>
-                      <p className="text-xs text-gray-500">Send a message to new members</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={bot.config?.welcomeEnabled || false}
-                        className="sr-only peer"
-                        readOnly
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-discord-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-discord-600"></div>
-                    </label>
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-lg">
+                  <div>
+                    <h4 className="font-medium text-green-900">Auto Role</h4>
+                    <p className="text-sm text-green-700">Assign roles automatically</p>
                   </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <label className="text-sm font-medium text-gray-700">Moderation</label>
-                      <p className="text-xs text-gray-500">Automatic moderation features</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={bot.config?.moderationEnabled || false}
-                        className="sr-only peer"
-                        readOnly
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-discord-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-discord-600"></div>
-                    </label>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <label className="text-sm font-medium text-gray-700">Automatic Role Assignment</label>
-                      <p className="text-xs text-gray-500">Assign a role to new members</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={bot.config?.autoRoleEnabled || false}
-                        className="sr-only peer"
-                        readOnly
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-discord-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-discord-600"></div>
-                    </label>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                    bot.config?.autoRoleEnabled ? 'bg-green-500' : 'bg-gray-400'
+                  }`}>
+                    <span className="text-white text-sm">
+                      {bot.config?.autoRoleEnabled ? '✓' : '○'}
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Console/Actions */}
-            <div className="space-y-6">
-              <div className="card p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Premium Features</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  <button 
-                    onClick={() => setActiveFeature('console')}
-                    className={`p-3 rounded-lg border text-sm font-medium transition-colors ${
-                      activeFeature === 'console' 
-                        ? 'bg-blue-50 border-blue-200 text-blue-700' 
-                        : 'hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="text-lg mb-1">📟</div>
-                    Console
-                  </button>
-                  <button 
-                    onClick={() => setActiveFeature('performance')}
-                    className={`p-3 rounded-lg border text-sm font-medium transition-colors ${
-                      activeFeature === 'performance' 
-                        ? 'bg-blue-50 border-blue-200 text-blue-700' 
-                        : 'hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="text-lg mb-1">📊</div>
-                    Performance
-                  </button>
-                  <button 
-                    onClick={() => setActiveFeature('notifications')}
-                    className={`relative p-3 rounded-lg border text-sm font-medium transition-colors ${
-                      activeFeature === 'notifications' 
-                        ? 'bg-blue-50 border-blue-200 text-blue-700' 
-                        : 'hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="text-lg mb-1">🔔</div>
-                    Notifications
-                    {notificationCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">
-                        {notificationCount}
-                      </span>
-                    )}
-                  </button>
-                  <button 
-                    onClick={() => setActiveFeature('playground')}
-                    className={`p-3 rounded-lg border text-sm font-medium transition-colors ${
-                      activeFeature === 'playground' 
-                        ? 'bg-blue-50 border-blue-200 text-blue-700' 
-                        : 'hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="text-lg mb-1">🎮</div>
-                    Playground
-                  </button>
-                </div>
-                <button 
-                  onClick={() => setActiveFeature('analytics')}
-                  className={`w-full mt-2 p-3 rounded-lg border text-sm font-medium transition-colors ${
-                    activeFeature === 'analytics' 
-                      ? 'bg-blue-50 border-blue-200 text-blue-700' 
-                      : 'hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="text-lg mb-1">📈</div>
-                  Advanced Analytics
-                </button>
-                
-                <div className="border-t pt-3 mt-4 space-y-2">
-                  <button 
-                    onClick={() => router.push(`/bots/${botId}/config`)}
-                    className="w-full btn-secondary text-sm"
-                  >
-                    ⚙️ Configuration
-                  </button>
-                  <button 
-                    onClick={generateInviteLink}
-                    className="w-full btn-outline text-sm"
-                  >
-                    🔗 Invite Link
-                  </button>
-                  <button 
-                    onClick={viewLogs}
-                    className="w-full btn-outline text-sm"
-                  >
-                    📄 View Logs
-                  </button>
-                </div>
-              </div>
-
-              {/* Dynamic Feature Content */}
-              {activeFeature === 'console' && (
-                <div className="card p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Real-time Console</h3>
-                  <div 
-                    ref={consoleRef}
-                    className="bg-gray-900 text-green-400 p-4 rounded-lg text-xs font-mono h-64 overflow-y-auto"
-                  >
-                    <div className="space-y-1">
-                      {logs.map((log, index) => (
-                        <div key={index} className={index === logs.length - 1 ? 'text-green-300' : ''}>
-                          {log}
-                        </div>
-                      ))}
-                      {bot.status === 'ONLINE' && (
-                        <div className="text-yellow-400 animate-pulse">
-                          ● Waiting for events...
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeFeature === 'performance' && (
-                <PerformanceMonitor 
-                  botId={botId} 
-                  isOnline={bot.status === 'ONLINE'} 
-                />
-              )}
-
-              {activeFeature === 'notifications' && (
-                <NotificationsCenter 
-                  botId={botId} 
-                  botStatus={bot.status}
-                  onNotificationUpdate={setNotificationCount}
-                />
-              )}
-
-              {activeFeature === 'playground' && (
-                <BotPlayground 
-                  botId={botId} 
-                  botStatus={bot.status}
-                  guilds={guilds}
-                />
-              )}
-
-              {activeFeature === 'analytics' && (
-                <AnalyticsDashboard 
-                  botId={botId} 
-                  botStatus={bot.status}
-                  guilds={guilds}
-                />
-              )}
-            </div>
           </div>
         </div>
       </main>
