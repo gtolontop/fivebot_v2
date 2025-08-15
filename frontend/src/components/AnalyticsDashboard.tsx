@@ -31,18 +31,6 @@ import {
   ArcElement,
 } from 'chart.js';
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement
-);
-
 interface AnalyticsData {
   dailyUsers: number[];
   weeklyCommands: { command: string; count: number }[];
@@ -63,6 +51,23 @@ export default function AnalyticsDashboard({ botId, botStatus, guilds }: Analyti
   const [selectedMetric, setSelectedMetric] = useState<'users' | 'commands' | 'errors'>('users');
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [chartsReady, setChartsReady] = useState(false);
+
+  // Register Chart.js components
+  useEffect(() => {
+    ChartJS.register(
+      CategoryScale,
+      LinearScale,
+      PointElement,
+      LineElement,
+      BarElement,
+      Title,
+      Tooltip,
+      Legend,
+      ArcElement
+    );
+    setChartsReady(true);
+  }, []);
 
   // Generate realistic analytics data
   useEffect(() => {
@@ -342,7 +347,13 @@ export default function AnalyticsDashboard({ botId, botStatus, guilds }: Analyti
       <div className="card p-6">
         <h4 className="text-md font-semibold text-gray-900 mb-4">👥 User Activity Trends</h4>
         <div className="h-64">
-          <Line data={userActivityData} options={{ responsive: true, maintainAspectRatio: false }} />
+          {chartsReady ? (
+            <Line data={userActivityData} options={{ responsive: true, maintainAspectRatio: false }} />
+          ) : (
+            <div className="h-64 bg-gray-100 rounded animate-pulse flex items-center justify-center">
+              <span className="text-gray-500">Loading chart...</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -351,36 +362,48 @@ export default function AnalyticsDashboard({ botId, botStatus, guilds }: Analyti
         <div className="card p-6">
           <h4 className="text-md font-semibold text-gray-900 mb-4">⚡ Top Commands</h4>
           <div className="h-64">
-            <Bar 
-              data={commandsData} 
-              options={{ 
-                responsive: true, 
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } }
-              }} 
-            />
+            {chartsReady ? (
+              <Bar 
+                data={commandsData} 
+                options={{ 
+                  responsive: true, 
+                  maintainAspectRatio: false,
+                  plugins: { legend: { display: false } }
+                }} 
+              />
+            ) : (
+              <div className="h-64 bg-gray-100 rounded animate-pulse flex items-center justify-center">
+                <span className="text-gray-500">Loading chart...</span>
+              </div>
+            )}
           </div>
         </div>
 
         <div className="card p-6">
           <h4 className="text-md font-semibold text-gray-900 mb-4">🌡️ Server Activity Heatmap</h4>
           <div className="h-64">
-            <Bar 
-              data={serverActivityData} 
-              options={{ 
-                responsive: true, 
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                  x: {
-                    ticks: {
-                      maxRotation: 45,
-                      minRotation: 45,
+            {chartsReady ? (
+              <Bar 
+                data={serverActivityData} 
+                options={{ 
+                  responsive: true, 
+                  maintainAspectRatio: false,
+                  plugins: { legend: { display: false } },
+                  scales: {
+                    x: {
+                      ticks: {
+                        maxRotation: 45,
+                        minRotation: 45,
+                      },
                     },
                   },
-                },
-              }} 
-            />
+                }} 
+              />
+            ) : (
+              <div className="h-64 bg-gray-100 rounded animate-pulse flex items-center justify-center">
+                <span className="text-gray-500">Loading chart...</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -389,7 +412,13 @@ export default function AnalyticsDashboard({ botId, botStatus, guilds }: Analyti
       <div className="card p-6">
         <h4 className="text-md font-semibold text-gray-900 mb-4">🚀 Performance Metrics</h4>
         <div className="h-64">
-          <Line data={performanceData} options={chartOptions} />
+          {chartsReady ? (
+            <Line data={performanceData} options={chartOptions} />
+          ) : (
+            <div className="h-64 bg-gray-100 rounded animate-pulse flex items-center justify-center">
+              <span className="text-gray-500">Loading chart...</span>
+            </div>
+          )}
         </div>
       </div>
 
