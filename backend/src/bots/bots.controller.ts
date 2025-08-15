@@ -147,19 +147,66 @@ export class BotsController {
     const body = req.body;
     if (body && body.action === 'sync-statuses') {
       try {
-        console.log('Sync statuses called for user:', req.user?.id);
+        console.log('🔄 Sync statuses called for user:', req.user?.id);
         
-        // Get user's bots and count them
+        // Get user's bots
         const userBots = await this.botsService.findAll(req.user.id);
-        console.log(`Found ${userBots.length} bots for user`);
+        console.log(`📊 Found ${userBots.length} bots for user`);
+        
+        let updated = 0;
+        let errors = 0;
+
+        // Check each bot's real Discord status
+        for (const bot of userBots) {
+          try {
+            console.log(`🔍 Checking bot: ${bot.name} (currently marked as ${bot.status})`);
+            
+            // Get decrypted token
+            const decryptedToken = await this.botsService.getDecryptedToken(bot.id);
+            
+            // Try to make a simple Discord API call to check if bot is really online
+            const response = await fetch('https://discord.com/api/v10/users/@me', {
+              headers: {
+                'Authorization': `Bot ${decryptedToken}`,
+                'Content-Type': 'application/json'
+              }
+            });
+
+            const isReallyOnline = response.status === 200;
+            const expectedStatus = isReallyOnline ? 'ONLINE' : 'OFFLINE';
+            
+            console.log(`🤖 Bot ${bot.name}: API response ${response.status} -> ${expectedStatus}`);
+            
+            // Update status if different
+            if (bot.status !== expectedStatus) {
+              await this.botsService.updateStatus(bot.id, expectedStatus as any);
+              updated++;
+              console.log(`✅ Updated ${bot.name}: ${bot.status} -> ${expectedStatus}`);
+            } else {
+              console.log(`✨ ${bot.name} status is already correct: ${expectedStatus}`);
+            }
+            
+          } catch (error) {
+            console.error(`❌ Error checking bot ${bot.name}:`, error.message);
+            // If we can't check the bot, assume it's offline
+            if (bot.status !== 'OFFLINE') {
+              await this.botsService.updateStatus(bot.id, 'OFFLINE');
+              updated++;
+              console.log(`🔄 Set ${bot.name} to OFFLINE (couldn't verify)`);
+            }
+            errors++;
+          }
+        }
+
+        console.log(`✅ Sync complete: ${updated} bots updated, ${errors} errors`);
         
         return {
           message: 'Status sync completed',
-          updated: userBots.length,
-          errors: 0
+          updated,
+          errors
         };
       } catch (error) {
-        console.error('Error in sync statuses:', error);
+        console.error('❌ Error in sync statuses:', error);
         throw error;
       }
     }
