@@ -215,15 +215,6 @@ export default function BotDetailPage() {
     window.open(`/bots/${botId}/logs`, '_blank');
   };
 
-  const viewStats = () => {
-    setShowStats(!showStats);
-    setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${showStats ? 'Closing' : 'Opening'} statistics`]);
-  };
-
-  const testCommands = () => {
-    setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Slash commands test initiated`]);
-    toast('Command testing module in development', { icon: '🧪' });
-  };
 
   if (loading || botLoading) {
     return (
@@ -504,70 +495,59 @@ export default function BotDetailPage() {
                 </div>
               </div>
 
-              <div className="card p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Real-time Console</h3>
-                <div 
-                  ref={consoleRef}
-                  className="bg-gray-900 text-green-400 p-4 rounded-lg text-xs font-mono h-64 overflow-y-auto"
-                >
-                  <div className="space-y-1">
-                    {logs.map((log, index) => (
-                      <div key={index} className={index === logs.length - 1 ? 'text-green-300' : ''}>
-                        {log}
-                      </div>
-                    ))}
-                    {bot.status === 'ONLINE' && (
-                      <div className="text-yellow-400 animate-pulse">
-                        ● Waiting for events...
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Statistiques */}
-              {showStats && (
+              {/* Dynamic Feature Content */}
+              {activeFeature === 'console' && (
                 <div className="card p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">📊 Bot Statistics</h3>
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className="bg-blue-50 p-3 rounded-lg">
-                      <div className="text-2xl font-bold text-blue-600">{guilds?.length || 0}</div>
-                      <div className="text-sm text-blue-800">Connected Servers</div>
-                    </div>
-                    <div className="bg-green-50 p-3 rounded-lg">
-                      <div className="text-2xl font-bold text-green-600">{Math.floor(Math.random() * 500) + 100}</div>
-                      <div className="text-sm text-green-800">Total Users</div>
-                    </div>
-                    <div className="bg-purple-50 p-3 rounded-lg">
-                      <div className="text-2xl font-bold text-purple-600">{Math.floor(Math.random() * 50) + 10}</div>
-                      <div className="text-sm text-purple-800">Commands Today</div>
-                    </div>
-                    <div className="bg-orange-50 p-3 rounded-lg">
-                      <div className="text-2xl font-bold text-orange-600">
-                        {bot.status === 'ONLINE' ? '99.9%' : '0%'}
-                      </div>
-                      <div className="text-sm text-orange-800">Current Uptime</div>
-                    </div>
-                  </div>
-                  
-                  <div className="border-t pt-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-3">Recent Activity</h4>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Last Command</span>
-                        <span className="text-gray-900">2 minutes ago</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Memory Usage</span>
-                        <span className="text-gray-900">64 MB</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Bot Started</span>
-                        <span className="text-gray-900">{new Date(bot.createdAt).toLocaleDateString()}</span>
-                      </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Real-time Console</h3>
+                  <div 
+                    ref={consoleRef}
+                    className="bg-gray-900 text-green-400 p-4 rounded-lg text-xs font-mono h-64 overflow-y-auto"
+                  >
+                    <div className="space-y-1">
+                      {logs.map((log, index) => (
+                        <div key={index} className={index === logs.length - 1 ? 'text-green-300' : ''}>
+                          {log}
+                        </div>
+                      ))}
+                      {bot.status === 'ONLINE' && (
+                        <div className="text-yellow-400 animate-pulse">
+                          ● Waiting for events...
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
+              )}
+
+              {activeFeature === 'performance' && (
+                <PerformanceMonitor 
+                  botId={botId} 
+                  isOnline={bot.status === 'ONLINE'} 
+                />
+              )}
+
+              {activeFeature === 'notifications' && (
+                <NotificationsCenter 
+                  botId={botId} 
+                  botStatus={bot.status}
+                  onNotificationUpdate={setNotificationCount}
+                />
+              )}
+
+              {activeFeature === 'playground' && (
+                <BotPlayground 
+                  botId={botId} 
+                  botStatus={bot.status}
+                  guilds={guilds}
+                />
+              )}
+
+              {activeFeature === 'analytics' && (
+                <AnalyticsDashboard 
+                  botId={botId} 
+                  botStatus={bot.status}
+                  guilds={guilds}
+                />
               )}
             </div>
           </div>
