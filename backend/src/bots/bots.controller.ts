@@ -227,8 +227,17 @@ export class BotsController {
       try {
         console.log('🔄 Sync statuses called for user:', req.user?.id);
         
-        // Get user's bots
-        const userBots = await this.botsService.findAll(req.user.id);
+        // Get user's bots with shouldAutoRestart field
+        const userBots = await this.prisma.bot.findMany({
+          where: { ownerId: req.user.id },
+          select: {
+            id: true,
+            name: true,
+            status: true,
+            shouldAutoRestart: true,
+            tokenEncrypted: true
+          }
+        });
         console.log(`📊 Found ${userBots.length} bots for user`);
         
         let updated = 0;
@@ -237,7 +246,7 @@ export class BotsController {
         // Check each bot's real Discord status
         for (const bot of userBots) {
           try {
-            console.log(`🔍 Checking bot: ${bot.name} (currently marked as ${bot.status}, shouldAutoRestart: ${(bot as any).shouldAutoRestart})`);
+            console.log(`🔍 Checking bot: ${bot.name} (currently marked as ${bot.status}, shouldAutoRestart: ${bot.shouldAutoRestart})`);
             
             // Get decrypted token
             const decryptedToken = await this.botsService.getDecryptedToken(bot.id);
