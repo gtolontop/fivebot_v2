@@ -14,6 +14,7 @@ import { BotsService } from './bots.service';
 import { BotMetricsService, DashboardStats, DailyMetrics } from './bot-metrics.service';
 import { SetupMetricsService } from './setup-metrics.service';
 import { BotMonitorService } from './bot-monitor.service';
+import { PrismaService } from '../common/prisma/prisma.service';
 
 interface CreateBotDto {
   name: string;
@@ -42,6 +43,7 @@ export class BotsController {
     private botMetricsService: BotMetricsService,
     private setupMetricsService: SetupMetricsService,
     private botMonitorService: BotMonitorService,
+    private prisma: PrismaService,
   ) {}
 
   @Post()
@@ -190,8 +192,37 @@ export class BotsController {
 
   @Post('setup/metrics')
   async setupMetrics(@Req() req: any) {
-    // Check if this is a sync request based on body
+    // Check if this is a fix concurrency request
     const body = req.body;
+    if (body && body.action === 'fix-concurrency') {
+      try {
+        console.log('🔧 Fixing concurrency issues...');
+        
+        // Simple approach: reset all bots that might be stuck
+        const result = await this.prisma.bot.updateMany({
+          where: {
+            status: {
+              in: ['STARTING', 'STOPPING']
+            }
+          },
+          data: {
+            status: 'OFFLINE'
+          }
+        });
+
+        console.log(`🔄 Reset ${result.count} stuck bots to OFFLINE`);
+        
+        return {
+          message: 'Concurrency fix completed',
+          updated: result.count
+        };
+      } catch (error) {
+        console.error('❌ Error fixing concurrency:', error);
+        throw error;
+      }
+    }
+
+    // Check if this is a sync request based on body
     if (body && body.action === 'sync-statuses') {
       try {
         console.log('🔄 Sync statuses called for user:', req.user?.id);
