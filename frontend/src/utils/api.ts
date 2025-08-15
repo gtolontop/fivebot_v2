@@ -118,6 +118,8 @@ export const botsAPI = {
   getGuilds: (id: string) => api.get(`/bots/${id}/guilds`),
   getGuildChannels: (id: string, guildId: string) => api.get(`/bots/${id}/guilds/${guildId}/channels`),
   getGuildRoles: (id: string, guildId: string) => api.get(`/bots/${id}/guilds/${guildId}/roles`),
+  getDashboardStats: () => api.get('/bots/dashboard/stats'),
+  getMetrics: (id: string) => api.get(`/bots/${id}/metrics`),
 };
 
 export const usersAPI = {

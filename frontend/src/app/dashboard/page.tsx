@@ -95,97 +95,46 @@ export default function DashboardPage() {
     try {
       setIsLoading(true);
       
-      // Fetch all bots
+      // Fetch dashboard stats from backend
+      const response = await botsAPI.getDashboardStats();
+      const dashboardStats = response.data;
+      
+      // Fetch all bots for display
       const botsResponse = await botsAPI.getAll();
       const userBots = botsResponse.data || [];
       setBots(userBots);
       
-      // Calculate stats
-      const activeBots = userBots.filter(bot => bot.status === 'ONLINE').length;
-      const totalBots = userBots.length;
-      
-      // Try to get real guild data for active bots, but don't fail if rate limited
-      let totalServers = 0;
-      let totalUsers = 0;
-      
-      // Fetch guild data for up to 3 active bots to avoid rate limits
-      const botsToFetch = userBots.filter(bot => bot.status === 'ONLINE').slice(0, 3);
-      
-      const guildPromises = botsToFetch.map(async (bot) => {
-        try {
-          const guildsResponse = await botsAPI.getGuilds(bot.id);
-          const guilds = guildsResponse.data || [];
-          return {
-            botId: bot.id,
-            servers: guilds.length,
-            users: guilds.reduce((acc, guild) => acc + (guild.memberCount || 0), 0)
-          };
-        } catch (error) {
-          console.log(`Could not fetch guilds for bot ${bot.name} - using estimates`);
-          return {
-            botId: bot.id,
-            servers: Math.floor(Math.random() * 5) + 1,
-            users: Math.floor(Math.random() * 1000) + 100
-          };
-        }
-      });
-      
-      try {
-        const guildResults = await Promise.allSettled(guildPromises);
-        guildResults.forEach((result) => {
-          if (result.status === 'fulfilled' && result.value) {
-            totalServers += result.value.servers;
-            totalUsers += result.value.users;
-          }
-        });
-      } catch (error) {
-        console.log('Error fetching guild data, using estimates');
-      }
-      
-      // If we couldn't get real data, use estimates
-      if (totalServers === 0) {
-        totalServers = totalBots * 3 + Math.floor(Math.random() * 10);
-        totalUsers = totalServers * 150 + Math.floor(Math.random() * 2000);
-      }
-      
-      const todayCommands = activeBots * 150 + Math.floor(Math.random() * 200);
-      const todayMessages = activeBots * 800 + Math.floor(Math.random() * 1000);
-      
-      // Generate monthly activity (last 30 days)
-      const monthlyActivity = Array.from({ length: 30 }, (_, i) => {
-        const dayActivity = activeBots * 100 + Math.floor(Math.random() * 300);
-        return Math.max(0, dayActivity - (Math.random() * 50));
-      });
-      
-      // Bot status distribution
-      const statusDistribution = userBots.reduce((acc, bot) => {
-        acc[bot.status] = (acc[bot.status] || 0) + 1;
-        return acc;
-      }, {} as { [key: string]: number });
-      
-      // Top performing bots (simulated)
-      const topBots = userBots.slice(0, 5).map(bot => ({
-        name: bot.name,
-        servers: Math.floor(Math.random() * 10) + 1,
-        users: Math.floor(Math.random() * 1500) + 100
-      }));
-      
-      setStats({
-        totalBots,
-        activeBots,
-        totalServers,
-        totalUsers,
-        todayCommands,
-        todayMessages,
-        monthlyActivity,
-        botStatusDistribution: statusDistribution,
-        topBots
-      });
+      setStats(dashboardStats);
       
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
-      // Don't show error toast if it's just rate limiting
-      if (error.response?.status !== 429) {
+      // Fallback to showing bots at least
+      try {
+        const botsResponse = await botsAPI.getAll();
+        const userBots = botsResponse.data || [];
+        setBots(userBots);
+        
+        // Show basic stats if API fails
+        const totalBots = userBots.length;
+        const activeBots = userBots.filter(bot => bot.status === 'ONLINE').length;
+        const statusDistribution = userBots.reduce((acc, bot) => {
+          acc[bot.status] = (acc[bot.status] || 0) + 1;
+          return acc;
+        }, {} as { [key: string]: number });
+        
+        setStats({
+          totalBots,
+          activeBots,
+          totalServers: 0,
+          totalUsers: 0,
+          todayCommands: 0,
+          todayMessages: 0,
+          monthlyActivity: Array(30).fill(0),
+          botStatusDistribution: statusDistribution,
+          topBots: []
+        });
+      } catch (fallbackError) {
+        console.error('Fallback also failed:', fallbackError);
         toast.error('Failed to load dashboard data');
       }
     } finally {
