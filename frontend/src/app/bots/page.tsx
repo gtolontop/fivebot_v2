@@ -27,6 +27,7 @@ export default function BotsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [botStats, setBotStats] = useState<{ [botId: string]: BotStats }>({});
+  const [openMenus, setOpenMenus] = useState<{ [botId: string]: boolean }>({});
 
   useEffect(() => {
     if (!loading && !user) {
@@ -100,6 +101,44 @@ export default function BotsPage() {
 
   const getStatusCount = (status: string) => {
     return bots.filter(bot => bot.status === status).length;
+  };
+
+  const toggleMenu = (botId: string) => {
+    setOpenMenus(prev => ({
+      ...prev,
+      [botId]: !prev[botId]
+    }));
+  };
+
+  const closeAllMenus = () => {
+    setOpenMenus({});
+  };
+
+  const handleAction = (botId: string, action: string) => {
+    closeAllMenus();
+    switch (action) {
+      case 'manage':
+        router.push(`/bots/${botId}`);
+        break;
+      case 'logs':
+        router.push(`/bots/${botId}/logs`);
+        break;
+      case 'analytics':
+        router.push(`/bots/${botId}/analytics`);
+        break;
+      case 'settings':
+        router.push(`/bots/${botId}/settings`);
+        break;
+      case 'start':
+        // Handle start bot
+        break;
+      case 'stop':
+        // Handle stop bot
+        break;
+      case 'delete':
+        // Handle delete bot
+        break;
+    }
   };
 
   const getStatusIcon = (status: string) => {
@@ -392,14 +431,88 @@ export default function BotsPage() {
                   >
                     Analytics
                   </button>
-                  <button 
-                    onClick={() => router.push(`/bots/${bot.id}/logs`)}
-                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd"/>
-                    </svg>
-                  </button>
+                  
+                  {/* Dropdown Menu */}
+                  <div className="relative">
+                    <button 
+                      onClick={() => toggleMenu(bot.id)}
+                      className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd"/>
+                      </svg>
+                    </button>
+                    
+                    {openMenus[bot.id] && (
+                      <>
+                        {/* Backdrop */}
+                        <div 
+                          className="fixed inset-0 z-10" 
+                          onClick={closeAllMenus}
+                        ></div>
+                        
+                        {/* Menu */}
+                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                          <button
+                            onClick={() => handleAction(bot.id, 'logs')}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                          >
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 8a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 12a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 16a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd"/>
+                            </svg>
+                            <span>View Logs</span>
+                          </button>
+                          
+                          <button
+                            onClick={() => handleAction(bot.id, 'settings')}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                          >
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd"/>
+                            </svg>
+                            <span>Settings</span>
+                          </button>
+                          
+                          <div className="border-t border-gray-100 my-1"></div>
+                          
+                          {bot.status === 'OFFLINE' ? (
+                            <button
+                              onClick={() => handleAction(bot.id, 'start')}
+                              className="w-full text-left px-4 py-2 text-sm text-green-700 hover:bg-green-50 flex items-center space-x-2"
+                            >
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd"/>
+                              </svg>
+                              <span>Start Bot</span>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleAction(bot.id, 'stop')}
+                              className="w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50 flex items-center space-x-2"
+                            >
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clipRule="evenodd"/>
+                              </svg>
+                              <span>Stop Bot</span>
+                            </button>
+                          )}
+                          
+                          <div className="border-t border-gray-100 my-1"></div>
+                          
+                          <button
+                            onClick={() => handleAction(bot.id, 'delete')}
+                            className="w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50 flex items-center space-x-2"
+                          >
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clipRule="evenodd"/>
+                              <path fillRule="evenodd" d="M10 5a2 2 0 00-2 2v6a2 2 0 104 0V7a2 2 0 00-2-2zM8 7a2 2 0 114 0v6a2 2 0 11-4 0V7zM5 4a1 1 0 011-1h8a1 1 0 110 2v10a2 2 0 11-4 0H8a2 2 0 01-4 0V5a1 1 0 01-1-1z" clipRule="evenodd"/>
+                            </svg>
+                            <span>Delete Bot</span>
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
