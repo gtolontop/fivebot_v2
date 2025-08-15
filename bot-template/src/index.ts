@@ -208,13 +208,33 @@ class ChildBot {
     console.log('🛑 Shutting down gracefully...');
     
     try {
+      // Force bot to appear offline immediately
+      if (this.client.user) {
+        console.log('📤 Setting Discord presence to offline...');
+        await this.client.user.setPresence({ 
+          status: 'invisible',
+          activities: []
+        });
+        
+        // Wait a moment for the presence to update
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      
+      console.log('💾 Updating bot status to OFFLINE in database...');
       await this.updateBotStatus('OFFLINE');
+      
+      console.log('🔌 Destroying Discord client...');
       this.client.destroy();
+      
+      console.log('🗄️ Disconnecting from database...');
       await this.prisma.$disconnect();
+      
+      console.log('✅ Graceful shutdown completed');
     } catch (error) {
-      console.error('Error during shutdown:', error);
+      console.error('❌ Error during shutdown:', error);
     }
     
+    console.log('👋 Process exiting...');
     process.exit(0);
   }
 

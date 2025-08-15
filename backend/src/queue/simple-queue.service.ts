@@ -237,19 +237,23 @@ export class SimpleQueueService implements IQueueService {
         return;
       }
 
-      console.log(`🔄 Sending SIGTERM to bot ${botId} process`);
+      console.log(`🔄 Sending SIGTERM to bot ${botId} process (PID: ${botProcess.pid})`);
       
       // Kill the process gracefully first
       botProcess.kill('SIGTERM');
       
-      // Wait for graceful shutdown, then force kill if needed
+      // More aggressive timeout - Discord bots should shut down quickly
       const forceKillTimeout = setTimeout(() => {
         if (this.runningBots.has(botId)) {
-          console.log(`💀 Force killing bot ${botId} with SIGKILL`);
-          botProcess.kill('SIGKILL');
+          console.log(`💀 Process didn't exit gracefully, sending SIGKILL to bot ${botId} (PID: ${botProcess.pid})`);
+          try {
+            botProcess.kill('SIGKILL');
+          } catch (error) {
+            console.log(`⚠️ Process ${botProcess.pid} may have already exited`);
+          }
           this.runningBots.delete(botId);
         }
-      }, 5000); // 5 seconds timeout (reduced from 10)
+      }, 3000); // 3 seconds timeout (reduced from 5)
 
       // Wait for process to exit naturally
       await new Promise<void>((resolve) => {
