@@ -157,11 +157,19 @@ export class BotsController {
       throw new Error('Bot not found');
     }
     
-    // For now, return recent job logs as these are the closest thing to "real" logs we have
+    // Get recent job logs from the bot (they're included in findOne)
+    const recentLogs = (bot as any).jobLogs?.slice(-20).map((log: any) => 
+      `[${new Date(log.createdAt).toLocaleTimeString()}] ${log.message || `${log.jobType}: ${log.status}`}`
+    ) || [];
+
+    // Add some basic status logs
+    const statusLogs = [
+      `[${new Date().toLocaleTimeString()}] Bot status: ${bot.status}`,
+      `[${new Date().toLocaleTimeString()}] Bot "${bot.name}" is ${bot.status.toLowerCase()}`
+    ];
+
     return {
-      logs: bot.jobLogs?.slice(-20).map(log => 
-        `[${new Date(log.createdAt).toLocaleTimeString()}] ${log.message || `${log.jobType}: ${log.status}`}`
-      ) || []
+      logs: [...statusLogs, ...recentLogs].slice(-20)
     };
   }
 }
