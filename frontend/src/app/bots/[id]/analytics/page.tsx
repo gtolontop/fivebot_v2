@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
 import dynamic from 'next/dynamic';
+import Cookies from 'js-cookie';
 
 // Dynamic imports to avoid SSR issues
 const Chart = dynamic(() => import('react-chartjs-2').then((mod) => mod.Chart), {
@@ -125,7 +126,7 @@ export default function AnalyticsPage() {
       // Fetch real metrics from backend
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/bots/${botId}/metrics`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+          'Authorization': `Bearer ${Cookies.get('token') || ''}`,
           'Content-Type': 'application/json'
         }
       });
