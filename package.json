@@ -4,17 +4,21 @@
   "description": "FiveBot v2 - Advanced Discord Bot Manager",
   "main": "index.js",
   "scripts": {
-    "dev": "docker-compose up -d",
+    "dev": "concurrently \"cd backend && npm run start:dev\" \"cd frontend && npm run dev\"",
+    "dev-docker": "docker-compose up -d",
     "build": "npm run build:backend && npm run build:frontend",
     "build:backend": "cd backend && npm run build",
     "build:frontend": "cd frontend && npm run build",
-    "start": "docker-compose up -d --build",
+    "start": "concurrently \"cd backend && npm start\" \"cd frontend && npm start\"",
+    "start-docker": "docker-compose up -d --build",
     "stop": "docker-compose down",
     "logs": "docker-compose logs -f",
     "setup": "npm run setup:backend && npm run setup:frontend && npm run setup:bot",
     "setup:backend": "cd backend && npm install",
     "setup:frontend": "cd frontend && npm install",
     "setup:bot": "cd bot-manager && npm install",
+    "install-all": "npm run setup",
+    "install-concurrently": "npm install concurrently",
     "db:migrate": "cd backend && npx prisma migrate dev",
     "db:reset": "cd backend && npx prisma migrate reset",
     "db:generate": "cd backend && npx prisma generate",
@@ -37,5 +41,8 @@
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=8.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0"
   }
 }
