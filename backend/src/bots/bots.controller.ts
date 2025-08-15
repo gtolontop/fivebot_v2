@@ -34,6 +34,7 @@ interface UpdateBotConfigDto {
 }
 
 @Controller('bots')
+@UseGuards(AuthGuard('jwt'))
 export class BotsController {
   constructor(
     private botsService: BotsService,
@@ -42,7 +43,6 @@ export class BotsController {
   ) {}
 
   @Post()
-  @UseGuards(AuthGuard('jwt'))
   async create(@Req() req: any, @Body() createBotDto: CreateBotDto) {
     return this.botsService.create(req.user.id, createBotDto);
   }
