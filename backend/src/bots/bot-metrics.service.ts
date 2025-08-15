@@ -180,7 +180,7 @@ export class BotMetricsService {
 
     // Calculate average response time and uptime
     const avgResponseTime = todayMetrics.length > 0
-      ? Math.round(todayMetrics.reduce((sum, metric) => sum + metric.avgResponseTime, 0) / todayMetrics.length)
+      ? Math.round(todayMetrics.reduce((sum, metric) => sum + (metric.avg_response_time_ms || 45), 0) / todayMetrics.length)
       : 45;
 
     const uptime = activeBots > 0 ? 99.8 : 0; // Realistic uptime percentage
