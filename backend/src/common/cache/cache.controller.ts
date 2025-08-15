@@ -1,5 +1,5 @@
 import { Controller, Delete, Get, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
+import { AuthGuard } from '@nestjs/passport';
 import { CacheService } from './cache.service';
 import { DiscordService } from '../discord/discord.service';
 
