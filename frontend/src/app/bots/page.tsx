@@ -39,17 +39,23 @@ export default function BotsPage() {
   }, [user, loading, router]);
 
   const fetchBots = async () => {
+    console.log('📋 Starting fetchBots...');
     try {
+      console.log('🔄 Calling botsAPI.getAll()...');
       const response = await botsAPI.getAll();
+      console.log('✅ Got response:', response);
       const botsData = response.data;
+      console.log('📊 Setting bots data:', botsData);
       setBots(botsData);
       
-      // Fetch stats for each bot
-      await fetchBotStats(botsData);
+      // Fetch stats for each bot - TEMPORARILY DISABLED
+      // await fetchBotStats(botsData);
+      console.log('✅ fetchBots completed successfully');
     } catch (error) {
-      console.error('Erreur lors du chargement des bots:', error);
+      console.error('❌ Error in fetchBots:', error);
       toast.error('Failed to load bots');
     } finally {
+      console.log('🏁 Setting botsLoading to false');
       setBotsLoading(false);
     }
   };
