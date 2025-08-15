@@ -1,67 +1,71 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { 
-  RocketLaunchIcon, 
-  ShieldCheckIcon, 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import {
+  RocketLaunchIcon,
+  ShieldCheckIcon,
   CpuChipIcon,
   SparklesIcon,
   ArrowRightIcon,
-  CheckIcon
-} from '@heroicons/react/24/outline';
-import { useAuth } from '@/contexts/AuthContext';
+  CheckIcon,
+} from "@heroicons/react/24/outline";
+import { useAuth } from "@/contexts/AuthContext";
 
 const features = [
   {
-    name: 'Création automatisée',
-    description: 'Créez et déployez des bots Discord en quelques clics avec notre interface intuitive.',
+    name: "Création automatisée",
+    description:
+      "Créez et déployez des bots Discord en quelques clics avec notre interface intuitive.",
     icon: RocketLaunchIcon,
   },
   {
-    name: 'Sécurité avancée',
-    description: 'Tokens chiffrés, validation stricte et contrôle d\'accès pour protéger vos bots.',
+    name: "Sécurité avancée",
+    description:
+      "Tokens chiffrés, validation stricte et contrôle d'accès pour protéger vos bots.",
     icon: ShieldCheckIcon,
   },
   {
-    name: 'Orchestration Docker',
-    description: 'Chaque bot s\'exécute dans son propre container isolé pour une performance optimale.',
+    name: "Orchestration Docker",
+    description:
+      "Chaque bot s'exécute dans son propre container isolé pour une performance optimale.",
     icon: CpuChipIcon,
   },
   {
-    name: 'Interface moderne',
-    description: 'Dashboard web complet avec monitoring en temps réel et configuration avancée.',
+    name: "Interface moderne",
+    description:
+      "Dashboard web complet avec monitoring en temps réel et configuration avancée.",
     icon: SparklesIcon,
   },
 ];
 
 const pricingPlans = [
   {
-    name: 'Gratuit',
-    price: '0',
-    description: 'Parfait pour commencer',
+    name: "Gratuit",
+    price: "0",
+    description: "Parfait pour commencer",
     features: [
-      '100 crédits gratuits',
-      'Jusqu\'à 5 bots',
-      'Support communautaire',
-      'Messages de bienvenue',
+      "100 crédits gratuits",
+      "Jusqu'à 5 bots",
+      "Support communautaire",
+      "Messages de bienvenue",
     ],
-    cta: 'Commencer gratuitement',
+    cta: "Commencer gratuitement",
     popular: false,
   },
   {
-    name: 'Pro',
-    price: '9.99',
-    description: 'Pour les créateurs actifs',
+    name: "Pro",
+    price: "9.99",
+    description: "Pour les créateurs actifs",
     features: [
-      '1000 crédits/mois',
-      'Bots illimités',
-      'Support prioritaire',
-      'Analytics avancées',
-      'Custom commands',
+      "1000 crédits/mois",
+      "Bots illimités",
+      "Support prioritaire",
+      "Analytics avancées",
+      "Custom commands",
     ],
-    cta: 'Bientôt disponible',
+    cta: "Bientôt disponible",
     popular: true,
   },
 ];
@@ -94,27 +98,20 @@ export default function HomePage() {
             <div className="flex items-center space-x-4">
               {user ? (
                 <>
-                  <span className="text-gray-700">Bonjour, {user.username}!</span>
-                  <Link
-                    href="/dashboard"
-                    className="btn-primary"
-                  >
+                  <span className="text-gray-700">
+                    Bonjour, {user.username}!
+                  </span>
+                  <Link href="/dashboard" className="btn-primary">
                     Dashboard
                   </Link>
                 </>
               ) : (
                 <>
                   <Link
-                    href="/auth/login"
+                    href="http://localhost:8000/api/auth/discord"
                     className="btn-secondary"
                   >
-                    Se connecter
-                  </Link>
-                  <Link
-                    href="/auth/login"
-                    className="btn-primary"
-                  >
-                    Commencer
+                    Se connecter avec Discord
                   </Link>
                 </>
               )}
@@ -132,8 +129,9 @@ export default function HomePage() {
               <span className="text-gradient block">comme un pro</span>
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              FiveBot v2 est la plateforme ultime pour créer, déployer et gérer vos bots Discord. 
-              Interface moderne, sécurité avancée et orchestration automatisée.
+              FiveBot v2 est la plateforme ultime pour créer, déployer et gérer
+              vos bots Discord. Interface moderne, sécurité avancée et
+              orchestration automatisée.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
@@ -165,21 +163,23 @@ export default function HomePage() {
               Tout ce dont vous avez besoin
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Des fonctionnalités puissantes pour créer et gérer vos bots Discord facilement.
+              Des fonctionnalités puissantes pour créer et gérer vos bots
+              Discord facilement.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature) => (
-              <div key={feature.name} className="card p-6 hover:shadow-lg transition-shadow">
+              <div
+                key={feature.name}
+                className="card p-6 hover:shadow-lg transition-shadow"
+              >
                 <div className="flex items-center justify-center w-12 h-12 bg-discord-100 rounded-lg mb-4">
                   <feature.icon className="h-6 w-6 text-discord-600" />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   {feature.name}
                 </h3>
-                <p className="text-gray-600">
-                  {feature.description}
-                </p>
+                <p className="text-gray-600">{feature.description}</p>
               </div>
             ))}
           </div>
@@ -202,7 +202,7 @@ export default function HomePage() {
               <div
                 key={plan.name}
                 className={`card p-8 relative ${
-                  plan.popular ? 'ring-2 ring-discord-500 shadow-lg' : ''
+                  plan.popular ? "ring-2 ring-discord-500 shadow-lg" : ""
                 }`}
               >
                 {plan.popular && (
@@ -213,11 +213,17 @@ export default function HomePage() {
                   </div>
                 )}
                 <div className="text-center mb-6">
-                  <h3 className="text-2xl font-bold text-gray-900">{plan.name}</h3>
+                  <h3 className="text-2xl font-bold text-gray-900">
+                    {plan.name}
+                  </h3>
                   <p className="text-gray-600 mt-2">{plan.description}</p>
                   <div className="mt-4">
-                    <span className="text-4xl font-bold text-gray-900">€{plan.price}</span>
-                    {plan.price !== '0' && <span className="text-gray-600">/mois</span>}
+                    <span className="text-4xl font-bold text-gray-900">
+                      €{plan.price}
+                    </span>
+                    {plan.price !== "0" && (
+                      <span className="text-gray-600">/mois</span>
+                    )}
                   </div>
                 </div>
                 <ul className="space-y-3 mb-8">
@@ -231,7 +237,7 @@ export default function HomePage() {
                 <Link
                   href="/auth/login"
                   className={`btn w-full ${
-                    plan.popular ? 'btn-primary' : 'btn-secondary'
+                    plan.popular ? "btn-primary" : "btn-secondary"
                   }`}
                 >
                   {plan.cta}
@@ -249,7 +255,7 @@ export default function HomePage() {
             Prêt à créer votre premier bot ?
           </h2>
           <p className="text-xl text-discord-100 mb-8 max-w-2xl mx-auto">
-            Rejoignez des milliers de créateurs qui font confiance à FiveBot v2 
+            Rejoignez des milliers de créateurs qui font confiance à FiveBot v2
             pour gérer leurs bots Discord.
           </p>
           <Link
