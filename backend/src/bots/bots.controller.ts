@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { BotsService } from './bots.service';
-import { BotMetricsService } from './bot-metrics.service';
+import { BotMetricsService, DashboardStats, DailyMetrics } from './bot-metrics.service';
 import { SetupMetricsService } from './setup-metrics.service';
 
 interface CreateBotDto {
