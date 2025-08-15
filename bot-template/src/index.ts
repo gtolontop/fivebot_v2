@@ -199,7 +199,7 @@ class ChildBot {
         data: { status: status as any },
       });
     } catch (error) {
-      console.warn('Failed to update bot status:', error.message);
+      console.warn('Failed to update bot status:', (error as Error).message);
       // Don't throw - this is not critical for bot operation
     }
   }
