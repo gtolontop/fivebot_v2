@@ -267,8 +267,8 @@ export class BotsController {
             // Update status if different, but respect user intentions
             if (bot.status !== expectedStatus) {
               // Don't override if bot is manually stopped (shouldAutoRestart = false) or in STOPPING state
-              if ((bot as any).shouldAutoRestart === false || bot.status === 'STOPPING') {
-                console.log(`🚫 ${bot.name} is manually stopped (shouldAutoRestart: ${(bot as any).shouldAutoRestart}) - not overriding status`);
+              if (bot.shouldAutoRestart === false || bot.status === 'STOPPING') {
+                console.log(`🚫 ${bot.name} is manually stopped (shouldAutoRestart: ${bot.shouldAutoRestart}) - not overriding status`);
                 
                 // If Discord shows bot as offline and we expected it to be offline (manual stop), that's correct
                 if (expectedStatus === 'OFFLINE' && bot.status !== 'OFFLINE') {
