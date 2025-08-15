@@ -9,6 +9,6 @@ export interface IQueueService {
   pauseQueue(): Promise<void>;
   resumeQueue(): Promise<void>;
   cleanJobs(type: 'completed' | 'failed', olderThan?: number): Promise<void>;
-  getRunningBots?(): string[];
-  forceStopBot?(botId: string): Promise<void>;
+  getRunningBots(): string[];
+  forceStopBot(botId: string): Promise<void>;
 }
