@@ -108,7 +108,7 @@ export class BotMonitorService {
       const result = await this.discordService.validateBotToken(token);
       
       // If validation succeeds and we can get application info, bot is likely online
-      return result.isValid && result.application?.id;
+      return result.isValid && !!result.application?.id;
       
     } catch (error) {
       // If we can't validate or get info, assume bot is offline
