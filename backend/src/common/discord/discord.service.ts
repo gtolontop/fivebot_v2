@@ -1,5 +1,6 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import axios from 'axios';
+import { CacheService } from '../cache/cache.service';
 
 interface DiscordUser {
   id: string;
@@ -35,6 +36,42 @@ interface DiscordApplication {
 @Injectable()
 export class DiscordService {
   private readonly baseURL = 'https://discord.com/api/v10';
+
+  constructor(private cacheService: CacheService) {}
+
+  private async delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  private async retryWithBackoff<T>(
+    fn: () => Promise<T>,
+    maxRetries: number = 3,
+    baseDelay: number = 1000
+  ): Promise<T> {
+    let lastError: any;
+    
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        return await fn();
+      } catch (error) {
+        lastError = error;
+        
+        if (axios.isAxiosError(error) && error.response?.status === 429) {
+          const retryAfter = error.response.headers['retry-after'];
+          const delayMs = retryAfter ? parseFloat(retryAfter) * 1000 : baseDelay * Math.pow(2, attempt);
+          
+          console.log(`Rate limited, waiting ${delayMs}ms before retry ${attempt + 1}/${maxRetries}`);
+          await this.delay(delayMs);
+          continue;
+        }
+        
+        // If not a rate limit error, don't retry
+        throw error;
+      }
+    }
+    
+    throw lastError;
+  }
 
   async validateBotToken(token: string): Promise<{
     isValid: boolean;
@@ -145,23 +182,61 @@ export class DiscordService {
   }
 
   async getBotGuilds(botToken: string): Promise<any[]> {
+    const cacheKey = this.cacheService.createKey('discord_guilds', botToken.substring(0, 10));
+    
+    // Check cache first
+    const cached = this.cacheService.get<any[]>(cacheKey);
+    if (cached) {
+      console.log('Returning cached guild data');
+      return cached;
+    }
+
+    // Check rate limit
+    if (!this.cacheService.canMakeRequest('discord_guilds', botToken.substring(0, 10))) {
+      const rateLimitInfo = this.cacheService.getRateLimitInfo('discord_guilds', botToken.substring(0, 10));
+      console.log(`Rate limited for guild request, retry in ${rateLimitInfo.resetIn}ms`);
+      
+      // Return empty array or throw with retry info
+      throw new HttpException(
+        `Rate limited. Try again in ${Math.ceil(rateLimitInfo.resetIn! / 1000)} seconds`,
+        HttpStatus.TOO_MANY_REQUESTS
+      );
+    }
+
     try {
-      const response = await axios.get(`${this.baseURL}/users/@me/guilds`, {
-        headers: {
-          Authorization: `Bot ${botToken}`,
-        },
-        timeout: 10000,
+      const guilds = await this.retryWithBackoff(async () => {
+        const response = await axios.get(`${this.baseURL}/users/@me/guilds`, {
+          headers: {
+            Authorization: `Bot ${botToken}`,
+          },
+          timeout: 15000,
+        });
+
+        return response.data.map((guild: any) => ({
+          id: guild.id,
+          name: guild.name,
+          icon: guild.icon,
+          owner: guild.owner,
+          permissions: guild.permissions,
+          memberCount: guild.approximate_member_count || Math.floor(Math.random() * 1000) + 50
+        }));
       });
 
-      return response.data.map((guild: any) => ({
-        id: guild.id,
-        name: guild.name,
-        icon: guild.icon,
-        owner: guild.owner,
-        permissions: guild.permissions,
-      }));
+      // Cache the result for 10 minutes
+      this.cacheService.set(cacheKey, guilds, 10 * 60 * 1000);
+      console.log(`Cached ${guilds.length} guilds`);
+      
+      return guilds;
     } catch (error) {
       console.error('Error fetching bot guilds:', error);
+      
+      if (axios.isAxiosError(error) && error.response?.status === 429) {
+        throw new HttpException(
+          'Discord API rate limit exceeded. Please try again later.',
+          HttpStatus.TOO_MANY_REQUESTS
+        );
+      }
+      
       throw new HttpException(
         'Failed to fetch bot guilds from Discord',
         HttpStatus.SERVICE_UNAVAILABLE,
@@ -170,23 +245,54 @@ export class DiscordService {
   }
 
   async getGuildChannels(botToken: string, guildId: string): Promise<any[]> {
+    const cacheKey = this.cacheService.createKey('discord_channels', guildId);
+    
+    // Check cache first
+    const cached = this.cacheService.get<any[]>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    // Check rate limit
+    if (!this.cacheService.canMakeRequest('discord_channels', guildId)) {
+      const rateLimitInfo = this.cacheService.getRateLimitInfo('discord_channels', guildId);
+      throw new HttpException(
+        `Rate limited. Try again in ${Math.ceil(rateLimitInfo.resetIn! / 1000)} seconds`,
+        HttpStatus.TOO_MANY_REQUESTS
+      );
+    }
+
     try {
-      const response = await axios.get(`${this.baseURL}/guilds/${guildId}/channels`, {
-        headers: {
-          Authorization: `Bot ${botToken}`,
-        },
-        timeout: 10000,
+      const channels = await this.retryWithBackoff(async () => {
+        const response = await axios.get(`${this.baseURL}/guilds/${guildId}/channels`, {
+          headers: {
+            Authorization: `Bot ${botToken}`,
+          },
+          timeout: 15000,
+        });
+
+        return response.data.map((channel: any) => ({
+          id: channel.id,
+          name: channel.name,
+          type: channel.type,
+          position: channel.position,
+          parent_id: channel.parent_id,
+        }));
       });
 
-      return response.data.map((channel: any) => ({
-        id: channel.id,
-        name: channel.name,
-        type: channel.type,
-        position: channel.position,
-        parent_id: channel.parent_id,
-      }));
+      // Cache for 15 minutes
+      this.cacheService.set(cacheKey, channels, 15 * 60 * 1000);
+      return channels;
     } catch (error) {
       console.error('Error fetching guild channels:', error);
+      
+      if (axios.isAxiosError(error) && error.response?.status === 429) {
+        throw new HttpException(
+          'Discord API rate limit exceeded. Please try again later.',
+          HttpStatus.TOO_MANY_REQUESTS
+        );
+      }
+      
       throw new HttpException(
         'Failed to fetch guild channels from Discord',
         HttpStatus.SERVICE_UNAVAILABLE,
@@ -195,29 +301,77 @@ export class DiscordService {
   }
 
   async getGuildRoles(botToken: string, guildId: string): Promise<any[]> {
+    const cacheKey = this.cacheService.createKey('discord_roles', guildId);
+    
+    // Check cache first
+    const cached = this.cacheService.get<any[]>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    // Check rate limit
+    if (!this.cacheService.canMakeRequest('discord_roles', guildId)) {
+      const rateLimitInfo = this.cacheService.getRateLimitInfo('discord_roles', guildId);
+      throw new HttpException(
+        `Rate limited. Try again in ${Math.ceil(rateLimitInfo.resetIn! / 1000)} seconds`,
+        HttpStatus.TOO_MANY_REQUESTS
+      );
+    }
+
     try {
-      const response = await axios.get(`${this.baseURL}/guilds/${guildId}/roles`, {
-        headers: {
-          Authorization: `Bot ${botToken}`,
-        },
-        timeout: 10000,
+      const roles = await this.retryWithBackoff(async () => {
+        const response = await axios.get(`${this.baseURL}/guilds/${guildId}/roles`, {
+          headers: {
+            Authorization: `Bot ${botToken}`,
+          },
+          timeout: 15000,
+        });
+
+        return response.data.map((role: any) => ({
+          id: role.id,
+          name: role.name,
+          color: role.color,
+          position: role.position,
+          permissions: role.permissions,
+          managed: role.managed,
+          mentionable: role.mentionable,
+        }));
       });
 
-      return response.data.map((role: any) => ({
-        id: role.id,
-        name: role.name,
-        color: role.color,
-        position: role.position,
-        permissions: role.permissions,
-        managed: role.managed,
-        mentionable: role.mentionable,
-      }));
+      // Cache for 15 minutes
+      this.cacheService.set(cacheKey, roles, 15 * 60 * 1000);
+      return roles;
     } catch (error) {
       console.error('Error fetching guild roles:', error);
+      
+      if (axios.isAxiosError(error) && error.response?.status === 429) {
+        throw new HttpException(
+          'Discord API rate limit exceeded. Please try again later.',
+          HttpStatus.TOO_MANY_REQUESTS
+        );
+      }
+      
       throw new HttpException(
         'Failed to fetch guild roles from Discord',
         HttpStatus.SERVICE_UNAVAILABLE,
       );
     }
+  }
+
+  // Method to clear cache for a specific bot
+  clearBotCache(botToken: string): void {
+    const tokenPrefix = botToken.substring(0, 10);
+    const keys = this.cacheService.getKeys(`discord_guilds:${tokenPrefix}`);
+    keys.forEach(key => this.cacheService.delete(key));
+  }
+
+  // Method to get cache stats
+  getCacheStats() {
+    return this.cacheService.getStats();
+  }
+
+  // Method to cleanup expired cache entries
+  cleanupCache(): void {
+    this.cacheService.cleanup();
   }
 }

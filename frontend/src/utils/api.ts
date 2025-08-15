@@ -57,7 +57,18 @@ api.interceptors.response.use(
     }
     
     if (response?.status === 429) {
-      toast.error('Trop de requêtes - Veuillez patienter');
+      const message = response.data?.message || 'Rate limit exceeded';
+      const retryAfter = response.headers['retry-after'];
+      
+      if (retryAfter) {
+        const seconds = Math.ceil(parseFloat(retryAfter));
+        toast.error(`Rate limited. Try again in ${seconds} second${seconds > 1 ? 's' : ''}`);
+      } else if (message.includes('Try again in')) {
+        toast.error(message);
+      } else {
+        toast.error('Too many requests - Please wait before trying again');
+      }
+      
       return Promise.reject(error);
     }
     
