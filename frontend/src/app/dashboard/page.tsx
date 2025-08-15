@@ -93,6 +93,18 @@ export default function DashboardPage() {
     });
   }, []);
 
+  const setupMetrics = async () => {
+    try {
+      await botsAPI.setupMetrics();
+      toast.success('Metrics setup completed successfully!');
+      // Retry fetching dashboard data
+      await fetchDashboardData();
+    } catch (error) {
+      console.error('Error setting up metrics:', error);
+      toast.error('Failed to setup metrics');
+    }
+  };
+
   const fetchDashboardData = async () => {
     try {
       setIsLoading(true);
@@ -110,6 +122,26 @@ export default function DashboardPage() {
       
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+      
+      // Check if it's a metrics table error
+      if (error.response?.status === 500 && error.response?.data?.message?.includes('bot_metrics')) {
+        // Show setup button instead of fallback
+        setStats({
+          totalBots: 0,
+          activeBots: 0,
+          totalServers: 0,
+          totalUsers: 0,
+          todayCommands: 0,
+          todayMessages: 0,
+          monthlyActivity: Array(30).fill(0),
+          botStatusDistribution: {},
+          topBots: []
+        });
+        
+        toast.error('Database needs to be initialized. Please click "Setup Metrics" button.');
+        return;
+      }
+      
       // Fallback to showing bots at least
       try {
         const botsResponse = await botsAPI.getAll();
