@@ -148,7 +148,7 @@ export class BotMetricsService {
     // Group by date and sum commands
     const activityByDate = monthlyMetrics.reduce((acc, metric) => {
       const dateKey = metric.date.toISOString().split('T')[0];
-      acc[dateKey] = (acc[dateKey] || 0) + metric.commandsUsed;
+      acc[dateKey] = (acc[dateKey] || 0) + (metric.commands_used || 0);
       return acc;
     }, {} as { [key: string]: number });
 
