@@ -13,6 +13,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { BotsService } from './bots.service';
 import { BotMetricsService, DashboardStats, DailyMetrics } from './bot-metrics.service';
 import { SetupMetricsService } from './setup-metrics.service';
+import { BotMonitorService } from './bot-monitor.service';
 
 interface CreateBotDto {
   name: string;
@@ -40,6 +41,7 @@ export class BotsController {
     private botsService: BotsService,
     private botMetricsService: BotMetricsService,
     private setupMetricsService: SetupMetricsService,
+    private botMonitorService: BotMonitorService,
   ) {}
 
   @Post()
@@ -165,6 +167,32 @@ export class BotsController {
     // Only return the actual logs, no duplicate status messages
     return {
       logs: recentLogs
+    };
+  }
+
+  @Post(':id/verify-status')
+  async verifyBotStatus(@Param('id') id: string, @Req() req: any) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new Error('Bot not found');
+    }
+    
+    const isOnline = await this.botMonitorService.checkBotStatus(id);
+    return { 
+      id, 
+      isOnline, 
+      status: isOnline ? 'ONLINE' : 'OFFLINE',
+      message: `Bot is ${isOnline ? 'online' : 'offline'}` 
+    };
+  }
+
+  @Post('verify-all-statuses')
+  async verifyAllBotStatuses(@Req() req: any) {
+    const result = await this.botMonitorService.forceRefreshAllStatuses();
+    return {
+      message: 'Status verification completed',
+      updated: result.updated,
+      errors: result.errors
     };
   }
 }
