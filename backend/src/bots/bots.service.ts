@@ -160,8 +160,8 @@ export class BotsService {
   async findAll(ownerId: string): Promise<Bot[]> {
     return this.prisma.bot.findMany({
       where: { 
-        ownerId,
-        isActive: true  // Only return active bots
+        ownerId
+        // No need for isActive filter since bots are hard deleted
       },
       include: {
         config: true,
@@ -181,13 +181,11 @@ export class BotsService {
   }
 
   async findOne(id: string, ownerId?: string): Promise<Bot | null> {
-    const where: any = { 
-      id,
-      isActive: true  // Only return active bots
-    };
+    const where: any = { id };
     if (ownerId) {
       where.ownerId = ownerId;
     }
+    // No need for isActive filter since bots are hard deleted
 
     return this.prisma.bot.findUnique({
       where,
@@ -324,15 +322,7 @@ export class BotsService {
     // Queue deletion job
     await this.queueService.addJob('delete-bot', { botId });
 
-    // Mark as inactive
-    await this.prisma.bot.update({
-      where: { id: botId },
-      data: { 
-        isActive: false,
-        status: BotStatus.OFFLINE,
-      },
-    });
-
+    // Log the deletion before deleting
     await this.prisma.auditLog.create({
       data: {
         userId: ownerId,
@@ -340,6 +330,11 @@ export class BotsService {
         action: 'BOT_DELETED',
         resource: 'bot',
       },
+    });
+
+    // Hard delete the bot and all related data
+    await this.prisma.bot.delete({
+      where: { id: botId },
     });
   }
 
