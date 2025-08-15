@@ -221,13 +221,13 @@ export class SimpleQueueService implements IQueueService {
 
   private async handleStopBot(data: JobData): Promise<void> {
     const botId = data.botId;
-    console.log(`Stopping bot ${botId}`);
+    console.log(`🛑 Stopping bot ${botId}`);
 
     try {
       const botProcess = this.runningBots.get(botId);
       
       if (!botProcess) {
-        console.log(`Bot ${botId} is not running`);
+        console.log(`⚠️ Bot ${botId} is not running in process manager`);
         // Update status anyway
         await this.prisma.bot.update({
           where: { id: botId },
@@ -236,17 +236,36 @@ export class SimpleQueueService implements IQueueService {
         return;
       }
 
-      // Kill the process
+      console.log(`🔄 Sending SIGTERM to bot ${botId} process`);
+      
+      // Kill the process gracefully first
       botProcess.kill('SIGTERM');
       
       // Wait for graceful shutdown, then force kill if needed
-      setTimeout(() => {
+      const forceKillTimeout = setTimeout(() => {
         if (this.runningBots.has(botId)) {
-          console.log(`Force killing bot ${botId}`);
+          console.log(`💀 Force killing bot ${botId} with SIGKILL`);
           botProcess.kill('SIGKILL');
+          this.runningBots.delete(botId);
         }
-      }, 10000); // 10 seconds timeout
+      }, 5000); // 5 seconds timeout (reduced from 10)
 
+      // Wait for process to exit naturally
+      await new Promise<void>((resolve) => {
+        botProcess.on('exit', () => {
+          clearTimeout(forceKillTimeout);
+          console.log(`📤 Bot ${botId} process exited naturally`);
+          resolve();
+        });
+        
+        // Fallback after timeout
+        setTimeout(() => {
+          clearTimeout(forceKillTimeout);
+          resolve();
+        }, 6000);
+      });
+
+      // Ensure process is removed from running bots
       this.runningBots.delete(botId);
 
       // Update bot status
@@ -258,6 +277,19 @@ export class SimpleQueueService implements IQueueService {
       console.log(`✅ Bot ${botId} stopped successfully`);
     } catch (error) {
       console.error(`❌ Failed to stop bot ${botId}:`, error);
+      // Ensure cleanup even on error
+      this.runningBots.delete(botId);
+      
+      // Update status to offline anyway
+      try {
+        await this.prisma.bot.update({
+          where: { id: botId },
+          data: { status: 'OFFLINE' },
+        });
+      } catch (dbError) {
+        console.error(`❌ Failed to update bot status after stop error:`, dbError);
+      }
+      
       throw error;
     }
   }
@@ -350,6 +382,27 @@ export class SimpleQueueService implements IQueueService {
       job.status !== type || job.createdAt.getTime() > cutoff
     );
     console.log(`Cleaned ${type} jobs older than ${olderThan}ms`);
+  }
+
+  // Helper method to get running bots for debugging
+  getRunningBots(): string[] {
+    return Array.from(this.runningBots.keys());
+  }
+
+  // Helper method to force stop a specific bot (for emergency situations)
+  async forceStopBot(botId: string): Promise<void> {
+    const botProcess = this.runningBots.get(botId);
+    if (botProcess) {
+      console.log(`🚨 Force stopping bot ${botId}`);
+      botProcess.kill('SIGKILL');
+      this.runningBots.delete(botId);
+      
+      // Update database status
+      await this.prisma.bot.update({
+        where: { id: botId },
+        data: { status: 'OFFLINE' },
+      });
+    }
   }
 
   private getJobPriority(jobType: string): number {
