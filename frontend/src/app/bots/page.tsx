@@ -114,30 +114,45 @@ export default function BotsPage() {
     setOpenMenus({});
   };
 
-  const handleAction = (botId: string, action: string) => {
+  const handleAction = async (botId: string, action: string) => {
     closeAllMenus();
-    switch (action) {
-      case 'manage':
-        router.push(`/bots/${botId}`);
-        break;
-      case 'logs':
-        router.push(`/bots/${botId}/logs`);
-        break;
-      case 'analytics':
-        router.push(`/bots/${botId}/analytics`);
-        break;
-      case 'settings':
-        router.push(`/bots/${botId}/settings`);
-        break;
-      case 'start':
-        // Handle start bot
-        break;
-      case 'stop':
-        // Handle stop bot
-        break;
-      case 'delete':
-        // Handle delete bot
-        break;
+    
+    try {
+      switch (action) {
+        case 'manage':
+          router.push(`/bots/${botId}`);
+          break;
+        case 'logs':
+          router.push(`/bots/${botId}/logs`);
+          break;
+        case 'analytics':
+          router.push(`/bots/${botId}/analytics`);
+          break;
+        case 'settings':
+          router.push(`/bots/${botId}/config`);
+          break;
+        case 'start':
+          await botsAPI.start(botId);
+          toast.success('Bot started successfully');
+          await fetchBots(); // Refresh the list
+          break;
+        case 'stop':
+          await botsAPI.stop(botId);
+          toast.success('Bot stopped successfully');
+          await fetchBots(); // Refresh the list
+          break;
+        case 'delete':
+          if (confirm('Are you sure you want to delete this bot? This action cannot be undone.')) {
+            await botsAPI.delete(botId);
+            toast.success('Bot deleted successfully');
+            await fetchBots(); // Refresh the list
+          }
+          break;
+      }
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'Action failed';
+      toast.error(errorMessage);
+      console.error(`Error executing ${action}:`, error);
     }
   };
 

@@ -113,9 +113,21 @@ export default function BotDetailPage() {
     }
   }, [logs]);
 
-  // Simulate real-time performance stats
+  // Simulate real-time performance stats - only when online
   useEffect(() => {
-    if (!bot || bot.status !== 'ONLINE') return;
+    // Reset stats to 0 when bot goes offline
+    if (!bot || bot.status !== 'ONLINE') {
+      setRealTimeStats({
+        cpuUsage: 0,
+        memoryUsage: 0,
+        uptime: 0,
+        eventCount: 0,
+        messageCount: 0,
+        commandCount: 0,
+        responseTime: 0
+      });
+      return;
+    }
 
     const statsInterval = setInterval(() => {
       setRealTimeStats(prev => ({
@@ -130,7 +142,7 @@ export default function BotDetailPage() {
     }, 2000);
 
     return () => clearInterval(statsInterval);
-  }, [bot]);
+  }, [bot?.status]); // React to status changes
 
   // Auto-refresh bot status every 10 seconds
   useEffect(() => {
