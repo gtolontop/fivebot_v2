@@ -30,18 +30,19 @@ model User {
 }
 
 model Bot {
-  id              String    @id @default(uuid())
-  ownerId         String    @map("owner_id")
-  name            String
-  tokenEncrypted  String    @map("token_encrypted") @db.Text
-  clientId        String?   @map("client_id")
-  prefix          String    @default("!")
-  isActive        Boolean   @default(false) @map("is_active")
-  containerId     String?   @map("container_id")
-  instanceId      String?   @map("instance_id")
-  status          BotStatus @default(OFFLINE)
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  id                String    @id @default(uuid())
+  ownerId           String    @map("owner_id")
+  name              String
+  tokenEncrypted    String    @map("token_encrypted") @db.Text
+  clientId          String?   @map("client_id")
+  prefix            String    @default("!")
+  isActive          Boolean   @default(false) @map("is_active")
+  containerId       String?   @map("container_id")
+  instanceId        String?   @map("instance_id")
+  status            BotStatus @default(OFFLINE)
+  shouldAutoRestart Boolean   @default(true) @map("should_auto_restart")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
 
   // Relations
   owner       User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
@@ -60,6 +61,7 @@ model BotConfig {
   welcomeChannelId    String? @map("welcome_channel_id")
   welcomeEmbedJson    Json?   @map("welcome_embed_json")
   welcomeLogoUrl      String? @map("welcome_logo_url")
+  welcomeThumbnailUrl String? @map("welcome_thumbnail_url")
   moderationEnabled   Boolean @default(false) @map("moderation_enabled")
   autoRoleEnabled     Boolean @default(false) @map("auto_role_enabled")
   autoRoleId          String? @map("auto_role_id")

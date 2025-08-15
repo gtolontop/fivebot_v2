@@ -17,6 +17,7 @@ interface UpdateBotConfigDto {
   welcomeChannelId?: string;
   welcomeEmbedJson?: any;
   welcomeLogoUrl?: string;
+  welcomeThumbnailUrl?: string;
   moderationEnabled?: boolean;
   autoRoleEnabled?: boolean;
   autoRoleId?: string;
@@ -235,7 +236,10 @@ export class BotsService {
 
     await this.prisma.bot.update({
       where: { id: botId },
-      data: { status: BotStatus.STARTING },
+      data: { 
+        status: BotStatus.STARTING,
+        shouldAutoRestart: true, // Enable auto-restart when user manually starts
+      },
     });
 
     await this.queueService.addJob('start-bot', { botId });
@@ -264,7 +268,10 @@ export class BotsService {
 
     await this.prisma.bot.update({
       where: { id: botId },
-      data: { status: BotStatus.STOPPING },
+      data: { 
+        status: BotStatus.STOPPING,
+        shouldAutoRestart: false, // Disable auto-restart when user manually stops
+      },
     });
 
     await this.queueService.addJob('stop-bot', { botId });

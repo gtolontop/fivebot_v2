@@ -23,6 +23,7 @@ interface UpdateBotConfigDto {
   welcomeChannelId?: string;
   welcomeEmbedJson?: any;
   welcomeLogoUrl?: string;
+  welcomeThumbnailUrl?: string;
   moderationEnabled?: boolean;
   autoRoleEnabled?: boolean;
   autoRoleId?: string;
