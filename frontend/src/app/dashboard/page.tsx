@@ -93,17 +93,6 @@ export default function DashboardPage() {
     });
   }, []);
 
-  const setupMetrics = async () => {
-    try {
-      await botsAPI.setupMetrics();
-      toast.success('Metrics setup completed successfully!');
-      // Retry fetching dashboard data
-      await fetchDashboardData();
-    } catch (error) {
-      console.error('Error setting up metrics:', error);
-      toast.error('Failed to setup metrics');
-    }
-  };
 
   const fetchDashboardData = async () => {
     try {
