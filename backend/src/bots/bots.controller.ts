@@ -237,7 +237,7 @@ export class BotsController {
         // Check each bot's real Discord status
         for (const bot of userBots) {
           try {
-            console.log(`🔍 Checking bot: ${bot.name} (currently marked as ${bot.status})`);
+            console.log(`🔍 Checking bot: ${bot.name} (currently marked as ${bot.status}, shouldAutoRestart: ${(bot as any).shouldAutoRestart})`);
             
             // Get decrypted token
             const decryptedToken = await this.botsService.getDecryptedToken(bot.id);
@@ -257,9 +257,16 @@ export class BotsController {
             
             // Update status if different, but respect user intentions
             if (bot.status !== expectedStatus) {
-              // Don't override if bot is manually stopped (STOPPING or shouldAutoRestart = false)
-              if (bot.status === 'STOPPING' || (bot as any).shouldAutoRestart === false) {
-                console.log(`🚫 ${bot.name} is manually stopped - not overriding status`);
+              // Don't override if bot is manually stopped (shouldAutoRestart = false) or in STOPPING state
+              if ((bot as any).shouldAutoRestart === false || bot.status === 'STOPPING') {
+                console.log(`🚫 ${bot.name} is manually stopped (shouldAutoRestart: ${(bot as any).shouldAutoRestart}) - not overriding status`);
+                
+                // If Discord shows bot as offline and we expected it to be offline (manual stop), that's correct
+                if (expectedStatus === 'OFFLINE' && bot.status !== 'OFFLINE') {
+                  await this.botsService.updateStatus(bot.id, 'OFFLINE');
+                  updated++;
+                  console.log(`✅ Confirmed ${bot.name} is offline as expected (manual stop)`);
+                }
               } else {
                 await this.botsService.updateStatus(bot.id, expectedStatus as any);
                 updated++;
