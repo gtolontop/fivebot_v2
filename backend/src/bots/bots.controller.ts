@@ -255,11 +255,16 @@ export class BotsController {
             
             console.log(`🤖 Bot ${bot.name}: API response ${response.status} -> ${expectedStatus}`);
             
-            // Update status if different
+            // Update status if different, but respect user intentions
             if (bot.status !== expectedStatus) {
-              await this.botsService.updateStatus(bot.id, expectedStatus as any);
-              updated++;
-              console.log(`✅ Updated ${bot.name}: ${bot.status} -> ${expectedStatus}`);
+              // Don't override if bot is manually stopped (STOPPING or shouldAutoRestart = false)
+              if (bot.status === 'STOPPING' || (bot as any).shouldAutoRestart === false) {
+                console.log(`🚫 ${bot.name} is manually stopped - not overriding status`);
+              } else {
+                await this.botsService.updateStatus(bot.id, expectedStatus as any);
+                updated++;
+                console.log(`✅ Updated ${bot.name}: ${bot.status} -> ${expectedStatus}`);
+              }
             } else {
               console.log(`✨ ${bot.name} status is already correct: ${expectedStatus}`);
             }
