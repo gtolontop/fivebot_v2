@@ -304,26 +304,26 @@ export default function BotsPage() {
     }
   };
 
-  // Auto-sync bot statuses when page loads and periodically  
-  useEffect(() => {
-    if (user) {
-      // Auto-sync statuses when page loads
-      const timer = setTimeout(() => {
-        verifyAllStatusesQuietly();
-      }, 1000); // Wait 1 second after initial load
+  // AUTO-SYNC DISABLED - IT WAS PUTTING BOTS BACK ONLINE AFTER MANUAL STOP
+  // useEffect(() => {
+  //   if (user) {
+  //     // Auto-sync statuses when page loads
+  //     const timer = setTimeout(() => {
+  //       verifyAllStatusesQuietly();
+  //     }, 1000); // Wait 1 second after initial load
       
-      // Auto-refresh statuses every 60 seconds (reduced frequency to avoid interfering with manual actions)
-      const intervalId = setInterval(() => {
-        verifyAllStatusesQuietly();
-      }, 60000); // 60 seconds instead of 30
+  //     // Auto-refresh statuses every 60 seconds (reduced frequency to avoid interfering with manual actions)
+  //     const intervalId = setInterval(() => {
+  //       verifyAllStatusesQuietly();
+  //     }, 60000); // 60 seconds instead of 30
 
-      // Cleanup on unmount
-      return () => {
-        clearTimeout(timer);
-        clearInterval(intervalId);
-      };
-    }
-  }, [user]);
+  //     // Cleanup on unmount
+  //     return () => {
+  //       clearTimeout(timer);
+  //       clearInterval(intervalId);
+  //     };
+  //   }
+  // }, [user]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
