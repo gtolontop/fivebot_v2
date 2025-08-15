@@ -35,6 +35,7 @@ export default function BotDetailPage() {
   const [bot, setBot] = useState<Bot | null>(null);
   const [botLoading, setBotLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [fetchingBot, setFetchingBot] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
   const [guilds, setGuilds] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
