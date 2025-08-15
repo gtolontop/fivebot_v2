@@ -24,7 +24,8 @@
     "ask": [],
     "defaultMode": "acceptEdits",
     "additionalDirectories": [
-      "C:\\mnt\\c\\Users\\teamr\\Desktop\\fivebot"
+      "C:\\mnt\\c\\Users\\teamr\\Desktop\\fivebot",
+      "C:\\c\\Users\\teamr\\Desktop\\fivebot"
     ]
   }
 }
