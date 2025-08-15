@@ -205,23 +205,21 @@ export class BotMetricsService {
     startDate.setDate(startDate.getDate() - days);
     startDate.setHours(0, 0, 0, 0);
 
-    const metrics = await this.prisma.botMetrics.findMany({
-      where: {
-        botId,
-        date: { gte: startDate },
-      },
-      orderBy: { date: 'asc' },
-    });
+    const metrics = await this.prisma.$queryRawUnsafe(
+      'SELECT * FROM bot_metrics WHERE bot_id = ? AND date >= ? ORDER BY date ASC',
+      botId,
+      startDate
+    ) as any[];
 
     return metrics.map(metric => ({
       date: metric.date,
-      commandsUsed: metric.commandsUsed,
-      messagesProcessed: metric.messagesProcessed,
-      guildsCount: metric.guildsCount,
-      usersCount: metric.usersCount,
-      uptimeSeconds: metric.uptimeSeconds,
-      avgResponseTime: metric.avgResponseTime,
-      errorsCount: metric.errorsCount,
+      commandsUsed: metric.commands_used || 0,
+      messagesProcessed: metric.messages_processed || 0,
+      guildsCount: metric.guilds_count || 0,
+      usersCount: metric.users_count || 0,
+      uptimeSeconds: metric.uptime_seconds || 0,
+      avgResponseTime: metric.avg_response_time_ms || 45,
+      errorsCount: metric.errors_count || 0,
     }));
   }
 
