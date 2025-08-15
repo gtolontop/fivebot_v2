@@ -3,7 +3,7 @@ import { PrismaService } from '../common/prisma/prisma.service';
 import { DiscordService } from '../common/discord/discord.service';
 import { EncryptionService } from '../common/encryption/encryption.service';
 
-interface DailyMetrics {
+export interface DailyMetrics {
   date: Date;
   commandsUsed: number;
   messagesProcessed: number;
@@ -14,7 +14,7 @@ interface DailyMetrics {
   errorsCount: number;
 }
 
-interface DashboardStats {
+export interface DashboardStats {
   totalBots: number;
   activeBots: number;
   totalServers: number;
