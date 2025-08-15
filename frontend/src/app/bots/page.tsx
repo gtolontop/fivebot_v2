@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
+import Cookies from 'js-cookie';
 
 interface Bot {
   id: string;
@@ -160,12 +161,13 @@ export default function BotsPage() {
   const verifyAllStatuses = async () => {
     setVerifyingStatuses(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/bots/verify-all-statuses`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/bots/setup/metrics`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+          'Authorization': `Bearer ${Cookies.get('token') || ''}`,
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({ action: 'sync-statuses' })
       });
 
       if (response.ok) {
@@ -173,7 +175,10 @@ export default function BotsPage() {
         toast.success(`Status verification completed: ${result.updated} bots updated`);
         await fetchBots(); // Refresh the list to show updated statuses
       } else {
-        toast.error('Failed to verify bot statuses');
+        console.error('Verify statuses failed:', response.status, response.statusText);
+        const errorData = await response.text();
+        console.error('Error response:', errorData);
+        toast.error(`Failed to verify bot statuses: ${response.status} ${response.statusText}`);
       }
     } catch (error) {
       console.error('Error verifying statuses:', error);
