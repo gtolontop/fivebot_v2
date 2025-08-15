@@ -85,13 +85,17 @@ export default function BotDetailPage() {
         
         if (response.ok) {
           const data = await response.json();
+          console.log('Bot detail logs response:', data); // Debug
           if (data.logs && data.logs.length > 0) {
             // Replace logs instead of appending to avoid duplicates
             setLogs(data.logs.slice(-50));
+          } else {
+            setLogs([]);
           }
         }
       } catch (error) {
         console.log('Could not fetch bot logs:', error);
+        setLogs([]);
       }
     };
 
