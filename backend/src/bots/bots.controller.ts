@@ -70,7 +70,15 @@ export class BotsController {
 
   @Post(':id/start')
   async start(@Param('id') id: string, @Req() req: any) {
-    return this.botsService.start(id, req.user.id);
+    try {
+      console.log(`🚀 Starting bot ${id} for user ${req.user.id}`);
+      const result = await this.botsService.start(id, req.user.id);
+      console.log(`✅ Bot ${id} start command sent successfully`);
+      return result;
+    } catch (error) {
+      console.error(`❌ Error starting bot ${id}:`, error);
+      throw error;
+    }
   }
 
   @Post(':id/stop')
