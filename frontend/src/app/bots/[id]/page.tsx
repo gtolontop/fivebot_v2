@@ -512,9 +512,25 @@ export default function BotDetailPage() {
                 
                 <div className="space-y-4">
                   <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-600">CPU Usage</span>
-                      <span className="font-medium">{bot.status === 'ONLINE' ? `${realTimeStats.cpuUsage.toFixed(1)}%` : '0%'}</span>
+                    <div className="flex justify-between items-center text-sm mb-2">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-gray-600">CPU Usage</span>
+                        <span className="text-xs text-gray-400">of available cores</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-medium">
+                          {bot.status === 'ONLINE' ? `${realTimeStats.cpuUsage.toFixed(1)}%` : '0%'}
+                        </span>
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          realTimeStats.cpuUsage > 80 ? 'bg-red-100 text-red-700' :
+                          realTimeStats.cpuUsage > 60 ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
+                        }`}>
+                          {bot.status === 'ONLINE' ? (
+                            realTimeStats.cpuUsage > 80 ? 'High' :
+                            realTimeStats.cpuUsage > 60 ? 'Medium' : 'Normal'
+                          ) : 'Offline'}
+                        </span>
+                      </div>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div 
@@ -528,9 +544,25 @@ export default function BotDetailPage() {
                   </div>
                   
                   <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-600">Memory Usage</span>
-                      <span className="font-medium">{bot.status === 'ONLINE' ? `${realTimeStats.memoryUsage.toFixed(1)}%` : '0%'}</span>
+                    <div className="flex justify-between items-center text-sm mb-2">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-gray-600">Memory Usage</span>
+                        <span className="text-xs text-gray-400">of 512 MB allocated</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-medium">
+                          {bot.status === 'ONLINE' ? `${(realTimeStats.memoryUsage * 5.12).toFixed(0)} MB` : '0 MB'}
+                        </span>
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          realTimeStats.memoryUsage > 80 ? 'bg-red-100 text-red-700' :
+                          realTimeStats.memoryUsage > 60 ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'
+                        }`}>
+                          {bot.status === 'ONLINE' ? (
+                            realTimeStats.memoryUsage > 80 ? 'High' :
+                            realTimeStats.memoryUsage > 60 ? 'Medium' : 'Low'
+                          ) : 'Offline'}
+                        </span>
+                      </div>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div 
@@ -544,14 +576,28 @@ export default function BotDetailPage() {
                   </div>
                   
                   <div className="pt-2 border-t border-gray-100">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Response Time</span>
-                      <span className={`font-medium ${
-                        realTimeStats.responseTime < 100 ? 'text-green-600' :
-                        realTimeStats.responseTime < 300 ? 'text-yellow-600' : 'text-red-600'
-                      }`}>
-                        {bot.status === 'ONLINE' ? `${realTimeStats.responseTime.toFixed(0)}ms` : '0ms'}
-                      </span>
+                    <div className="flex justify-between items-center text-sm">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-gray-600">Response Time</span>
+                        <span className="text-xs text-gray-400">avg Discord API</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className={`font-medium ${
+                          realTimeStats.responseTime < 100 ? 'text-green-600' :
+                          realTimeStats.responseTime < 300 ? 'text-yellow-600' : 'text-red-600'
+                        }`}>
+                          {bot.status === 'ONLINE' ? `${realTimeStats.responseTime.toFixed(0)} ms` : '0 ms'}
+                        </span>
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          realTimeStats.responseTime < 100 ? 'bg-green-100 text-green-700' :
+                          realTimeStats.responseTime < 300 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
+                        }`}>
+                          {bot.status === 'ONLINE' ? (
+                            realTimeStats.responseTime < 100 ? 'Fast' :
+                            realTimeStats.responseTime < 300 ? 'Average' : 'Slow'
+                          ) : 'Offline'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
