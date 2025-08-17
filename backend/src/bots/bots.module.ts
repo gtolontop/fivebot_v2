@@ -14,7 +14,7 @@ import { UsersModule } from '../users/users.module';
 @Module({
   imports: [QueueModule, UsersModule, DiscordModule],
   controllers: [BotsController],
-  providers: [BotsService, BotRecoveryService, BotMetricsService, SetupMetricsService, BotMonitorService, EncryptionService],
-  exports: [BotsService, BotRecoveryService],
+  providers: [BotsService, BotRecoveryService, BotMetricsService, SetupMetricsService, BotMonitorService, BotLogsService, EncryptionService],
+  exports: [BotsService, BotRecoveryService, BotLogsService],
 })
 export class BotsModule {}
