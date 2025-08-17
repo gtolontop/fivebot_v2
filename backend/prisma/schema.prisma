@@ -51,6 +51,7 @@ model Bot {
   jobLogs     JobLog[]
   auditLogs   AuditLog[]
   metrics     BotMetrics[]
+  logs        BotLog[]
 
   @@map("bots")
 }
@@ -125,6 +126,30 @@ model JobLog {
   bot Bot? @relation(fields: [botId], references: [id], onDelete: SetNull)
 
   @@map("job_logs")
+}
+
+model BotLog {
+  id        String   @id @default(uuid())
+  botId     String   @map("bot_id")
+  level     LogLevel @default(INFO)
+  message   String   @db.Text
+  source    String?  // Discord, Command, System, etc.
+  metadata  Json?    // Additional context data
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  bot Bot @relation(fields: [botId], references: [id], onDelete: Cascade)
+
+  @@index([botId, createdAt])
+  @@map("bot_logs")
+}
+
+enum LogLevel {
+  DEBUG
+  INFO
+  WARN
+  ERROR
+  SUCCESS
 }
 
 model AuditLog {
