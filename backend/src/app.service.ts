@@ -30,13 +30,29 @@ export class AppService implements OnApplicationBootstrap {
     }
   }
 
-  private async checkIfBotIsReallyRunning(tokenEncrypted: string): Promise<boolean> {
-    // This is a simple check - we could make it more sophisticated
-    // For now, we'll assume if we recently updated the status, the bot is probably running
-    // In a real implementation, you might check if there's an active WebSocket connection
-    // or if the bot recently responded to a heartbeat
-    
-    // For now, return false to reset all bots (can be improved later)
+  // Helper method to safely update bot status with retry logic
+  async updateBotStatusSafely(botId: string, status: string, maxRetries: number = 3): Promise<boolean> {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        await this.prisma.bot.update({
+          where: { id: botId },
+          data: { 
+            status,
+            updatedAt: new Date()
+          }
+        });
+        return true;
+      } catch (error) {
+        if (error.code === 1020 && attempt < maxRetries) {
+          // MySQL record changed error - wait and retry
+          console.log(`⚠️ Retrying bot status update (attempt ${attempt}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, 100 * attempt)); // Exponential backoff
+          continue;
+        }
+        console.error(`❌ Failed to update bot status after ${attempt} attempts:`, error);
+        return false;
+      }
+    }
     return false;
   }
 }
