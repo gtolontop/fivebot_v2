@@ -5,6 +5,7 @@ import { EncryptionService } from '../common/encryption/encryption.service';
 import { DiscordService } from '../common/discord/discord.service';
 import { QueueService } from '../queue/queue.service';
 import { UsersService } from '../users/users.service';
+import { BotLogsService } from './bot-logs.service';
 
 interface CreateBotDto {
   name: string;
@@ -33,6 +34,7 @@ export class BotsService {
     private discordService: DiscordService,
     public queueService: QueueService, // Make public for monitor service access
     private usersService: UsersService,
+    private botLogsService: BotLogsService,
   ) {}
 
   async create(ownerId: string, data: CreateBotDto): Promise<Bot> {
@@ -282,6 +284,12 @@ export class BotsService {
     console.log(`🔄 Pre-start sync for bot ${botId}`);
     await this.forceSyncBotStatus(botId);
 
+    // Log the start action
+    await this.botLogsService.logSystemEvent(botId, 'START', `User ${ownerId} initiated bot start`, {
+      userId: ownerId,
+      timestamp: new Date().toISOString(),
+    });
+
     // Check if bot is actually running, not just marked as ONLINE
     if (bot.status === BotStatus.ONLINE) {
       // Verify if the bot process is actually running
@@ -347,8 +355,16 @@ export class BotsService {
     console.log(`🔄 Pre-stop sync for bot ${botId}`);
     const currentStatus = await this.forceSyncBotStatus(botId);
 
+    // Log the stop action
+    await this.botLogsService.logSystemEvent(botId, 'STOP', `User ${ownerId} initiated bot stop`, {
+      userId: ownerId,
+      timestamp: new Date().toISOString(),
+      previousStatus: currentStatus,
+    });
+
     if (currentStatus === BotStatus.OFFLINE) {
       console.log(`⚠️ Bot ${botId} was already OFFLINE after sync - no action needed`);
+      await this.botLogsService.addLog(botId, 'INFO', '⚠️ Bot was already offline - no action needed', 'System');
       return bot;
     }
 
