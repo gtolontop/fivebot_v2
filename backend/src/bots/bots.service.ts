@@ -343,8 +343,13 @@ export class BotsService {
       throw new NotFoundException('Bot not found');
     }
 
-    if (bot.status === BotStatus.OFFLINE) {
-      throw new BadRequestException('Bot is already stopped');
+    // Force sync status before stopping to ensure accurate state
+    console.log(`🔄 Pre-stop sync for bot ${botId}`);
+    const currentStatus = await this.forceSyncBotStatus(botId);
+
+    if (currentStatus === BotStatus.OFFLINE) {
+      console.log(`⚠️ Bot ${botId} was already OFFLINE after sync - no action needed`);
+      return bot;
     }
 
     await this.prisma.bot.update({
