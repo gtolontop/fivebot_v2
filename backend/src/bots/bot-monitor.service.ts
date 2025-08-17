@@ -15,6 +15,10 @@ export class BotMonitorService {
   // Check bot statuses every 5 minutes to reduce concurrency conflicts
   @Cron('0 */5 * * * *')
   async checkAllBotsStatus() {
+    // Add random delay to prevent all instances from checking at exactly the same time
+    const randomDelay = Math.random() * 30000; // 0-30 seconds
+    await new Promise(resolve => setTimeout(resolve, randomDelay));
+    
     console.log('🔍 Starting periodic bot status check...');
     
     try {
@@ -34,16 +38,14 @@ export class BotMonitorService {
       let stillOnline = 0;
       let foundOffline = 0;
 
+      // Process bots with small delays to reduce concurrent updates
       for (const bot of botsMarkedOnline) {
         try {
           const isReallyOnline = await this.verifyBotIsOnline(bot.tokenEncrypted);
           
           if (!isReallyOnline) {
-            // Bot is not really online, update status
-            await this.prisma.bot.update({
-              where: { id: bot.id },
-              data: { status: 'OFFLINE' }
-            });
+            // Bot is not really online, update status using the safe method
+            await this.botsService.updateStatus(bot.id, 'OFFLINE');
             foundOffline++;
             console.log(`❌ Bot "${bot.name}" was marked ONLINE but is actually OFFLINE - status corrected`);
           } else {
@@ -53,6 +55,9 @@ export class BotMonitorService {
           console.log(`⚠️ Could not verify bot "${bot.name}": ${error.message}`);
           // Don't change status if we can't verify - might be temporary network issue
         }
+        
+        // Add small delay between checks to reduce database load
+        await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 200));
       }
 
       if (foundOffline > 0 || stillOnline > 0) {
