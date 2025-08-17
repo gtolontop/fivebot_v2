@@ -164,9 +164,14 @@ export class BotMetricsService {
       let todayMetrics: any[] = [];
       
       if (bots.length > 0) {
-        const placeholders = bots.map(() => '?').join(',');
-        const query = `SELECT * FROM bot_metrics WHERE bot_id IN (${placeholders}) AND date = ?`;
-        todayMetrics = await this.prisma.$queryRawUnsafe(query, ...bots.map(bot => bot.id), today) as any[];
+        try {
+          const placeholders = bots.map(() => '?').join(',');
+          const query = `SELECT * FROM bot_metrics WHERE bot_id IN (${placeholders}) AND date = ?`;
+          todayMetrics = await this.prisma.$queryRawUnsafe(query, ...bots.map(bot => bot.id), today) as any[];
+        } catch (error) {
+          console.log('bot_metrics table not found, using fallback data');
+          todayMetrics = [];
+        }
       }
 
     const todayCommands = todayMetrics.reduce((sum, metric) => sum + (metric.commands_used || 0), 0);
