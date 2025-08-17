@@ -20,14 +20,15 @@
       "Bash(chmod:*)",
       "Bash(find:*)",
       "Bash(grep:*)",
-      "Bash(set PORT=8000)"
+      "Bash(set PORT=8000)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
-    "ask": [],
     "defaultMode": "acceptEdits",
     "additionalDirectories": [
       "C:\\mnt\\c\\Users\\teamr\\Desktop\\fivebot",
       "C:\\c\\Users\\teamr\\Desktop\\fivebot"
-    ]
+    ],
+    "ask": []
   }
 }

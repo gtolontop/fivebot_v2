@@ -62,7 +62,7 @@ export async function ready(client: Client, prisma: PrismaClient, botId: string)
           jobId: `startup-error-${Date.now()}`,
           jobType: 'BOT_STARTUP',
           status: 'FAILED',
-          message: `Failed to update bot status: ${error.message}`,
+          message: `Failed to update bot status: ${(error as Error).message}`,
         },
       });
     } catch (logError) {

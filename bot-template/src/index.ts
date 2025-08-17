@@ -192,15 +192,50 @@ class ChildBot {
   }
 
   private async updateBotStatus(status: string) {
-    try {
-      if (!this.prisma) return;
-      await this.prisma.bot.update({
-        where: { id: this.botId },
-        data: { status: status as any },
-      });
-    } catch (error) {
-      console.warn('Failed to update bot status:', (error as Error).message);
-      // Don't throw - this is not critical for bot operation
+    let retries = 3;
+    
+    while (retries > 0) {
+      try {
+        if (!this.prisma) return;
+        
+        await this.prisma.bot.update({
+          where: { id: this.botId },
+          data: { 
+            status: status as any,
+            updatedAt: new Date()
+          },
+        });
+        
+        console.log(`✅ Bot status updated to ${status}`);
+        return; // Success, exit
+      } catch (error: any) {
+        const isConcurrencyError = 
+          error.code === 'P2034' || 
+          (error.message && (
+            error.message.includes('Record has changed') ||
+            error.message.includes('ConnectorError') ||
+            error.message.includes('code: 1020') ||
+            error.message.includes('HY000')
+          ));
+          
+        if (isConcurrencyError) {
+          retries--;
+          console.warn(`⚠️ Concurrency conflict updating status to ${status}, retrying... (${retries} retries left)`);
+          
+          if (retries > 0) {
+            // Wait with exponential backoff
+            const delay = (4 - retries) * 200 + Math.random() * 300;
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue;
+          } else {
+            console.warn(`❌ Failed to update status to ${status} after all retries`);
+            return;
+          }
+        } else {
+          console.warn('Failed to update bot status (non-concurrency error):', error.message);
+          return;
+        }
+      }
     }
   }
 

@@ -188,7 +188,7 @@ async function handleCustomCommand(
     return;
   }
 
-  const customCommand = config.customCommands[commandName];
+  const customCommand = (config.customCommands as any)?.[commandName];
   
   if (!customCommand) {
     await interaction.reply({
