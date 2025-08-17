@@ -79,7 +79,6 @@ export default function BotDetailPage() {
     if (!bot) return;
 
     if (bot.status !== 'ONLINE') {
-      setLogs([]);
       return;
     }
 
