@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
 import Cookies from 'js-cookie';
+import Header from '@/components/Header';
 
 interface Bot {
   id: string;
@@ -377,79 +378,63 @@ export default function BotsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Header */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center space-x-4">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd"/>
-                  <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z"/>
+      <Header
+        title="My Bots"
+        subtitle="Manage your Discord bots"
+        backButton={{
+          label: "Back to Dashboard",
+          href: "/dashboard"
+        }}
+        actions={
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={verifyAllStatuses}
+              disabled={verifyingStatuses}
+              className="flex items-center space-x-2 px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+              title="Verify real bot statuses"
+            >
+              {verifyingStatuses ? (
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"/>
+                  <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8v8H4z"/>
                 </svg>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">My Bots</h1>
-                <p className="text-sm text-gray-500">Manage your Discord bots</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="flex items-center space-x-2 text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <span>←</span>
-                <span className="font-medium">Back to Dashboard</span>
-              </button>
-              <button
-                onClick={verifyAllStatuses}
-                disabled={verifyingStatuses}
-                className="flex items-center space-x-2 px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-                title="Verify real bot statuses"
-              >
-                {verifyingStatuses ? (
-                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"/>
-                    <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8v8H4z"/>
-                  </svg>
-                ) : (
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd"/>
-                  </svg>
-                )}
-                <span>{verifyingStatuses ? 'Verifying...' : 'Sync Status'}</span>
-              </button>
-              <button
-                onClick={startAllBots}
-                disabled={startingAllBots || bots.filter(bot => bot.status === 'OFFLINE').length === 0}
-                className="flex items-center space-x-2 px-3 py-2 bg-orange-600 text-white text-sm font-medium rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50"
-                title="Start all offline bots"
-              >
-                {startingAllBots ? (
-                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"/>
-                    <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8v8H4z"/>
-                  </svg>
-                ) : (
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd"/>
-                  </svg>
-                )}
-                <span>{startingAllBots ? 'Starting...' : 'Start All'}</span>
-              </button>
-              <button
-                onClick={() => router.push('/bots/create')}
-                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-              >
+              ) : (
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd"/>
+                  <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd"/>
                 </svg>
-                <span>Create Bot</span>
-              </button>
-            </div>
+              )}
+              <span>{verifyingStatuses ? 'Verifying...' : 'Sync Status'}</span>
+            </button>
+            <button
+              onClick={startAllBots}
+              disabled={startingAllBots || bots.filter(bot => bot.status === 'OFFLINE').length === 0}
+              className="flex items-center space-x-2 px-3 py-2 bg-orange-600 text-white text-sm font-medium rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50"
+              title="Start all offline bots"
+            >
+              {startingAllBots ? (
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"/>
+                  <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8v8H4z"/>
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd"/>
+                </svg>
+              )}
+              <span>{startingAllBots ? 'Starting...' : 'Start All'}</span>
+            </button>
+            <button
+              onClick={() => router.push('/bots/create')}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd"/>
+              </svg>
+              <span>Create Bot</span>
+            </button>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
