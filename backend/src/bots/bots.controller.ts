@@ -71,9 +71,20 @@ export class BotsController {
   }
 
   @Post(':id/start')
-  async start(@Param('id') id: string, @Req() req: any) {
+  async start(@Param('id') id: string, @Req() req: any, @Body() body?: { force?: boolean }) {
     try {
-      console.log(`🚀 Starting bot ${id} for user ${req.user.id}`);
+      console.log(`🚀 Starting bot ${id} for user ${req.user.id}${body?.force ? ' (forced)' : ''}`);
+      
+      if (body?.force) {
+        // Force restart: stop first then start
+        try {
+          await this.botsService.stop(id, req.user.id);
+          await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+        } catch (stopError) {
+          console.log('Could not stop bot (maybe already stopped):', stopError.message);
+        }
+      }
+      
       const result = await this.botsService.start(id, req.user.id);
       console.log(`✅ Bot ${id} start command sent successfully`);
       return result;
