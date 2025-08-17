@@ -6,6 +6,7 @@ import { useEffect, useState, useRef } from 'react';
 import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
 import Cookies from 'js-cookie';
+import Header from '@/components/Header';
 
 interface Bot {
   id: string;
