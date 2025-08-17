@@ -493,29 +493,29 @@ export default function BotDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Console - Takes 2/3 on large screens */}
           <div className="lg:col-span-2">
-            <div className="bg-black/40 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden">
-              <div className="flex items-center justify-between p-4 border-b border-white/10">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="flex items-center justify-between p-4 border-b border-gray-200">
                 <div className="flex items-center space-x-3">
                   <div className="flex items-center space-x-1">
                     <div className="w-3 h-3 bg-red-500 rounded-full"></div>
                     <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
                     <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                   </div>
-                  <span className="text-white font-medium">Live Console</span>
+                  <span className="text-gray-900 font-medium">Live Console</span>
                   {bot.status === 'ONLINE' && (
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-emerald-500/20 text-emerald-400">
-                      <span className="w-2 h-2 bg-emerald-500 rounded-full mr-2 animate-pulse"></span>
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">
+                      <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
                       Live
                     </span>
                   )}
                 </div>
-                <span className="text-slate-400 text-xs">Auto-refresh every 1.5s</span>
+                <span className="text-gray-500 text-xs">Auto-refresh every 1.5s</span>
               </div>
               
-              <div className="h-96 overflow-y-auto p-4 bg-black/20">
+              <div className="h-96 overflow-y-auto p-4 bg-gray-900">
                 <div className="space-y-2 text-sm font-mono">
                   {logs.length === 0 ? (
-                    <div className="text-slate-400 text-center py-8">
+                    <div className="text-gray-400 text-center py-8">
                       {bot.status === 'ONLINE' ? (
                         <div className="space-y-2">
                           <div>⏳ Waiting for bot activity...</div>
@@ -530,8 +530,8 @@ export default function BotDetailPage() {
                     </div>
                   ) : (
                     logs.map((log, index) => (
-                      <div key={index} className="text-emerald-400 leading-relaxed hover:bg-white/5 px-2 py-1 rounded">
-                        <span className="text-slate-500">[{new Date().toLocaleTimeString()}]</span> {log}
+                      <div key={index} className="text-green-400 leading-relaxed hover:bg-gray-800 px-2 py-1 rounded">
+                        <span className="text-gray-500">[{new Date().toLocaleTimeString()}]</span> {log}
                       </div>
                     ))
                   )}
