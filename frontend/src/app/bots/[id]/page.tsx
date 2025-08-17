@@ -6,7 +6,6 @@ import { useEffect, useState, useRef } from 'react';
 import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
 import Cookies from 'js-cookie';
-import Header from '@/components/Header';
 
 interface Bot {
   id: string;
@@ -46,14 +45,16 @@ export default function BotDetailPage() {
   const [fetchingBot, setFetchingBot] = useState(false);
   const [guilds, setGuilds] = useState<GuildInfo[]>([]);
   const [logs, setLogs] = useState<string[]>([]);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const logsEndRef = useRef<HTMLDivElement>(null);
 
-  // Real-time performance stats
+  // Real-time stats
   const [stats, setStats] = useState({
-    cpu: 0,
-    memory: 0,
-    ping: 0,
-    uptime: 0
+    uptime: 0,
+    commands: 0,
+    messages: 0,
+    users: 0,
+    servers: 0
   });
 
   useEffect(() => {
@@ -75,11 +76,10 @@ export default function BotDetailPage() {
     }
   }, [logs]);
 
-  // Fetch logs every 1.5 seconds when bot is online
+  // Fetch logs every 5 seconds when bot is online
   useEffect(() => {
-    if (!bot) return;
-
-    if (bot.status !== 'ONLINE') {
+    if (!bot || bot.status !== 'ONLINE') {
+      setLogs([]);
       return;
     }
 
@@ -96,17 +96,7 @@ export default function BotDetailPage() {
         if (response.ok) {
           const data = await response.json();
           if (data.logs && data.logs.length > 0) {
-            setLogs(prev => {
-              const newLogs = data.logs.slice(-25); // Keep last 25 logs
-              // Only update if logs have actually changed
-              if (JSON.stringify(newLogs) !== JSON.stringify(prev)) {
-                return newLogs;
-              }
-              return prev;
-            });
-          } else if (logs.length === 0) {
-            // Add initial connection message
-            setLogs([`Bot connected and ready - ${new Date().toLocaleTimeString()}`]);
+            setLogs(data.logs.slice(-20)); // Keep last 20 logs
           }
         }
       } catch (error) {
@@ -114,9 +104,8 @@ export default function BotDetailPage() {
       }
     };
 
-    // Fetch immediately when status changes to ONLINE
     fetchLogs();
-    const interval = setInterval(fetchLogs, 1500); // Every 1.5 seconds for more real-time feel
+    const interval = setInterval(fetchLogs, 5000);
     return () => clearInterval(interval);
   }, [bot?.status, botId]);
 
