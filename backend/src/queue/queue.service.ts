@@ -56,6 +56,11 @@ export class QueueService implements IQueueService {
     console.log(`Force stop not implemented in BullMQ version for bot ${botId}`);
   }
 
+  async forceCleanupAndSync(): Promise<void> {
+    // BullMQ version - this would need to be implemented with job queuing
+    console.log('Force cleanup not fully implemented in BullMQ version - use SimpleQueueService instead');
+  }
+
   private getJobPriority(jobType: string): number {
     const priorities = {
       'create-bot': 10,

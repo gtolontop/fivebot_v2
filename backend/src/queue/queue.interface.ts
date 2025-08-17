@@ -11,4 +11,5 @@ export interface IQueueService {
   cleanJobs(type: 'completed' | 'failed', olderThan?: number): Promise<void>;
   getRunningBots(): string[];
   forceStopBot(botId: string): Promise<void>;
+  forceCleanupAndSync(): Promise<void>;
 }
