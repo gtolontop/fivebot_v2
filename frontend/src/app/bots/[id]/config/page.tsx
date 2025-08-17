@@ -438,6 +438,7 @@ export default function BotConfigPage() {
       case 'ONLINE': return 'text-green-600 bg-green-100';
       case 'STARTING': case 'STOPPING': return 'text-yellow-600 bg-yellow-100';
       case 'ERROR': return 'text-red-600 bg-red-100';
+      case 'OFFLINE': return 'text-gray-600 bg-gray-100';
       default: return 'text-gray-600 bg-gray-100';
     }
   };
