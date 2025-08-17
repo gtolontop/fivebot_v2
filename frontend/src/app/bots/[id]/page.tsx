@@ -288,41 +288,29 @@ export default function BotDetailPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Header */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push('/bots')}
-                className="flex items-center space-x-2 text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                <span>Back to Bots</span>
-              </button>
-              <div className="h-6 w-px bg-gray-300"></div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center space-x-3">
-                  <span>🤖</span>
-                  <span>{bot.name}</span>
-                </h1>
-                <div className="flex items-center space-x-3 mt-1">
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(bot.status)}`}>
-                    <span className="mr-2">{getStatusIcon(bot.status)}</span>
-                    {bot.status}
-                  </span>
-                  <span className="text-gray-500 text-sm">
-                    ID: {bot.id.substring(0, 8)}...
-                  </span>
-                </div>
-              </div>
-            </div>
-
+      <Header
+        title={bot.name}
+        subtitle={
+          <div className="flex items-center space-x-3 mt-1">
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(bot.status)}`}>
+              <span className="mr-2">{getStatusIcon(bot.status)}</span>
+              {bot.status}
+            </span>
+            <span className="text-gray-500 text-sm">
+              ID: {bot.id.substring(0, 8)}...
+            </span>
           </div>
-        </div>
-      </div>
+        }
+        icon={
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+            <span className="text-white text-lg">🤖</span>
+          </div>
+        }
+        backButton={{
+          label: "Back to Bots",
+          href: "/bots"
+        }}
+      />
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Bot Actions */}
