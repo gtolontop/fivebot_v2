@@ -394,8 +394,85 @@ export default function BotDetailPage() {
             </div>
           </div>
 
-          {/* Right Column - Performance Only */}
-          <div>
+          {/* Right Column - Bot Controls & Performance */}
+          <div className="space-y-4">
+            {/* Bot Controls */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+              <h3 className="text-md font-semibold text-gray-900 mb-3">Bot Controls</h3>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={bot.status === 'OFFLINE' ? handleStart : handleStop}
+                  disabled={actionLoading === 'start' || actionLoading === 'stop'}
+                  className={`p-2 rounded-lg border transition-all text-sm ${
+                    bot.status === 'OFFLINE'
+                      ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
+                      : 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100'
+                  } disabled:opacity-50`}
+                >
+                  <div className="flex items-center justify-center space-x-2">
+                    {actionLoading === 'start' || actionLoading === 'stop' ? (
+                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <span>{bot.status === 'OFFLINE' ? '▶️' : '⏹️'}</span>
+                    )}
+                    <span className="font-medium">
+                      {actionLoading === 'start' ? 'Starting...' : 
+                       actionLoading === 'stop' ? 'Stopping...' : 
+                       bot.status === 'OFFLINE' ? 'Start' : 'Stop'}
+                    </span>
+                  </div>
+                </button>
+
+                <button
+                  onClick={handleRestart}
+                  disabled={actionLoading === 'restart'}
+                  className="p-2 rounded-lg border bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 transition-all disabled:opacity-50 text-sm"
+                >
+                  <div className="flex items-center justify-center space-x-2">
+                    {actionLoading === 'restart' ? (
+                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <span>🔄</span>
+                    )}
+                    <span className="font-medium">
+                      {actionLoading === 'restart' ? 'Restarting...' : 'Restart'}
+                    </span>
+                  </div>
+                </button>
+
+                <button
+                  onClick={async () => {
+                    if (window.confirm('Force stop this bot? This will immediately terminate the process.')) {
+                      try {
+                        await botsAPI.forceStop(botId);
+                        toast.success('Bot force stopped');
+                        fetchBot();
+                      } catch (error: any) {
+                        toast.error('Error force stopping bot');
+                      }
+                    }
+                  }}
+                  className="p-2 rounded-lg border bg-red-50 border-red-200 text-red-700 hover:bg-red-100 transition-all text-sm"
+                >
+                  <div className="flex items-center justify-center space-x-2">
+                    <span>🚨</span>
+                    <span className="font-medium">Force Stop</span>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => router.push(`/bots/${botId}/debug`)}
+                  className="p-2 rounded-lg border bg-yellow-50 border-yellow-200 text-yellow-700 hover:bg-yellow-100 transition-all text-sm"
+                >
+                  <div className="flex items-center justify-center space-x-2">
+                    <span>🔧</span>
+                    <span className="font-medium">Debug</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Performance */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center space-x-2">
                 <span>📊</span>
