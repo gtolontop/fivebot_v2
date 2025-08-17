@@ -220,10 +220,7 @@ export class SimpleQueueService implements IQueueService {
         
         // Update bot status to offline
         try {
-          await this.prisma.bot.update({
-            where: { id: botId },
-            data: { status: 'OFFLINE' },
-          });
+          await this.updateBotStatusSafe(botId, 'OFFLINE');
           console.log(`[Bot ${botId}] ✅ Status updated to OFFLINE after process exit`);
         } catch (dbError) {
           console.error(`[Bot ${botId}] ❌ Failed to update bot status:`, dbError);
@@ -261,10 +258,7 @@ export class SimpleQueueService implements IQueueService {
       if (!botProcess) {
         console.log(`⚠️ Bot ${botId} is not running in process manager`);
         // Update status anyway
-        await this.prisma.bot.update({
-          where: { id: botId },
-          data: { status: 'OFFLINE' },
-        });
+        await this.updateBotStatusSafe(botId, 'OFFLINE');
         return;
       }
 
@@ -305,10 +299,7 @@ export class SimpleQueueService implements IQueueService {
       this.runningBots.delete(botId);
 
       // Update bot status
-      await this.prisma.bot.update({
-        where: { id: botId },
-        data: { status: 'OFFLINE' },
-      });
+      await this.updateBotStatusSafe(botId, 'OFFLINE');
 
       console.log(`✅ Bot ${botId} stopped successfully`);
     } catch (error) {
