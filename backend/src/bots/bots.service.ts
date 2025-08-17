@@ -250,8 +250,22 @@ export class BotsService {
       throw new NotFoundException('Bot not found');
     }
 
+    // Check if bot is actually running, not just marked as ONLINE
     if (bot.status === BotStatus.ONLINE) {
-      throw new BadRequestException('Bot is already running');
+      // Verify if the bot process is actually running
+      const isActuallyRunning = this.queueService['runningBots']?.has(botId);
+      
+      if (isActuallyRunning) {
+        throw new BadRequestException('Bot is already running');
+      } else {
+        // Bot is marked as ONLINE but process is not running - allow restart
+        console.log(`⚠️ Bot ${bot.name} is marked as ONLINE but process not found - allowing restart`);
+      }
+    }
+    
+    // Don't allow starting if already in STARTING state
+    if (bot.status === BotStatus.STARTING) {
+      throw new BadRequestException('Bot is already starting');
     }
 
     await this.prisma.bot.update({
