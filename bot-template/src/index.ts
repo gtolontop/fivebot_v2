@@ -276,8 +276,8 @@ class ChildBot {
   public async reloadConfig() {
     try {
       const newConfig = await this.configService.getConfig();
-      this.config = newConfig;
-      this.welcomeService.updateConfig(newConfig);
+      this.config = newConfig as any;
+      this.welcomeService.updateConfig(newConfig as any);
       
       console.log('🔄 Configuration reloaded');
       return true;
