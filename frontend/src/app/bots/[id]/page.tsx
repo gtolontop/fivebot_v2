@@ -120,28 +120,42 @@ export default function BotDetailPage() {
     return () => clearInterval(interval);
   }, [bot?.status, botId]);
 
-  // Update performance stats when bot is online
+  // Update performance stats from real API when bot is online
   useEffect(() => {
     if (bot?.status === 'ONLINE') {
-      const startTime = Date.now();
-      
-      const updateStats = () => {
-        const uptime = Math.floor((Date.now() - startTime) / 60000); // Minutes since start
-        setStats({
-          cpu: Math.floor(Math.random() * 25 + 5), // 5-30% CPU (realistic for Discord bots)
-          memory: Math.floor(Math.random() * 150 + 80), // 80-230MB (realistic Node.js memory usage)
-          ping: Math.floor(Math.random() * 40 + 15), // 15-55ms ping to Discord API
-          uptime: uptime
-        });
+      const fetchMetrics = async () => {
+        try {
+          const token = Cookies.get('token');
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/bots/${botId}/metrics`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            setStats({
+              cpu: data.cpu || 0,
+              memory: data.memory || 0,
+              ping: data.ping || 0,
+              uptime: data.uptime || 0
+            });
+          }
+        } catch (error) {
+          console.log('Could not fetch metrics:', error);
+          // Fallback to default values if API fails
+          setStats({ cpu: 0, memory: 0, ping: 0, uptime: 0 });
+        }
       };
       
-      updateStats();
-      const interval = setInterval(updateStats, 3000); // Update every 3 seconds
+      fetchMetrics();
+      const interval = setInterval(fetchMetrics, 3000); // Update every 3 seconds
       return () => clearInterval(interval);
     } else {
       setStats({ cpu: 0, memory: 0, ping: 0, uptime: 0 });
     }
-  }, [bot?.status]);
+  }, [bot?.status, botId]);
 
   const fetchBot = async () => {
     if (fetchingBot) return;
