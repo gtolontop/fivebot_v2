@@ -126,7 +126,7 @@ export default function BotDetailPage() {
       const fetchMetrics = async () => {
         try {
           const token = Cookies.get('token');
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/bots/${botId}/metrics`, {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/bots/${botId}/metrics/realtime`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
