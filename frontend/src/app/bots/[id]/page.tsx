@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import NotificationsCenter from '@/components/NotificationsCenter';
 import PerformanceMonitor from '@/components/PerformanceMonitor';
 import BotLogs from '@/components/BotLogs';
+import BotManagement from '@/components/BotManagement';
 import Cookies from 'js-cookie';
 
 interface Bot {
