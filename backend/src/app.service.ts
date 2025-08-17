@@ -15,7 +15,7 @@ export class AppService implements OnApplicationBootstrap {
       const result = await this.prisma.bot.updateMany({
         where: {
           status: {
-            in: ['ONLINE', 'STARTING', 'STOPPING']
+            in: [BotStatus.ONLINE, BotStatus.STARTING, BotStatus.STOPPING]
           }
         },
         data: {
