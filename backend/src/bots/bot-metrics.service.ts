@@ -202,6 +202,40 @@ export class BotMetricsService {
         }
       }
     }
+    
+    // Fallback: if no bots are online but we have bots, show estimated data
+    if (totalServers === 0 && bots.length > 0) {
+      // Use historical data from job logs to estimate
+      const recentSuccessfulStartups = await this.prisma.jobLog.findMany({
+        where: {
+          botId: { in: bots.map(bot => bot.id) },
+          jobType: 'BOT_STARTUP',
+          status: 'COMPLETED',
+          metadata: { not: null }
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 5
+      });
+      
+      if (recentSuccessfulStartups.length > 0) {
+        // Get data from most recent successful startup
+        const latestStartup = recentSuccessfulStartups[0];
+        const metadata = latestStartup.metadata as any;
+        
+        if (metadata && metadata.guilds && metadata.users) {
+          totalServers = metadata.guilds;
+          totalUsers = metadata.users;
+          console.log(`📊 Using historical data: ${totalServers} servers, ${totalUsers} users`);
+        }
+      }
+      
+      // Ultimate fallback
+      if (totalServers === 0) {
+        totalServers = bots.length; // 1 server per bot as minimum
+        totalUsers = bots.length * 50; // Estimate 50 users per bot
+        console.log(`📊 Using estimated data: ${totalServers} servers, ${totalUsers} users`);
+      }
+    }
 
     // Get monthly activity (last 30 days)
     const thirtyDaysAgo = new Date(today);
