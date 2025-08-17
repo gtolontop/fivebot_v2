@@ -396,21 +396,35 @@ export default function BotDetailPage() {
                 >
                   <div className="space-y-1">
                     {logs.length === 0 ? (
-                      <div className="text-gray-500">No logs available...</div>
+                      <div className="text-gray-500">Aucun log disponible...</div>
                     ) : (
-                      logs.slice(-50).map((log, index) => (
-                        <div 
-                          key={index} 
-                          className={`${index === logs.slice(-50).length - 1 ? 'text-green-300' : 'text-green-400'} leading-relaxed`}
-                        >
-                          {log}
-                        </div>
-                      ))
+                      logs.slice(-50).map((log, index) => {
+                        // Determine color based on log content and bot status
+                        let logColor = 'text-green-400';
+                        if (log.includes('Bot est éteint') || log.includes('OFFLINE')) {
+                          logColor = 'text-red-400';
+                        } else if (log.includes('démarrage') || log.includes('STARTING')) {
+                          logColor = 'text-yellow-400';
+                        } else if (log.includes('Erreur') || log.includes('ERROR')) {
+                          logColor = 'text-red-300';
+                        } else if (log.includes('En attente')) {
+                          logColor = 'text-blue-400';
+                        }
+                        
+                        return (
+                          <div 
+                            key={index} 
+                            className={`${logColor} leading-relaxed`}
+                          >
+                            {log}
+                          </div>
+                        );
+                      })
                     )}
-                    {bot.status === 'ONLINE' && (
+                    {bot.status === 'ONLINE' && wsConnection && logs.length > 0 && !logs[logs.length - 1]?.includes('En attente') && (
                       <div className="text-yellow-400 animate-pulse flex items-center space-x-1">
                         <span>●</span>
-                        <span>Waiting for events...</span>
+                        <span>En attente d'événements...</span>
                       </div>
                     )}
                   </div>
