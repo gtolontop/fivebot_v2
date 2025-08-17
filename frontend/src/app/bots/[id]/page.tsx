@@ -150,7 +150,7 @@ export default function BotDetailPage() {
       };
       
       fetchMetrics();
-      const interval = setInterval(fetchMetrics, 3000); // Update every 3 seconds
+      const interval = setInterval(fetchMetrics, 2000); // Update every 2 seconds for faster response
       return () => clearInterval(interval);
     } else {
       setStats({ cpu: 0, memory: 0, ping: 0, uptime: 0 });
@@ -242,6 +242,12 @@ export default function BotDetailPage() {
       await botsAPI.stop(botId);
       toast.success('Bot stopped successfully');
       await fetchBot();
+      
+      // Force immediate refresh after stopping
+      setTimeout(async () => {
+        await fetchBot();
+      }, 1000);
+      
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Error stopping bot');
     } finally {
