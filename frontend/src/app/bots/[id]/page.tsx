@@ -460,15 +460,6 @@ export default function BotDetailPage() {
                   </div>
                 </button>
 
-                <button
-                  onClick={() => router.push(`/bots/${botId}/debug`)}
-                  className="p-2 rounded-lg border bg-yellow-50 border-yellow-200 text-yellow-700 hover:bg-yellow-100 transition-all text-sm"
-                >
-                  <div className="flex items-center justify-center space-x-2">
-                    <span>🔧</span>
-                    <span className="font-medium">Debug</span>
-                  </div>
-                </button>
               </div>
             </div>
 
