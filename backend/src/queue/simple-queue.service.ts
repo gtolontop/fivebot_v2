@@ -309,10 +309,7 @@ export class SimpleQueueService implements IQueueService {
       
       // Update status to offline anyway
       try {
-        await this.prisma.bot.update({
-          where: { id: botId },
-          data: { status: 'OFFLINE' },
-        });
+        await this.updateBotStatusSafe(botId, 'OFFLINE');
       } catch (dbError) {
         console.error(`❌ Failed to update bot status after stop error:`, dbError);
       }
@@ -500,10 +497,7 @@ export class SimpleQueueService implements IQueueService {
     
     // Update database status
     try {
-      await this.prisma.bot.update({
-        where: { id: botId },
-        data: { status: 'OFFLINE' },
-      });
+      await this.updateBotStatusSafe(botId, 'OFFLINE');
       console.log(`💾 Bot ${botId} status set to OFFLINE in database`);
     } catch (dbError) {
       console.error(`❌ Failed to update bot status in database:`, dbError);
