@@ -58,7 +58,19 @@
   }
   
   .input {
-    @apply block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-discord-500 focus:border-discord-500 sm:text-sm;
+    @apply block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-discord-500 focus:border-discord-500 sm:text-sm transition-colors;
+  }
+  
+  .input-field {
+    @apply input;
+  }
+  
+  .input-error {
+    @apply input border-red-300 focus:ring-red-500 focus:border-red-500;
+  }
+  
+  .input-success {
+    @apply input border-green-300 focus:ring-green-500 focus:border-green-500;
   }
   
   .label {
