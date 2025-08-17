@@ -48,6 +48,7 @@ export class BotsController {
     private botMonitorService: BotMonitorService,
     private prisma: PrismaService,
     private queueService: QueueService,
+    private botLogsService: BotLogsService,
   ) {}
 
   @Post()
