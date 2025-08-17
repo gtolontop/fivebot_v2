@@ -262,6 +262,21 @@ export class BotsService {
       },
     });
 
+    // Create detailed job log for bot start
+    await this.prisma.jobLog.create({
+      data: {
+        botId,
+        jobId: `start-${Date.now()}`,
+        jobType: 'START_BOT',
+        status: 'PROCESSING',
+        message: `🚀 Starting bot ${bot.name}...`,
+        metadata: {
+          requestedBy: ownerId,
+          timestamp: new Date().toISOString()
+        }
+      }
+    });
+
     await this.queueService.addJob('start-bot', { botId });
 
     await this.prisma.auditLog.create({
