@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
+import Header from '@/components/Header';
 
 export default function CreateBotPage() {
   const { user, loading } = useAuth();
@@ -66,43 +67,36 @@ export default function CreateBotPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Header */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center space-x-4">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd"/>
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">Create New Bot</h1>
-                <p className="text-sm text-gray-500">Set up your Discord bot in minutes</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="text-gray-700 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-lg transition-colors text-sm font-medium"
-              >
-                Dashboard
-              </button>
-              <button
-                onClick={() => router.push('/bots')}
-                className="text-gray-700 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-lg transition-colors text-sm font-medium"
-              >
-                Back to Bots
-              </button>
-              <div className="flex items-center space-x-2 text-sm text-gray-500">
-                <span className="px-2 py-1 bg-purple-100 text-purple-600 rounded-full text-xs font-medium">
-                  {user.credits} Credits
-                </span>
-              </div>
+      <Header
+        title="Create New Bot"
+        subtitle="Set up your Discord bot in minutes"
+        icon={
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+            <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd"/>
+            </svg>
+          </div>
+        }
+        backButton={{
+          label: "Back to Bots",
+          href: "/bots"
+        }}
+        actions={
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="text-gray-700 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-lg transition-colors text-sm font-medium"
+            >
+              Dashboard
+            </button>
+            <div className="flex items-center space-x-2 text-sm text-gray-500">
+              <span className="px-2 py-1 bg-purple-100 text-purple-600 rounded-full text-xs font-medium">
+                {user.credits} Credits
+              </span>
             </div>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
