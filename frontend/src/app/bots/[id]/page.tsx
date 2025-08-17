@@ -439,70 +439,9 @@ export default function BotDetailPage() {
           {/* Main Row */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            {/* Console - Large Center */}
+            {/* Bot Logs - Large Center */}
             <div className="lg:col-span-2">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 h-96">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">
-                      <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm2 2a1 1 0 000 2h.01a1 1 0 100-2H5zm3 0a1 1 0 000 2h3a1 1 0 100-2H8z" clipRule="evenodd"/>
-                      </svg>
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900">Live Console</h3>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    {bot.status === 'ONLINE' && wsConnection ? (
-                      <>
-                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                        <span className="text-sm text-green-600 font-medium">Live</span>
-                      </>
-                    ) : bot.status === 'ONLINE' ? (
-                      <>
-                        <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
-                        <span className="text-sm text-yellow-600 font-medium">Connecting...</span>
-                      </>
-                    ) : (
-                      <>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                        <span className="text-sm text-gray-500">Offline</span>
-                      </>
-                    )}
-                    <button
-                      onClick={() => router.push(`/bots/${botId}/logs`)}
-                      className="ml-3 px-3 py-1 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors"
-                    >
-                      View Full Logs
-                    </button>
-                  </div>
-                </div>
-
-                <div 
-                  ref={consoleRef}
-                  className="bg-gray-900 text-green-400 p-4 rounded-lg text-sm font-mono h-80 overflow-y-auto border border-gray-700"
-                >
-                  <div className="space-y-1">
-                    {logs.length === 0 ? (
-                      <div className="text-gray-500">No logs available...</div>
-                    ) : (
-                      logs.slice(-50).map((log, index) => (
-                        <div 
-                          key={index} 
-                          className={`${index === logs.slice(-50).length - 1 ? 'text-green-300' : 'text-green-400'} leading-relaxed`}
-                        >
-                          {log}
-                        </div>
-                      ))
-                    )}
-                    {bot.status === 'ONLINE' && (
-                      <div className="text-yellow-400 animate-pulse flex items-center space-x-1">
-                        <span>●</span>
-                        <span>Waiting for events...</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <BotLogs botId={botId} botStatus={bot.status} />
             </div>
 
             {/* Performance Stats */}
