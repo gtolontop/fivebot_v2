@@ -399,7 +399,7 @@ export default function BotDetailPage() {
             {/* Bot Controls */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
               <h3 className="text-md font-semibold text-gray-900 mb-3">Bot Controls</h3>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2">
                 <button
                   onClick={bot.status === 'OFFLINE' ? handleStart : handleStop}
                   disabled={actionLoading === 'start' || actionLoading === 'stop'}
