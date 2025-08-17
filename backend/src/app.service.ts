@@ -32,7 +32,7 @@ export class AppService implements OnApplicationBootstrap {
   }
 
   // Helper method to safely update bot status with retry logic
-  async updateBotStatusSafely(botId: string, status: string, maxRetries: number = 3): Promise<boolean> {
+  async updateBotStatusSafely(botId: string, status: BotStatus, maxRetries: number = 3): Promise<boolean> {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         await this.prisma.bot.update({
