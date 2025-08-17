@@ -191,8 +191,8 @@ export class BotMetricsService {
           });
           
           if (encryptedBot) {
-            const decryptedToken = await this.getDecryptedToken(encryptedBot.tokenEncrypted);
-            const guilds = await this.getDiscordGuilds(decryptedToken);
+            const decryptedToken = this.encryptionService.decrypt(encryptedBot.tokenEncrypted);
+            const guilds = await this.discordService.getBotGuilds(decryptedToken);
             
             totalServers += guilds.length;
             totalUsers += guilds.reduce((sum: number, guild: any) => sum + (guild.memberCount || 0), 0);
