@@ -255,6 +255,24 @@ export class SimpleQueueService implements IQueueService {
         // Update bot status to online
         await this.updateBotStatusSafe(botId, BotStatus.ONLINE);
         console.log(`✅ Bot ${botId} started successfully`);
+        
+        // Schedule a verification check after 10 seconds to ensure it's still online
+        setTimeout(async () => {
+          try {
+            if (!this.runningBots.has(botId)) {
+              console.log(`⚠️ Bot ${botId} verification failed - process no longer running`);
+              await this.prisma.bot.update({
+                where: { id: botId },
+                data: { 
+                  status: BotStatus.OFFLINE,
+                  updatedAt: new Date()
+                },
+              });
+            }
+          } catch (verifyError) {
+            console.error(`❌ Failed to verify bot ${botId} start:`, verifyError);
+          }
+        }, 10000);
       } else {
         throw new Error('Bot process failed to start');
       }
@@ -329,6 +347,26 @@ export class SimpleQueueService implements IQueueService {
       });
 
       console.log(`✅ Bot ${botId} stopped successfully and status FORCE updated to OFFLINE`);
+      
+      // Schedule a verification check after 5 seconds to ensure it really stopped
+      setTimeout(async () => {
+        try {
+          const bot = await this.prisma.bot.findUnique({ where: { id: botId } });
+          if (bot && bot.status !== BotStatus.OFFLINE) {
+            console.log(`⚠️ Bot ${botId} status verification failed - forcing to OFFLINE`);
+            await this.prisma.bot.update({
+              where: { id: botId },
+              data: { 
+                status: BotStatus.OFFLINE,
+                updatedAt: new Date()
+              },
+            });
+          }
+        } catch (verifyError) {
+          console.error(`❌ Failed to verify bot ${botId} stop:`, verifyError);
+        }
+      }, 5000);
+      
     } catch (error) {
       console.error(`❌ Failed to stop bot ${botId}:`, error);
       // Ensure cleanup even on error

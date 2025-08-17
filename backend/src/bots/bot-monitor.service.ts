@@ -15,7 +15,57 @@ export class BotMonitorService {
     private botsService: BotsService,
   ) {}
 
-  // Check bot statuses every 30 seconds for immediate sync
+  // Aggressive heartbeat check every 15 seconds
+  @Cron('*/15 * * * * *')
+  async heartbeatCheck() {
+    try {
+      console.log('💓 Heartbeat check starting...');
+      
+      // Quick check for obvious mismatches
+      const allBots = await this.prisma.bot.findMany({
+        select: { id: true, name: true, status: true }
+      });
+
+      let corrections = 0;
+      
+      for (const bot of allBots) {
+        // Get running status from queue service
+        const queueService = this.botsService.queueService as any;
+        const isProcessRunning = queueService?.getRunningBots?.().includes(bot.id) ?? false;
+        
+        // Quick correction for obvious mismatches
+        if (bot.status === 'ONLINE' && !isProcessRunning) {
+          console.log(`💓 Heartbeat correcting bot ${bot.id} (${bot.name}): ONLINE → OFFLINE`);
+          await this.prisma.bot.update({
+            where: { id: bot.id },
+            data: { 
+              status: 'OFFLINE',
+              updatedAt: new Date()
+            }
+          });
+          corrections++;
+        } else if (bot.status === 'ERROR' && !isProcessRunning) {
+          console.log(`💓 Heartbeat correcting bot ${bot.id} (${bot.name}): ERROR → OFFLINE`);
+          await this.prisma.bot.update({
+            where: { id: bot.id },
+            data: { 
+              status: 'OFFLINE',
+              updatedAt: new Date()
+            }
+          });
+          corrections++;
+        }
+      }
+      
+      if (corrections > 0) {
+        console.log(`💓 Heartbeat made ${corrections} corrections`);
+      }
+    } catch (error) {
+      console.error('❌ Heartbeat check failed:', error);
+    }
+  }
+
+  // Deep status check every 30 seconds (less frequent but more thorough)
   @Cron('*/30 * * * * *')
   async checkAllBotsStatus() {
     // Add small random delay to prevent exact simultaneity 
