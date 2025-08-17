@@ -26,6 +26,45 @@ export class SimpleQueueService implements IQueueService {
     private encryptionService: EncryptionService,
   ) {}
 
+  // Safe method to update bot status with retry logic
+  private async updateBotStatusSafe(botId: string, status: string): Promise<void> {
+    let retries = 5;
+    
+    while (retries > 0) {
+      try {
+        await this.prisma.bot.update({
+          where: { id: botId },
+          data: { 
+            status,
+            updatedAt: new Date()
+          },
+        });
+        return;
+      } catch (error: any) {
+        const isConcurrencyError = 
+          error.code === 'P2034' ||
+          (error.message && (
+            error.message.includes('Record has changed') ||
+            error.message.includes('ConnectorError') ||
+            error.message.includes('code: 1020') ||
+            error.message.includes('HY000')
+          ));
+          
+        if (isConcurrencyError && retries > 1) {
+          retries--;
+          console.log(`⚠️ Concurrency conflict updating bot ${botId} status to ${status} in queue, retrying... (${retries} retries left)`);
+          
+          const delay = Math.min(1000, (6 - retries) * 200 + Math.random() * 300);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        } else {
+          console.error(`❌ Failed to update bot ${botId} status to ${status} in queue:`, error.message || error);
+          return;
+        }
+      }
+    }
+  }
+
   async addJob(jobType: string, data: JobData, options?: any): Promise<void> {
     const job: QueuedJob = {
       id: `${jobType}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -161,10 +200,7 @@ export class SimpleQueueService implements IQueueService {
         this.runningBots.delete(botId);
         
         // Update bot status to error
-        await this.prisma.bot.update({
-          where: { id: botId },
-          data: { status: 'ERROR' },
-        });
+        await this.updateBotStatusSafe(botId, 'ERROR');
       });
 
       // Handle process output
@@ -199,10 +235,7 @@ export class SimpleQueueService implements IQueueService {
 
       if (this.runningBots.has(botId)) {
         // Update bot status to online
-        await this.prisma.bot.update({
-          where: { id: botId },
-          data: { status: 'ONLINE' },
-        });
+        await this.updateBotStatusSafe(botId, 'ONLINE');
         console.log(`✅ Bot ${botId} started successfully`);
       } else {
         throw new Error('Bot process failed to start');
@@ -212,10 +245,7 @@ export class SimpleQueueService implements IQueueService {
       console.error(`❌ Failed to start bot ${botId}:`, error);
       
       // Update bot status to error
-      await this.prisma.bot.update({
-        where: { id: botId },
-        data: { status: 'ERROR' },
-      });
+      await this.updateBotStatusSafe(botId, 'ERROR');
 
       throw error;
     }

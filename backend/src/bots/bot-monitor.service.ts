@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, forwardRef, Inject } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { DiscordService } from '../common/discord/discord.service';
 import { EncryptionService } from '../common/encryption/encryption.service';
+import { BotsService } from './bots.service';
 
 @Injectable()
 export class BotMonitorService {
@@ -10,6 +11,8 @@ export class BotMonitorService {
     private prisma: PrismaService,
     private discordService: DiscordService,
     private encryptionService: EncryptionService,
+    @Inject(forwardRef(() => BotsService))
+    private botsService: BotsService,
   ) {}
 
   // Check bot statuses every 5 minutes to reduce concurrency conflicts
