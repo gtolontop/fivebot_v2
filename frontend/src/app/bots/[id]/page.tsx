@@ -261,6 +261,35 @@ export default function BotDetailPage() {
       await botsAPI.start(botId, { force: true });
       toast.success('Bot restarted successfully');
       await fetchBot();
+      
+      // Force immediate refresh and monitoring after restart
+      setTimeout(async () => {
+        await fetchBot();
+      }, 2000);
+      
+      // Continue checking status for restart transition
+      let checks = 0;
+      const statusCheckInterval = setInterval(async () => {
+        checks++;
+        if (checks > 15) { // Stop after 30 seconds
+          clearInterval(statusCheckInterval);
+          return;
+        }
+        
+        try {
+          const response = await botsAPI.getById(botId);
+          const updatedBot = response.data;
+          if (updatedBot.status === 'ONLINE') {
+            setBot(updatedBot);
+            clearInterval(statusCheckInterval);
+          } else {
+            setBot(updatedBot);
+          }
+        } catch (error) {
+          console.log('Status check error:', error);
+        }
+      }, 2000);
+      
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Error restarting bot');
     } finally {
