@@ -297,18 +297,6 @@ export default function BotDetailPage() {
               </div>
             </div>
 
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => setShowAdvanced(!showAdvanced)}
-                className={`px-4 py-2 rounded-lg transition-all ${
-                  showAdvanced 
-                    ? 'bg-blue-500 text-white' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Advanced
-              </button>
-            </div>
           </div>
         </div>
       </div>
