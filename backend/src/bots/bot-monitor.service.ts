@@ -12,8 +12,8 @@ export class BotMonitorService {
     private encryptionService: EncryptionService,
   ) {}
 
-  // Check bot statuses every 2 minutes
-  @Cron('0 */2 * * * *')
+  // Check bot statuses every 5 minutes to reduce concurrency conflicts
+  @Cron('0 */5 * * * *')
   async checkAllBotsStatus() {
     console.log('🔍 Starting periodic bot status check...');
     
