@@ -15,11 +15,11 @@ export class BotMonitorService {
     private botsService: BotsService,
   ) {}
 
-  // Check bot statuses every 5 minutes to reduce concurrency conflicts
-  @Cron('0 */5 * * * *')
+  // Check bot statuses every 30 seconds for immediate sync
+  @Cron('*/30 * * * * *')
   async checkAllBotsStatus() {
-    // Add random delay to prevent all instances from checking at exactly the same time
-    const randomDelay = Math.random() * 30000; // 0-30 seconds
+    // Add small random delay to prevent exact simultaneity 
+    const randomDelay = Math.random() * 3000; // 0-3 seconds
     await new Promise(resolve => setTimeout(resolve, randomDelay));
     
     console.log('🔍 Starting periodic bot status check...');
