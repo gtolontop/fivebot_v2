@@ -64,6 +64,16 @@ export default function BotDetailPage() {
   useEffect(() => {
     if (!bot || bot.status !== 'ONLINE') {
       setWsConnection(null);
+      
+      // Set appropriate message for offline states
+      if (bot && bot.status === 'OFFLINE') {
+        setLogs([`[${new Date().toLocaleTimeString()}] Bot est éteint`]);
+      } else if (bot && bot.status === 'STARTING') {
+        setLogs([`[${new Date().toLocaleTimeString()}] Bot est en cours de démarrage...`]);
+      } else if (bot && bot.status === 'ERROR') {
+        setLogs([`[${new Date().toLocaleTimeString()}] Erreur du bot - vérifiez la configuration`]);
+      }
+      
       return;
     }
 
@@ -85,10 +95,17 @@ export default function BotDetailPage() {
           if (data.logs && data.logs.length > 0) {
             // Replace logs instead of appending to avoid duplicates
             setLogs(data.logs.slice(-50));
+          } else {
+            // No logs available, show waiting message
+            setLogs([`[${new Date().toLocaleTimeString()}] En attente d'activité du bot...`]);
           }
+        } else {
+          // API error, show connection issue
+          setLogs([`[${new Date().toLocaleTimeString()}] Problème de connexion avec le serveur`]);
         }
       } catch (error) {
         console.log('Could not fetch bot logs:', error);
+        setLogs([`[${new Date().toLocaleTimeString()}] Erreur de récupération des logs`]);
       }
     };
 
