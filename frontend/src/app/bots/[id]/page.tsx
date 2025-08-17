@@ -304,67 +304,123 @@ export default function BotDetailPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Quick Actions */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <button
-            onClick={bot.status === 'OFFLINE' ? handleStart : handleStop}
-            disabled={actionLoading === 'start' || actionLoading === 'stop'}
-            className={`p-4 rounded-xl border-2 transition-all ${
-              bot.status === 'OFFLINE'
-                ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
-                : 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100'
-            } disabled:opacity-50`}
-          >
-            <div className="flex flex-col items-center space-y-2">
-              {actionLoading === 'start' || actionLoading === 'stop' ? (
-                <div className="w-6 h-6 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-              ) : (
-                <span className="text-2xl">{bot.status === 'OFFLINE' ? '▶️' : '⏹️'}</span>
-              )}
-              <span className="font-medium">
-                {actionLoading === 'start' ? 'Starting...' : 
-                 actionLoading === 'stop' ? 'Stopping...' : 
-                 bot.status === 'OFFLINE' ? 'Start Bot' : 'Stop Bot'}
-              </span>
-            </div>
-          </button>
+        {/* Control Panel */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Bot Controls</h3>
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+            <button
+              onClick={bot.status === 'OFFLINE' ? handleStart : handleStop}
+              disabled={actionLoading === 'start' || actionLoading === 'stop'}
+              className={`p-3 rounded-lg border transition-all ${
+                bot.status === 'OFFLINE'
+                  ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
+                  : 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100'
+              } disabled:opacity-50`}
+            >
+              <div className="flex flex-col items-center space-y-1">
+                {actionLoading === 'start' || actionLoading === 'stop' ? (
+                  <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <span className="text-xl">{bot.status === 'OFFLINE' ? '▶️' : '⏹️'}</span>
+                )}
+                <span className="text-sm font-medium">
+                  {actionLoading === 'start' ? 'Starting...' : 
+                   actionLoading === 'stop' ? 'Stopping...' : 
+                   bot.status === 'OFFLINE' ? 'Start' : 'Stop'}
+                </span>
+              </div>
+            </button>
 
-          <button
-            onClick={handleRestart}
-            disabled={actionLoading === 'restart'}
-            className="p-4 rounded-xl border-2 bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 transition-all disabled:opacity-50"
-          >
-            <div className="flex flex-col items-center space-y-2">
-              {actionLoading === 'restart' ? (
-                <div className="w-6 h-6 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-              ) : (
-                <span className="text-2xl">🔄</span>
-              )}
-              <span className="font-medium">
-                {actionLoading === 'restart' ? 'Restarting...' : 'Restart'}
-              </span>
-            </div>
-          </button>
+            <button
+              onClick={handleRestart}
+              disabled={actionLoading === 'restart'}
+              className="p-3 rounded-lg border bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 transition-all disabled:opacity-50"
+            >
+              <div className="flex flex-col items-center space-y-1">
+                {actionLoading === 'restart' ? (
+                  <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <span className="text-xl">🔄</span>
+                )}
+                <span className="text-sm font-medium">Restart</span>
+              </div>
+            </button>
 
-          <button
-            onClick={() => router.push(`/bots/${botId}/config`)}
-            className="p-4 rounded-xl border-2 bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 transition-all"
-          >
-            <div className="flex flex-col items-center space-y-2">
-              <span className="text-2xl">⚙️</span>
-              <span className="font-medium">Configuration</span>
-            </div>
-          </button>
+            <button
+              onClick={() => router.push(`/bots/${botId}/config`)}
+              className="p-3 rounded-lg border bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 transition-all"
+            >
+              <div className="flex flex-col items-center space-y-1">
+                <span className="text-xl">⚙️</span>
+                <span className="text-sm font-medium">Config</span>
+              </div>
+            </button>
 
-          <button
-            onClick={generateInviteLink}
-            className="p-4 rounded-xl border-2 bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100 transition-all"
-          >
-            <div className="flex flex-col items-center space-y-2">
-              <span className="text-2xl">🔗</span>
-              <span className="font-medium">Generate Invite</span>
+            <button
+              onClick={generateInviteLink}
+              className="p-3 rounded-lg border bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100 transition-all"
+            >
+              <div className="flex flex-col items-center space-y-1">
+                <span className="text-xl">🔗</span>
+                <span className="text-sm font-medium">Invite</span>
+              </div>
+            </button>
+
+            <button
+              onClick={() => router.push(`/bots/${botId}/logs`)}
+              className="p-3 rounded-lg border bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100 transition-all"
+            >
+              <div className="flex flex-col items-center space-y-1">
+                <span className="text-xl">📋</span>
+                <span className="text-sm font-medium">Logs</span>
+              </div>
+            </button>
+
+            <button
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              className={`p-3 rounded-lg border transition-all ${
+                showAdvanced 
+                  ? 'bg-red-50 border-red-200 text-red-700' 
+                  : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <div className="flex flex-col items-center space-y-1">
+                <span className="text-xl">⚠️</span>
+                <span className="text-sm font-medium">Advanced</span>
+              </div>
+            </button>
+          </div>
+
+          {/* Advanced Options */}
+          {showAdvanced && (
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <h4 className="font-medium text-red-800 mb-3">⚠️ Danger Zone</h4>
+              <div className="flex space-x-3">
+                <button
+                  onClick={async () => {
+                    if (window.confirm('Force stop this bot? This will immediately terminate the process.')) {
+                      try {
+                        await botsAPI.forceStop(botId);
+                        toast.success('Bot force stopped');
+                        fetchBot();
+                      } catch (error: any) {
+                        toast.error('Error force stopping bot');
+                      }
+                    }
+                  }}
+                  className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-sm font-medium"
+                >
+                  🚨 Force Stop
+                </button>
+                <button
+                  onClick={() => router.push(`/bots/${botId}/debug`)}
+                  className="px-4 py-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 rounded-lg text-sm font-medium"
+                >
+                  🔧 Debug Mode
+                </button>
+              </div>
             </div>
-          </button>
+          )}
         </div>
 
         {/* Main Content */}
