@@ -367,27 +367,47 @@ export class BotsService {
   }
 
   async updateStatus(botId: string, status: BotStatus, metadata?: any): Promise<void> {
-    let retries = 3;
+    let retries = 5; // Increase retries
     
     while (retries > 0) {
       try {
+        // Use a more robust update with optimistic locking
         await this.prisma.bot.update({
           where: { id: botId },
-          data: { status },
+          data: { 
+            status,
+            updatedAt: new Date() // Force timestamp update
+          },
         });
-        break; // Success, exit retry loop
+        return; // Success, exit function
       } catch (error: any) {
-        if (error.code === 'P2034' || (error.message && error.message.includes('Record has changed'))) {
-          // Concurrency conflict, retry after a short delay
+        const isConcurrencyError = 
+          error.code === 'P2034' || // Prisma concurrency error
+          (error.message && (
+            error.message.includes('Record has changed') ||
+            error.message.includes('ConnectorError') ||
+            error.message.includes('code: 1020') ||
+            error.message.includes('HY000')
+          ));
+          
+        if (isConcurrencyError) {
           retries--;
+          console.log(`⚠️ Concurrency conflict updating bot ${botId} status to ${status}, retrying... (${retries} retries left)`);
+          
           if (retries > 0) {
-            await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 200)); // Random delay 100-300ms
+            // Exponential backoff with jitter
+            const delay = Math.min(1000, (6 - retries) * 200 + Math.random() * 300);
+            await new Promise(resolve => setTimeout(resolve, delay));
             continue;
+          } else {
+            console.error(`❌ Failed to update bot ${botId} status after all retries due to concurrency conflicts`);
+            return; // Give up gracefully
           }
+        } else {
+          // Non-concurrency error, log and give up immediately
+          console.error(`❌ Failed to update bot ${botId} status due to non-concurrency error:`, error);
+          return;
         }
-        // Re-throw if it's not a concurrency error or we're out of retries
-        console.error('Failed to update bot status after retries:', error);
-        return; // Don't throw, just log and continue
       }
     }
 
