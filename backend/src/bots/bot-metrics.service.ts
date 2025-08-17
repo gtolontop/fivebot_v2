@@ -187,37 +187,77 @@ export class BotMetricsService {
       }
     }
     
-    // Fallback: if no bots are online but we have bots, show estimated data
+    // Fallback: if no bots are online but we have bots, try to get real Discord data anyway
     if (totalServers === 0 && bots.length > 0) {
-      // Use historical data from job logs to estimate
-      const recentSuccessfulStartups = await this.prisma.jobLog.findMany({
-        where: {
-          botId: { in: bots.map(bot => bot.id) },
-          jobType: 'BOT_STARTUP',
-          status: 'COMPLETED',
-          metadata: { not: null }
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 5
-      });
+      console.log('📊 No online bots detected, trying to fetch real Discord data for offline bots...');
       
-      if (recentSuccessfulStartups.length > 0) {
-        // Get data from most recent successful startup
-        const latestStartup = recentSuccessfulStartups[0];
-        const metadata = latestStartup.metadata as any;
-        
-        if (metadata && metadata.guilds && metadata.users) {
-          totalServers = metadata.guilds;
-          totalUsers = metadata.users;
-          console.log(`📊 Using historical data: ${totalServers} servers, ${totalUsers} users`);
+      for (const bot of bots) {
+        try {
+          // Try to get real Discord data even if bot is marked as offline
+          const encryptedBot = await this.prisma.bot.findUnique({
+            where: { id: bot.id },
+            select: { tokenEncrypted: true, name: true }
+          });
+          
+          if (encryptedBot) {
+            const decryptedToken = this.encryptionService.decrypt(encryptedBot.tokenEncrypted);
+            
+            // Test if token is still valid by making a simple API call
+            const response = await fetch('https://discord.com/api/v10/users/@me', {
+              headers: {
+                'Authorization': `Bot ${decryptedToken}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            
+            if (response.status === 200) {
+              // Token is valid, get guild data
+              const guilds = await this.discordService.getBotGuilds(decryptedToken);
+              
+              const botServers = guilds.length;
+              const botUsers = guilds.reduce((sum: number, guild: any) => sum + (guild.memberCount || 0), 0);
+              
+              totalServers += botServers;
+              totalUsers += botUsers;
+              
+              console.log(`📊 Bot ${encryptedBot.name}: ${botServers} servers, ${botUsers} users (real Discord data)`);
+            }
+          }
+        } catch (error) {
+          console.log(`⚠️ Could not fetch Discord data for bot ${bot.name}:`, error.message);
         }
       }
       
-      // Ultimate fallback
+      // If we still have no data, try historical data
       if (totalServers === 0) {
-        totalServers = bots.length; // 1 server per bot as minimum
-        totalUsers = bots.length * 50; // Estimate 50 users per bot
-        console.log(`📊 Using estimated data: ${totalServers} servers, ${totalUsers} users`);
+        const recentSuccessfulStartups = await this.prisma.jobLog.findMany({
+          where: {
+            botId: { in: bots.map(bot => bot.id) },
+            jobType: 'BOT_STARTUP',
+            status: 'COMPLETED',
+            metadata: { not: null }
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 5
+        });
+        
+        if (recentSuccessfulStartups.length > 0) {
+          const latestStartup = recentSuccessfulStartups[0];
+          const metadata = latestStartup.metadata as any;
+          
+          if (metadata && metadata.guilds && metadata.users) {
+            totalServers = metadata.guilds;
+            totalUsers = metadata.users;
+            console.log(`📊 Using historical data: ${totalServers} servers, ${totalUsers} users`);
+          }
+        }
+      }
+      
+      // Ultimate fallback (should rarely be used now)
+      if (totalServers === 0) {
+        totalServers = bots.length;
+        totalUsers = bots.length * 50;
+        console.log(`📊 Using minimal fallback: ${totalServers} servers, ${totalUsers} users`);
       }
     }
 
