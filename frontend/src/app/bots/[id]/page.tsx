@@ -162,16 +162,7 @@ export default function BotDetailPage() {
       const response = await botsAPI.getById(botId);
       const newBot = response.data;
       
-      // Clear logs and reset when status changes
-      if (bot && bot.status !== newBot.status) {
-        setLogs([]); // Clear existing logs when status changes
-        
-        if (newBot.status === 'OFFLINE') {
-          setLogs([`[${new Date().toLocaleTimeString()}] Bot is offline`]);
-        } else if (newBot.status === 'STARTING') {
-          setLogs([`[${new Date().toLocaleTimeString()}] Bot is starting...`]);
-        }
-      }
+      // Status change will be handled by the logs useEffect
       
       setBot(newBot);
       
