@@ -198,12 +198,6 @@ export default function BotDetailPage() {
     }
   };
 
-  const viewLogs = () => {
-    // Open logs in a new modal or redirect to logs page
-    window.open(`/bots/${botId}/logs`, '_blank');
-  };
-
-
   if (loading || botLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
