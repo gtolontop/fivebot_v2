@@ -1,5 +1,6 @@
 import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { PrismaService } from './common/prisma/prisma.service';
+import { BotStatus } from '@prisma/client';
 
 @Injectable()
 export class AppService implements OnApplicationBootstrap {
@@ -18,7 +19,7 @@ export class AppService implements OnApplicationBootstrap {
           }
         },
         data: {
-          status: 'OFFLINE'
+          status: BotStatus.OFFLINE
         }
       });
 
