@@ -116,7 +116,7 @@ export default function BotDetailPage() {
 
     // Fetch immediately when status changes to ONLINE
     fetchLogs();
-    const interval = setInterval(fetchLogs, 2000); // Every 2 seconds for more real-time feel
+    const interval = setInterval(fetchLogs, 1500); // Faster refresh - every 1.5 seconds for more responsive feel
     return () => clearInterval(interval);
   }, [bot?.status, botId]);
 
