@@ -426,17 +426,45 @@ export class BotsService {
       }
     }
 
-    // Only log significant status changes to avoid spam
-    if (status === 'ONLINE' || status === 'ERROR') {
+    // Log all significant status changes with detailed messages
+    const shouldLog = ['ONLINE', 'ERROR', 'OFFLINE', 'STARTING'].includes(status);
+    
+    if (shouldLog) {
       try {
+        let message = '';
+        let logStatus = 'COMPLETED';
+        
+        switch (status) {
+          case 'ONLINE':
+            message = `✅ Bot is now online and ready to serve commands`;
+            break;
+          case 'ERROR':
+            message = `❌ Bot encountered an error and stopped working`;
+            logStatus = 'FAILED';
+            break;
+          case 'OFFLINE':
+            message = `⏹️ Bot has been stopped and is now offline`;
+            break;
+          case 'STARTING':
+            message = `🔄 Bot is starting up...`;
+            logStatus = 'PROCESSING';
+            break;
+          default:
+            message = `📊 Bot status changed to ${status}`;
+        }
+        
         await this.prisma.jobLog.create({
           data: {
             botId,
             jobId: `status-${Date.now()}`,
             jobType: 'STATUS_UPDATE',
-            status: 'COMPLETED',
-            message: `Bot status changed to ${status}`,
-            metadata,
+            status: logStatus,
+            message,
+            metadata: {
+              ...metadata,
+              newStatus: status,
+              timestamp: new Date().toISOString()
+            },
           },
         });
       } catch (error) {
