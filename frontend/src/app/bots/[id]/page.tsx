@@ -6,6 +6,7 @@ import { useEffect, useState, useRef } from 'react';
 import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
 import NotificationsCenter from '@/components/NotificationsCenter';
+import PerformanceMonitor from '@/components/PerformanceMonitor';
 import Cookies from 'js-cookie';
 
 interface Bot {
@@ -427,6 +428,11 @@ export default function BotDetailPage() {
               </svg>
               <span className="font-medium">Analytics</span>
             </button>
+          </div>
+
+          {/* Performance Monitor Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
+            <PerformanceMonitor botId={botId} isOnline={bot.status === 'ONLINE'} />
           </div>
 
           {/* Main Row */}
