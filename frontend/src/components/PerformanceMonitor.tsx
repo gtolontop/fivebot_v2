@@ -175,29 +175,100 @@ export default function PerformanceMonitor({ botId, isOnline }: PerformanceMonit
       {/* Current Stats */}
       {latestData && (
         <div className="grid grid-cols-4 gap-4 mb-6">
-          <div className="bg-blue-50 p-3 rounded-lg text-center">
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-xs font-medium text-blue-700 uppercase tracking-wide">CPU Usage</div>
+              <div className={`text-xs px-2 py-1 rounded-full ${
+                latestData.cpu > 80 ? 'bg-red-100 text-red-700' : 
+                latestData.cpu > 60 ? 'bg-yellow-100 text-yellow-700' : 
+                'bg-green-100 text-green-700'
+              }`}>
+                {latestData.cpu > 80 ? 'High' : latestData.cpu > 60 ? 'Medium' : 'Normal'}
+              </div>
+            </div>
             <div className={`text-2xl font-bold ${latestData.cpu > 80 ? 'text-red-600' : 'text-blue-600'}`}>
               {latestData.cpu.toFixed(1)}%
             </div>
-            <div className="text-sm text-blue-800">CPU Usage</div>
+            <div className="text-xs text-gray-500 mt-1">of available CPU cores</div>
+            <div className="w-full bg-blue-200 rounded-full h-2 mt-2">
+              <div 
+                className={`h-2 rounded-full ${latestData.cpu > 80 ? 'bg-red-500' : 'bg-blue-500'}`}
+                style={{ width: `${Math.min(100, latestData.cpu)}%` }}
+              ></div>
+            </div>
           </div>
-          <div className="bg-green-50 p-3 rounded-lg text-center">
+
+          <div className="bg-green-50 p-4 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-xs font-medium text-green-700 uppercase tracking-wide">Memory Usage</div>
+              <div className={`text-xs px-2 py-1 rounded-full ${
+                latestData.memory > 150 ? 'bg-red-100 text-red-700' : 
+                latestData.memory > 100 ? 'bg-yellow-100 text-yellow-700' : 
+                'bg-green-100 text-green-700'
+              }`}>
+                {latestData.memory > 150 ? 'High' : latestData.memory > 100 ? 'Medium' : 'Low'}
+              </div>
+            </div>
             <div className={`text-2xl font-bold ${latestData.memory > 150 ? 'text-red-600' : 'text-green-600'}`}>
-              {latestData.memory.toFixed(0)}MB
+              {latestData.memory.toFixed(0)} MB
             </div>
-            <div className="text-sm text-green-800">Memory</div>
+            <div className="text-xs text-gray-500 mt-1">of 512 MB allocated</div>
+            <div className="w-full bg-green-200 rounded-full h-2 mt-2">
+              <div 
+                className={`h-2 rounded-full ${latestData.memory > 150 ? 'bg-red-500' : 'bg-green-500'}`}
+                style={{ width: `${Math.min(100, (latestData.memory / 512) * 100)}%` }}
+              ></div>
+            </div>
           </div>
-          <div className="bg-yellow-50 p-3 rounded-lg text-center">
+
+          <div className="bg-yellow-50 p-4 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-xs font-medium text-yellow-700 uppercase tracking-wide">Response Time</div>
+              <div className={`text-xs px-2 py-1 rounded-full ${
+                latestData.latency > 200 ? 'bg-red-100 text-red-700' : 
+                latestData.latency > 100 ? 'bg-yellow-100 text-yellow-700' : 
+                'bg-green-100 text-green-700'
+              }`}>
+                {latestData.latency > 200 ? 'Slow' : latestData.latency > 100 ? 'Average' : 'Fast'}
+              </div>
+            </div>
             <div className={`text-2xl font-bold ${latestData.latency > 200 ? 'text-red-600' : 'text-yellow-600'}`}>
-              {latestData.latency.toFixed(0)}ms
+              {latestData.latency.toFixed(0)} ms
             </div>
-            <div className="text-sm text-yellow-800">Latency</div>
+            <div className="text-xs text-gray-500 mt-1">avg API response time</div>
+            <div className="w-full bg-yellow-200 rounded-full h-2 mt-2">
+              <div 
+                className={`h-2 rounded-full ${
+                  latestData.latency > 200 ? 'bg-red-500' : 
+                  latestData.latency > 100 ? 'bg-yellow-500' : 
+                  'bg-green-500'
+                }`}
+                style={{ width: `${Math.min(100, (latestData.latency / 500) * 100)}%` }}
+              ></div>
+            </div>
           </div>
-          <div className="bg-purple-50 p-3 rounded-lg text-center">
+
+          <div className="bg-purple-50 p-4 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-xs font-medium text-purple-700 uppercase tracking-wide">Activity</div>
+              <div className={`text-xs px-2 py-1 rounded-full ${
+                latestData.commands > 15 ? 'bg-green-100 text-green-700' : 
+                latestData.commands > 5 ? 'bg-yellow-100 text-yellow-700' : 
+                'bg-gray-100 text-gray-700'
+              }`}>
+                {latestData.commands > 15 ? 'Busy' : latestData.commands > 5 ? 'Active' : 'Idle'}
+              </div>
+            </div>
             <div className="text-2xl font-bold text-purple-600">
               {latestData.commands}
             </div>
-            <div className="text-sm text-purple-800">Cmds/min</div>
+            <div className="text-xs text-gray-500 mt-1">commands per minute</div>
+            <div className="w-full bg-purple-200 rounded-full h-2 mt-2">
+              <div 
+                className="h-2 rounded-full bg-purple-500"
+                style={{ width: `${Math.min(100, (latestData.commands / 30) * 100)}%` }}
+              ></div>
+            </div>
           </div>
         </div>
       )}
