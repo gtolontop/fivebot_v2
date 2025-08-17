@@ -168,34 +168,6 @@ export default function BotDetailPage() {
       toast.success('Bot started successfully');
       await fetchBot();
       
-      // Force immediate refresh of logs and metrics after starting
-      setTimeout(async () => {
-        await fetchBot();
-      }, 2000);
-      
-      // Continue checking status every 2 seconds for 30 seconds to catch the transition
-      let checks = 0;
-      const statusCheckInterval = setInterval(async () => {
-        checks++;
-        if (checks > 15) { // Stop after 30 seconds
-          clearInterval(statusCheckInterval);
-          return;
-        }
-        
-        try {
-          const response = await botsAPI.getById(botId);
-          const updatedBot = response.data;
-          if (updatedBot.status === 'ONLINE') {
-            setBot(updatedBot);
-            clearInterval(statusCheckInterval);
-          } else {
-            setBot(updatedBot);
-          }
-        } catch (error) {
-          console.log('Status check error:', error);
-        }
-      }, 2000);
-      
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Error starting bot');
     } finally {
