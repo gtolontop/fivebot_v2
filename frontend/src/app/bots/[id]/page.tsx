@@ -373,54 +373,54 @@ export default function BotDetailPage() {
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Quick Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-slate-300 text-sm font-medium">Status</p>
-                <p className="text-white text-2xl font-bold">{bot.status}</p>
+                <p className="text-gray-600 text-sm font-medium">Status</p>
+                <p className="text-gray-900 text-2xl font-bold">{bot.status}</p>
               </div>
-              <div className="w-12 h-12 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                 <span className="text-2xl">{getStatusIcon(bot.status)}</span>
               </div>
             </div>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-slate-300 text-sm font-medium">Servers</p>
-                <p className="text-white text-2xl font-bold">{totalServers}</p>
+                <p className="text-gray-600 text-sm font-medium">Servers</p>
+                <p className="text-gray-900 text-2xl font-bold">{totalServers}</p>
               </div>
-              <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <svg className="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9z"/>
                 </svg>
               </div>
             </div>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-slate-300 text-sm font-medium">Members</p>
-                <p className="text-white text-2xl font-bold">{totalMembers.toLocaleString()}</p>
+                <p className="text-gray-600 text-sm font-medium">Members</p>
+                <p className="text-gray-900 text-2xl font-bold">{totalMembers.toLocaleString()}</p>
               </div>
-              <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                <svg className="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
                 </svg>
               </div>
             </div>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-slate-300 text-sm font-medium">Uptime</p>
-                <p className="text-white text-2xl font-bold">{bot.status === 'ONLINE' ? formatUptime(stats.uptime) : '0h 0m'}</p>
+                <p className="text-gray-600 text-sm font-medium">Uptime</p>
+                <p className="text-gray-900 text-2xl font-bold">{bot.status === 'ONLINE' ? formatUptime(stats.uptime) : '0h 0m'}</p>
               </div>
-              <div className="w-12 h-12 bg-emerald-500/20 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <svg className="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd"/>
                 </svg>
               </div>
