@@ -185,9 +185,14 @@ export class BotMetricsService {
 
     let monthlyMetrics: any[] = [];
     if (bots.length > 0) {
-      const placeholders = bots.map(() => '?').join(',');
-      const query = `SELECT * FROM bot_metrics WHERE bot_id IN (${placeholders}) AND date >= ? ORDER BY date ASC`;
-      monthlyMetrics = await this.prisma.$queryRawUnsafe(query, ...bots.map(bot => bot.id), thirtyDaysAgo) as any[];
+      try {
+        const placeholders = bots.map(() => '?').join(',');
+        const query = `SELECT * FROM bot_metrics WHERE bot_id IN (${placeholders}) AND date >= ? ORDER BY date ASC`;
+        monthlyMetrics = await this.prisma.$queryRawUnsafe(query, ...bots.map(bot => bot.id), thirtyDaysAgo) as any[];
+      } catch (error) {
+        console.log('bot_metrics table not found for monthly data, using fallback');
+        monthlyMetrics = [];
+      }
     }
 
     // Group by date and sum commands
