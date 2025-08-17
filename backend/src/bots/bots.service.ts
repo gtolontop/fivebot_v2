@@ -31,7 +31,7 @@ export class BotsService {
     private prisma: PrismaService,
     private encryptionService: EncryptionService,
     private discordService: DiscordService,
-    private queueService: QueueService,
+    public queueService: QueueService, // Make public for monitor service access
     private usersService: UsersService,
   ) {}
 
