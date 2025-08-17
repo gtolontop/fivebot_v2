@@ -6,68 +6,27 @@ export class AppService implements OnApplicationBootstrap {
   constructor(private prisma: PrismaService) {}
 
   async onApplicationBootstrap() {
-    console.log('🔄 Application starting - checking bot statuses...');
+    console.log('🔄 Application starting - resetting bot statuses...');
     
     try {
-      // Get all bots that were marked as running
-      const potentiallyRunningBots = await this.prisma.bot.findMany({
+      // Simple approach: reset all non-offline bots to offline on startup
+      // This prevents concurrency issues and ensures clean state
+      const result = await this.prisma.bot.updateMany({
         where: {
           status: {
             in: ['ONLINE', 'STARTING', 'STOPPING']
           }
         },
-        select: {
-          id: true,
-          name: true,
-          status: true,
-          tokenEncrypted: true
+        data: {
+          status: 'OFFLINE'
         }
       });
 
-      console.log(`🔍 Found ${potentiallyRunningBots.length} bots that might be running`);
-
-      let stillRunning = 0;
-      let resetToOffline = 0;
-
-      // Check each bot's real status instead of blindly resetting
-      for (const bot of potentiallyRunningBots) {
-        try {
-          // Try to validate if the bot is actually connected to Discord
-          // We'll use a simple approach: if the token is valid and can fetch user info, bot is likely running
-          const isActuallyRunning = await this.checkIfBotIsReallyRunning(bot.tokenEncrypted);
-          
-          if (isActuallyRunning) {
-            // Bot is really running, keep it as ONLINE
-            await this.prisma.bot.update({
-              where: { id: bot.id },
-              data: { status: 'ONLINE' }
-            });
-            stillRunning++;
-            console.log(`✅ Bot "${bot.name}" is confirmed running`);
-          } else {
-            // Bot is not running, set to OFFLINE
-            await this.prisma.bot.update({
-              where: { id: bot.id },
-              data: { status: 'OFFLINE' }
-            });
-            resetToOffline++;
-            console.log(`❌ Bot "${bot.name}" is not running, set to OFFLINE`);
-          }
-        } catch (error) {
-          // If we can't check, assume offline for safety
-          await this.prisma.bot.update({
-            where: { id: bot.id },
-            data: { status: 'OFFLINE' }
-          });
-          resetToOffline++;
-          console.log(`⚠️ Bot "${bot.name}" check failed, set to OFFLINE`);
-        }
-      }
-
-      console.log(`✅ Status sync complete: ${stillRunning} still running, ${resetToOffline} reset to offline`);
+      console.log(`✅ Reset ${result.count} bots to OFFLINE status on startup`);
+      console.log('🚀 Application ready - all bots are now offline and can be started manually');
 
     } catch (error) {
-      console.error('❌ Error checking bot statuses on startup:', error);
+      console.error('❌ Error resetting bot statuses on startup:', error);
     }
   }
 
