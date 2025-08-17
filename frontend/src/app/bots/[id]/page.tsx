@@ -182,11 +182,6 @@ export default function BotDetailPage() {
       toast.success('Bot stopped successfully');
       await fetchBot();
       
-      // Force immediate refresh after stopping
-      setTimeout(async () => {
-        await fetchBot();
-      }, 1000);
-      
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Error stopping bot');
     } finally {
