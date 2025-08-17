@@ -354,13 +354,13 @@ export default function BotDetailPage() {
               <span className="mr-2">{getStatusIcon(bot.status)}</span>
               {bot.status}
             </span>
-            <span className="text-slate-400 text-sm">
+            <span className="text-gray-500 text-sm">
               ID: {bot.id.substring(0, 8)}...
             </span>
           </div>
         }
         icon={
-          <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
             <span className="text-white text-lg">🤖</span>
           </div>
         }
