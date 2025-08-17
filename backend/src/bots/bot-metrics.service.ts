@@ -132,29 +132,13 @@ export class BotMetricsService {
         };
       }
 
-      // Check if metrics table exists
+      // Check if metrics table exists and set a flag
+      let metricsTableExists = true;
       try {
         await this.prisma.$queryRaw`SELECT 1 FROM bot_metrics LIMIT 1`;
       } catch (error) {
-        // Table doesn't exist, return basic stats
-        const statusDistribution = bots.reduce((acc, bot) => {
-          acc[bot.status] = (acc[bot.status] || 0) + 1;
-          return acc;
-        }, {} as { [key: string]: number });
-
-        return {
-          totalBots,
-          activeBots,
-          totalServers: 0,
-          totalUsers: 0,
-          todayCommands: 0,
-          todayMessages: 0,
-          monthlyActivity: Array(30).fill(0),
-          botStatusDistribution: statusDistribution,
-          topBots: [],
-          avgResponseTime: 45,
-          uptime: activeBots > 0 ? 99.8 : 0,
-        };
+        metricsTableExists = false;
+        console.log('bot_metrics table not found, will use fallback data');
       }
 
       // Get today's metrics
