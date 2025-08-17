@@ -7,28 +7,34 @@ export class AppService implements OnApplicationBootstrap {
   constructor(private prisma: PrismaService) {}
 
   async onApplicationBootstrap() {
-    console.log('🔄 Application starting - resetting bot statuses...');
+    console.log('🔄 Application starting...');
     
-    try {
-      // Simple approach: reset all non-offline bots to offline on startup
-      // This prevents concurrency issues and ensures clean state
-      const result = await this.prisma.bot.updateMany({
-        where: {
-          status: {
-            in: [BotStatus.ONLINE, BotStatus.STARTING, BotStatus.STOPPING]
+    // Skip the status reset to avoid database lock issues
+    // Let the bots keep their current status - users can manage them manually
+    console.log('🚀 Application ready - bot statuses preserved from previous session');
+    
+    // Optional: Add a delay and then try to reset in background
+    setTimeout(async () => {
+      try {
+        console.log('🔄 Attempting to reset bot statuses in background...');
+        const result = await this.prisma.bot.updateMany({
+          where: {
+            status: {
+              in: [BotStatus.STARTING, BotStatus.STOPPING] // Only reset transitional states
+            }
+          },
+          data: {
+            status: BotStatus.OFFLINE
           }
-        },
-        data: {
-          status: BotStatus.OFFLINE
+        });
+        
+        if (result.count > 0) {
+          console.log(`✅ Reset ${result.count} bots from transitional states to OFFLINE`);
         }
-      });
-
-      console.log(`✅ Reset ${result.count} bots to OFFLINE status on startup`);
-      console.log('🚀 Application ready - all bots are now offline and can be started manually');
-
-    } catch (error) {
-      console.error('❌ Error resetting bot statuses on startup:', error);
-    }
+      } catch (error) {
+        console.log('⚠️ Could not reset bot statuses, will skip for now');
+      }
+    }, 5000); // Wait 5 seconds after app start
   }
 
   // Helper method to safely update bot status with retry logic
