@@ -158,7 +158,7 @@ export class BotsService {
   }
 
   async findAll(ownerId: string): Promise<Bot[]> {
-    return this.prisma.bot.findMany({
+    const bots = await this.prisma.bot.findMany({
       where: { 
         ownerId
         // No need for isActive filter since bots are hard deleted
@@ -177,6 +177,34 @@ export class BotsService {
         },
       },
       orderBy: { createdAt: 'desc' },
+    });
+
+    // Auto-sync any bots that might be out of sync (but don't await to avoid slowing the response)
+    this.autoSyncBotsInBackground(bots);
+
+    return bots;
+  }
+
+  // Background sync without blocking the main request
+  private async autoSyncBotsInBackground(bots: any[]): Promise<void> {
+    setImmediate(async () => {
+      for (const bot of bots) {
+        try {
+          // Only sync if status seems potentially wrong
+          if (bot.status === 'ONLINE' || bot.status === 'ERROR') {
+            const isProcessRunning = this.queueService.getRunningBots?.().includes(bot.id) ?? false;
+            
+            // If marked ONLINE but no process, quick sync
+            if (bot.status === 'ONLINE' && !isProcessRunning) {
+              console.log(`🔄 Auto-syncing bot ${bot.id} (${bot.name}) - marked ONLINE but no process`);
+              await this.forceSyncBotStatus(bot.id);
+            }
+          }
+        } catch (error) {
+          // Silently fail background sync to not affect user experience
+          console.error(`❌ Background sync failed for bot ${bot.id}:`, error.message);
+        }
+      }
     });
   }
 
@@ -249,6 +277,10 @@ export class BotsService {
     if (!bot) {
       throw new NotFoundException('Bot not found');
     }
+
+    // Force sync status before starting to ensure clean state
+    console.log(`🔄 Pre-start sync for bot ${botId}`);
+    await this.forceSyncBotStatus(botId);
 
     // Check if bot is actually running, not just marked as ONLINE
     if (bot.status === BotStatus.ONLINE) {
