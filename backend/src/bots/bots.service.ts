@@ -446,7 +446,7 @@ export class BotsService {
     if (shouldLog) {
       try {
         let message = '';
-        let logStatus = 'COMPLETED';
+        let logStatus: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' = 'COMPLETED';
         
         switch (status) {
           case 'ONLINE':
