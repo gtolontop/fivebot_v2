@@ -373,8 +373,17 @@ export default function BotDetailPage() {
               <BotLogs botId={botId} botStatus={bot.status} />
             </div>
 
-            {/* Performance Stats */}
+            {/* Right Sidebar */}
             <div className="space-y-6">
+              {/* Bot Management */}
+              <BotManagement
+                botId={botId}
+                botName={bot.name}
+                botStatus={bot.status}
+                onStatusChange={fetchBot}
+              />
+
+              {/* Performance Stats */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center space-x-3 mb-4">
                   <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
