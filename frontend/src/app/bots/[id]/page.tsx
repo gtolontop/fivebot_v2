@@ -189,12 +189,23 @@ export default function BotDetailPage() {
 
   const handleStart = async () => {
     setActionLoading('start');
+    
+    // Show immediate feedback in console
+    setLogs([`[${new Date().toLocaleTimeString()}] Démarrage du bot en cours...`]);
+    
     try {
       await botsAPI.start(botId);
       toast.success('Bot started successfully');
+      
+      // Show success message
+      setLogs([`[${new Date().toLocaleTimeString()}] Bot démarré avec succès, connexion à Discord...`]);
+      
       await fetchBot(); // Refresh bot status
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Error starting bot');
+      
+      // Show error message
+      setLogs([`[${new Date().toLocaleTimeString()}] Erreur lors du démarrage: ${error.response?.data?.message || 'Erreur inconnue'}`]);
     } finally {
       setActionLoading(null);
     }
