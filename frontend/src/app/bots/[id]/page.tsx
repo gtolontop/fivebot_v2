@@ -317,7 +317,7 @@ export default function BotDetailPage() {
         {/* Control Panel */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Bot Controls</h3>
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             <button
               onClick={bot.status === 'OFFLINE' ? handleStart : handleStop}
               disabled={actionLoading === 'start' || actionLoading === 'stop'}
@@ -382,55 +382,10 @@ export default function BotDetailPage() {
             >
               <div className="flex flex-col items-center space-y-1">
                 <span className="text-xl">📋</span>
-                <span className="text-sm font-medium">Logs</span>
-              </div>
-            </button>
-
-            <button
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className={`p-3 rounded-lg border transition-all ${
-                showAdvanced 
-                  ? 'bg-red-50 border-red-200 text-red-700' 
-                  : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              <div className="flex flex-col items-center space-y-1">
-                <span className="text-xl">⚠️</span>
-                <span className="text-sm font-medium">Advanced</span>
+                <span className="text-sm font-medium">Full Logs</span>
               </div>
             </button>
           </div>
-
-          {/* Advanced Options */}
-          {showAdvanced && (
-            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <h4 className="font-medium text-red-800 mb-3">⚠️ Danger Zone</h4>
-              <div className="flex space-x-3">
-                <button
-                  onClick={async () => {
-                    if (window.confirm('Force stop this bot? This will immediately terminate the process.')) {
-                      try {
-                        await botsAPI.forceStop(botId);
-                        toast.success('Bot force stopped');
-                        fetchBot();
-                      } catch (error: any) {
-                        toast.error('Error force stopping bot');
-                      }
-                    }
-                  }}
-                  className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-sm font-medium"
-                >
-                  🚨 Force Stop
-                </button>
-                <button
-                  onClick={() => router.push(`/bots/${botId}/debug`)}
-                  className="px-4 py-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 rounded-lg text-sm font-medium"
-                >
-                  🔧 Debug Mode
-                </button>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Main Content */}
