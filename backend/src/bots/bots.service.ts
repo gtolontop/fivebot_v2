@@ -396,27 +396,53 @@ export class BotsService {
   }
 
   async updateStatus(botId: string, status: BotStatus, metadata?: any): Promise<void> {
-    let retries = 5; // Increase retries
+    let retries = 8; // Increase retries significantly
     
     while (retries > 0) {
       try {
-        // Use a more robust update with optimistic locking
-        await this.prisma.bot.update({
+        // First, get the current bot to ensure it exists and get its current state
+        const currentBot = await this.prisma.bot.findUnique({
           where: { id: botId },
+          select: { id: true, status: true, updatedAt: true }
+        });
+
+        if (!currentBot) {
+          console.warn(`⚠️ Bot ${botId} not found, skipping status update to ${status}`);
+          return;
+        }
+
+        // Only update if status has actually changed to reduce unnecessary updates
+        if (currentBot.status === status) {
+          return;
+        }
+
+        // Use upsert with optimistic locking based on updatedAt
+        await this.prisma.bot.update({
+          where: { 
+            id: botId,
+            updatedAt: currentBot.updatedAt // Optimistic locking
+          },
           data: { 
             status,
-            updatedAt: new Date() // Force timestamp update
+            updatedAt: new Date(), // Force timestamp update
+            ...(metadata || {})
           },
         });
+        
+        // Log successful status changes
+        console.log(`✅ Successfully updated bot ${botId} status: ${currentBot.status} → ${status}`);
         return; // Success, exit function
+        
       } catch (error: any) {
         const isConcurrencyError = 
           error.code === 'P2034' || // Prisma concurrency error
+          error.code === 'P2025' || // Record not found (might be due to concurrent deletion)
           (error.message && (
             error.message.includes('Record has changed') ||
             error.message.includes('ConnectorError') ||
             error.message.includes('code: 1020') ||
-            error.message.includes('HY000')
+            error.message.includes('HY000') ||
+            error.message.includes('Record to update not found')
           ));
           
         if (isConcurrencyError) {
@@ -424,17 +450,20 @@ export class BotsService {
           console.log(`⚠️ Concurrency conflict updating bot ${botId} status to ${status}, retrying... (${retries} retries left)`);
           
           if (retries > 0) {
-            // Exponential backoff with jitter
-            const delay = Math.min(1000, (6 - retries) * 200 + Math.random() * 300);
+            // More aggressive exponential backoff with jitter
+            const baseDelay = Math.min(2000, (9 - retries) * 250);
+            const jitter = Math.random() * 500;
+            const delay = baseDelay + jitter;
+            
             await new Promise(resolve => setTimeout(resolve, delay));
             continue;
           } else {
-            console.error(`❌ Failed to update bot ${botId} status after all retries due to concurrency conflicts`);
+            console.error(`❌ Failed to update bot ${botId} status to ${status} after all retries due to concurrency conflicts`);
             return; // Give up gracefully
           }
         } else {
           // Non-concurrency error, log and give up immediately
-          console.error(`❌ Failed to update bot ${botId} status due to non-concurrency error:`, error);
+          console.error(`❌ Failed to update bot ${botId} status to ${status} due to non-concurrency error:`, error.message || error);
           return;
         }
       }
