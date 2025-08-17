@@ -511,7 +511,13 @@ export class BotsController {
     }
 
     // Get recent logs from new persistent system
-    const recentLogs = await this.botLogsService.getRecentLogs(id, 100);
+    let recentLogs = await this.botLogsService.getRecentLogs(id, 100);
+    
+    // If no logs exist, create some default historical logs
+    if (recentLogs.length === 0) {
+      await this.createDefaultLogs(id, bot.name);
+      recentLogs = await this.botLogsService.getRecentLogs(id, 100);
+    }
     
     // Format for console display
     const formattedLogs = recentLogs.map(log => {
@@ -716,5 +722,24 @@ export class BotsController {
       SUCCESS: '✅',
     };
     return emojis[level] || '📝';
+  }
+
+  private async createDefaultLogs(botId: string, botName: string): Promise<void> {
+    try {
+      // Create some example historical logs to show the user
+      const defaultLogs = [
+        { level: 'INFO', message: `Bot ${botName} configuré et prêt`, source: 'System' },
+        { level: 'INFO', message: 'Console de logs initialisée', source: 'System' },
+        { level: 'INFO', message: 'En attente d\'actions utilisateur...', source: 'System' },
+      ];
+
+      for (const log of defaultLogs) {
+        await this.botLogsService.addLog(botId, log.level as any, log.message, log.source);
+        // Small delay to ensure different timestamps
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    } catch (error) {
+      console.error(`Failed to create default logs for bot ${botId}:`, error);
+    }
   }
 }

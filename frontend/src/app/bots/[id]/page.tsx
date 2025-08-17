@@ -96,12 +96,17 @@ export default function BotDetailPage() {
             // Replace logs instead of appending to avoid duplicates
             setLogs(data.logs.slice(-50));
           } else {
-            // No logs available, show waiting message
-            setLogs([`[${new Date().toLocaleTimeString()}] En attente d'activité du bot...`]);
+            // No logs available yet, but don't replace existing logs
+            // Only set the waiting message if we truly have no logs
+            if (logs.length === 0) {
+              setLogs([`[${new Date().toLocaleTimeString()}] 📋 Console prête - Historique des activités s'affichera ici`]);
+            }
           }
         } else {
-          // API error, show connection issue
-          setLogs([`[${new Date().toLocaleTimeString()}] Problème de connexion avec le serveur`]);
+          // API error, show connection issue only if no existing logs
+          if (logs.length === 0) {
+            setLogs([`[${new Date().toLocaleTimeString()}] ❌ Problème de connexion avec le serveur`]);
+          }
         }
       } catch (error) {
         console.log('Could not fetch bot logs:', error);

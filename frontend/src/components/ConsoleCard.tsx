@@ -48,7 +48,9 @@ export default function ConsoleCard({ logs, botStatus, isOnline }: ConsoleCardPr
       >
         <div className="space-y-1">
           {logs.length === 0 ? (
-            <div className="text-gray-500">No logs available...</div>
+            <div className="text-gray-500">
+              {isOnline ? 'En attente d\'activité...' : 'Aucun historique disponible'}
+            </div>
           ) : (
             logs.slice(-20).map((log, index) => (
               <div 
@@ -59,10 +61,10 @@ export default function ConsoleCard({ logs, botStatus, isOnline }: ConsoleCardPr
               </div>
             ))
           )}
-          {isOnline && (
+          {isOnline && logs.length > 0 && (
             <div className="text-yellow-400 animate-pulse flex items-center space-x-1">
               <span>●</span>
-              <span>Waiting for events...</span>
+              <span>En attente d'événements...</span>
             </div>
           )}
         </div>
