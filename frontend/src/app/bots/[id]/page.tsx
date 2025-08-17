@@ -7,6 +7,7 @@ import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
 import NotificationsCenter from '@/components/NotificationsCenter';
 import PerformanceMonitor from '@/components/PerformanceMonitor';
+import BotLogs from '@/components/BotLogs';
 import Cookies from 'js-cookie';
 
 interface Bot {
