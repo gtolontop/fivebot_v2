@@ -377,15 +377,7 @@ export default function BotDetailPage() {
                     </span>
                   )}
                 </h3>
-                <div className="flex items-center space-x-3">
-                  <span className="text-xs text-gray-500">Auto-refresh every 3s</span>
-                  <button
-                    onClick={() => router.push(`/bots/${botId}/logs`)}
-                    className="text-sm text-blue-600 hover:text-blue-800"
-                  >
-                    View Full Logs →
-                  </button>
-                </div>
+                <span className="text-xs text-gray-500">Auto-refresh every 2s</span>
               </div>
               
               <div className="bg-gray-900 rounded-lg p-4 h-96 overflow-y-auto">
