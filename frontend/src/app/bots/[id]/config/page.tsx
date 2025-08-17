@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -75,13 +76,6 @@ interface DiscordRole {
   color: number;
 }
 
-interface BotStats {
-  guilds: number;
-  users: number;
-  commands: number;
-  uptime: string;
-  lastRestart: string;
-}
 
 export default function BotConfigPage() {
   const { user, loading } = useAuth();
@@ -92,17 +86,8 @@ export default function BotConfigPage() {
   const [bot, setBot] = useState<Bot | null>(null);
   const [botLoading, setBotLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('general');
   const [guildsLoading, setGuildsLoading] = useState(false);
-  
-  // Bot stats state
-  const [botStats, setBotStats] = useState<BotStats>({
-    guilds: 0,
-    users: 0,
-    commands: 0,
-    uptime: '0m',
-    lastRestart: 'Never'
-  });
   
   // Bot configuration state
   const [config, setConfig] = useState<BotConfig>({
@@ -141,7 +126,6 @@ export default function BotConfigPage() {
     if (user && botId) {
       fetchBot();
       fetchDiscordGuilds();
-      fetchBotStats();
     }
   }, [user, botId]);
 
@@ -161,21 +145,6 @@ export default function BotConfigPage() {
     }
   };
 
-  const fetchBotStats = async () => {
-    try {
-      // Mock stats for now - in real implementation, fetch from API
-      const totalUsers = guilds.reduce((sum, guild) => sum + (guild.memberCount || 0), 0);
-      setBotStats({
-        guilds: guilds.length,
-        users: totalUsers,
-        commands: Object.keys(config.customCommands || {}).length,
-        uptime: bot?.status === 'ONLINE' ? '2h 45m' : '0m',
-        lastRestart: bot?.updatedAt ? new Date(bot.updatedAt).toLocaleString() : 'Never'
-      });
-    } catch (error) {
-      console.error('Error loading bot stats:', error);
-    }
-  };
 
   const fetchDiscordGuilds = async () => {
     if (!botId) return;
@@ -442,8 +411,7 @@ export default function BotConfigPage() {
   }
 
   const tabs = [
-    { id: 'overview', name: 'Overview', icon: ChartBarIcon, description: 'Bot status and statistics' },
-    { id: 'general', name: 'General', icon: Cog6ToothIcon, description: 'Basic bot settings' },
+    { id: 'general', name: 'General', icon: Cog6ToothIcon, description: 'Bot info and servers' },
     { id: 'welcome', name: 'Welcome', icon: HandRaisedIcon, description: 'Welcome messages' },
     { id: 'moderation', name: 'Moderation', icon: ShieldCheckIcon, description: 'Auto-moderation' },
     { id: 'roles', name: 'Auto-Roles', icon: UserGroupIcon, description: 'Automatic role assignment' },
@@ -474,13 +442,6 @@ export default function BotConfigPage() {
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'ONLINE': return CheckCircleIcon;
-      case 'ERROR': return ExclamationTriangleIcon;
-      default: return ClockIcon;
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -507,7 +468,9 @@ export default function BotConfigPage() {
             <div className="flex items-center space-x-4">
               {/* Bot Status Badge */}
               <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(bot.status)}`}>
-                {React.createElement(getStatusIcon(bot.status), { className: "w-4 h-4 mr-1" })}
+                {bot.status === 'ONLINE' && <CheckCircleIcon className="w-4 h-4 mr-1" />}
+                {bot.status === 'ERROR' && <ExclamationTriangleIcon className="w-4 h-4 mr-1" />}
+                {(bot.status === 'STARTING' || bot.status === 'STOPPING' || bot.status === 'OFFLINE') && <ClockIcon className="w-4 h-4 mr-1" />}
                 {bot.status === 'ONLINE' ? 'Online' : 
                  bot.status === 'STARTING' ? 'Starting...' :
                  bot.status === 'STOPPING' ? 'Stopping...' :
