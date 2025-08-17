@@ -425,80 +425,13 @@ export default function BotDetailPage() {
 
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Stats & Activity */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Live Stats */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
-                <span>📊</span>
-                <span>Live Statistics</span>
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <div className="text-center p-3 bg-green-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">{stats.servers}</div>
-                  <div className="text-sm text-gray-600">Servers</div>
-                </div>
-                <div className="text-center p-3 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">{stats.users.toLocaleString()}</div>
-                  <div className="text-sm text-gray-600">Users</div>
-                </div>
-                <div className="text-center p-3 bg-purple-50 rounded-lg">
-                  <div className="text-2xl font-bold text-purple-600">{stats.commands.toLocaleString()}</div>
-                  <div className="text-sm text-gray-600">Commands</div>
-                </div>
-                <div className="text-center p-3 bg-orange-50 rounded-lg">
-                  <div className="text-2xl font-bold text-orange-600">{stats.messages.toLocaleString()}</div>
-                  <div className="text-sm text-gray-600">Messages</div>
-                </div>
-                <div className="text-center p-3 bg-cyan-50 rounded-lg">
-                  <div className="text-2xl font-bold text-cyan-600">{formatUptime(stats.uptime)}</div>
-                  <div className="text-sm text-gray-600">Uptime</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Server List */}
-            {guilds.length > 0 && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
-                  <span>🏠</span>
-                  <span>Active Servers ({guilds.length})</span>
-                </h3>
-                <div className="space-y-3 max-h-64 overflow-y-auto">
-                  {guilds.slice(0, 15).map((guild) => (
-                    <div key={guild.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center">
-                          {guild.icon ? (
-                            <img 
-                              src={`https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`} 
-                              alt={guild.name}
-                              className="w-10 h-10 rounded-lg"
-                            />
-                          ) : (
-                            <span className="text-lg">🏠</span>
-                          )}
-                        </div>
-                        <div>
-                          <div className="font-medium text-gray-900">{guild.name}</div>
-                          <div className="text-sm text-gray-500">{guild.memberCount.toLocaleString()} members</div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm text-gray-600">{guild.channels} channels</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Recent Activity Console */}
+          {/* Left Column - Console */}
+          <div className="lg:col-span-2">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                  <span>📝</span>
-                  <span>Recent Activity</span>
+                  <span>💻</span>
+                  <span>Live Console</span>
                   {bot.status === 'ONLINE' && (
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">
                       <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
@@ -506,24 +439,37 @@ export default function BotDetailPage() {
                     </span>
                   )}
                 </h3>
-                <button
-                  onClick={() => router.push(`/bots/${botId}/logs`)}
-                  className="text-sm text-blue-600 hover:text-blue-800"
-                >
-                  View Full Logs →
-                </button>
+                <div className="flex items-center space-x-3">
+                  <span className="text-xs text-gray-500">Auto-refresh every 3s</span>
+                  <button
+                    onClick={() => router.push(`/bots/${botId}/logs`)}
+                    className="text-sm text-blue-600 hover:text-blue-800"
+                  >
+                    View Full Logs →
+                  </button>
+                </div>
               </div>
               
-              <div className="bg-gray-900 rounded-lg p-4 h-64 overflow-y-auto">
+              <div className="bg-gray-900 rounded-lg p-4 h-96 overflow-y-auto">
                 <div className="space-y-1 text-sm font-mono">
                   {logs.length === 0 ? (
-                    <div className="text-gray-500 text-center py-8">
-                      {bot.status === 'ONLINE' ? 'Waiting for activity...' : 'Bot is offline'}
+                    <div className="text-green-400 text-center py-8">
+                      {bot.status === 'ONLINE' ? (
+                        <div className="space-y-2">
+                          <div>Waiting for bot activity...</div>
+                          <div className="text-xs text-gray-500">Console will show live logs when bot processes events</div>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <div>Bot is offline</div>
+                          <div className="text-xs text-gray-500">Start the bot to see live activity</div>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     logs.map((log, index) => (
                       <div key={index} className="text-green-400 leading-relaxed">
-                        {log}
+                        <span className="text-gray-500">[{new Date().toLocaleTimeString()}]</span> {log}
                       </div>
                     ))
                   )}
