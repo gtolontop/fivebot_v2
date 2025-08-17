@@ -500,6 +500,36 @@ export class BotsController {
     }
   }
 
+  @Get(':id/logs/live')
+  async getLiveLogs(
+    @Param('id') id: string,
+    @Req() req: any,
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    // Get recent logs from new persistent system
+    const recentLogs = await this.botLogsService.getRecentLogs(id, 100);
+    
+    // Format for console display
+    const formattedLogs = recentLogs.map(log => {
+      const timestamp = new Date(log.createdAt).toLocaleTimeString();
+      const emoji = this.getLogEmoji(log.level);
+      return `[${timestamp}] ${emoji} ${log.message}`;
+    });
+
+    return {
+      logs: formattedLogs,
+      bot: {
+        id: bot.id,
+        name: bot.name,
+        status: bot.status,
+      }
+    };
+  }
+
   @Get(':id/logs/recent')
   async getRecentLogs(
     @Param('id') id: string,
@@ -675,5 +705,16 @@ export class BotsController {
       console.error('Error killing all processes:', error);
       throw error;
     }
+  }
+
+  private getLogEmoji(level: string): string {
+    const emojis = {
+      DEBUG: '🔍',
+      INFO: '📝',
+      WARN: '⚠️',
+      ERROR: '❌',
+      SUCCESS: '✅',
+    };
+    return emojis[level] || '📝';
   }
 }
