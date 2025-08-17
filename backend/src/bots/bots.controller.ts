@@ -17,6 +17,7 @@ import { SetupMetricsService } from './setup-metrics.service';
 import { BotMonitorService } from './bot-monitor.service';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { QueueService } from '../queue/queue.service';
+import { BotLogsService } from './bot-logs.service';
 
 interface CreateBotDto {
   name: string;
