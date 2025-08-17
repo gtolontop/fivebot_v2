@@ -429,9 +429,9 @@ export default function BotDetailPage() {
         </div>
 
         {/* Control Panel */}
-        <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6 mb-8">
-          <h3 className="text-white text-lg font-semibold mb-4 flex items-center">
-            <svg className="w-5 h-5 mr-2 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+          <h3 className="text-gray-900 text-lg font-semibold mb-4 flex items-center">
+            <svg className="w-5 h-5 mr-2 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd"/>
             </svg>
             Bot Controls
@@ -442,8 +442,8 @@ export default function BotDetailPage() {
               disabled={actionLoading === 'start' || actionLoading === 'stop'}
               className={`p-4 rounded-xl border transition-all text-sm font-medium flex flex-col items-center space-y-2 ${
                 bot.status === 'OFFLINE'
-                  ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/30'
-                  : 'bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30'
+                  ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
+                  : 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100'
               } disabled:opacity-50`}
             >
               {actionLoading === 'start' || actionLoading === 'stop' ? (
@@ -461,7 +461,7 @@ export default function BotDetailPage() {
             <button
               onClick={handleRestart}
               disabled={actionLoading === 'restart'}
-              className="p-4 rounded-xl border bg-orange-500/20 border-orange-500/30 text-orange-400 hover:bg-orange-500/30 transition-all disabled:opacity-50 text-sm font-medium flex flex-col items-center space-y-2"
+              className="p-4 rounded-xl border bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 transition-all disabled:opacity-50 text-sm font-medium flex flex-col items-center space-y-2"
             >
               {actionLoading === 'restart' ? (
                 <div className="w-6 h-6 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
@@ -473,7 +473,7 @@ export default function BotDetailPage() {
 
             <button
               onClick={() => router.push(`/bots/${botId}/config`)}
-              className="p-4 rounded-xl border bg-blue-500/20 border-blue-500/30 text-blue-400 hover:bg-blue-500/30 transition-all text-sm font-medium flex flex-col items-center space-y-2"
+              className="p-4 rounded-xl border bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 transition-all text-sm font-medium flex flex-col items-center space-y-2"
             >
               <span className="text-2xl">⚙️</span>
               <span>Configure</span>
@@ -481,7 +481,7 @@ export default function BotDetailPage() {
 
             <button
               onClick={generateInviteLink}
-              className="p-4 rounded-xl border bg-purple-500/20 border-purple-500/30 text-purple-400 hover:bg-purple-500/30 transition-all text-sm font-medium flex flex-col items-center space-y-2"
+              className="p-4 rounded-xl border bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100 transition-all text-sm font-medium flex flex-col items-center space-y-2"
             >
               <span className="text-2xl">🔗</span>
               <span>Invite Link</span>
