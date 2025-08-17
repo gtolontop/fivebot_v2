@@ -323,11 +323,11 @@ export default function BotDetailPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'ONLINE': return 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20';
-      case 'OFFLINE': return 'text-slate-400 bg-slate-400/10 border-slate-400/20';
-      case 'STARTING': return 'text-amber-400 bg-amber-400/10 border-amber-400/20';
-      case 'ERROR': return 'text-red-400 bg-red-400/10 border-red-400/20';
-      default: return 'text-slate-400 bg-slate-400/10 border-slate-400/20';
+      case 'ONLINE': return 'text-green-700 bg-green-100 border-green-200';
+      case 'OFFLINE': return 'text-gray-700 bg-gray-100 border-gray-200';
+      case 'STARTING': return 'text-yellow-700 bg-yellow-100 border-yellow-200';
+      case 'ERROR': return 'text-red-700 bg-red-100 border-red-200';
+      default: return 'text-gray-700 bg-gray-100 border-gray-200';
     }
   };
 
@@ -345,7 +345,7 @@ export default function BotDetailPage() {
   const totalServers = guilds.length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Header
         title={bot.name}
         subtitle={
