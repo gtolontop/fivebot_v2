@@ -120,4 +120,11 @@ export class AuthController {
       },
     };
   }
+
+  @Get('debug/set-token')
+  async setDebugToken(@Res() res: Response) {
+    const frontendUrl = this.configService.get('FRONTEND_URL') || 'http://localhost:3000';
+    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3ZTRlNzFmNi03ZmY2LTQyMjMtYTZkOS0xYWJkNGZjYjRjOWIiLCJkaXNjb3JkSWQiOiI3NDY3MDA5MDcyNDg0ODQzOTMiLCJ1c2VybmFtZSI6Imd0b2wiLCJyb2xlIjoiVVNFUiIsImlhdCI6MTc1NTI5OTc4MiwiZXhwIjoxNzU1OTA0NTgyfQ.jkxsIjwGyfKdgAdiSu4KTzacvXFk6LYAkMDpPNtf1MI";
+    res.redirect(`${frontendUrl}/auth/discord/callback?token=${token}`);
+  }
 }
