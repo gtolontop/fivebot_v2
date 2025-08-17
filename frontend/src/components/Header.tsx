@@ -79,7 +79,20 @@ export default function Header({ title, subtitle, icon, actions, backButton }: H
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
                 className="flex items-center space-x-3 p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center">
+                {user?.avatar ? (
+                  <img
+                    src={`https://cdn.discordapp.com/avatars/${user.discordId}/${user.avatar}.png?size=128`}
+                    alt={user.username}
+                    className="w-8 h-8 rounded-full"
+                    onError={(e) => {
+                      // Fallback to default avatar if Discord avatar fails to load
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      target.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                ) : null}
+                <div className={`w-8 h-8 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center ${user?.avatar ? 'hidden' : ''}`}>
                   <span className="text-white font-semibold text-sm">
                     {user?.username?.charAt(0).toUpperCase() || 'U'}
                   </span>
