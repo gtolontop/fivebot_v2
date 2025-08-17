@@ -314,7 +314,7 @@ export default function BotDetailPage() {
         {/* Bot Actions */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Bot Actions</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <button
               onClick={() => router.push(`/bots/${botId}/config`)}
               className="p-3 rounded-lg border bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 transition-all"
@@ -342,16 +342,6 @@ export default function BotDetailPage() {
               <div className="flex flex-col items-center space-y-1">
                 <span className="text-xl">🔗</span>
                 <span className="text-sm font-medium">Generate Invite</span>
-              </div>
-            </button>
-
-            <button
-              onClick={() => router.push(`/bots/${botId}/logs`)}
-              className="p-3 rounded-lg border bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100 transition-all"
-            >
-              <div className="flex flex-col items-center space-y-1">
-                <span className="text-xl">📋</span>
-                <span className="text-sm font-medium">Full Logs</span>
               </div>
             </button>
           </div>
