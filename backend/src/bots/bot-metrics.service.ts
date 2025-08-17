@@ -176,8 +176,32 @@ export class BotMetricsService {
 
     const todayCommands = todayMetrics.reduce((sum, metric) => sum + (metric.commands_used || 0), 0);
     const todayMessages = todayMetrics.reduce((sum, metric) => sum + (metric.messages_processed || 0), 0);
-    const totalServers = todayMetrics.reduce((sum, metric) => sum + (metric.guilds_count || 0), 0);
-    const totalUsers = todayMetrics.reduce((sum, metric) => sum + (metric.users_count || 0), 0);
+    
+    // Get real server/user counts from Discord API for online bots
+    let totalServers = 0;
+    let totalUsers = 0;
+    
+    for (const bot of bots) {
+      if (bot.status === 'ONLINE') {
+        try {
+          // Get decrypted token and fetch guilds directly
+          const encryptedBot = await this.prisma.bot.findUnique({
+            where: { id: bot.id },
+            select: { tokenEncrypted: true }
+          });
+          
+          if (encryptedBot) {
+            const decryptedToken = await this.getDecryptedToken(encryptedBot.tokenEncrypted);
+            const guilds = await this.getDiscordGuilds(decryptedToken);
+            
+            totalServers += guilds.length;
+            totalUsers += guilds.reduce((sum: number, guild: any) => sum + (guild.memberCount || 0), 0);
+          }
+        } catch (error) {
+          console.log(`Could not fetch Discord data for bot ${bot.name}:`, error.message);
+        }
+      }
+    }
 
     // Get monthly activity (last 30 days)
     const thirtyDaysAgo = new Date(today);
