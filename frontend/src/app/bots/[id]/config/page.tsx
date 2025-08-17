@@ -567,150 +567,16 @@ export default function BotConfigPage() {
             {/* Main Content */}
             <div className="flex-1">
               <div className="bg-white shadow-sm rounded-lg border border-gray-200">
-                {/* Overview Tab */}
-                {activeTab === 'overview' && (
-                  <div className="p-6">
-                    <div className="mb-6">
-                      <h2 className="text-2xl font-bold text-gray-900 mb-2">Bot Overview</h2>
-                      <p className="text-gray-600">Monitor your bot's performance and status</p>
-                    </div>
-
-                    {/* Stats Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                      <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-6 text-white">
-                        <div className="flex items-center">
-                          <ServerIcon className="w-8 h-8 mr-3" />
-                          <div>
-                            <p className="text-blue-100 text-sm">Discord Servers</p>
-                            <p className="text-2xl font-bold">{guilds.length}</p>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-6 text-white">
-                        <div className="flex items-center">
-                          <UserGroupIcon className="w-8 h-8 mr-3" />
-                          <div>
-                            <p className="text-green-100 text-sm">Total Users</p>
-                            <p className="text-2xl font-bold">{guilds.reduce((sum, guild) => sum + (guild.memberCount || 0), 0).toLocaleString()}</p>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-6 text-white">
-                        <div className="flex items-center">
-                          <ChatBubbleLeftRightIcon className="w-8 h-8 mr-3" />
-                          <div>
-                            <p className="text-purple-100 text-sm">Custom Commands</p>
-                            <p className="text-2xl font-bold">{Object.keys(config.customCommands || {}).length}</p>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg p-6 text-white">
-                        <div className="flex items-center">
-                          <ClockIcon className="w-8 h-8 mr-3" />
-                          <div>
-                            <p className="text-orange-100 text-sm">Uptime</p>
-                            <p className="text-2xl font-bold">{bot.status === 'ONLINE' ? '2h 45m' : '0m'}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Discord Servers List */}
-                    <div className="mb-8">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Connected Discord Servers</h3>
-                      {guildsLoading ? (
-                        <div className="flex items-center justify-center p-8">
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mr-3"></div>
-                          <span className="text-gray-600">Loading servers...</span>
-                        </div>
-                      ) : guilds.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {guilds.map((guild) => (
-                            <div key={guild.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                              <div className="flex items-center space-x-3">
-                                {guild.icon ? (
-                                  <img 
-                                    src={`https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`}
-                                    alt={guild.name}
-                                    className="w-12 h-12 rounded-full"
-                                  />
-                                ) : (
-                                  <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center">
-                                    <ServerIcon className="w-6 h-6 text-gray-600" />
-                                  </div>
-                                )}
-                                <div className="flex-1">
-                                  <h4 className="font-medium text-gray-900">{guild.name}</h4>
-                                  <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
-                                    <span>{guild.memberCount?.toLocaleString()} members</span>
-                                    <span>{guild.channels.length} channels</span>
-                                    <span>{guild.roles.length} roles</span>
-                                  </div>
-                                </div>
-                                <div className="flex items-center space-x-1 text-green-600">
-                                  <CheckCircleIcon className="w-4 h-4" />
-                                  <span className="text-xs font-medium">Connected</span>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-center p-8 bg-gray-50 rounded-lg">
-                          <ServerIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                          <h3 className="text-lg font-medium text-gray-900 mb-2">No Discord Servers</h3>
-                          <p className="text-gray-600">Your bot hasn't been invited to any servers yet.</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Quick Actions */}
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <button
-                          onClick={() => setActiveTab('welcome')}
-                          className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors"
-                        >
-                          <HandRaisedIcon className="w-8 h-8 text-indigo-600 mb-2" />
-                          <h4 className="font-medium text-gray-900">Setup Welcome Messages</h4>
-                          <p className="text-sm text-gray-600 mt-1">Configure welcome messages for new members</p>
-                        </button>
-                        
-                        <button
-                          onClick={() => setActiveTab('commands')}
-                          className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors"
-                        >
-                          <ChatBubbleLeftRightIcon className="w-8 h-8 text-purple-600 mb-2" />
-                          <h4 className="font-medium text-gray-900">Add Custom Commands</h4>
-                          <p className="text-sm text-gray-600 mt-1">Create custom slash commands for your bot</p>
-                        </button>
-                        
-                        <button
-                          onClick={() => setActiveTab('moderation')}
-                          className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors"
-                        >
-                          <ShieldCheckIcon className="w-8 h-8 text-green-600 mb-2" />
-                          <h4 className="font-medium text-gray-900">Enable Moderation</h4>
-                          <p className="text-sm text-gray-600 mt-1">Set up automatic moderation features</p>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {/* General Tab */}
                 {activeTab === 'general' && (
                   <div className="p-6">
                     <div className="mb-6">
-                      <h2 className="text-2xl font-bold text-gray-900 mb-2">General Settings</h2>
-                      <p className="text-gray-600">Basic bot configuration and server information</p>
+                      <h2 className="text-2xl font-bold text-gray-900 mb-2">General Information</h2>
+                      <p className="text-gray-600">Bot information and connected Discord servers</p>
                     </div>
 
                     <div className="space-y-6">
+                      {/* Bot Information */}
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900 mb-4">Bot Information</h3>
                         <div className="bg-gray-50 rounded-lg p-4">
@@ -721,7 +587,11 @@ export default function BotConfigPage() {
                             </div>
                             <div>
                               <dt className="text-sm font-medium text-gray-500">Status</dt>
-                              <dd className="text-sm text-gray-900 mt-1">{bot.status}</dd>
+                              <dd className="text-sm text-gray-900 mt-1">
+                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(bot.status)}`}>
+                                  {bot.status}
+                                </span>
+                              </dd>
                             </div>
                             <div>
                               <dt className="text-sm font-medium text-gray-500">Client ID</dt>
@@ -733,44 +603,57 @@ export default function BotConfigPage() {
                                 {bot.updatedAt ? new Date(bot.updatedAt).toLocaleString() : 'N/A'}
                               </dd>
                             </div>
+                            <div>
+                              <dt className="text-sm font-medium text-gray-500">Total Servers</dt>
+                              <dd className="text-sm text-gray-900 mt-1 font-semibold">{guilds.length}</dd>
+                            </div>
+                            <div>
+                              <dt className="text-sm font-medium text-gray-500">Total Users</dt>
+                              <dd className="text-sm text-gray-900 mt-1 font-semibold">
+                                {guilds.reduce((sum, guild) => sum + (guild.memberCount || 0), 0).toLocaleString()}
+                              </dd>
+                            </div>
                           </dl>
                         </div>
                       </div>
 
+                      {/* Discord Servers */}
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Discord Servers</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Connected Discord Servers</h3>
                         {guildsLoading ? (
                           <div className="flex items-center justify-center p-8">
                             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600 mr-3"></div>
                             <span className="text-gray-600">Loading Discord servers...</span>
                           </div>
                         ) : guilds.length > 0 ? (
-                          <div className="space-y-3">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {guilds.map((guild) => (
-                              <div key={guild.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                              <div key={guild.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
                                 <div className="flex items-center space-x-3">
                                   {guild.icon ? (
                                     <img 
                                       src={`https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`}
                                       alt={guild.name}
-                                      className="w-10 h-10 rounded-full"
+                                      className="w-12 h-12 rounded-full"
                                     />
                                   ) : (
-                                    <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                                      <ServerIcon className="w-5 h-5 text-gray-600" />
+                                    <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center">
+                                      <ServerIcon className="w-6 h-6 text-gray-600" />
                                     </div>
                                   )}
-                                  <div>
-                                    <p className="font-medium text-gray-900">{guild.name}</p>
-                                    <p className="text-sm text-gray-500">
-                                      {guild.memberCount?.toLocaleString()} members • {guild.channels.length} channels • {guild.roles.length} roles
-                                    </p>
+                                  <div className="flex-1">
+                                    <h4 className="font-medium text-gray-900">{guild.name}</h4>
+                                    <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
+                                      <span>{guild.memberCount?.toLocaleString()} members</span>
+                                      <span>{guild.channels.length} channels</span>
+                                      <span>{guild.roles.length} roles</span>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center space-x-1 text-green-600">
+                                    <CheckCircleIcon className="w-4 h-4" />
+                                    <span className="text-xs font-medium">Connected</span>
                                   </div>
                                 </div>
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                  <CheckCircleIcon className="w-3 h-3 mr-1" />
-                                  Connected
-                                </span>
                               </div>
                             ))}
                           </div>
@@ -787,6 +670,39 @@ export default function BotConfigPage() {
                             </button>
                           </div>
                         )}
+                      </div>
+
+                      {/* Quick Actions */}
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Setup</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <button
+                            onClick={() => setActiveTab('welcome')}
+                            className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors"
+                          >
+                            <HandRaisedIcon className="w-8 h-8 text-indigo-600 mb-2" />
+                            <h4 className="font-medium text-gray-900">Welcome Messages</h4>
+                            <p className="text-sm text-gray-600 mt-1">Greet new members automatically</p>
+                          </button>
+                          
+                          <button
+                            onClick={() => setActiveTab('commands')}
+                            className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors"
+                          >
+                            <ChatBubbleLeftRightIcon className="w-8 h-8 text-purple-600 mb-2" />
+                            <h4 className="font-medium text-gray-900">Custom Commands</h4>
+                            <p className="text-sm text-gray-600 mt-1">Create custom slash commands</p>
+                          </button>
+                          
+                          <button
+                            onClick={() => setActiveTab('moderation')}
+                            className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors"
+                          >
+                            <ShieldCheckIcon className="w-8 h-8 text-green-600 mb-2" />
+                            <h4 className="font-medium text-gray-900">Moderation</h4>
+                            <p className="text-sm text-gray-600 mt-1">Enable automatic moderation</p>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
