@@ -8,6 +8,7 @@ import {
   Param,
   UseGuards,
   Req,
+  NotFoundException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { BotsService } from './bots.service';
@@ -186,6 +187,35 @@ export class BotsController {
       throw new Error('Bot not found');
     }
     return this.botMetricsService.getBotMetrics(id);
+  }
+
+  @Post(':id/sync-status')
+  async syncBotStatus(
+    @Param('id') id: string,
+    @Req() req: any,
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    const newStatus = await this.botsService.forceSyncBotStatus(id);
+    return {
+      success: true,
+      oldStatus: bot.status,
+      newStatus,
+      message: `Bot status synced from ${bot.status} to ${newStatus}`
+    };
+  }
+
+  @Post('admin/force-cleanup')
+  async forceCleanupAllBots(@Req() req: any) {
+    // Note: In a real app, you'd want to check for admin permissions here
+    await this.queueService.forceCleanupAndSync();
+    return {
+      success: true,
+      message: 'Force cleanup and sync completed for all bots'
+    };
   }
 
   @Get(':id/metrics/realtime')

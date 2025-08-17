@@ -612,4 +612,81 @@ export class BotsService {
       throw new BadRequestException('Failed to fetch guild roles');
     }
   }
+
+  // Method to check if bot is actually connected to Discord
+  async checkDiscordConnectionStatus(botId: string): Promise<{ isConnected: boolean; lastSeen?: Date }> {
+    try {
+      const bot = await this.prisma.bot.findUnique({
+        where: { id: botId }
+      });
+
+      if (!bot) {
+        return { isConnected: false };
+      }
+
+      const decryptedToken = this.encryptionService.decrypt(bot.tokenEncrypted);
+      
+      // Try to fetch bot's own user info - this will fail if not connected
+      const response = await fetch('https://discord.com/api/v10/users/@me', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bot ${decryptedToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        // If we can fetch the bot info, it's connected
+        return { isConnected: true, lastSeen: new Date() };
+      } else {
+        // If fetch fails, bot is not connected
+        return { isConnected: false };
+      }
+    } catch (error) {
+      console.error(`Error checking Discord connection for bot ${botId}:`, error);
+      return { isConnected: false };
+    }
+  }
+
+  // Force sync bot status with actual Discord state
+  async forceSyncBotStatus(botId: string): Promise<BotStatus> {
+    try {
+      const connectionStatus = await this.checkDiscordConnectionStatus(botId);
+      const isProcessRunning = this.queueService.getRunningBots?.().includes(botId) ?? false;
+      
+      let newStatus: BotStatus;
+      
+      if (connectionStatus.isConnected && isProcessRunning) {
+        newStatus = BotStatus.ONLINE;
+      } else if (isProcessRunning && !connectionStatus.isConnected) {
+        newStatus = BotStatus.ERROR;
+      } else {
+        newStatus = BotStatus.OFFLINE;
+      }
+
+      // Force update the status in database
+      await this.prisma.bot.update({
+        where: { id: botId },
+        data: { 
+          status: newStatus,
+          updatedAt: new Date()
+        }
+      });
+
+      console.log(`🔄 Force synced bot ${botId} status to ${newStatus} (Discord: ${connectionStatus.isConnected}, Process: ${isProcessRunning})`);
+      
+      return newStatus;
+    } catch (error) {
+      console.error(`Error force syncing bot ${botId} status:`, error);
+      // If we can't determine, mark as error
+      await this.prisma.bot.update({
+        where: { id: botId },
+        data: { 
+          status: BotStatus.ERROR,
+          updatedAt: new Date()
+        }
+      });
+      return BotStatus.ERROR;
+    }
+  }
 }

@@ -4,6 +4,7 @@ import { PrismaService } from '../common/prisma/prisma.service';
 import { EncryptionService } from '../common/encryption/encryption.service';
 import { spawn, ChildProcess } from 'child_process';
 import * as path from 'path';
+import { BotStatus } from '@prisma/client';
 
 interface QueuedJob {
   id: string;
@@ -27,7 +28,7 @@ export class SimpleQueueService implements IQueueService {
   ) {}
 
   // Safe method to update bot status with retry logic
-  private async updateBotStatusSafe(botId: string, status: string): Promise<void> {
+  private async updateBotStatusSafe(botId: string, status: BotStatus): Promise<void> {
     let retries = 5;
     
     while (retries > 0) {
@@ -200,7 +201,7 @@ export class SimpleQueueService implements IQueueService {
         this.runningBots.delete(botId);
         
         // Update bot status to error
-        await this.updateBotStatusSafe(botId, 'ERROR');
+        await this.updateBotStatusSafe(botId, BotStatus.ERROR);
       });
 
       // Handle process output
@@ -218,12 +219,32 @@ export class SimpleQueueService implements IQueueService {
         console.log(`🗂️ Removing bot ${botId} from running processes list`);
         this.runningBots.delete(botId);
         
-        // Update bot status to offline
+        // Force update bot status to offline with immediate database write
         try {
-          await this.updateBotStatusSafe(botId, 'OFFLINE');
-          console.log(`[Bot ${botId}] ✅ Status updated to OFFLINE after process exit`);
+          await this.prisma.bot.update({
+            where: { id: botId },
+            data: { 
+              status: BotStatus.OFFLINE,
+              updatedAt: new Date()
+            },
+          });
+          console.log(`[Bot ${botId}] ✅ Status FORCE updated to OFFLINE after process exit`);
         } catch (dbError) {
           console.error(`[Bot ${botId}] ❌ Failed to update bot status:`, dbError);
+          // Retry once more
+          try {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await this.prisma.bot.update({
+              where: { id: botId },
+              data: { 
+                status: BotStatus.OFFLINE,
+                updatedAt: new Date()
+              },
+            });
+            console.log(`[Bot ${botId}] ✅ Status updated to OFFLINE on retry`);
+          } catch (retryError) {
+            console.error(`[Bot ${botId}] ❌ Failed to update bot status on retry:`, retryError);
+          }
         }
       });
 
@@ -232,7 +253,7 @@ export class SimpleQueueService implements IQueueService {
 
       if (this.runningBots.has(botId)) {
         // Update bot status to online
-        await this.updateBotStatusSafe(botId, 'ONLINE');
+        await this.updateBotStatusSafe(botId, BotStatus.ONLINE);
         console.log(`✅ Bot ${botId} started successfully`);
       } else {
         throw new Error('Bot process failed to start');
@@ -242,7 +263,7 @@ export class SimpleQueueService implements IQueueService {
       console.error(`❌ Failed to start bot ${botId}:`, error);
       
       // Update bot status to error
-      await this.updateBotStatusSafe(botId, 'ERROR');
+      await this.updateBotStatusSafe(botId, BotStatus.ERROR);
 
       throw error;
     }
@@ -258,7 +279,7 @@ export class SimpleQueueService implements IQueueService {
       if (!botProcess) {
         console.log(`⚠️ Bot ${botId} is not running in process manager`);
         // Update status anyway
-        await this.updateBotStatusSafe(botId, 'OFFLINE');
+        await this.updateBotStatusSafe(botId, BotStatus.OFFLINE);
         return;
       }
 
@@ -298,10 +319,16 @@ export class SimpleQueueService implements IQueueService {
       // Ensure process is removed from running bots
       this.runningBots.delete(botId);
 
-      // Update bot status
-      await this.updateBotStatusSafe(botId, 'OFFLINE');
+      // Force update bot status immediately - no safe retry needed here
+      await this.prisma.bot.update({
+        where: { id: botId },
+        data: { 
+          status: BotStatus.OFFLINE,
+          updatedAt: new Date()
+        },
+      });
 
-      console.log(`✅ Bot ${botId} stopped successfully`);
+      console.log(`✅ Bot ${botId} stopped successfully and status FORCE updated to OFFLINE`);
     } catch (error) {
       console.error(`❌ Failed to stop bot ${botId}:`, error);
       // Ensure cleanup even on error
@@ -309,7 +336,7 @@ export class SimpleQueueService implements IQueueService {
       
       // Update status to offline anyway
       try {
-        await this.updateBotStatusSafe(botId, 'OFFLINE');
+        await this.updateBotStatusSafe(botId, BotStatus.OFFLINE);
       } catch (dbError) {
         console.error(`❌ Failed to update bot status after stop error:`, dbError);
       }
@@ -497,11 +524,67 @@ export class SimpleQueueService implements IQueueService {
     
     // Update database status
     try {
-      await this.updateBotStatusSafe(botId, 'OFFLINE');
+      await this.updateBotStatusSafe(botId, BotStatus.OFFLINE);
       console.log(`💾 Bot ${botId} status set to OFFLINE in database`);
     } catch (dbError) {
       console.error(`❌ Failed to update bot status in database:`, dbError);
     }
+  }
+
+  // Method to force cleanup all disconnected processes and sync status
+  async forceCleanupAndSync(): Promise<void> {
+    console.log('🧹 Starting force cleanup and sync of all bot processes...');
+    
+    // Get all bots that are marked as ONLINE or ERROR in database
+    const activeBots = await this.prisma.bot.findMany({
+      where: {
+        status: {
+          in: [BotStatus.ONLINE, BotStatus.ERROR, BotStatus.STARTING]
+        }
+      }
+    });
+
+    for (const bot of activeBots) {
+      const isProcessRunning = this.runningBots.has(bot.id);
+      
+      if (!isProcessRunning) {
+        // Process is not running but DB says it should be - force to OFFLINE
+        console.log(`🔄 Bot ${bot.id} (${bot.name}) marked as ${bot.status} but no process found - forcing to OFFLINE`);
+        
+        try {
+          await this.prisma.bot.update({
+            where: { id: bot.id },
+            data: { 
+              status: BotStatus.OFFLINE,
+              updatedAt: new Date()
+            },
+          });
+          console.log(`✅ Bot ${bot.id} status forced to OFFLINE`);
+        } catch (error) {
+          console.error(`❌ Failed to force bot ${bot.id} to OFFLINE:`, error);
+        }
+      }
+    }
+
+    // Clean up any zombie processes that aren't in database
+    const runningBotIds = Array.from(this.runningBots.keys());
+    for (const botId of runningBotIds) {
+      try {
+        const bot = await this.prisma.bot.findUnique({ where: { id: botId } });
+        if (!bot) {
+          console.log(`🧟 Found zombie process for deleted bot ${botId} - killing it`);
+          const process = this.runningBots.get(botId);
+          if (process) {
+            process.kill('SIGKILL');
+            this.runningBots.delete(botId);
+          }
+        }
+      } catch (error) {
+        console.error(`❌ Error checking bot ${botId}:`, error);
+      }
+    }
+
+    console.log('✅ Force cleanup and sync completed');
   }
 
   private getJobPriority(jobType: string): number {
