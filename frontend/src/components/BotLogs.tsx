@@ -55,7 +55,7 @@ export default function BotLogs({ botId, botStatus, className = '' }: BotLogsPro
     try {
       const token = Cookies.get('token');
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/bots/${botId}/logs/recent`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/bots/${botId}/logs/live`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
