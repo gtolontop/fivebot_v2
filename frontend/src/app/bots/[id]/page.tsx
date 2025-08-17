@@ -38,11 +38,9 @@ export default function BotDetailPage() {
   const [botLoading, setBotLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [fetchingBot, setFetchingBot] = useState(false);
-  const [logs, setLogs] = useState<string[]>([]);
   const [guilds, setGuilds] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
-  const [wsConnection, setWsConnection] = useState<WebSocket | null>(null);
   const [realTimeStats, setRealTimeStats] = useState({
     cpuUsage: 0,
     memoryUsage: 0,
@@ -52,7 +50,6 @@ export default function BotDetailPage() {
     commandCount: 0,
     responseTime: 0
   });
-  const consoleRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!loading && !user) {
