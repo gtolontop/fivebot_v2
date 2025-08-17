@@ -213,11 +213,21 @@ export class BotsController {
   @Post('admin/force-cleanup')
   async forceCleanupAllBots(@Req() req: any) {
     // Note: In a real app, you'd want to check for admin permissions here
-    await this.queueService.forceCleanupAndSync();
-    return {
-      success: true,
-      message: 'Force cleanup and sync completed for all bots'
-    };
+    
+    // Cast to SimpleQueueService since we know that's what's being used
+    const simpleQueueService = this.queueService as any;
+    if (simpleQueueService.forceCleanupAndSync) {
+      await simpleQueueService.forceCleanupAndSync();
+      return {
+        success: true,
+        message: 'Force cleanup and sync completed for all bots'
+      };
+    } else {
+      return {
+        success: false,
+        message: 'Force cleanup not available with current queue implementation'
+      };
+    }
   }
 
   @Get(':id/metrics/realtime')
