@@ -63,59 +63,6 @@ export default function BotDetailPage() {
     }
   }, [user, botId]);
 
-  // Polling pour récupérer les vrais logs
-  useEffect(() => {
-    if (!bot || bot.status !== 'ONLINE') {
-      setWsConnection(null);
-      return;
-    }
-
-    // Simulate connection state for UI
-    setWsConnection({} as WebSocket);
-    
-    const pollLogs = async () => {
-      try {
-        const token = Cookies.get('token');
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/bots/${botId}/logs/recent`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Bot detail logs response:', data); // Debug
-          if (data.logs && data.logs.length > 0) {
-            // Replace logs instead of appending to avoid duplicates
-            setLogs(data.logs.slice(-50));
-          } else {
-            setLogs([]);
-          }
-        }
-      } catch (error) {
-        console.log('Could not fetch bot logs:', error);
-        setLogs([]);
-      }
-    };
-
-    // Fetch logs immediately and then every 5 seconds (less frequent)
-    pollLogs();
-    const interval = setInterval(pollLogs, 5000);
-
-    return () => {
-      clearInterval(interval);
-      setWsConnection(null);
-    };
-  }, [bot?.status, botId]);
-
-
-  // Auto-scroll console to bottom
-  useEffect(() => {
-    if (consoleRef.current) {
-      consoleRef.current.scrollTop = consoleRef.current.scrollHeight;
-    }
-  }, [logs]);
 
   // Simulate real-time performance stats - only when online
   useEffect(() => {
