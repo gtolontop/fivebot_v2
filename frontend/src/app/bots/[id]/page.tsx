@@ -45,7 +45,6 @@ export default function BotDetailPage() {
   const [fetchingBot, setFetchingBot] = useState(false);
   const [guilds, setGuilds] = useState<GuildInfo[]>([]);
   const [logs, setLogs] = useState<string[]>([]);
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const logsEndRef = useRef<HTMLDivElement>(null);
 
   // Real-time stats
@@ -490,138 +489,74 @@ export default function BotDetailPage() {
             </div>
           </div>
 
-          {/* Right Column - Performance & Info */}
-          <div className="space-y-6">
-            {/* Performance Stats */}
+          {/* Right Column - Performance Only */}
+          <div>
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+              <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center space-x-2">
                 <span>📊</span>
                 <span>Performance</span>
               </h3>
               
               {bot.status === 'ONLINE' ? (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">CPU Usage</span>
-                    <span className="font-mono text-sm">{stats.cpu}%</span>
+                    <span className="font-mono text-sm font-semibold">{stats.cpu}%</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-blue-500 h-2 rounded-full transition-all" style={{width: `${stats.cpu}%`}}></div>
+                  <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div className="bg-blue-500 h-3 rounded-full transition-all duration-300" style={{width: `${stats.cpu}%`}}></div>
                   </div>
 
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Memory</span>
-                    <span className="font-mono text-sm">{stats.memory}MB</span>
+                    <span className="text-gray-600">Memory Usage</span>
+                    <span className="font-mono text-sm font-semibold">{stats.memory}MB</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-green-500 h-2 rounded-full transition-all" style={{width: `${Math.min(stats.memory / 5, 100)}%`}}></div>
+                  <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div className="bg-green-500 h-3 rounded-full transition-all duration-300" style={{width: `${Math.min(stats.memory / 5, 100)}%`}}></div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3 mt-4">
-                    <div className="text-center p-2 bg-gray-50 rounded">
-                      <div className="text-sm font-mono">{stats.ping}ms</div>
-                      <div className="text-xs text-gray-500">Ping</div>
+                  <div className="grid grid-cols-2 gap-4 mt-6">
+                    <div className="text-center p-4 bg-gray-50 rounded-lg">
+                      <div className="text-xl font-bold font-mono text-gray-800">{stats.ping}ms</div>
+                      <div className="text-sm text-gray-500 mt-1">API Ping</div>
                     </div>
-                    <div className="text-center p-2 bg-gray-50 rounded">
-                      <div className="text-sm font-mono">{formatUptime(stats.uptime)}</div>
-                      <div className="text-xs text-gray-500">Uptime</div>
+                    <div className="text-center p-4 bg-gray-50 rounded-lg">
+                      <div className="text-xl font-bold font-mono text-gray-800">{formatUptime(stats.uptime)}</div>
+                      <div className="text-sm text-gray-500 mt-1">Uptime</div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-4 bg-blue-50 rounded-lg">
+                      <div className="text-xl font-bold text-blue-600">{stats.servers}</div>
+                      <div className="text-sm text-gray-600 mt-1">Servers</div>
+                    </div>
+                    <div className="text-center p-4 bg-green-50 rounded-lg">
+                      <div className="text-xl font-bold text-green-600">{stats.users.toLocaleString()}</div>
+                      <div className="text-sm text-gray-600 mt-1">Users</div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-4 bg-purple-50 rounded-lg">
+                      <div className="text-xl font-bold text-purple-600">{stats.commands.toLocaleString()}</div>
+                      <div className="text-sm text-gray-600 mt-1">Commands</div>
+                    </div>
+                    <div className="text-center p-4 bg-orange-50 rounded-lg">
+                      <div className="text-xl font-bold text-orange-600">{stats.messages.toLocaleString()}</div>
+                      <div className="text-sm text-gray-600 mt-1">Messages</div>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="text-center text-gray-500 py-8">
-                  <div className="text-3xl mb-2">💤</div>
-                  <div>Bot is offline</div>
-                  <div className="text-sm">Performance data unavailable</div>
+                <div className="text-center text-gray-500 py-16">
+                  <div className="text-6xl mb-4">💤</div>
+                  <div className="text-lg font-medium">Bot is offline</div>
+                  <div className="text-sm mt-2">Performance data unavailable</div>
+                  <div className="text-xs text-gray-400 mt-4">Start the bot to see real-time metrics</div>
                 </div>
               )}
             </div>
-
-            {/* Live Statistics */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
-                <span>📈</span>
-                <span>Statistics</span>
-              </h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center p-3 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">{stats.servers}</div>
-                  <div className="text-xs text-gray-600">Servers</div>
-                </div>
-                <div className="text-center p-3 bg-green-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">{stats.users.toLocaleString()}</div>
-                  <div className="text-xs text-gray-600">Users</div>
-                </div>
-                <div className="text-center p-3 bg-purple-50 rounded-lg">
-                  <div className="text-2xl font-bold text-purple-600">{stats.commands.toLocaleString()}</div>
-                  <div className="text-xs text-gray-600">Commands</div>
-                </div>
-                <div className="text-center p-3 bg-orange-50 rounded-lg">
-                  <div className="text-2xl font-bold text-orange-600">{stats.messages.toLocaleString()}</div>
-                  <div className="text-xs text-gray-600">Messages</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Bot Information */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Bot Information</h3>
-              <div className="space-y-3">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Name</label>
-                  <p className="text-gray-900 font-medium">{bot.name}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Prefix</label>
-                  <p className="text-gray-900 font-mono">{bot.prefix}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Created</label>
-                  <p className="text-gray-900">{new Date(bot.createdAt).toLocaleDateString()}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Status</label>
-                  <p className={`font-medium flex items-center space-x-2 ${
-                    bot.status === 'ONLINE' ? 'text-green-600' :
-                    bot.status === 'ERROR' ? 'text-red-600' :
-                    'text-gray-600'
-                  }`}>
-                    <span>{getStatusIcon(bot.status)}</span>
-                    <span>{bot.status}</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Active Servers */}
-            {guilds.length > 0 && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Active Servers ({guilds.length})</h3>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {guilds.slice(0, 8).map((guild) => (
-                    <div key={guild.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-8 h-8 bg-gray-200 rounded-md flex items-center justify-center">
-                          {guild.icon ? (
-                            <img 
-                              src={`https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`} 
-                              alt={guild.name}
-                              className="w-8 h-8 rounded-md"
-                            />
-                          ) : (
-                            <span className="text-sm">🏠</span>
-                          )}
-                        </div>
-                        <div>
-                          <div className="font-medium text-gray-900 text-sm">{guild.name}</div>
-                          <div className="text-xs text-gray-500">{guild.memberCount.toLocaleString()} members</div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
