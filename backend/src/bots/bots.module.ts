@@ -5,6 +5,7 @@ import { BotRecoveryService } from './bot-recovery.service';
 import { BotMetricsService } from './bot-metrics.service';
 import { SetupMetricsService } from './setup-metrics.service';
 import { BotMonitorService } from './bot-monitor.service';
+import { BotLogsService } from './bot-logs.service';
 import { EncryptionService } from '../common/encryption/encryption.service';
 import { DiscordModule } from '../common/discord/discord.module';
 import { QueueModule } from '../queue/queue.module';
