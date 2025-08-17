@@ -16,6 +16,7 @@ import { BotMetricsService, DashboardStats, DailyMetrics } from './bot-metrics.s
 import { SetupMetricsService } from './setup-metrics.service';
 import { BotMonitorService } from './bot-monitor.service';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { IQueueService } from '../queue/queue.interface';
 
 interface CreateBotDto {
   name: string;
@@ -45,6 +46,7 @@ export class BotsController {
     private setupMetricsService: SetupMetricsService,
     private botMonitorService: BotMonitorService,
     private prisma: PrismaService,
+    private queueService: IQueueService,
   ) {}
 
   @Post()
