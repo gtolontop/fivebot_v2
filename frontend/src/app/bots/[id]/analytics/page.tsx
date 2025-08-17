@@ -7,6 +7,7 @@ import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
 import dynamic from 'next/dynamic';
 import Cookies from 'js-cookie';
+import Header from '@/components/Header';
 
 // Dynamic imports to avoid SSR issues
 const Chart = dynamic(() => import('react-chartjs-2').then((mod) => mod.Chart), {
@@ -275,46 +276,42 @@ export default function AnalyticsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Header */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push(`/bots/${botId}`)}
-                className="flex items-center space-x-2 text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <span>←</span>
-                <span className="font-medium">Back to Dashboard</span>
-              </button>
-              <div className="h-6 w-px bg-gray-300"></div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">{bot.name} - Analytics</h1>
-                <p className="text-sm text-gray-500">Detailed performance insights and statistics</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <select
-                value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value as any)}
-                className="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="7d">Last 7 days</option>
-                <option value="30d">Last 30 days</option>
-                <option value="90d">Last 90 days</option>
-              </select>
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                bot.status === 'ONLINE' 
-                  ? 'bg-green-100 text-green-800' 
-                  : 'bg-gray-100 text-gray-800'
-              }`}>
-                <div className="w-1.5 h-1.5 bg-current rounded-full mr-1.5"></div>
-                {bot.status}
-              </span>
-            </div>
+      <Header
+        title={`${bot.name} - Analytics`}
+        subtitle="Detailed performance insights and statistics"
+        icon={
+          <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-blue-600 rounded-lg flex items-center justify-center">
+            <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
+            </svg>
           </div>
-        </div>
-      </div>
+        }
+        backButton={{
+          label: "Back to Dashboard",
+          href: `/bots/${botId}`
+        }}
+        actions={
+          <div className="flex items-center space-x-4">
+            <select
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value as any)}
+              className="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="7d">Last 7 days</option>
+              <option value="30d">Last 30 days</option>
+              <option value="90d">Last 90 days</option>
+            </select>
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+              bot.status === 'ONLINE' 
+                ? 'bg-green-100 text-green-800' 
+                : 'bg-gray-100 text-gray-800'
+            }`}>
+              <div className="w-1.5 h-1.5 bg-current rounded-full mr-1.5"></div>
+              {bot.status}
+            </span>
+          </div>
+        }
+      />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
