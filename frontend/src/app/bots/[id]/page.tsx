@@ -302,55 +302,17 @@ export default function BotDetailPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Control Panel */}
+        {/* Bot Actions */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Bot Controls</h3>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            <button
-              onClick={bot.status === 'OFFLINE' ? handleStart : handleStop}
-              disabled={actionLoading === 'start' || actionLoading === 'stop'}
-              className={`p-3 rounded-lg border transition-all ${
-                bot.status === 'OFFLINE'
-                  ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
-                  : 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100'
-              } disabled:opacity-50`}
-            >
-              <div className="flex flex-col items-center space-y-1">
-                {actionLoading === 'start' || actionLoading === 'stop' ? (
-                  <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                ) : (
-                  <span className="text-xl">{bot.status === 'OFFLINE' ? '▶️' : '⏹️'}</span>
-                )}
-                <span className="text-sm font-medium">
-                  {actionLoading === 'start' ? 'Starting...' : 
-                   actionLoading === 'stop' ? 'Stopping...' : 
-                   bot.status === 'OFFLINE' ? 'Start' : 'Stop'}
-                </span>
-              </div>
-            </button>
-
-            <button
-              onClick={handleRestart}
-              disabled={actionLoading === 'restart'}
-              className="p-3 rounded-lg border bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 transition-all disabled:opacity-50"
-            >
-              <div className="flex flex-col items-center space-y-1">
-                {actionLoading === 'restart' ? (
-                  <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                ) : (
-                  <span className="text-xl">🔄</span>
-                )}
-                <span className="text-sm font-medium">Restart</span>
-              </div>
-            </button>
-
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Bot Actions</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <button
               onClick={() => router.push(`/bots/${botId}/config`)}
               className="p-3 rounded-lg border bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 transition-all"
             >
               <div className="flex flex-col items-center space-y-1">
                 <span className="text-xl">⚙️</span>
-                <span className="text-sm font-medium">Config</span>
+                <span className="text-sm font-medium">Configuration</span>
               </div>
             </button>
 
@@ -360,7 +322,7 @@ export default function BotDetailPage() {
             >
               <div className="flex flex-col items-center space-y-1">
                 <span className="text-xl">🔗</span>
-                <span className="text-sm font-medium">Invite</span>
+                <span className="text-sm font-medium">Generate Invite</span>
               </div>
             </button>
 
