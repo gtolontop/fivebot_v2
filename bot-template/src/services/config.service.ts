@@ -118,7 +118,7 @@ export class ConfigService {
           jobType: 'CONFIG_UPDATE',
           status: 'COMPLETED',
           message: 'Bot configuration updated',
-          metadata: data,
+          metadata: data as any,
         },
       });
 
