@@ -20,7 +20,7 @@
       "Bash(chmod:*)",
       "Bash(find:*)",
       "Bash(grep:*)",
-      "Bash(set PORT=8001)"
+      "Bash(set PORT=8000)"
     ],
     "deny": [],
     "ask": [],

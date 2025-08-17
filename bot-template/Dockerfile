@@ -21,7 +21,7 @@ RUN adduser -S botuser -u 1001
 USER botuser
 
 # Expose health check port (optional)
-EXPOSE 3001
+EXPOSE 3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
