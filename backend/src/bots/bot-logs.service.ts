@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { LogLevel } from '@prisma/client';
+import { ConsoleBufferService } from './console-buffer.service';
 
 export interface BotLogEntry {
   id: string;
@@ -13,7 +14,11 @@ export interface BotLogEntry {
 
 @Injectable()
 export class BotLogsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Inject(forwardRef(() => ConsoleBufferService))
+    private consoleBufferService: ConsoleBufferService,
+  ) {}
 
   // Add a log entry for a specific bot
   async addLog(
@@ -24,6 +29,7 @@ export class BotLogsService {
     metadata?: any
   ): Promise<void> {
     try {
+      // Save to database
       await this.prisma.botLog.create({
         data: {
           botId,
@@ -33,6 +39,17 @@ export class BotLogsService {
           metadata,
         },
       });
+
+      // Add to console buffer
+      const timestamp = new Date().toLocaleTimeString();
+      const prefix = source === 'Discord' ? `discord@${botId}` : 
+                     source === 'System' ? `container@fivebot` : 
+                     source === 'Commands' ? `cmd@${botId}` : 
+                     `${source?.toLowerCase() || 'bot'}@${botId}`;
+      
+      const formattedLog = `[${timestamp}] [${prefix}]: ${message}`;
+      this.consoleBufferService.addLog(botId, formattedLog);
+      
     } catch (error) {
       // Silently fail log creation to not crash the main functionality
       console.error(`Failed to create log for bot ${botId}:`, error);
