@@ -135,7 +135,7 @@ export class MetricsService {
       });
     });
 
-    this.client.on('guildMemberRemove', (member: GuildMember) => {
+    this.client.on('guildMemberRemove', (member) => {
       this.addEvent({
         type: 'member_leave',
         timestamp: new Date(),
