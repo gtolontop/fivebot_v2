@@ -207,14 +207,14 @@ export default function BotDetailPage() {
     setActionLoading('start');
     
     // Show immediate feedback in console
-    setLogs([`[${new Date().toLocaleTimeString()}] Démarrage du bot en cours...`]);
+    setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Starting bot...`].slice(-500));
     
     try {
       await botsAPI.start(botId);
       toast.success('Bot started successfully');
       
       // Show success message
-      setLogs([`[${new Date().toLocaleTimeString()}] Bot démarré avec succès, connexion à Discord...`]);
+      setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Bot started successfully, connecting to Discord...`].slice(-500));
       
       await fetchBot(); // Refresh bot status
     } catch (error: any) {
@@ -231,14 +231,14 @@ export default function BotDetailPage() {
     setActionLoading('stop');
     
     // Show immediate feedback in console
-    setLogs([`[${new Date().toLocaleTimeString()}] Arrêt du bot en cours...`]);
+    setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Stopping bot...`].slice(-500));
     
     try {
       await botsAPI.stop(botId);
       toast.success('Bot stopped successfully');
       
       // Show success message
-      setLogs([`[${new Date().toLocaleTimeString()}] Bot arrêté avec succès`]);
+      setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Bot stopped successfully`].slice(-500));
       
       await fetchBot(); // Refresh bot status
     } catch (error: any) {
