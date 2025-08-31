@@ -48,10 +48,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const response = await api.get('/auth/me');
       setUser(response.data.user);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Auth check failed:', error);
-      Cookies.remove('token');
-      delete api.defaults.headers.common['Authorization'];
+      // Only remove token if it's truly invalid (401)
+      if (error.response?.status === 401) {
+        Cookies.remove('token');
+        delete api.defaults.headers.common['Authorization'];
+      }
     } finally {
       setLoading(false);
     }
