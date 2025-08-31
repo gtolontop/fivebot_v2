@@ -41,11 +41,18 @@ export class BotLogsService {
       });
 
       // Add to console buffer
+      // Get bot name for prefix
+      const bot = await this.prisma.bot.findUnique({
+        where: { id: botId },
+        select: { name: true }
+      });
+      const botName = bot?.name || 'unknown';
+      
       const timestamp = new Date().toLocaleTimeString();
-      const prefix = source === 'Discord' ? `discord@${botId}` : 
+      const prefix = source === 'Discord' ? `discord@${botName}` : 
                      source === 'System' ? `container@fivebot` : 
-                     source === 'Commands' ? `cmd@${botId}` : 
-                     `${source?.toLowerCase() || 'bot'}@${botId}`;
+                     source === 'Commands' ? `cmd@${botName}` : 
+                     `${source?.toLowerCase() || 'bot'}@${botName}`;
       
       const formattedLog = `[${timestamp}] [${prefix}]: ${message}`;
       this.consoleBufferService.addLog(botId, formattedLog);
