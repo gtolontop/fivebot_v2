@@ -370,8 +370,8 @@ export class BotsService {
     });
 
     if (currentStatus === BotStatus.OFFLINE) {
-      console.log(`⚠️ Bot ${botId} was already OFFLINE after sync - no action needed`);
-      await this.botLogsService.addLog(botId, 'INFO', '⚠️ Bot was already offline - no action needed', 'System');
+      console.log(`⚠️ Bot ${botId} was already OFFLINE after sync - skipping stop`);
+      // Don't add confusing log message, just return
       return bot;
     }
 
