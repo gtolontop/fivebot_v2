@@ -210,12 +210,38 @@ export class SimpleQueueService implements IQueueService {
       });
 
       // Handle process output
-      botProcess.stdout?.on('data', (data) => {
-        console.log(`[Bot ${botId}] ${data.toString().trim()}`);
+      botProcess.stdout?.on('data', async (data) => {
+        const output = data.toString().trim();
+        console.log(`[Bot ${botId}] ${output}`);
+        
+        // Send to live console
+        try {
+          await this.botLogsService.addLog(
+            botId,
+            LogLevel.INFO,
+            output,
+            'Bot'
+          );
+        } catch (error) {
+          console.error('Failed to log bot output:', error);
+        }
       });
 
-      botProcess.stderr?.on('data', (data) => {
-        console.error(`[Bot ${botId} ERROR] ${data.toString().trim()}`);
+      botProcess.stderr?.on('data', async (data) => {
+        const output = data.toString().trim();
+        console.error(`[Bot ${botId} ERROR] ${output}`);
+        
+        // Send to live console
+        try {
+          await this.botLogsService.addLog(
+            botId,
+            LogLevel.ERROR,
+            output,
+            'Bot'
+          );
+        } catch (error) {
+          console.error('Failed to log bot error:', error);
+        }
       });
 
       // Handle process exit
