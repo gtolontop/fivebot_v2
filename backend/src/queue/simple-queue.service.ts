@@ -272,6 +272,18 @@ export class SimpleQueueService implements IQueueService {
         await this.updateBotStatusSafe(botId, BotStatus.ONLINE);
         console.log(`✅ Bot ${botId} started successfully`);
         
+        // Add Pterodactyl-style server online message
+        try {
+          await this.botLogsService.addLog(
+            botId,
+            LogLevel.SUCCESS,
+            'Server marked as online...',
+            'System'
+          );
+        } catch (logError) {
+          console.error('Failed to add online log:', logError);
+        }
+        
         // Schedule a verification check after 10 seconds to ensure it's still online
         setTimeout(async () => {
           try {
