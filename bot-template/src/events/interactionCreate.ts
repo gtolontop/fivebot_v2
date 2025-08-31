@@ -1,6 +1,7 @@
 import { BaseInteraction, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { PrismaClient } from '@prisma/client';
 import { ConfigService } from '../services/config.service';
+import * as statsCommand from '../commands/stats';
 
 export async function interactionCreate(
   interaction: BaseInteraction,
@@ -31,6 +32,12 @@ async function handleBuiltInCommands(
   configService: ConfigService
 ) {
   const { commandName } = interaction;
+
+  // Handle stats command without owner check
+  if (commandName === 'stats') {
+    await statsCommand.execute(interaction);
+    return;
+  }
 
   // Only allow bot owner to use configuration commands
   const bot = await configService.getBot();
@@ -278,6 +285,11 @@ async function handleHelp(interaction: ChatInputCommandInteraction) {
       {
         name: '⚙️ Configuration',
         value: '`/set-welcome` - Configure le message de bienvenue\n`/bot-status` - Affiche le statut du bot\n`/reload-config` - Recharge la configuration',
+        inline: false
+      },
+      {
+        name: '📊 Statistiques',
+        value: '`/stats` - Affiche les statistiques du bot',
         inline: false
       },
       {

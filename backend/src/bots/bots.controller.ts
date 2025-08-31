@@ -42,7 +42,6 @@ interface UpdateBotConfigDto {
 }
 
 @Controller('bots')
-@UseGuards(AuthGuard('jwt'))
 export class BotsController {
   constructor(
     private botsService: BotsService,
@@ -57,21 +56,25 @@ export class BotsController {
   ) {}
 
   @Post()
+  @UseGuards(AuthGuard('jwt'))
   async create(@Req() req: any, @Body() createBotDto: CreateBotDto) {
     return this.botsService.create(req.user.id, createBotDto);
   }
 
   @Get()
+  @UseGuards(AuthGuard('jwt'))
   async findAll(@Req() req: any) {
     return this.botsService.findAll(req.user.id);
   }
 
   @Get(':id')
+  @UseGuards(AuthGuard('jwt'))
   async findOne(@Param('id') id: string, @Req() req: any) {
     return this.botsService.findOne(id, req.user.id);
   }
 
   @Patch(':id/config')
+  @UseGuards(AuthGuard('jwt'))
   async updateConfig(
     @Param('id') id: string,
     @Req() req: any,
@@ -81,6 +84,7 @@ export class BotsController {
   }
 
   @Post(':id/start')
+  @UseGuards(AuthGuard('jwt'))
   async start(@Param('id') id: string, @Req() req: any, @Body() body?: { force?: boolean }) {
     try {
       console.log(`🚀 Starting bot ${id} for user ${req.user.id}${body?.force ? ' (forced)' : ''}`);
@@ -105,22 +109,26 @@ export class BotsController {
   }
 
   @Post(':id/stop')
+  @UseGuards(AuthGuard('jwt'))
   async stop(@Param('id') id: string, @Req() req: any) {
     return this.botsService.stop(id, req.user.id);
   }
 
   @Delete(':id')
+  @UseGuards(AuthGuard('jwt'))
   async delete(@Param('id') id: string, @Req() req: any) {
     await this.botsService.delete(id, req.user.id);
     return { message: 'Bot deleted successfully' };
   }
 
   @Post(':id/invite-link')
+  @UseGuards(AuthGuard('jwt'))
   async generateInviteLink(@Param('id') id: string, @Req() req: any) {
     return this.botsService.generateInviteLink(id, req.user.id);
   }
 
   @Get(':id/status')
+  @UseGuards(AuthGuard('jwt'))
   async getStatus(@Param('id') id: string, @Req() req: any) {
     const bot = await this.botsService.findOne(id, req.user.id);
     return {
@@ -133,6 +141,7 @@ export class BotsController {
   }
 
   @Post(':id/force-stop')
+  @UseGuards(AuthGuard('jwt'))
   async forceStopBot(@Param('id') id: string, @Req() req: any) {
     try {
       const bot = await this.botsService.findOne(id, req.user.id);
@@ -159,11 +168,13 @@ export class BotsController {
   }
 
   @Get(':id/guilds')
+  @UseGuards(AuthGuard('jwt'))
   async getGuilds(@Param('id') id: string, @Req() req: any) {
     return this.botsService.getDiscordGuilds(id, req.user.id);
   }
 
   @Get(':id/guilds/:guildId/channels')
+  @UseGuards(AuthGuard('jwt'))
   async getGuildChannels(
     @Param('id') id: string,
     @Param('guildId') guildId: string,
@@ -173,6 +184,7 @@ export class BotsController {
   }
 
   @Get(':id/guilds/:guildId/roles')
+  @UseGuards(AuthGuard('jwt'))
   async getGuildRoles(
     @Param('id') id: string,
     @Param('guildId') guildId: string,
@@ -182,11 +194,13 @@ export class BotsController {
   }
 
   @Get('dashboard/stats')
+  @UseGuards(AuthGuard('jwt'))
   async getDashboardStats(@Req() req: any): Promise<DashboardStats> {
     return this.botMetricsService.getDashboardStats(req.user.id);
   }
 
   @Get(':id/metrics')
+  @UseGuards(AuthGuard('jwt'))
   async getBotMetrics(
     @Param('id') id: string,
     @Req() req: any,
@@ -199,6 +213,7 @@ export class BotsController {
   }
 
   @Post(':id/sync-status')
+  @UseGuards(AuthGuard('jwt'))
   async syncBotStatus(
     @Param('id') id: string,
     @Req() req: any,
@@ -218,6 +233,7 @@ export class BotsController {
   }
 
   @Post('admin/force-cleanup')
+  @UseGuards(AuthGuard('jwt'))
   async forceCleanupAllBots(@Req() req: any) {
     // Note: In a real app, you'd want to check for admin permissions here
     
@@ -238,6 +254,7 @@ export class BotsController {
   }
 
   @Get(':id/metrics/realtime')
+  @UseGuards(AuthGuard('jwt'))
   async getBotRealTimeMetrics(
     @Param('id') id: string,
     @Req() req: any,
@@ -315,6 +332,7 @@ export class BotsController {
   }
 
   @Post('start-all')
+  @UseGuards(AuthGuard('jwt'))
   async startAllBots(@Req() req: any) {
     try {
       console.log('🚀 Start all bots called for user:', req.user?.id);
@@ -354,6 +372,7 @@ export class BotsController {
   }
 
   @Post('setup/metrics')
+  @UseGuards(AuthGuard('jwt'))
   async setupMetrics(@Req() req: any) {
     // Check if this is a fix concurrency request
     const body = req.body;
@@ -486,6 +505,7 @@ export class BotsController {
   }
 
   @Post('sync-statuses')
+  @UseGuards(AuthGuard('jwt'))
   async syncBotStatuses(@Req() req: any) {
     try {
       console.log('Sync statuses endpoint called for user:', req.user?.id);
@@ -506,6 +526,7 @@ export class BotsController {
   }
 
   @Get(':id/logs/live')
+  @UseGuards(AuthGuard('jwt'))
   async getLiveLogs(
     @Param('id') id: string,
     @Req() req: any,
@@ -543,6 +564,7 @@ export class BotsController {
   }
 
   @Get(':id/logs/recent')
+  @UseGuards(AuthGuard('jwt'))
   async getRecentLogs(
     @Param('id') id: string,
     @Req() req: any,
@@ -608,6 +630,7 @@ export class BotsController {
   }
 
   @Post(':id/verify-status')
+  @UseGuards(AuthGuard('jwt'))
   async verifyBotStatus(@Param('id') id: string, @Req() req: any) {
     const bot = await this.botsService.findOne(id, req.user.id);
     if (!bot) {
@@ -624,6 +647,7 @@ export class BotsController {
   }
 
   @Post('verify-all-statuses')
+  @UseGuards(AuthGuard('jwt'))
   async verifyAllBotStatuses(@Req() req: any) {
     try {
       console.log('Verify all statuses endpoint called for user:', req.user?.id);
@@ -660,6 +684,7 @@ export class BotsController {
   }
 
   @Get('debug/running')
+  @UseGuards(AuthGuard('jwt'))
   async getRunningBots(@Req() req: any) {
     try {
       const queueService = this.botsService['queueService'];
@@ -679,6 +704,7 @@ export class BotsController {
   }
 
   @Post(':id/logs/clean-duplicates')
+  @UseGuards(AuthGuard('jwt'))
   async cleanDuplicateLogs(
     @Param('id') id: string,
     @Req() req: any,
@@ -698,6 +724,7 @@ export class BotsController {
   }
 
   @Post('kill-all-processes')
+  @UseGuards(AuthGuard('jwt'))
   async killAllBotProcesses(@Req() req: any) {
     try {
       const queueService = this.botsService['queueService'];
@@ -784,6 +811,7 @@ export class BotsController {
   }
 
   @Get(':id/metrics/realtime')
+  @UseGuards(AuthGuard('jwt'))
   async getRealtimeMetrics(
     @Param('id') id: string,
     @Req() req: any,
@@ -803,6 +831,7 @@ export class BotsController {
   }
 
   @Get(':id/analytics/:period')
+  @UseGuards(AuthGuard('jwt'))
   async getBotAnalytics(
     @Param('id') id: string,
     @Param('period') period: 'daily' | 'weekly' | 'monthly',
@@ -823,6 +852,7 @@ export class BotsController {
   }
 
   @Get('analytics/overview')
+  @UseGuards(AuthGuard('jwt'))
   async getAnalyticsOverview(@Req() req: any) {
     const bots = await this.botsService.findAll(req.user.id);
     const overview = {
