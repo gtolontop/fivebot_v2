@@ -284,12 +284,13 @@ export class BotsService {
     console.log(`🔄 Pre-start sync for bot ${botId}`);
     const currentStatus = await this.forceSyncBotStatus(botId);
 
-    // Log the start action
-    await this.botLogsService.logSystemEvent(botId, 'START', `User ${ownerId} initiated bot start`, {
-      userId: ownerId,
-      timestamp: new Date().toISOString(),
-      previousStatus: currentStatus,
-    });
+    // Add simple starting message
+    await this.botLogsService.addLog(
+      botId, 
+      LogLevel.INFO, 
+      'Server marked as starting...', 
+      'System'
+    );
 
     // Re-fetch bot to get updated status
     bot = await this.findOne(botId, ownerId);
