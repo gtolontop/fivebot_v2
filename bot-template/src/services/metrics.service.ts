@@ -60,8 +60,8 @@ export class MetricsService {
     });
 
     // Track command executions
-    this.client.on('interactionCreate', (interaction: CommandInteraction) => {
-      if (!interaction.isCommand()) return;
+    this.client.on('interactionCreate', (interaction) => {
+      if (!interaction.isChatInputCommand()) return;
 
       const startTime = Date.now();
       const interactionId = interaction.id;
