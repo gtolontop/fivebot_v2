@@ -7,6 +7,7 @@ export async function ready(client: Client, prisma: PrismaClient, botId: string)
   
   console.log(`Bot logged in as ${client.user.tag}`);
   console.log(`Connected to ${client.guilds.cache.size} servers`);
+  console.log(`Serving ${client.users.cache.size} users`);
   
   // Deploy slash commands
   await deployCommands(client);
