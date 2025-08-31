@@ -270,6 +270,40 @@ export class SimpleQueueService implements IQueueService {
         }
       });
 
+      // Add startup logs progressively
+      setTimeout(async () => {
+        try {
+          await this.botLogsService.addLog(
+            botId,
+            LogLevel.INFO,
+            'Starting bot process...',
+            'System'
+          );
+        } catch (e) {}
+      }, 500);
+
+      setTimeout(async () => {
+        try {
+          await this.botLogsService.addLog(
+            botId,
+            LogLevel.INFO,
+            'Loading bot configuration...',
+            'System'
+          );
+        } catch (e) {}
+      }, 1000);
+
+      setTimeout(async () => {
+        try {
+          await this.botLogsService.addLog(
+            botId,
+            LogLevel.INFO,
+            'Connecting to Discord...',
+            'System'
+          );
+        } catch (e) {}
+      }, 1500);
+
       // Wait a bit to see if the process starts successfully
       await new Promise(resolve => setTimeout(resolve, 3000));
 
