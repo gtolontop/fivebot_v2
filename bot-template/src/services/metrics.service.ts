@@ -40,7 +40,7 @@ export class MetricsService {
     private client: Client,
     private prisma: PrismaClient,
     private botId: string,
-    private backendUrl: string = process.env.BACKEND_URL || 'http://localhost:3001'
+    private backendUrl: string = process.env.BACKEND_URL || 'http://localhost:8000'
   ) {
     this.setupEventListeners();
     this.startPeriodicSending();
