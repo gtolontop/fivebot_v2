@@ -35,6 +35,7 @@ export default function BotDetailPage() {
   const [botLoading, setBotLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
+  const lastLogCountRef = useRef(0);
   const [guilds, setGuilds] = useState<any[]>([]);
   const [wsConnection, setWsConnection] = useState<WebSocket | null>(null);
   const [realTimeStats, setRealTimeStats] = useState({
@@ -87,8 +88,10 @@ export default function BotDetailPage() {
         if (response.ok) {
           const data = await response.json();
           if (data.logs && data.logs.length > 0) {
-            // Replace all logs with backend logs - single source of truth
+            // Always use backend logs as single source of truth
+            // This ensures persistence across refreshes
             setLogs(data.logs.slice(-500));
+            lastLogCountRef.current = data.logs.length;
           } else {
             // No logs available yet
             // Only set the waiting message if we truly have no logs
