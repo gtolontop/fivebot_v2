@@ -39,7 +39,8 @@ api.interceptors.response.use(
       Cookies.remove('token');
       delete api.defaults.headers.common['Authorization'];
       
-      if (typeof window !== 'undefined') {
+      // Avoid redirect loop - only redirect if not already on auth pages
+      if (typeof window !== 'undefined' && !window.location.pathname.includes('/auth')) {
         window.location.href = '/auth/login';
       }
       
