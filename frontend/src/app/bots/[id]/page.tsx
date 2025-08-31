@@ -35,8 +35,6 @@ export default function BotDetailPage() {
   const [botLoading, setBotLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
-  const [backendLogs, setBackendLogs] = useState<string[]>([]);
-  const [frontendLogs, setFrontendLogs] = useState<string[]>([]);
   const [guilds, setGuilds] = useState<any[]>([]);
   const [wsConnection, setWsConnection] = useState<WebSocket | null>(null);
   const [realTimeStats, setRealTimeStats] = useState({
@@ -67,20 +65,8 @@ export default function BotDetailPage() {
     if (!bot || bot.status !== 'ONLINE') {
       setWsConnection(null);
       
-      // Add status message to frontend logs
-      if (bot && bot.status === 'OFFLINE') {
-        const statusLog = `[${new Date().toLocaleTimeString()}] Bot is offline`;
-        setFrontendLogs(prev => [...prev, statusLog].slice(-100));
-        setLogs(prev => [...prev, statusLog].slice(-500));
-      } else if (bot && bot.status === 'STARTING') {
-        const statusLog = `[${new Date().toLocaleTimeString()}] Bot is starting...`;
-        setFrontendLogs(prev => [...prev, statusLog].slice(-100));
-        setLogs(prev => [...prev, statusLog].slice(-500));
-      } else if (bot && bot.status === 'ERROR') {
-        const statusLog = `[${new Date().toLocaleTimeString()}] Bot error - check configuration`;
-        setFrontendLogs(prev => [...prev, statusLog].slice(-100));
-        setLogs(prev => [...prev, statusLog].slice(-500));
-      }
+      // Status changes will be logged by backend, no need to add here
+      // Backend logs are the single source of truth
       
       return;
     }
@@ -101,13 +87,10 @@ export default function BotDetailPage() {
         if (response.ok) {
           const data = await response.json();
           if (data.logs && data.logs.length > 0) {
-            // Update backend logs
-            setBackendLogs(data.logs);
-            
-            // Combine frontend and backend logs
-            setLogs([...frontendLogs, ...data.logs].slice(-500));
+            // Replace all logs with backend logs - single source of truth
+            setLogs(data.logs.slice(-500));
           } else {
-            // No logs available yet, but don't replace existing logs
+            // No logs available yet
             // Only set the waiting message if we truly have no logs
             if (logs.length === 0) {
               setLogs([`[${new Date().toLocaleTimeString()}] 📋 Console prête - Historique des activités s'affichera ici`]);
@@ -206,19 +189,13 @@ export default function BotDetailPage() {
   const handleStart = async () => {
     setActionLoading('start');
     
-    // Show immediate feedback in console
-    const startLog = `[${new Date().toLocaleTimeString()}] Starting bot...`;
-    setFrontendLogs(prev => [...prev, startLog].slice(-100));
-    setLogs(prev => [...prev, startLog].slice(-500));
+    // No need to add logs here - backend will log the action
     
     try {
       await botsAPI.start(botId);
       toast.success('Bot started successfully');
       
-      // Show success message
-      const successLog = `[${new Date().toLocaleTimeString()}] Bot started successfully, connecting to Discord...`;
-      setFrontendLogs(prev => [...prev, successLog].slice(-100));
-      setLogs(prev => [...prev, successLog].slice(-500));
+      // Success will be shown by backend logs
       
       await fetchBot(); // Refresh bot status
     } catch (error: any) {
@@ -234,19 +211,13 @@ export default function BotDetailPage() {
   const handleStop = async () => {
     setActionLoading('stop');
     
-    // Show immediate feedback in console
-    const stopLog = `[${new Date().toLocaleTimeString()}] Stopping bot...`;
-    setFrontendLogs(prev => [...prev, stopLog].slice(-100));
-    setLogs(prev => [...prev, stopLog].slice(-500));
+    // No need to add logs here - backend will log the action
     
     try {
       await botsAPI.stop(botId);
       toast.success('Bot stopped successfully');
       
-      // Show success message
-      const successLog = `[${new Date().toLocaleTimeString()}] Bot stopped successfully`;
-      setFrontendLogs(prev => [...prev, successLog].slice(-100));
-      setLogs(prev => [...prev, successLog].slice(-500));
+      // Success will be shown by backend logs
       
       await fetchBot(); // Refresh bot status
     } catch (error: any) {
