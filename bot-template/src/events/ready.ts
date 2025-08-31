@@ -49,7 +49,7 @@ export async function ready(client: Client, prisma: PrismaClient, botId: string)
       },
     });
 
-    console.log('✅ Bot status updated to ONLINE');
+    console.log('Bot ready');
     
   } catch (error) {
     console.error('❌ Failed to update bot status:', error);
