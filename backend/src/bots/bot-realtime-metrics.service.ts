@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 
-interface MetricEvent {
+export interface MetricEvent {
   type: 'message' | 'command' | 'error' | 'guild_join' | 'guild_leave' | 'member_join' | 'member_leave';
   timestamp: Date;
   guildId?: string;
