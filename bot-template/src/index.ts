@@ -13,6 +13,7 @@ import { commands } from './commands';
 // Import services
 import { ConfigService } from './services/config.service';
 import { WelcomeService } from './services/welcome.service';
+import { MetricsService } from './services/metrics.service';
 
 dotenv.config();
 
