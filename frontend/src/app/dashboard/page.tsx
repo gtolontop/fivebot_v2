@@ -159,6 +159,8 @@ export default function DashboardPage() {
       }
     } finally {
       setIsLoading(false);
+      // Always dismiss the loading toast
+      toast.dismiss('dashboard-loading');
     }
   };
 
