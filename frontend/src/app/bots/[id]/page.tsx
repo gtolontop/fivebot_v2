@@ -192,20 +192,16 @@ export default function BotDetailPage() {
   const handleStart = async () => {
     setActionLoading('start');
     
-    // No need to add logs here - backend will log the action
+    // Add immediate feedback message
+    const timestamp = new Date().toLocaleTimeString();
+    setLogs(prev => [...prev, `[${timestamp}] [container@fivebot]: Server marked as starting...`]);
     
     try {
       await botsAPI.start(botId);
       toast.success('Bot started successfully');
-      
-      // Success will be shown by backend logs
-      
       await fetchBot(); // Refresh bot status
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Error starting bot');
-      
-      // Show error message
-      setLogs([`[${new Date().toLocaleTimeString()}] Erreur lors du démarrage: ${error.response?.data?.message || 'Erreur inconnue'}`]);
     } finally {
       setActionLoading(null);
     }
