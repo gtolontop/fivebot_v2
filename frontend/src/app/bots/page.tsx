@@ -32,6 +32,7 @@ export default function BotsPage() {
   const [openMenus, setOpenMenus] = useState<{ [botId: string]: boolean }>({});
   const [verifyingStatuses, setVerifyingStatuses] = useState(false);
   const [startingAllBots, setStartingAllBots] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -78,11 +79,19 @@ export default function BotsPage() {
       if (error.response?.status === 401) {
         toast.error('Session expired. Please login again.');
         router.push('/auth/login');
+      } else if (retryCount < 2) {
+        // Retry up to 2 times
+        setRetryCount(prev => prev + 1);
+        setTimeout(() => {
+          fetchBots();
+        }, 1000); // Wait 1 second before retry
+        return; // Don't set loading to false yet
       } else {
-        toast.error('Failed to load bots');
+        toast.error('Failed to load bots after multiple attempts');
       }
     } finally {
       setBotsLoading(false);
+      setRetryCount(0); // Reset retry count on success or final failure
     }
   };
 
