@@ -40,22 +40,47 @@ export default function BotsPage() {
   }, [user, loading, router]);
 
   useEffect(() => {
-    if (user) {
-      fetchBots();
+    // Fetch bots once the auth check is complete
+    if (!loading) {
+      if (user) {
+        fetchBots();
+      } else {
+        // Small delay to ensure token is available
+        const token = Cookies.get('token');
+        if (token) {
+          setTimeout(() => {
+            fetchBots();
+          }, 100);
+        }
+      }
     }
-  }, [user]);
+  }, [user, loading]);
 
   const fetchBots = async () => {
     try {
+      const token = Cookies.get('token');
+      if (!token) {
+        console.log('No token found, redirecting to login');
+        router.push('/auth/login');
+        return;
+      }
+
       const response = await botsAPI.getAll();
       const botsData = response.data;
       setBots(botsData);
       
       // Fetch stats for each bot - TEMPORARILY DISABLED
       // await fetchBotStats(botsData);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in fetchBots:', error);
-      toast.error('Failed to load bots');
+      
+      // Check if it's an auth error
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please login again.');
+        router.push('/auth/login');
+      } else {
+        toast.error('Failed to load bots');
+      }
     } finally {
       setBotsLoading(false);
     }
@@ -361,7 +386,8 @@ export default function BotsPage() {
     }
   };
 
-  if (loading) {
+  // Show loading state while auth is being checked or bots are loading
+  if (loading || (botsLoading && bots.length === 0)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="flex items-center space-x-3">
@@ -372,7 +398,8 @@ export default function BotsPage() {
     );
   }
 
-  if (!user) {
+  // Don't render anything if no auth and not loading
+  if (!loading && !user && !Cookies.get('token')) {
     return null;
   }
 
