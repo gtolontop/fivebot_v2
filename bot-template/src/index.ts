@@ -157,13 +157,16 @@ class ChildBot {
   public async start() {
     try {
       // Connect to database
+      console.log('Initializing bot...');
       try {
         await this.prisma.$connect();
-        console.log('✅ Database connected');
+        console.log('Database connected');
       } catch (dbError) {
-        console.warn('⚠️ Database connection failed, continuing without DB:', (dbError as Error).message);
+        console.warn('Database connection failed, continuing without DB:', (dbError as Error).message);
         // Continue without database - the bot can still work for basic functions
       }
+      
+      console.log('Validating token...');
 
       // Update bot status (only if DB is available)
       try {
