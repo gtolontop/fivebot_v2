@@ -25,14 +25,35 @@ export default function BotLogs({ botId, botStatus, className = '' }: BotLogsPro
   const [isAutoScroll, setIsAutoScroll] = useState(true);
   const logsEndRef = useRef<HTMLDivElement>(null);
   const logsContainerRef = useRef<HTMLDivElement>(null);
+  const lastFetchedLogsRef = useRef<string[]>([]);
 
   // Fetch logs when bot status changes or component mounts
   useEffect(() => {
     if (botStatus !== 'ONLINE') {
-      setLogs([]);
+      // Don't clear logs when bot goes offline - keep the history
       setIsConnected(false);
+      
+      // Add a status change log entry
+      const statusLog: LogEntry = {
+        id: `status-${Date.now()}`,
+        timestamp: new Date().toLocaleTimeString(),
+        level: 'info',
+        message: `Bot status changed to ${botStatus}`,
+        category: 'System'
+      };
+      setLogs(prev => [...prev, statusLog].slice(-500)); // Keep last 500 logs
       return;
     }
+
+    // Add connection log
+    const connectLog: LogEntry = {
+      id: `connect-${Date.now()}`,
+      timestamp: new Date().toLocaleTimeString(),
+      level: 'success',
+      message: 'Connected to bot console',
+      category: 'System'
+    };
+    setLogs(prev => [...prev, connectLog].slice(-500));
 
     fetchLogs();
     const interval = setInterval(fetchLogs, 3000);
@@ -96,7 +117,15 @@ export default function BotLogs({ botId, botStatus, className = '' }: BotLogsPro
             return { id, timestamp, level, message, category };
           });
 
-          setLogs(structuredLogs.slice(-100)); // Keep last 100 logs
+          // Only add new logs that we haven't seen before
+          const newLogs = structuredLogs.filter(log => 
+            !lastFetchedLogsRef.current.includes(log.message)
+          );
+          
+          if (newLogs.length > 0) {
+            setLogs(prev => [...prev, ...newLogs].slice(-500)); // Keep last 500 logs
+            lastFetchedLogsRef.current = structuredLogs.map(log => log.message);
+          }
         }
       }
     } catch (error) {
@@ -106,6 +135,7 @@ export default function BotLogs({ botId, botStatus, className = '' }: BotLogsPro
 
   const clearLogs = () => {
     setLogs([]);
+    lastFetchedLogsRef.current = [];
   };
 
   const downloadLogs = () => {
@@ -155,23 +185,7 @@ export default function BotLogs({ botId, botStatus, className = '' }: BotLogsPro
     }
   };
 
-  if (botStatus !== 'ONLINE') {
-    return (
-      <div className={`card p-6 ${className}`}>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">🔍 Bot Logs</h3>
-          <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-            <span className="text-sm text-gray-500">Offline</span>
-          </div>
-        </div>
-        <div className="text-center py-8 text-gray-500">
-          <div className="text-4xl mb-2">⚠️</div>
-          <p>Bot must be online to view logs</p>
-        </div>
-      </div>
-    );
-  }
+  // Don't show offline message - always show the console
 
   return (
     <div className={`card p-6 ${className}`}>
