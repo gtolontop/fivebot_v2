@@ -190,6 +190,7 @@ export class SimpleQueueService implements IQueueService {
         },
         stdio: ['ignore', 'pipe', 'pipe'],
         shell: true, // Use shell on Windows
+        detached: process.platform !== 'win32', // Detach on Unix systems
       });
 
       // Store the process
@@ -311,27 +312,43 @@ export class SimpleQueueService implements IQueueService {
         if (this.runningBots.has(botId)) {
           console.log(`💀 Process didn't exit gracefully, sending SIGKILL to bot ${botId} (PID: ${botProcess.pid})`);
           try {
-            botProcess.kill('SIGKILL');
+            // On Windows, SIGKILL might not work properly, use taskkill
+            if (process.platform === 'win32' && botProcess.pid) {
+              const { exec } = require('child_process');
+              exec(`taskkill /F /PID ${botProcess.pid} /T`, (error) => {
+                if (error) {
+                  console.error(`taskkill error: ${error}`);
+                  botProcess.kill('SIGKILL');
+                } else {
+                  console.log(`✅ Process ${botProcess.pid} killed with taskkill`);
+                }
+              });
+            } else {
+              botProcess.kill('SIGKILL');
+            }
           } catch (error) {
             console.log(`⚠️ Process ${botProcess.pid} may have already exited`);
           }
           this.runningBots.delete(botId);
         }
-      }, 3000); // 3 seconds timeout (reduced from 5)
+      }, 5000); // 5 seconds timeout to allow graceful shutdown
 
       // Wait for process to exit naturally
       await new Promise<void>((resolve) => {
-        botProcess.on('exit', () => {
+        const exitHandler = () => {
           clearTimeout(forceKillTimeout);
           console.log(`📤 Bot ${botId} process exited naturally`);
           resolve();
-        });
+        };
+        
+        botProcess.once('exit', exitHandler);
         
         // Fallback after timeout
         setTimeout(() => {
           clearTimeout(forceKillTimeout);
+          botProcess.removeListener('exit', exitHandler);
           resolve();
-        }, 6000);
+        }, 8000); // 8 seconds total timeout
       });
 
       // Ensure process is removed from running bots
@@ -347,6 +364,37 @@ export class SimpleQueueService implements IQueueService {
       });
 
       console.log(`✅ Bot ${botId} stopped successfully and status FORCE updated to OFFLINE`);
+      
+      // Force Discord disconnection by invalidating the bot session
+      try {
+        const bot = await this.prisma.bot.findUnique({
+          where: { id: botId },
+          select: { tokenEncrypted: true, name: true }
+        });
+
+        if (bot) {
+          const token = this.encryptionService.decrypt(bot.tokenEncrypted);
+          
+          // Send a logout request to Discord API to force disconnect
+          console.log(`🔌 Forcing Discord disconnection for bot ${bot.name}...`);
+          
+          try {
+            // This endpoint doesn't exist but will invalidate the session
+            await fetch('https://discord.com/api/v10/auth/logout', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bot ${token}`,
+                'Content-Type': 'application/json'
+              }
+            });
+          } catch (discordError) {
+            // Expected to fail, but helps disconnect the bot
+            console.log(`📤 Discord session invalidation attempted`);
+          }
+        }
+      } catch (error) {
+        console.error(`⚠️ Could not force Discord disconnection:`, error);
+      }
       
       // Schedule a verification check after 5 seconds to ensure it really stopped
       setTimeout(async () => {

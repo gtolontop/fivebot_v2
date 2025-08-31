@@ -110,9 +110,23 @@ class ChildBot {
       console.warn('Discord client warning:', info);
     });
 
-    // Graceful shutdown
-    process.on('SIGTERM', () => this.shutdown());
-    process.on('SIGINT', () => this.shutdown());
+    // Graceful shutdown - ensure shutdown is called only once
+    let shutdownCalled = false;
+    const handleShutdown = () => {
+      if (!shutdownCalled) {
+        shutdownCalled = true;
+        this.shutdown();
+      }
+    };
+    
+    process.on('SIGTERM', handleShutdown);
+    process.on('SIGINT', handleShutdown);
+    process.on('SIGHUP', handleShutdown);
+    
+    // Handle Windows specific signals
+    if (process.platform === 'win32') {
+      process.on('SIGBREAK', handleShutdown);
+    }
     
     process.on('unhandledRejection', (error) => {
       console.error('Unhandled promise rejection:', error);
@@ -246,20 +260,25 @@ class ChildBot {
       // Force bot to appear offline immediately
       if (this.client.user) {
         console.log('📤 Setting Discord presence to offline...');
-        await this.client.user.setPresence({ 
-          status: 'invisible',
-          activities: []
-        });
-        
-        // Wait a moment for the presence to update
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        try {
+          await this.client.user.setPresence({ 
+            status: 'invisible',
+            activities: []
+          });
+        } catch (presenceError) {
+          console.warn('⚠️ Could not update presence:', presenceError);
+        }
       }
       
       console.log('💾 Updating bot status to OFFLINE in database...');
       await this.updateBotStatus('OFFLINE');
       
       console.log('🔌 Destroying Discord client...');
+      // Destroy the client which will close the WebSocket connection
       this.client.destroy();
+      
+      // Give Discord a moment to register the disconnection
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       console.log('🗄️ Disconnecting from database...');
       await this.prisma.$disconnect();
