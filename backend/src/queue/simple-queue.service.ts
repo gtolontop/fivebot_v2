@@ -211,19 +211,22 @@ export class SimpleQueueService implements IQueueService {
 
       // Handle process output
       botProcess.stdout?.on('data', async (data) => {
-        const output = data.toString().trim();
-        console.log(`[Bot ${botId}] ${output}`);
+        const output = data.toString();
+        console.log(`[Bot ${botId}] ${output.trim()}`);
         
-        // Send to live console
-        try {
-          await this.botLogsService.addLog(
-            botId,
-            LogLevel.INFO,
-            output,
-            'Bot'
-          );
-        } catch (error) {
-          console.error('Failed to log bot output:', error);
+        // Split output by lines and send each line to live console
+        const lines = output.split('\n').filter(line => line.trim());
+        for (const line of lines) {
+          try {
+            await this.botLogsService.addLog(
+              botId,
+              LogLevel.INFO,
+              line.trim(),
+              'Bot'
+            );
+          } catch (error) {
+            console.error('Failed to log bot output:', error);
+          }
         }
       });
 
