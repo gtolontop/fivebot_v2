@@ -231,6 +231,12 @@ export class SimpleQueueService implements IQueueService {
             'Server marked as offline...',
             'System'
           );
+          
+          // Clear console buffer since bot is offline
+          const consoleBufferService = this.botLogsService['consoleBufferService'];
+          if (consoleBufferService) {
+            consoleBufferService.onBotOffline(botId);
+          }
         } catch (logError) {
           console.error('Failed to add offline log:', logError);
         }
