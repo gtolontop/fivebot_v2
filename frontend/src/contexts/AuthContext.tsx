@@ -81,10 +81,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const response = await api.get('/auth/me');
       setUser(response.data.user);
       
-      // Small delay to ensure state is updated
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 100);
+      // Return user data for the caller to use
+      return response.data.user;
     } catch (error: any) {
       console.error('Login failed:', error);
       Cookies.remove('token');
