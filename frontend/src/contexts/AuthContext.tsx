@@ -61,8 +61,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
       
-      // Store token
-      Cookies.set('token', token, { expires: 7, secure: true, sameSite: 'strict' });
+      // Store token - use secure only in production
+      const isProduction = process.env.NODE_ENV === 'production';
+      Cookies.set('token', token, { 
+        expires: 7, 
+        secure: isProduction, 
+        sameSite: 'strict',
+        path: '/'
+      });
       
       // Set token for API requests
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
