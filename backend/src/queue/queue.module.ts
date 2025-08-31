@@ -1,11 +1,16 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { SimpleQueueService } from './simple-queue.service';
 import { QueueService } from './queue.service';
 import { PrismaModule } from '../common/prisma/prisma.module';
 import { EncryptionModule } from '../common/encryption/encryption.module';
+import { BotsModule } from '../bots/bots.module';
 
 @Module({
-  imports: [PrismaModule, EncryptionModule],
+  imports: [
+    PrismaModule, 
+    EncryptionModule,
+    forwardRef(() => BotsModule),
+  ],
   providers: [
     {
       provide: QueueService,
