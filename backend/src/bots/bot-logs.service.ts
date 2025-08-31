@@ -148,7 +148,8 @@ export class BotLogsService {
       CONFIG_UPDATE: LogLevel.INFO,
     };
 
-    const message = details ? `${messages[event]} ${details}` : messages[event];
+    // Simple message without details for cleaner console
+    const message = messages[event];
 
     await this.addLog(botId, levels[event], message, 'System', metadata);
   }
