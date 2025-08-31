@@ -756,18 +756,13 @@ export class BotsController {
 
   private async createDefaultLogs(botId: string, botName: string): Promise<void> {
     try {
-      // Create some example historical logs to show the user
-      const defaultLogs = [
-        { level: 'INFO', message: `Bot ${botName} configuré et prêt`, source: 'System' },
-        { level: 'INFO', message: 'Console de logs initialisée', source: 'System' },
-        { level: 'INFO', message: 'En attente d\'actions utilisateur...', source: 'System' },
-      ];
-
-      for (const log of defaultLogs) {
-        await this.botLogsService.addLog(botId, log.level as any, log.message, log.source);
-        // Small delay to ensure different timestamps
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
+      // Single clean log like Pterodactyl
+      await this.botLogsService.addLog(
+        botId, 
+        LogLevel.INFO as any, 
+        'Server marked as offline...', 
+        'System'
+      );
     } catch (error) {
       console.error(`Failed to create default logs for bot ${botId}:`, error);
     }
