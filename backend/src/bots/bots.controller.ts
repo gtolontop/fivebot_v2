@@ -529,7 +529,7 @@ export class BotsController {
       const timestamp = new Date(log.createdAt).toLocaleTimeString();
       const source = log.source || 'System';
       const prefix = source === 'Discord' ? `discord@${bot.name}` : 
-                     source === 'System' ? `container@fivebot` : 
+                     source === 'System' ? `container@pterodactyl` : 
                      source === 'Commands' ? `cmd@${bot.name}` : 
                      `${source.toLowerCase()}@${bot.name}`;
       
