@@ -100,12 +100,6 @@ export default function DashboardPage() {
     try {
       setIsLoading(true);
       
-      // Show loading toast only once
-      if (!hasShownLoadingToast) {
-        toast.loading('Loading dashboard...', { id: 'dashboard-loading' });
-        setHasShownLoadingToast(true);
-      }
-      
       // Fetch dashboard stats from backend
       const response = await botsAPI.getDashboardStats();
       const dashboardStats = response.data;
@@ -116,9 +110,6 @@ export default function DashboardPage() {
       setBots(userBots);
       
       setStats(dashboardStats);
-      
-      // Dismiss loading toast on success
-      toast.dismiss('dashboard-loading');
       
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
