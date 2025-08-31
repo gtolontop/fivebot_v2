@@ -12,6 +12,7 @@ import { UsersModule } from './users/users.module';
 import { BotsModule } from './bots/bots.module';
 import { CreditsModule } from './credits/credits.module';
 import { QueueModule } from './queue/queue.module';
+import { TasksModule } from './tasks/tasks.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { QueueModule } from './queue/queue.module';
     BotsModule,
     CreditsModule,
     QueueModule,
+    TasksModule,
   ],
   controllers: [],
   providers: [AppService],
