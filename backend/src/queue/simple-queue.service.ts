@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { IQueueService, JobData } from './queue.interface';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { EncryptionService } from '../common/encryption/encryption.service';
+import { BotLogsService } from '../bots/bot-logs.service';
 import { spawn, ChildProcess } from 'child_process';
 import * as path from 'path';
-import { BotStatus } from '@prisma/client';
+import { BotStatus, LogLevel } from '@prisma/client';
 
 interface QueuedJob {
   id: string;
@@ -25,6 +26,8 @@ export class SimpleQueueService implements IQueueService {
   constructor(
     private prisma: PrismaService,
     private encryptionService: EncryptionService,
+    @Inject(forwardRef(() => BotLogsService))
+    private botLogsService: BotLogsService,
   ) {}
 
   // Safe method to update bot status with retry logic
