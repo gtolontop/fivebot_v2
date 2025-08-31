@@ -99,6 +99,15 @@ class ChildBot {
     this.client.on('interactionCreate', (interaction) => 
       interactionCreate(interaction, this.prisma, this.configService)
     );
+    
+    // Guild events
+    this.client.on('guildCreate', (guild) => {
+      console.log(`Joined new server: ${guild.name} (${guild.memberCount} members)`);
+    });
+    
+    this.client.on('guildDelete', (guild) => {
+      console.log(`Removed from server: ${guild.name}`);
+    });
 
     // Error handling
     this.client.on('error', (error) => {
