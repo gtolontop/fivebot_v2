@@ -275,20 +275,27 @@ export class BotsService {
   }
 
   async start(botId: string, ownerId: string): Promise<Bot> {
-    const bot = await this.findOne(botId, ownerId);
+    let bot = await this.findOne(botId, ownerId);
     if (!bot) {
       throw new NotFoundException('Bot not found');
     }
 
     // Force sync status before starting to ensure clean state
     console.log(`🔄 Pre-start sync for bot ${botId}`);
-    await this.forceSyncBotStatus(botId);
+    const currentStatus = await this.forceSyncBotStatus(botId);
 
     // Log the start action
     await this.botLogsService.logSystemEvent(botId, 'START', `User ${ownerId} initiated bot start`, {
       userId: ownerId,
       timestamp: new Date().toISOString(),
+      previousStatus: currentStatus,
     });
+
+    // Re-fetch bot to get updated status
+    bot = await this.findOne(botId, ownerId);
+    if (!bot) {
+      throw new NotFoundException('Bot not found after sync');
+    }
 
     // Check if bot is actually running, not just marked as ONLINE
     if (bot.status === BotStatus.ONLINE) {
