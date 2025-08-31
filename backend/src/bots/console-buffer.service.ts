@@ -56,14 +56,8 @@ export class ConsoleBufferService {
    * @param botId - The ID of the bot
    */
   onBotOffline(botId: string): void {
-    // Add a final log entry before clearing
-    const timestamp = new Date().toISOString();
-    this.addLog(botId, `[${timestamp}] [System] Bot went offline, clearing console buffer`);
-    
-    // Clear the buffer after a short delay to allow final messages to be seen
-    setTimeout(() => {
-      this.clearBuffer(botId);
-    }, 5000);
+    // Clear the buffer immediately for a clean console
+    this.clearBuffer(botId);
   }
 
   /**
