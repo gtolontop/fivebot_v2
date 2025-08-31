@@ -133,11 +133,11 @@ export class BotLogsService {
     }
     
     const messages = {
-      START: '🚀 Bot starting...',
-      STOP: '🛑 Bot stopping...',
-      ERROR: '❌ Bot encountered an error',
-      RESTART: '🔄 Bot restarting...',
-      CONFIG_UPDATE: '⚙️ Configuration updated',
+      START: 'Server marked as starting...',
+      STOP: 'Server marked as stopping...',
+      ERROR: 'Server encountered an error',
+      RESTART: 'Server marked as restarting...',
+      CONFIG_UPDATE: 'Configuration updated',
     };
 
     const levels = {
