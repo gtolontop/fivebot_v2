@@ -51,6 +51,7 @@ export class BotsController {
     private prisma: PrismaService,
     private queueService: QueueService,
     private botLogsService: BotLogsService,
+    private consoleBufferService: ConsoleBufferService,
   ) {}
 
   @Post()
