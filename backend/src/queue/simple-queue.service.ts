@@ -302,36 +302,55 @@ export class SimpleQueueService implements IQueueService {
         return;
       }
 
-      console.log(`🔄 Sending SIGTERM to bot ${botId} process (PID: ${botProcess.pid})`);
+      console.log(`🔄 Stopping bot ${botId} process (PID: ${botProcess.pid})`);
       
-      // Kill the process gracefully first
-      botProcess.kill('SIGTERM');
+      // On Windows, use taskkill directly for immediate termination
+      if (process.platform === 'win32' && botProcess.pid) {
+        const { exec } = require('child_process');
+        
+        // First try graceful shutdown with taskkill
+        exec(`taskkill /PID ${botProcess.pid}`, (error) => {
+          if (error) {
+            console.log(`⚠️ Graceful taskkill failed, forcing...`);
+            // Force kill with /F flag and tree /T to kill all child processes
+            exec(`taskkill /F /PID ${botProcess.pid} /T`, (forceError) => {
+              if (forceError) {
+                console.error(`❌ taskkill force error: ${forceError}`);
+              } else {
+                console.log(`✅ Process ${botProcess.pid} force killed with taskkill`);
+              }
+            });
+          } else {
+            console.log(`✅ Process ${botProcess.pid} killed gracefully with taskkill`);
+          }
+        });
+      } else {
+        // Unix systems - send SIGTERM
+        botProcess.kill('SIGTERM');
+      }
       
-      // More aggressive timeout - Discord bots should shut down quickly
+      // Timeout to force kill if needed
       const forceKillTimeout = setTimeout(() => {
         if (this.runningBots.has(botId)) {
-          console.log(`💀 Process didn't exit gracefully, sending SIGKILL to bot ${botId} (PID: ${botProcess.pid})`);
+          console.log(`💀 Process didn't exit, forcing termination for bot ${botId}`);
           try {
-            // On Windows, SIGKILL might not work properly, use taskkill
             if (process.platform === 'win32' && botProcess.pid) {
-              const { exec } = require('child_process');
-              exec(`taskkill /F /PID ${botProcess.pid} /T`, (error) => {
-                if (error) {
-                  console.error(`taskkill error: ${error}`);
-                  botProcess.kill('SIGKILL');
-                } else {
-                  console.log(`✅ Process ${botProcess.pid} killed with taskkill`);
-                }
-              });
+              const { execSync } = require('child_process');
+              try {
+                execSync(`taskkill /F /PID ${botProcess.pid} /T`);
+                console.log(`✅ Force killed with taskkill`);
+              } catch (e) {
+                console.error(`taskkill sync error:`, e);
+              }
             } else {
               botProcess.kill('SIGKILL');
             }
           } catch (error) {
-            console.log(`⚠️ Process ${botProcess.pid} may have already exited`);
+            console.log(`⚠️ Process may have already exited`);
           }
           this.runningBots.delete(botId);
         }
-      }, 5000); // 5 seconds timeout to allow graceful shutdown
+      }, 3000); // 3 seconds timeout
 
       // Wait for process to exit naturally
       await new Promise<void>((resolve) => {
@@ -364,37 +383,6 @@ export class SimpleQueueService implements IQueueService {
       });
 
       console.log(`✅ Bot ${botId} stopped successfully and status FORCE updated to OFFLINE`);
-      
-      // Force Discord disconnection by invalidating the bot session
-      try {
-        const bot = await this.prisma.bot.findUnique({
-          where: { id: botId },
-          select: { tokenEncrypted: true, name: true }
-        });
-
-        if (bot) {
-          const token = this.encryptionService.decrypt(bot.tokenEncrypted);
-          
-          // Send a logout request to Discord API to force disconnect
-          console.log(`🔌 Forcing Discord disconnection for bot ${bot.name}...`);
-          
-          try {
-            // This endpoint doesn't exist but will invalidate the session
-            await fetch('https://discord.com/api/v10/auth/logout', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bot ${token}`,
-                'Content-Type': 'application/json'
-              }
-            });
-          } catch (discordError) {
-            // Expected to fail, but helps disconnect the bot
-            console.log(`📤 Discord session invalidation attempted`);
-          }
-        }
-      } catch (error) {
-        console.error(`⚠️ Could not force Discord disconnection:`, error);
-      }
       
       // Schedule a verification check after 5 seconds to ensure it really stopped
       setTimeout(async () => {
