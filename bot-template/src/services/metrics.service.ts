@@ -76,36 +76,17 @@ export class MetricsService {
         commandName: interaction.commandName,
       });
 
-      // Calculate response time when command is replied
-      const originalReply = interaction.reply.bind(interaction);
-      const originalEditReply = interaction.editReply.bind(interaction);
-      const originalFollowUp = interaction.followUp.bind(interaction);
-
-      const trackResponseTime = () => {
+      // Simple response time tracking without modifying interaction methods
+      setTimeout(() => {
         const responseTime = Date.now() - startTime;
         this.commandStartTimes.delete(interactionId);
         
-        // Update the last event with response time
+        // Update the last event with approximate response time
         const lastEvent = this.events[this.events.length - 1];
         if (lastEvent && lastEvent.type === 'command' && lastEvent.commandName === interaction.commandName) {
           lastEvent.responseTime = responseTime;
         }
-      };
-
-      interaction.reply = async (options: any) => {
-        trackResponseTime();
-        return originalReply(options);
-      };
-
-      interaction.editReply = async (options: any) => {
-        trackResponseTime();
-        return originalEditReply(options);
-      };
-
-      interaction.followUp = async (options: any) => {
-        trackResponseTime();
-        return originalFollowUp(options);
-      };
+      }, 100); // Check after 100ms
     });
 
     // Track guild events
