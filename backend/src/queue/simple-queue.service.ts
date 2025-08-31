@@ -223,6 +223,18 @@ export class SimpleQueueService implements IQueueService {
         console.log(`🗂️ Removing bot ${botId} from running processes list`);
         this.runningBots.delete(botId);
         
+        // Add Pterodactyl-style server offline message
+        try {
+          await this.botLogsService.addLog(
+            botId,
+            LogLevel.INFO,
+            'Server marked as offline...',
+            'System'
+          );
+        } catch (logError) {
+          console.error('Failed to add offline log:', logError);
+        }
+        
         // Force update bot status to offline with immediate database write
         try {
           await this.prisma.bot.update({
