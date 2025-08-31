@@ -506,7 +506,7 @@ export default function BotsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Credits</p>
-                <p className="text-2xl font-bold text-purple-600">{user.credits}</p>
+                <p className="text-2xl font-bold text-purple-600">{user?.credits || 0}</p>
               </div>
               <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                 <svg className="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
