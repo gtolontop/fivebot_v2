@@ -35,6 +35,7 @@ export default function BotDetailPage() {
   const [botLoading, setBotLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
+  const lastFetchedLogsRef = useRef<string[]>([]);
   const [guilds, setGuilds] = useState<any[]>([]);
   const [wsConnection, setWsConnection] = useState<WebSocket | null>(null);
   const [realTimeStats, setRealTimeStats] = useState({
@@ -60,18 +61,21 @@ export default function BotDetailPage() {
     }
   }, [user, botId]);
 
-  // Polling pour récupérer les vrais logs
+  // Polling to get real logs
   useEffect(() => {
     if (!bot || bot.status !== 'ONLINE') {
       setWsConnection(null);
       
-      // Set appropriate message for offline states
+      // Add status message to logs instead of replacing
       if (bot && bot.status === 'OFFLINE') {
-        setLogs([`[${new Date().toLocaleTimeString()}] Bot est éteint`]);
+        const statusLog = `[${new Date().toLocaleTimeString()}] Bot is offline`;
+        setLogs(prev => [...prev, statusLog].slice(-500));
       } else if (bot && bot.status === 'STARTING') {
-        setLogs([`[${new Date().toLocaleTimeString()}] Bot est en cours de démarrage...`]);
+        const statusLog = `[${new Date().toLocaleTimeString()}] Bot is starting...`;
+        setLogs(prev => [...prev, statusLog].slice(-500));
       } else if (bot && bot.status === 'ERROR') {
-        setLogs([`[${new Date().toLocaleTimeString()}] Erreur du bot - vérifiez la configuration`]);
+        const statusLog = `[${new Date().toLocaleTimeString()}] Bot error - check configuration`;
+        setLogs(prev => [...prev, statusLog].slice(-500));
       }
       
       return;
@@ -93,8 +97,15 @@ export default function BotDetailPage() {
         if (response.ok) {
           const data = await response.json();
           if (data.logs && data.logs.length > 0) {
-            // Replace logs instead of appending to avoid duplicates
-            setLogs(data.logs.slice(-50));
+            // Only add new logs that we haven't seen before
+            const newLogs = data.logs.filter((log: string) => 
+              !lastFetchedLogsRef.current.includes(log)
+            );
+            
+            if (newLogs.length > 0) {
+              setLogs(prev => [...prev, ...newLogs].slice(-500)); // Keep last 500 logs
+              lastFetchedLogsRef.current = data.logs;
+            }
           } else {
             // No logs available yet, but don't replace existing logs
             // Only set the waiting message if we truly have no logs
@@ -425,7 +436,7 @@ export default function BotDetailPage() {
                     {logs.length === 0 ? (
                       <div className="text-gray-500">Aucun log disponible...</div>
                     ) : (
-                      logs.slice(-50).map((log, index) => {
+                      logs.slice(-100).map((log, index) => {
                         // Determine color based on log content and bot status
                         let logColor = 'text-green-400';
                         if (log.includes('Bot est éteint') || log.includes('OFFLINE')) {
