@@ -257,31 +257,25 @@ class ChildBot {
     console.log('🛑 Shutting down gracefully...');
     
     try {
-      // Force bot to appear offline immediately
-      if (this.client.user) {
-        console.log('📤 Setting Discord presence to offline...');
-        try {
-          await this.client.user.setPresence({ 
-            status: 'invisible',
-            activities: []
-          });
-        } catch (presenceError) {
-          console.warn('⚠️ Could not update presence:', presenceError);
-        }
-      }
-      
       console.log('💾 Updating bot status to OFFLINE in database...');
-      await this.updateBotStatus('OFFLINE');
+      try {
+        await this.updateBotStatus('OFFLINE');
+      } catch (dbError) {
+        console.warn('⚠️ Could not update database status:', dbError);
+      }
       
       console.log('🔌 Destroying Discord client...');
       // Destroy the client which will close the WebSocket connection
-      this.client.destroy();
-      
-      // Give Discord a moment to register the disconnection
-      await new Promise(resolve => setTimeout(resolve, 500));
+      if (this.client) {
+        this.client.destroy();
+      }
       
       console.log('🗄️ Disconnecting from database...');
-      await this.prisma.$disconnect();
+      try {
+        await this.prisma.$disconnect();
+      } catch (dbError) {
+        console.warn('⚠️ Could not disconnect from database:', dbError);
+      }
       
       console.log('✅ Graceful shutdown completed');
     } catch (error) {
