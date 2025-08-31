@@ -276,7 +276,7 @@ export class SimpleQueueService implements IQueueService {
         try {
           await this.botLogsService.addLog(
             botId,
-            LogLevel.SUCCESS,
+            LogLevel.INFO,
             'Server marked as online...',
             'System'
           );
