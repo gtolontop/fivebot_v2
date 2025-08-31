@@ -510,6 +510,11 @@ export class BotsController {
       throw new NotFoundException('Bot not found');
     }
 
+    // Clean duplicate logs first (non-blocking)
+    this.botLogsService.cleanDuplicateLogs(id).catch(err => 
+      console.error('Failed to clean duplicates:', err)
+    );
+
     // Get recent logs from new persistent system
     let recentLogs = await this.botLogsService.getRecentLogs(id, 100);
     
@@ -676,6 +681,25 @@ export class BotsController {
       console.error('Error getting running bots:', error);
       throw error;
     }
+  }
+
+  @Post(':id/logs/clean-duplicates')
+  async cleanDuplicateLogs(
+    @Param('id') id: string,
+    @Req() req: any,
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    const cleaned = await this.botLogsService.cleanDuplicateLogs(id);
+    
+    return {
+      message: `Cleaned ${cleaned} duplicate logs`,
+      cleaned,
+      botId: id
+    };
   }
 
   @Post('kill-all-processes')

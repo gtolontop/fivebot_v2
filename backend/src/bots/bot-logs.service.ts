@@ -104,6 +104,34 @@ export class BotLogsService {
     details?: string,
     metadata?: any
   ): Promise<void> {
+    // Check for recent duplicate events to avoid spam
+    const fiveMinutesAgo = new Date();
+    fiveMinutesAgo.setMinutes(fiveMinutesAgo.getMinutes() - 5);
+    
+    const recentSimilarLog = await this.prisma.botLog.findFirst({
+      where: {
+        botId,
+        source: 'System',
+        message: {
+          contains: event === 'START' ? 'Bot starting' : 
+                   event === 'STOP' ? 'Bot stopping' :
+                   event
+        },
+        createdAt: {
+          gte: fiveMinutesAgo
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+    
+    // If we found a similar log recently, don't create a duplicate
+    if (recentSimilarLog) {
+      console.log(`Skipping duplicate ${event} log for bot ${botId}`);
+      return;
+    }
+    
     const messages = {
       START: '🚀 Bot starting...',
       STOP: '🛑 Bot stopping...',
@@ -179,6 +207,50 @@ export class BotLogsService {
 
     const result = await this.prisma.botLog.deleteMany({ where });
     return result.count;
+  }
+  
+  // Clean duplicate logs for a specific bot
+  async cleanDuplicateLogs(botId: string): Promise<number> {
+    try {
+      // Get all logs for the bot
+      const allLogs = await this.prisma.botLog.findMany({
+        where: { botId },
+        orderBy: { createdAt: 'desc' }
+      });
+      
+      const seenMessages = new Set<string>();
+      const duplicateIds: string[] = [];
+      
+      // Find duplicates (same message within 1 minute)
+      for (let i = 0; i < allLogs.length; i++) {
+        const log = allLogs[i];
+        const messageKey = `${log.message}-${log.source}`;
+        const timeKey = Math.floor(log.createdAt.getTime() / 60000); // Round to minute
+        const uniqueKey = `${messageKey}-${timeKey}`;
+        
+        if (seenMessages.has(uniqueKey)) {
+          duplicateIds.push(log.id);
+        } else {
+          seenMessages.add(uniqueKey);
+        }
+      }
+      
+      // Delete duplicates
+      if (duplicateIds.length > 0) {
+        const result = await this.prisma.botLog.deleteMany({
+          where: {
+            id: { in: duplicateIds }
+          }
+        });
+        console.log(`Cleaned ${result.count} duplicate logs for bot ${botId}`);
+        return result.count;
+      }
+      
+      return 0;
+    } catch (error) {
+      console.error('Error cleaning duplicate logs:', error);
+      return 0;
+    }
   }
 
   // Get log statistics
