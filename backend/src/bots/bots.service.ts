@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
-import { Bot, BotStatus, BotConfig } from '@prisma/client';
+import { Bot, BotStatus, BotConfig, LogLevel } from '@prisma/client';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { EncryptionService } from '../common/encryption/encryption.service';
 import { DiscordService } from '../common/discord/discord.service';
