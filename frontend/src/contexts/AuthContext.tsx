@@ -47,6 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
       const response = await api.get('/auth/me');
+      console.log('Auth check successful, user:', response.data.user);
       setUser(response.data.user);
     } catch (error: any) {
       console.error('Auth check failed:', error);
