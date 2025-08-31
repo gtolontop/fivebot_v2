@@ -210,20 +210,16 @@ export default function BotDetailPage() {
   const handleStop = async () => {
     setActionLoading('stop');
     
-    // No need to add logs here - backend will log the action
+    // Add immediate feedback message
+    const timestamp = new Date().toLocaleTimeString();
+    setLogs(prev => [...prev, `[${timestamp}] [container@fivebot]: Server marked as stopping...`]);
     
     try {
       await botsAPI.stop(botId);
       toast.success('Bot stopped successfully');
-      
-      // Success will be shown by backend logs
-      
       await fetchBot(); // Refresh bot status
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Error stopping bot');
-      
-      // Show error message
-      setLogs([`[${new Date().toLocaleTimeString()}] Erreur lors de l'arrêt: ${error.response?.data?.message || 'Erreur inconnue'}`]);
     } finally {
       setActionLoading(null);
     }
