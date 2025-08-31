@@ -3,6 +3,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
+import toast from 'react-hot-toast';
 
 interface HeaderProps {
   title: string;
@@ -160,6 +161,7 @@ export default function Header({ title, subtitle, icon, actions, backButton }: H
                     onClick={() => {
                       logout();
                       setUserMenuOpen(false);
+                      toast.success('Déconnexion réussie');
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50 flex items-center space-x-2"
                   >
