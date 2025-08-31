@@ -22,7 +22,9 @@
       "Bash(grep:*)",
       "Bash(set PORT=8000)",
       "Bash(npx tsc:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",
