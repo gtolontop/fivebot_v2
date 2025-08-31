@@ -81,8 +81,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const response = await api.get('/auth/me');
       setUser(response.data.user);
       
-      toast.success(`Bienvenue, ${response.data.user.username}!`);
-      
       // Small delay to ensure state is updated
       setTimeout(() => {
         router.push('/dashboard');
@@ -101,7 +99,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     Cookies.remove('token');
     delete api.defaults.headers.common['Authorization'];
     setUser(null);
-    toast.success('Déconnexion réussie');
     router.push('/');
   };
 
