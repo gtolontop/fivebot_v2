@@ -18,6 +18,7 @@ import { BotMonitorService } from './bot-monitor.service';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { QueueService } from '../queue/queue.service';
 import { BotLogsService } from './bot-logs.service';
+import { ConsoleBufferService } from './console-buffer.service';
 import { LogLevel } from '@prisma/client';
 
 interface CreateBotDto {
