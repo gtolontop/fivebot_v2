@@ -363,12 +363,13 @@ export class BotsService {
     console.log(`🔄 Pre-stop sync for bot ${botId}`);
     const currentStatus = await this.forceSyncBotStatus(botId);
 
-    // Log the stop action
-    await this.botLogsService.logSystemEvent(botId, 'STOP', `User ${ownerId} initiated bot stop`, {
-      userId: ownerId,
-      timestamp: new Date().toISOString(),
-      previousStatus: currentStatus,
-    });
+    // Add simple stopping message
+    await this.botLogsService.addLog(
+      botId, 
+      LogLevel.INFO, 
+      'Server marked as stopping...', 
+      'System'
+    );
 
     if (currentStatus === BotStatus.OFFLINE) {
       console.log(`⚠️ Bot ${botId} was already OFFLINE after sync - skipping stop`);
