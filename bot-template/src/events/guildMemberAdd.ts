@@ -51,7 +51,7 @@ export async function guildMemberAdd(
         const role = member.guild.roles.cache.get(config.autoRoleId);
         if (role) {
           await member.roles.add(role);
-          console.log(`✅ Auto-role assigned to ${member.user.tag}: ${role.name}`);
+          console.log(`Auto-role assigned to ${member.user.tag}: ${role.name}`);
         } else {
           console.warn(`⚠️ Auto-role not found: ${config.autoRoleId}`);
         }
