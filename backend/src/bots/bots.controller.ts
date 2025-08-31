@@ -513,35 +513,25 @@ export class BotsController {
       throw new NotFoundException('Bot not found');
     }
 
-    // Clean duplicate logs first (non-blocking)
-    this.botLogsService.cleanDuplicateLogs(id).catch(err => 
-      console.error('Failed to clean duplicates:', err)
-    );
+    let logs: string[] = [];
 
-    // Get recent logs from new persistent system
-    let recentLogs = await this.botLogsService.getRecentLogs(id, 100);
-    
-    // If no logs exist, create some default historical logs
-    if (recentLogs.length === 0) {
-      await this.createDefaultLogs(id, bot.name);
-      recentLogs = await this.botLogsService.getRecentLogs(id, 100);
-    }
-    
-    // Format for console display with Pterodactyl-style prefixes
-    const formattedLogs = recentLogs.map(log => {
-      const timestamp = new Date(log.createdAt).toLocaleTimeString();
-      const source = log.source || 'System';
-      const prefix = source === 'Discord' ? `discord@${bot.name}` : 
-                     source === 'System' ? `container@fivebot` : 
-                     source === 'Commands' ? `cmd@${bot.name}` : 
-                     `${source.toLowerCase()}@${bot.name}`;
+    if (bot.status === 'ONLINE' || bot.status === 'STARTING') {
+      // Bot is online - get logs from buffer
+      logs = this.consoleBufferService.getBuffer(id);
       
-      // Don't add emoji, just use the prefix
-      return `[${timestamp}] [${prefix}]: ${log.message}`;
-    });
+      // If buffer is empty, add a placeholder
+      if (logs.length === 0) {
+        const timestamp = new Date().toLocaleTimeString();
+        logs = [`[${timestamp}] [container@fivebot]: Server marked as online...`];
+      }
+    } else {
+      // Bot is offline - show placeholder
+      const timestamp = new Date().toLocaleTimeString();
+      logs = [`[${timestamp}] [container@fivebot]: Server marked as offline...`];
+    }
 
     return {
-      logs: formattedLogs,
+      logs,
       bot: {
         id: bot.id,
         name: bot.name,
