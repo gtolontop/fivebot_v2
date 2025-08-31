@@ -63,6 +63,7 @@ export default function DashboardPage() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [chartReady, setChartReady] = useState(false);
+  const [hasShownLoadingToast, setHasShownLoadingToast] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -71,10 +72,10 @@ export default function DashboardPage() {
   }, [user, loading, router]);
 
   useEffect(() => {
-    if (user) {
+    if (user && !loading) {
       fetchDashboardData();
     }
-  }, [user]);
+  }, [user, loading]);
 
   // Register Chart.js components
   useEffect(() => {
@@ -152,17 +153,6 @@ export default function DashboardPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="discord-spinner w-8 h-8 border-4 border-discord-200 border-t-discord-500 rounded-full"></div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return null;
-  }
 
   const getDateLabels = () => {
     return Array.from({ length: 30 }, (_, i) => {
