@@ -87,7 +87,7 @@ async function handleBuiltInCommands(
     // Log successful command completion
     console.log(`Command /${commandName} completed successfully`);
   } catch (error) {
-    console.error(`Command /${commandName} failed:`, error.message || error);
+    console.error(`Command /${commandName} failed:`, error instanceof Error ? error.message : error);
     
     const replyMethod = interaction.replied || interaction.deferred ? 'editReply' : 'reply';
     await interaction[replyMethod]({
