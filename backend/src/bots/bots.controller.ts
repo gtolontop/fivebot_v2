@@ -19,6 +19,7 @@ import { PrismaService } from '../common/prisma/prisma.service';
 import { QueueService } from '../queue/queue.service';
 import { BotLogsService } from './bot-logs.service';
 import { ConsoleBufferService } from './console-buffer.service';
+import { BotRealtimeMetricsService } from './bot-realtime-metrics.service';
 import { LogLevel } from '@prisma/client';
 
 interface CreateBotDto {
@@ -52,6 +53,7 @@ export class BotsController {
     private queueService: QueueService,
     private botLogsService: BotLogsService,
     private consoleBufferService: ConsoleBufferService,
+    private botRealtimeMetricsService: BotRealtimeMetricsService,
   ) {}
 
   @Post()
@@ -759,5 +761,116 @@ export class BotsController {
     } catch (error) {
       console.error(`Failed to create default logs for bot ${botId}:`, error);
     }
+  }
+
+  // New metrics endpoints
+
+  @Post(':id/metrics')
+  async receiveBotMetrics(
+    @Param('id') id: string,
+    @Body() metricsData: any,
+  ) {
+    // Simple auth check - in production, use proper authentication
+    if (metricsData.botId !== id) {
+      throw new Error('Bot ID mismatch');
+    }
+
+    await this.botRealtimeMetricsService.processBatch(metricsData);
+    
+    return {
+      success: true,
+      message: 'Metrics received',
+    };
+  }
+
+  @Get(':id/metrics/realtime')
+  async getRealtimeMetrics(
+    @Param('id') id: string,
+    @Req() req: any,
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    const realtimeData = await this.botRealtimeMetricsService.getRealtimeData(id);
+    
+    return {
+      botId: id,
+      botName: bot.name,
+      ...realtimeData,
+    };
+  }
+
+  @Get(':id/analytics/:period')
+  async getBotAnalytics(
+    @Param('id') id: string,
+    @Param('period') period: 'daily' | 'weekly' | 'monthly',
+    @Req() req: any,
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    const analytics = await this.botRealtimeMetricsService.getAnalytics(id, period);
+    
+    return {
+      botId: id,
+      botName: bot.name,
+      ...analytics,
+    };
+  }
+
+  @Get('analytics/overview')
+  async getAnalyticsOverview(@Req() req: any) {
+    const bots = await this.botsService.findAll(req.user.id);
+    const overview = {
+      totalBots: bots.length,
+      activeBots: bots.filter(b => b.status === 'ONLINE').length,
+      aggregatedMetrics: {
+        totalCommands: 0,
+        totalMessages: 0,
+        totalErrors: 0,
+        avgResponseTime: 0,
+      },
+      botMetrics: [] as any[],
+    };
+
+    // Get metrics for each bot
+    for (const bot of bots) {
+      try {
+        const realtimeData = await this.botRealtimeMetricsService.getRealtimeData(bot.id);
+        const analytics = await this.botRealtimeMetricsService.getAnalytics(bot.id, 'daily');
+        
+        overview.botMetrics.push({
+          botId: bot.id,
+          botName: bot.name,
+          status: bot.status,
+          realtime: realtimeData.metrics,
+          daily: analytics.summary,
+        });
+
+        // Aggregate metrics
+        overview.aggregatedMetrics.totalCommands += analytics.summary.totalCommands || 0;
+        overview.aggregatedMetrics.totalMessages += analytics.summary.totalMessages || 0;
+        overview.aggregatedMetrics.totalErrors += analytics.summary.totalErrors || 0;
+      } catch (error) {
+        console.error(`Error getting metrics for bot ${bot.id}:`, error);
+      }
+    }
+
+    // Calculate average response time
+    if (overview.botMetrics.length > 0) {
+      const totalResponseTime = overview.botMetrics.reduce(
+        (sum, bot) => sum + (bot.daily.avgResponseTime || 0),
+        0
+      );
+      overview.aggregatedMetrics.avgResponseTime = Math.round(
+        totalResponseTime / overview.botMetrics.length
+      );
+    }
+
+    return overview;
   }
 }

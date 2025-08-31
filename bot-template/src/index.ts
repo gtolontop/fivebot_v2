@@ -36,6 +36,7 @@ class ChildBot {
   private config: BotConfig;
   private configService: ConfigService;
   private welcomeService: WelcomeService;
+  private metricsService: MetricsService | null = null;
 
   constructor() {
     this.client = new Client({
@@ -91,7 +92,12 @@ class ChildBot {
 
   private setupEventListeners() {
     // Core events
-    this.client.once('ready', () => ready(this.client, this.prisma, this.botId));
+    this.client.once('ready', () => {
+      ready(this.client, this.prisma, this.botId);
+      // Initialize metrics service after bot is ready
+      this.metricsService = new MetricsService(this.client, this.prisma, this.botId);
+      console.log('📊 Metrics tracking initialized');
+    });
     
     this.client.on('guildMemberAdd', (member) => 
       guildMemberAdd(member, this.welcomeService, this.config)
@@ -275,6 +281,17 @@ class ChildBot {
         await this.updateBotStatus('OFFLINE');
       } catch (dbError) {
         console.warn('⚠️ Could not update database status:', dbError);
+      }
+      
+      console.log('📊 Sending final metrics...');
+      // Send any remaining metrics before shutdown
+      if (this.metricsService) {
+        try {
+          await this.metricsService.forceSync();
+          this.metricsService.destroy();
+        } catch (metricsError) {
+          console.warn('⚠️ Could not send final metrics:', metricsError);
+        }
       }
       
       console.log('🔌 Destroying Discord client...');
