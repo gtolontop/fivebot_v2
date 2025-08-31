@@ -63,7 +63,6 @@ export default function DashboardPage() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [chartReady, setChartReady] = useState(false);
-  const [hasShownLoadingToast, setHasShownLoadingToast] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
