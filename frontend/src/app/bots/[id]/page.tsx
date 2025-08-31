@@ -63,18 +63,8 @@ export default function BotDetailPage() {
 
   // Polling to get real logs
   useEffect(() => {
-    if (!bot || bot.status !== 'ONLINE') {
-      setWsConnection(null);
-      
-      // Status changes will be logged by backend, no need to add here
-      // Backend logs are the single source of truth
-      
-      return;
-    }
+    if (!bot || !botId) return;
 
-    // Simulate connection state for UI
-    setWsConnection({} as WebSocket);
-    
     const pollLogs = async () => {
       try {
         const token = Cookies.get('token');
@@ -88,37 +78,28 @@ export default function BotDetailPage() {
         if (response.ok) {
           const data = await response.json();
           if (data.logs && data.logs.length > 0) {
-            // Always use backend logs as single source of truth
-            // This ensures persistence across refreshes
-            setLogs(data.logs.slice(-500));
-            lastLogCountRef.current = data.logs.length;
-          } else {
-            // No logs available yet
-            // Only set the waiting message if we truly have no logs
-            if (logs.length === 0) {
-              setLogs([`[${new Date().toLocaleTimeString()}] 📋 Console prête - Historique des activités s'affichera ici`]);
-            }
-          }
-        } else {
-          // API error, show connection issue only if no existing logs
-          if (logs.length === 0) {
-            setLogs([`[${new Date().toLocaleTimeString()}] ❌ Problème de connexion avec le serveur`]);
+            setLogs(data.logs);
           }
         }
       } catch (error) {
         console.log('Could not fetch bot logs:', error);
-        setLogs([`[${new Date().toLocaleTimeString()}] Erreur de récupération des logs`]);
       }
     };
 
-    // Fetch logs immediately and then every 2 seconds
+    // Fetch logs immediately
     pollLogs();
-    const interval = setInterval(pollLogs, 2000);
 
-    return () => {
-      clearInterval(interval);
+    // Only poll if bot is online
+    if (bot.status === 'ONLINE' || bot.status === 'STARTING') {
+      setWsConnection({} as WebSocket);
+      const interval = setInterval(pollLogs, 2000);
+      return () => {
+        clearInterval(interval);
+        setWsConnection(null);
+      };
+    } else {
       setWsConnection(null);
-    };
+    }
   }, [bot?.status, botId]);
 
 
