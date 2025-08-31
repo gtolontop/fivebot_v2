@@ -82,7 +82,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(response.data.user);
       
       toast.success(`Bienvenue, ${response.data.user.username}!`);
-      router.push('/dashboard');
+      
+      // Small delay to ensure state is updated
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 100);
     } catch (error: any) {
       console.error('Login failed:', error);
       Cookies.remove('token');
