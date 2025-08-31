@@ -190,6 +190,7 @@ export class SimpleQueueService implements IQueueService {
           BOT_TOKEN: decryptedToken,
           CONFIG: JSON.stringify(bot.config || {}),
           DATABASE_URL: process.env.DATABASE_URL,
+          BACKEND_URL: process.env.BACKEND_URL || 'http://localhost:8000',
         },
         stdio: ['ignore', 'pipe', 'pipe'],
         shell: true, // Use shell on Windows
