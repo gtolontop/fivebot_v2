@@ -92,19 +92,19 @@ export class MetricsService {
         }
       };
 
-      interaction.reply = async (...args: any[]) => {
+      interaction.reply = async (options: any) => {
         trackResponseTime();
-        return originalReply(...args);
+        return originalReply(options);
       };
 
-      interaction.editReply = async (...args: any[]) => {
+      interaction.editReply = async (options: any) => {
         trackResponseTime();
-        return originalEditReply(...args);
+        return originalEditReply(options);
       };
 
-      interaction.followUp = async (...args: any[]) => {
+      interaction.followUp = async (options: any) => {
         trackResponseTime();
-        return originalFollowUp(...args);
+        return originalFollowUp(options);
       };
     });
 
