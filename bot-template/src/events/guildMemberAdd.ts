@@ -22,7 +22,7 @@ export async function guildMemberAdd(
   config: BotConfig
 ) {
   try {
-    console.log(`👋 New member joined: ${member.user.tag} in ${member.guild.name}`);
+    console.log(`New member joined: ${member.user.tag} in ${member.guild.name}`);
 
     // Créer une clé unique pour éviter les doublons
     const welcomeKey = `${member.user.id}-${member.guild.id}-${Date.now()}`;
