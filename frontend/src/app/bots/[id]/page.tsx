@@ -419,26 +419,51 @@ export default function BotDetailPage() {
                       <div className="text-gray-500">Aucun log disponible...</div>
                     ) : (
                       logs.slice(-100).map((log, index) => {
-                        // Determine color based on log content and bot status
-                        let logColor = 'text-green-400';
-                        if (log.includes('Bot est éteint') || log.includes('OFFLINE')) {
-                          logColor = 'text-red-400';
-                        } else if (log.includes('démarrage') || log.includes('STARTING')) {
-                          logColor = 'text-yellow-400';
-                        } else if (log.includes('Erreur') || log.includes('ERROR')) {
-                          logColor = 'text-red-300';
-                        } else if (log.includes('En attente')) {
-                          logColor = 'text-blue-400';
-                        }
+                        // Parse the log format: [time] [prefix]: message
+                        const logMatch = log.match(/\[(\d{2}:\d{2}:\d{2})\] \[([^\]]+)\]: (.*)/);
                         
-                        return (
-                          <div 
-                            key={index} 
-                            className={`${logColor} leading-relaxed`}
-                          >
-                            {log}
-                          </div>
-                        );
+                        if (logMatch) {
+                          const [, time, prefix, message] = logMatch;
+                          
+                          // Determine prefix color based on source
+                          let prefixColor = 'text-gray-400';
+                          if (prefix.startsWith('discord@')) {
+                            prefixColor = 'text-blue-400';
+                          } else if (prefix.startsWith('container@')) {
+                            prefixColor = 'text-yellow-400';
+                          } else if (prefix.startsWith('cmd@')) {
+                            prefixColor = 'text-purple-400';
+                          } else if (prefix.startsWith('system@')) {
+                            prefixColor = 'text-orange-400';
+                          }
+                          
+                          // Determine message color based on content
+                          let messageColor = 'text-gray-300';
+                          if (message.includes('error') || message.includes('ERROR') || message.includes('failed')) {
+                            messageColor = 'text-red-400';
+                          } else if (message.includes('warning') || message.includes('WARN')) {
+                            messageColor = 'text-yellow-300';
+                          } else if (message.includes('success') || message.includes('online')) {
+                            messageColor = 'text-green-400';
+                          } else if (message.includes('offline')) {
+                            messageColor = 'text-gray-500';
+                          }
+                          
+                          return (
+                            <div key={index} className="font-mono text-sm leading-relaxed hover:bg-gray-800 px-1 -mx-1 rounded">
+                              <span className="text-gray-500">[{time}]</span>
+                              <span className={`${prefixColor} ml-1`}>[{prefix}]:</span>
+                              <span className={`${messageColor} ml-1`}>{message}</span>
+                            </div>
+                          );
+                        } else {
+                          // Fallback for logs without proper format
+                          return (
+                            <div key={index} className="text-gray-400 font-mono text-sm leading-relaxed">
+                              {log}
+                            </div>
+                          );
+                        }
                       })
                     )}
                     {bot.status === 'ONLINE' && wsConnection && logs.length > 0 && !logs[logs.length - 1]?.includes('En attente') && (
