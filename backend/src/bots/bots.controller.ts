@@ -519,11 +519,17 @@ export class BotsController {
       recentLogs = await this.botLogsService.getRecentLogs(id, 100);
     }
     
-    // Format for console display
+    // Format for console display with Pterodactyl-style prefixes
     const formattedLogs = recentLogs.map(log => {
       const timestamp = new Date(log.createdAt).toLocaleTimeString();
-      const emoji = this.getLogEmoji(log.level);
-      return `[${timestamp}] ${emoji} ${log.message}`;
+      const source = log.source || 'System';
+      const prefix = source === 'Discord' ? `discord@${bot.name}` : 
+                     source === 'System' ? `container@fivebot` : 
+                     source === 'Commands' ? `cmd@${bot.name}` : 
+                     `${source.toLowerCase()}@${bot.name}`;
+      
+      // Don't add emoji, just use the prefix
+      return `[${timestamp}] [${prefix}]: ${log.message}`;
     });
 
     return {
