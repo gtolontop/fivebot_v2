@@ -9,6 +9,19 @@ export async function interactionCreate(
 ) {
   if (!interaction.isChatInputCommand()) return;
 
+  // Log command execution
+  const user = interaction.user;
+  const guild = interaction.guild;
+  const command = interaction.commandName;
+  
+  // Get command options for detailed logging
+  const options = interaction.options.data.map(opt => `${opt.name}:${opt.value}`).join(' ');
+  const logMessage = options 
+    ? `Command /${command} ${options} executed by ${user.username}#${user.discriminator}${guild ? ` in ${guild.name}` : ''}`
+    : `Command /${command} executed by ${user.username}#${user.discriminator}${guild ? ` in ${guild.name}` : ''}`;
+  
+  console.log(logMessage);
+
   // Handle built-in configuration commands
   await handleBuiltInCommands(interaction, configService);
 }
