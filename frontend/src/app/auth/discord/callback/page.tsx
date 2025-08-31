@@ -23,8 +23,12 @@ export default function DiscordCallbackPage() {
 
       if (token) {
         try {
-          await login(token);
-          // La redirection vers /dashboard est gérée par la fonction login
+          const user = await login(token);
+          toast.success(`Bienvenue, ${user.username}!`);
+          // Small delay to ensure state is updated
+          setTimeout(() => {
+            router.push('/dashboard');
+          }, 100);
         } catch (error) {
           console.error('Login error:', error);
           router.push('/auth/login');
