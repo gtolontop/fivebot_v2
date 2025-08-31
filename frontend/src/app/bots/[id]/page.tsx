@@ -466,12 +466,6 @@ export default function BotDetailPage() {
                         }
                       })
                     )}
-                    {bot.status === 'ONLINE' && wsConnection && logs.length > 0 && !logs[logs.length - 1]?.includes('En attente') && (
-                      <div className="text-yellow-400 animate-pulse flex items-center space-x-1">
-                        <span>●</span>
-                        <span>En attente d'événements...</span>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
