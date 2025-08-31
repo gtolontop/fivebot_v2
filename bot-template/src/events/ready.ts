@@ -5,8 +5,8 @@ import { commands } from '../commands';
 export async function ready(client: Client, prisma: PrismaClient, botId: string) {
   if (!client.user) return;
   
-  console.log(`🚀 Bot logged in as ${client.user.tag}!`);
-  console.log(`📊 Serving ${client.guilds.cache.size} guilds with ${client.users.cache.size} users`);
+  console.log(`Bot logged in as ${client.user.tag}`);
+  console.log(`Connected to ${client.guilds.cache.size} servers`);
   
   // Deploy slash commands
   await deployCommands(client);
@@ -88,14 +88,14 @@ async function deployCommands(client: Client) {
     const { REST, Routes } = require('discord.js');
     const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
 
-    console.log('🚀 Started refreshing application (/) commands.');
+    console.log('Registering slash commands...');
 
     await rest.put(
       Routes.applicationCommands(client.user?.id),
       { body: commands },
     );
 
-    console.log('✅ Successfully reloaded application (/) commands.');
+    console.log('Slash commands registered');
   } catch (error) {
     console.error('❌ Error deploying commands:', error);
   }
