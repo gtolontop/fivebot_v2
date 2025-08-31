@@ -188,12 +188,13 @@ export default function DashboardPage() {
     },
   };
 
-  if (loading || isLoading) {
+  // Show loading only for initial auth loading
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="flex items-center space-x-3">
           <div className="w-6 h-6 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-gray-600">Loading dashboard...</span>
+          <span className="text-gray-600">Loading...</span>
         </div>
       </div>
     );
