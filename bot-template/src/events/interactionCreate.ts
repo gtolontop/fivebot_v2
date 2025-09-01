@@ -93,6 +93,11 @@ async function handleBuiltInCommands(
         await ticketCommand.execute(interaction);
         break;
       
+      case 'ticket-example':
+        const ticketExampleCommand = await import('../commands/ticketExample');
+        await ticketExampleCommand.execute(interaction);
+        break;
+      
       default:
         // Handle custom commands if any
         await handleCustomCommand(interaction, configService);
