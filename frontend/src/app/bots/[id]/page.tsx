@@ -6,6 +6,28 @@ import { useEffect, useState, useRef } from 'react';
 import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
 import Cookies from 'js-cookie';
+import Header from '@/components/Header';
+import { 
+  PlayIcon, 
+  StopIcon, 
+  CogIcon, 
+  LinkIcon,
+  ChartBarIcon,
+  ServerIcon,
+  CommandLineIcon,
+  CpuChipIcon,
+  SignalIcon,
+  ClockIcon,
+  UsersIcon,
+  ChatBubbleLeftRightIcon,
+  HashtagIcon,
+  ArrowPathIcon,
+  TrashIcon,
+  ExclamationTriangleIcon,
+  CheckCircleIcon,
+  WifiIcon,
+  WifiOffIcon
+} from '@heroicons/react/24/outline';
 
 interface Bot {
   id: string;
@@ -35,7 +57,6 @@ export default function BotDetailPage() {
   const [botLoading, setBotLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
-  const lastLogCountRef = useRef(0);
   const [guilds, setGuilds] = useState<any[]>([]);
   const [wsConnection, setWsConnection] = useState<WebSocket | null>(null);
   const [realTimeStats, setRealTimeStats] = useState({
@@ -48,6 +69,7 @@ export default function BotDetailPage() {
     responseTime: 0
   });
   const consoleRef = useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = useState<'console' | 'performance' | 'settings'>('console');
 
   useEffect(() => {
     if (!loading && !user) {
@@ -61,7 +83,7 @@ export default function BotDetailPage() {
     }
   }, [user, botId]);
 
-  // Polling to get real logs
+  // Polling pour récupérer les logs
   useEffect(() => {
     if (!bot || !botId) return;
 
@@ -86,10 +108,8 @@ export default function BotDetailPage() {
       }
     };
 
-    // Fetch logs immediately
     pollLogs();
 
-    // Only poll if bot is online
     if (bot.status === 'ONLINE' || bot.status === 'STARTING') {
       setWsConnection({} as WebSocket);
       const interval = setInterval(pollLogs, 2000);
@@ -102,15 +122,14 @@ export default function BotDetailPage() {
     }
   }, [bot?.status, botId]);
 
-
-  // Auto-scroll console to bottom
+  // Auto-scroll console
   useEffect(() => {
-    if (consoleRef.current) {
+    if (consoleRef.current && activeTab === 'console') {
       consoleRef.current.scrollTop = consoleRef.current.scrollHeight;
     }
-  }, [logs]);
+  }, [logs, activeTab]);
 
-  // Simulate real-time performance stats
+  // Simulation des stats temps réel
   useEffect(() => {
     if (!bot || bot.status !== 'ONLINE') return;
 
@@ -127,9 +146,9 @@ export default function BotDetailPage() {
     }, 2000);
 
     return () => clearInterval(statsInterval);
-  }, [bot]);
+  }, [bot?.status]);
 
-  // Auto-refresh bot status every 10 seconds
+  // Auto-refresh du statut
   useEffect(() => {
     if (!bot) return;
 
@@ -145,25 +164,22 @@ export default function BotDetailPage() {
       const response = await botsAPI.getById(botId);
       const newBot = response.data;
       
-      // Status change will be handled by the logs useEffect
-      
       setBot(newBot);
       
-      // Fetch guilds data for statistics (only if bot is online)
       if (newBot.status === 'ONLINE') {
         try {
           const guildsResponse = await botsAPI.getGuilds(botId);
           setGuilds(guildsResponse.data || []);
         } catch (error) {
           console.log('Could not fetch guilds data:', error);
-          setGuilds([]); // Reset to empty array
+          setGuilds([]);
         }
       } else {
-        setGuilds([]); // Clear guilds if bot is offline
+        setGuilds([]);
       }
     } catch (error) {
-      console.error('Erreur lors du chargement du bot:', error);
-      toast.error('Impossible de charger les informations du bot');
+      console.error('Error loading bot:', error);
+      toast.error('Unable to load bot information');
       router.push('/bots');
     } finally {
       setBotLoading(false);
@@ -173,14 +189,13 @@ export default function BotDetailPage() {
   const handleStart = async () => {
     setActionLoading('start');
     
-    // Add immediate feedback message
     const timestamp = new Date().toLocaleTimeString();
     setLogs(prev => [...prev, `[${timestamp}] [container@fivebot]: Server marked as starting...`]);
     
     try {
       await botsAPI.start(botId);
       toast.success('Bot started successfully');
-      await fetchBot(); // Refresh bot status
+      await fetchBot();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Error starting bot');
     } finally {
@@ -191,16 +206,32 @@ export default function BotDetailPage() {
   const handleStop = async () => {
     setActionLoading('stop');
     
-    // Add immediate feedback message
     const timestamp = new Date().toLocaleTimeString();
     setLogs(prev => [...prev, `[${timestamp}] [container@fivebot]: Server marked as stopping...`]);
     
     try {
       await botsAPI.stop(botId);
       toast.success('Bot stopped successfully');
-      await fetchBot(); // Refresh bot status
+      await fetchBot();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Error stopping bot');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleRestart = async () => {
+    setActionLoading('restart');
+    
+    const timestamp = new Date().toLocaleTimeString();
+    setLogs(prev => [...prev, `[${timestamp}] [container@fivebot]: Server restart initiated...`]);
+    
+    try {
+      await botsAPI.start(botId, { force: true });
+      toast.success('Bot restarting...');
+      await fetchBot();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Error restarting bot');
     } finally {
       setActionLoading(null);
     }
@@ -211,11 +242,9 @@ export default function BotDetailPage() {
       const response = await botsAPI.getInviteLink(botId);
       const inviteUrl = response.data.inviteUrl;
       
-      // Copy to clipboard
       await navigator.clipboard.writeText(inviteUrl);
       toast.success('Invite link copied to clipboard');
       
-      // Open in new tab
       window.open(inviteUrl, '_blank');
       
     } catch (error: any) {
@@ -223,10 +252,27 @@ export default function BotDetailPage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete this bot? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await botsAPI.delete(botId);
+      toast.success('Bot deleted successfully');
+      router.push('/bots');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Error deleting bot');
+    }
+  };
+
   if (loading || botLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+          <p className="mt-4 text-gray-600">Loading bot details...</p>
+        </div>
       </div>
     );
   }
@@ -237,307 +283,449 @@ export default function BotDetailPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'ONLINE': return 'bg-green-100 text-green-800';
-      case 'OFFLINE': return 'bg-gray-100 text-gray-800';
-      case 'STARTING': return 'bg-yellow-100 text-yellow-800';
-      case 'ERROR': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'ONLINE': return 'text-green-600 bg-green-100';
+      case 'OFFLINE': return 'text-gray-600 bg-gray-100';
+      case 'STARTING': return 'text-yellow-600 bg-yellow-100';
+      case 'ERROR': return 'text-red-600 bg-red-100';
+      default: return 'text-gray-600 bg-gray-100';
     }
   };
 
+  const formatUptime = (seconds: number) => {
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    const parts = [];
+    if (days > 0) parts.push(`${days}d`);
+    if (hours > 0) parts.push(`${hours}h`);
+    if (minutes > 0) parts.push(`${minutes}m`);
+    if (secs > 0 || parts.length === 0) parts.push(`${secs}s`);
+    
+    return parts.join(' ');
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Header */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center space-x-4">
+    <div className="min-h-screen bg-gray-50">
+      <Header 
+        title={bot.name}
+        subtitle={`Bot ID: ${bot.id}`}
+        backButton={{
+          label: "Back to Bots",
+          href: "/bots"
+        }}
+        actions={
+          <div className="flex items-center space-x-3">
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(bot.status)}`}>
+              {bot.status === 'ONLINE' && <CheckCircleIcon className="w-4 h-4 mr-1" />}
+              {bot.status === 'ERROR' && <ExclamationTriangleIcon className="w-4 h-4 mr-1" />}
+              {bot.status === 'STARTING' && <ArrowPathIcon className="w-4 h-4 mr-1 animate-spin" />}
+              {bot.status}
+            </span>
+          </div>
+        }
+      />
+
+      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <div className="space-y-6">
+          
+          {/* Control Panel */}
+          <div className="bg-white shadow-sm rounded-lg p-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
               <button
-                onClick={() => router.push('/bots')}
-                className="flex items-center space-x-2 text-gray-500 hover:text-gray-700 transition-colors"
+                onClick={handleStart}
+                disabled={bot.status !== 'OFFLINE' || actionLoading !== null}
+                className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                <span>←</span>
-                <span className="font-medium">Back to Bots</span>
+                {actionLoading === 'start' ? (
+                  <ArrowPathIcon className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <PlayIcon className="w-4 h-4 mr-2" />
+                )}
+                Start
               </button>
-              <div className="h-6 w-px bg-gray-300"></div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">{bot.name}</h1>
-                <div className="flex items-center space-x-3 mt-1">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(bot.status)}`}>
-                    <div className="w-1.5 h-1.5 bg-current rounded-full mr-1.5"></div>
-                    {bot.status}
-                  </span>
-                  <span className="text-xs text-gray-500 font-mono">
-                    {bot.id.substring(0, 8)}...
-                  </span>
+
+              <button
+                onClick={handleStop}
+                disabled={bot.status !== 'ONLINE' || actionLoading !== null}
+                className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {actionLoading === 'stop' ? (
+                  <ArrowPathIcon className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <StopIcon className="w-4 h-4 mr-2" />
+                )}
+                Stop
+              </button>
+
+              <button
+                onClick={handleRestart}
+                disabled={bot.status !== 'ONLINE' || actionLoading !== null}
+                className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {actionLoading === 'restart' ? (
+                  <ArrowPathIcon className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <ArrowPathIcon className="w-4 h-4 mr-2" />
+                )}
+                Restart
+              </button>
+
+              <button
+                onClick={() => router.push(`/bots/${botId}/config`)}
+                className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+              >
+                <CogIcon className="w-4 h-4 mr-2" />
+                Settings
+              </button>
+
+              <button
+                onClick={generateInviteLink}
+                className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+              >
+                <LinkIcon className="w-4 h-4 mr-2" />
+                Invite
+              </button>
+
+              <button
+                onClick={() => router.push(`/bots/${botId}/analytics`)}
+                className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+              >
+                <ChartBarIcon className="w-4 h-4 mr-2" />
+                Analytics
+              </button>
+
+              <button
+                onClick={handleDelete}
+                className="inline-flex items-center justify-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+              >
+                <TrashIcon className="w-4 h-4 mr-2" />
+                Delete
+              </button>
+            </div>
+          </div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white shadow-sm rounded-lg p-6">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <ServerIcon className="h-8 w-8 text-indigo-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-500">Servers</p>
+                  <p className="text-2xl font-semibold text-gray-900">{guilds.length}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white shadow-sm rounded-lg p-6">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <UsersIcon className="h-8 w-8 text-green-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-500">Total Users</p>
+                  <p className="text-2xl font-semibold text-gray-900">
+                    {guilds.reduce((acc, guild) => acc + (guild.memberCount || 0), 0).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white shadow-sm rounded-lg p-6">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <ClockIcon className="h-8 w-8 text-yellow-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-500">Uptime</p>
+                  <p className="text-2xl font-semibold text-gray-900">
+                    {bot.status === 'ONLINE' ? formatUptime(realTimeStats.uptime) : '0s'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white shadow-sm rounded-lg p-6">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <SignalIcon className="h-8 w-8 text-purple-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-500">Response Time</p>
+                  <p className="text-2xl font-semibold text-gray-900">
+                    {bot.status === 'ONLINE' ? `${realTimeStats.responseTime}ms` : '0ms'}
+                  </p>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="space-y-6">
-          
-          {/* Top Row - Quick Actions */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <button
-              onClick={bot.status === 'OFFLINE' ? handleStart : handleStop}
-              disabled={actionLoading === 'start' || actionLoading === 'stop'}
-              className={`flex items-center justify-center space-x-3 p-4 rounded-xl border-2 transition-all ${
-                bot.status === 'OFFLINE'
-                  ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
-                  : 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100'
-              } disabled:opacity-50`}
-            >
-              {actionLoading === 'start' || actionLoading === 'stop' ? (
-                <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"/>
-                  <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8v8H4z"/>
-                </svg>
-              ) : bot.status === 'OFFLINE' ? (
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd"/>
-                </svg>
-              ) : (
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clipRule="evenodd"/>
-                </svg>
-              )}
-              <span className="font-medium">
-                {actionLoading === 'start' ? 'Starting...' : actionLoading === 'stop' ? 'Stopping...' : bot.status === 'OFFLINE' ? 'Start Bot' : 'Stop Bot'}
-              </span>
-            </button>
+          {/* Tabs */}
+          <div className="bg-white shadow-sm rounded-lg">
+            <div className="border-b border-gray-200">
+              <nav className="-mb-px flex">
+                <button
+                  onClick={() => setActiveTab('console')}
+                  className={`py-3 px-8 border-b-2 font-medium text-sm transition-colors ${
+                    activeTab === 'console'
+                      ? 'border-indigo-500 text-indigo-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <CommandLineIcon className="w-5 h-5 inline-block mr-2" />
+                  Console
+                </button>
+                <button
+                  onClick={() => setActiveTab('performance')}
+                  className={`py-3 px-8 border-b-2 font-medium text-sm transition-colors ${
+                    activeTab === 'performance'
+                      ? 'border-indigo-500 text-indigo-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <CpuChipIcon className="w-5 h-5 inline-block mr-2" />
+                  Performance
+                </button>
+                <button
+                  onClick={() => setActiveTab('settings')}
+                  className={`py-3 px-8 border-b-2 font-medium text-sm transition-colors ${
+                    activeTab === 'settings'
+                      ? 'border-indigo-500 text-indigo-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <CogIcon className="w-5 h-5 inline-block mr-2" />
+                  Details
+                </button>
+              </nav>
+            </div>
 
-            <button
-              onClick={() => router.push(`/bots/${botId}/config`)}
-              className="flex items-center justify-center space-x-3 p-4 rounded-xl border-2 border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-all"
-            >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd"/>
-              </svg>
-              <span className="font-medium">Configuration</span>
-            </button>
-
-            <button
-              onClick={generateInviteLink}
-              className="flex items-center justify-center space-x-3 p-4 rounded-xl border-2 border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 transition-all"
-            >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clipRule="evenodd"/>
-              </svg>
-              <span className="font-medium">Generate Invite</span>
-            </button>
-
-            <button
-              onClick={() => router.push(`/bots/${botId}/analytics`)}
-              className="flex items-center justify-center space-x-3 p-4 rounded-xl border-2 border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 transition-all"
-            >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
-              </svg>
-              <span className="font-medium">Analytics</span>
-            </button>
-          </div>
-
-          {/* Main Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            {/* Console - Large Center */}
-            <div className="lg:col-span-2">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 h-96">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">
-                      <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm2 2a1 1 0 000 2h.01a1 1 0 100-2H5zm3 0a1 1 0 000 2h3a1 1 0 100-2H8z" clipRule="evenodd"/>
-                      </svg>
+            <div className="p-6">
+              {/* Console Tab */}
+              {activeTab === 'console' && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-4">
+                      <h3 className="text-lg font-medium text-gray-900">Live Console</h3>
+                      {bot.status === 'ONLINE' && wsConnection ? (
+                        <div className="flex items-center text-green-600">
+                          <WifiIcon className="w-4 h-4 mr-1" />
+                          <span className="text-sm">Connected</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center text-gray-400">
+                          <WifiIcon className="w-4 h-4 mr-1" />
+                          <span className="text-sm">Disconnected</span>
+                        </div>
+                      )}
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900">Live Console</h3>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    {bot.status === 'ONLINE' && wsConnection ? (
-                      <>
-                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                        <span className="text-sm text-green-600 font-medium">Live</span>
-                      </>
-                    ) : bot.status === 'ONLINE' ? (
-                      <>
-                        <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
-                        <span className="text-sm text-yellow-600 font-medium">Connecting...</span>
-                      </>
-                    ) : (
-                      <>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                        <span className="text-sm text-gray-500">Offline</span>
-                      </>
-                    )}
                     <button
                       onClick={() => router.push(`/bots/${botId}/logs`)}
-                      className="ml-3 px-3 py-1 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors"
+                      className="text-sm text-indigo-600 hover:text-indigo-500"
                     >
-                      View Full Logs
+                      View Full Logs →
                     </button>
                   </div>
-                </div>
 
-                <div 
-                  ref={consoleRef}
-                  className="bg-gray-900 text-green-400 p-4 rounded-lg text-sm font-mono h-80 overflow-y-auto border border-gray-700"
-                >
-                  <div className="space-y-1">
+                  <div 
+                    ref={consoleRef}
+                    className="bg-gray-900 text-gray-100 p-4 rounded-lg h-96 overflow-y-auto font-mono text-sm"
+                    style={{ scrollbarGutter: 'stable' }}
+                  >
                     {logs.length === 0 ? (
-                      <div className="text-gray-500">Aucun log disponible...</div>
+                      <div className="text-gray-500">No logs available...</div>
                     ) : (
                       logs.slice(-100).map((log, index) => {
-                        // Parse the log format: [time] [prefix]: message
                         const logMatch = log.match(/\[(\d{2}:\d{2}:\d{2})\] \[([^\]]+)\]: (.*)/);
                         
                         if (logMatch) {
                           const [, time, prefix, message] = logMatch;
                           
-                          // Determine prefix color based on source
                           let prefixColor = 'text-gray-400';
-                          if (prefix.startsWith('discord@')) {
-                            prefixColor = 'text-blue-400';
-                          } else if (prefix.startsWith('container@')) {
-                            prefixColor = 'text-yellow-400';
-                          } else if (prefix.startsWith('cmd@')) {
-                            prefixColor = 'text-purple-400';
-                          } else if (prefix.startsWith('system@')) {
-                            prefixColor = 'text-orange-400';
-                          }
+                          if (prefix.includes('bot@')) prefixColor = 'text-blue-400';
+                          else if (prefix.includes('container@')) prefixColor = 'text-yellow-400';
+                          else if (prefix.includes('system@')) prefixColor = 'text-green-400';
                           
-                          // Determine message color based on content
                           let messageColor = 'text-gray-300';
-                          if (message.includes('error') || message.includes('ERROR') || message.includes('failed')) {
-                            messageColor = 'text-red-400';
-                          } else if (message.includes('warning') || message.includes('WARN')) {
-                            messageColor = 'text-yellow-300';
-                          } else if (message.includes('success') || message.includes('online')) {
-                            messageColor = 'text-green-400';
-                          } else if (message.includes('offline')) {
-                            messageColor = 'text-gray-500';
-                          }
+                          if (message.toLowerCase().includes('error')) messageColor = 'text-red-400';
+                          else if (message.toLowerCase().includes('warning')) messageColor = 'text-yellow-400';
+                          else if (message.toLowerCase().includes('success') || message.includes('✅')) messageColor = 'text-green-400';
                           
                           return (
-                            <div key={index} className="font-mono text-sm leading-relaxed hover:bg-gray-800 px-1 -mx-1 rounded">
+                            <div key={index} className="py-0.5 hover:bg-gray-800 -mx-2 px-2 rounded">
                               <span className="text-gray-500">[{time}]</span>
-                              <span className={`${prefixColor} ml-1`}>[{prefix}]:</span>
-                              <span className={`${messageColor} ml-1`}>{message}</span>
-                            </div>
-                          );
-                        } else {
-                          // Fallback for logs without proper format
-                          return (
-                            <div key={index} className="text-gray-400 font-mono text-sm leading-relaxed">
-                              {log}
+                              <span className={`${prefixColor} ml-2`}>[{prefix}]:</span>
+                              <span className={`${messageColor} ml-2`}>{message}</span>
                             </div>
                           );
                         }
+                        
+                        return (
+                          <div key={index} className="text-gray-400 py-0.5">
+                            {log}
+                          </div>
+                        );
                       })
                     )}
                   </div>
                 </div>
-              </div>
-            </div>
+              )}
 
-            {/* Performance Stats */}
-            <div className="space-y-6">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900">Performance</h3>
-                </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-600">CPU Usage</span>
-                      <span className="font-medium">{bot.status === 'ONLINE' ? `${realTimeStats.cpuUsage.toFixed(1)}%` : '0%'}</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className={`h-2 rounded-full transition-all duration-500 ${
-                          realTimeStats.cpuUsage > 80 ? 'bg-red-500' :
-                          realTimeStats.cpuUsage > 60 ? 'bg-yellow-500' : 'bg-green-500'
-                        }`}
-                        style={{ width: bot.status === 'ONLINE' ? `${realTimeStats.cpuUsage}%` : '0%' }}
-                      ></div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-600">Memory Usage</span>
-                      <span className="font-medium">{bot.status === 'ONLINE' ? `${realTimeStats.memoryUsage.toFixed(1)}%` : '0%'}</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className={`h-2 rounded-full transition-all duration-500 ${
-                          realTimeStats.memoryUsage > 80 ? 'bg-red-500' :
-                          realTimeStats.memoryUsage > 60 ? 'bg-yellow-500' : 'bg-blue-500'
-                        }`}
-                        style={{ width: bot.status === 'ONLINE' ? `${realTimeStats.memoryUsage}%` : '0%' }}
-                      ></div>
-                    </div>
-                  </div>
-                  
-                  <div className="pt-2 border-t border-gray-100">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Response Time</span>
-                      <span className={`font-medium ${
-                        realTimeStats.responseTime < 100 ? 'text-green-600' :
-                        realTimeStats.responseTime < 300 ? 'text-yellow-600' : 'text-red-600'
-                      }`}>
-                        {bot.status === 'ONLINE' ? `${realTimeStats.responseTime.toFixed(0)}ms` : '0ms'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              {/* Performance Tab */}
+              {activeTab === 'performance' && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 mb-4">Resource Usage</h4>
+                      <div className="space-y-4">
+                        <div>
+                          <div className="flex justify-between mb-1">
+                            <span className="text-sm text-gray-600">CPU Usage</span>
+                            <span className="text-sm font-medium">{realTimeStats.cpuUsage.toFixed(1)}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div 
+                              className={`h-2 rounded-full transition-all duration-500 ${
+                                realTimeStats.cpuUsage > 80 ? 'bg-red-500' :
+                                realTimeStats.cpuUsage > 60 ? 'bg-yellow-500' : 'bg-green-500'
+                              }`}
+                              style={{ width: `${realTimeStats.cpuUsage}%` }}
+                            />
+                          </div>
+                        </div>
 
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1-1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
-                    </svg>
+                        <div>
+                          <div className="flex justify-between mb-1">
+                            <span className="text-sm text-gray-600">Memory Usage</span>
+                            <span className="text-sm font-medium">{realTimeStats.memoryUsage.toFixed(1)}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div 
+                              className={`h-2 rounded-full transition-all duration-500 ${
+                                realTimeStats.memoryUsage > 80 ? 'bg-red-500' :
+                                realTimeStats.memoryUsage > 60 ? 'bg-yellow-500' : 'bg-blue-500'
+                              }`}
+                              style={{ width: `${realTimeStats.memoryUsage}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 mb-4">Activity Stats</h4>
+                      <div className="space-y-3">
+                        <div className="flex justify-between py-2 border-b border-gray-100">
+                          <span className="text-sm text-gray-600">Events Processed</span>
+                          <span className="text-sm font-medium">{realTimeStats.eventCount.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between py-2 border-b border-gray-100">
+                          <span className="text-sm text-gray-600">Messages Received</span>
+                          <span className="text-sm font-medium">{realTimeStats.messageCount.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between py-2">
+                          <span className="text-sm text-gray-600">Commands Executed</span>
+                          <span className="text-sm font-medium">{realTimeStats.commandCount.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900">Statistics</h3>
+
+                  <div className="pt-6 border-t border-gray-200">
+                    <h4 className="text-sm font-medium text-gray-700 mb-4">Server Distribution</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {guilds.slice(0, 6).map((guild) => (
+                        <div key={guild.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                          {guild.icon ? (
+                            <img 
+                              src={`https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`}
+                              alt={guild.name}
+                              className="w-10 h-10 rounded-full"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                              <ServerIcon className="w-5 h-5 text-gray-600" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{guild.name}</p>
+                            <p className="text-xs text-gray-500">{guild.memberCount?.toLocaleString()} members</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {guilds.length > 6 && (
+                      <p className="text-sm text-gray-500 text-center mt-4">
+                        And {guilds.length - 6} more servers...
+                      </p>
+                    )}
+                  </div>
                 </div>
-                
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span className="text-gray-600">Servers</span>
-                    <span className="font-semibold text-gray-900">{guilds.length}</span>
+              )}
+
+              {/* Settings Tab */}
+              {activeTab === 'settings' && (
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 mb-4">Bot Information</h4>
+                    <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="bg-gray-50 px-4 py-3 rounded-lg">
+                        <dt className="text-xs font-medium text-gray-500">Bot ID</dt>
+                        <dd className="mt-1 text-sm text-gray-900 font-mono">{bot.id}</dd>
+                      </div>
+                      <div className="bg-gray-50 px-4 py-3 rounded-lg">
+                        <dt className="text-xs font-medium text-gray-500">Client ID</dt>
+                        <dd className="mt-1 text-sm text-gray-900 font-mono">{bot.clientId || 'Not available'}</dd>
+                      </div>
+                      <div className="bg-gray-50 px-4 py-3 rounded-lg">
+                        <dt className="text-xs font-medium text-gray-500">Prefix</dt>
+                        <dd className="mt-1 text-sm text-gray-900 font-mono">{bot.prefix}</dd>
+                      </div>
+                      <div className="bg-gray-50 px-4 py-3 rounded-lg">
+                        <dt className="text-xs font-medium text-gray-500">Created At</dt>
+                        <dd className="mt-1 text-sm text-gray-900">
+                          {new Date(bot.createdAt).toLocaleDateString()}
+                        </dd>
+                      </div>
+                    </dl>
                   </div>
-                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span className="text-gray-600">Total Users</span>
-                    <span className="font-semibold text-gray-900">
-                      {bot.status === 'ONLINE' ? guilds.reduce((acc, guild) => acc + (guild.memberCount || 0), 0).toLocaleString() : '0'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span className="text-gray-600">Messages</span>
-                    <span className="font-semibold text-gray-900">{bot.status === 'ONLINE' ? realTimeStats.messageCount.toLocaleString() : '0'}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2">
-                    <span className="text-gray-600">Commands</span>
-                    <span className="font-semibold text-gray-900">{bot.status === 'ONLINE' ? realTimeStats.commandCount.toLocaleString() : '0'}</span>
+
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 mb-4">Features Status</h4>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between py-2">
+                        <span className="text-sm text-gray-600">Welcome Messages</span>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          bot.config?.welcomeEnabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {bot.config?.welcomeEnabled ? 'Enabled' : 'Disabled'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between py-2">
+                        <span className="text-sm text-gray-600">Auto Moderation</span>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          bot.config?.moderationEnabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {bot.config?.moderationEnabled ? 'Enabled' : 'Disabled'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between py-2">
+                        <span className="text-sm text-gray-600">Auto Role</span>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          bot.config?.autoRoleEnabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {bot.config?.autoRoleEnabled ? 'Enabled' : 'Disabled'}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
-
-
         </div>
       </main>
     </div>
