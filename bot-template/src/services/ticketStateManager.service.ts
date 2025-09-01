@@ -1,5 +1,4 @@
 import { ActivityState, TicketState, TimerType } from '@prisma/client';
-import { prisma } from '../lib/database';
 import { Client } from 'discord.js';
 import { TicketService } from './ticket.service';
 
