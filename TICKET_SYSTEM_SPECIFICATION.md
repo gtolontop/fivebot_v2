@@ -458,4 +458,66 @@ notifications:
 
 ---
 
+## 🔍 Critical Implementation Details
+
+### Consecutive Message Handling
+
+**Activity-Driven State Updates:**
+- **Multiple user messages** → Stays orange (waiting for staff)
+- **Multiple staff messages** → Stays green (waiting for user)
+- **User → Staff → User** → Properly cycles orange → green → orange
+- **Any staff member reply** → Changes to green (not just assigned staff)
+
+**Edge Cases Handled:**
+- Bot messages are ignored for state changes
+- System messages (joins/leaves) don't affect state
+- Attachments without text still count as messages
+- Reactions don't trigger state changes (configurable)
+
+### Assignment vs Activity Independence
+
+**Key Principle**: Assignment and activity states are **completely independent**.
+
+```
+Examples:
+- Unclaimed ticket + user message = Gray → Orange (no claim needed)
+- Claimed ticket + any staff reply = Still changes to green
+- Activity colors work even in strict claim mode
+- Claim only affects WHO can close/transfer, not color logic
+```
+
+### Preset Management
+
+**Dashboard Preset Features:**
+- **Clone & Customize**: Start from preset, modify anything
+- **Save as Template**: Turn your config into shareable preset
+- **Import/Export**: JSON format for backup/sharing
+- **A/B Testing**: Run different configs in different categories
+- **Rollback**: Undo recent changes with version history
+
+### Multi-Ticket & Multi-Staff Scenarios
+
+**Auto-Close Behavior:**
+- **Per-Ticket Timers**: Each ticket has independent idle timer
+- **Staff-Specific**: Warnings can DM assigned staff or all participants
+- **Bulk Operations**: Close all idle tickets with one command
+- **Smart Exclusions**: Skip tickets with specific tags/states
+
+**Warning System Logic:**
+```
+1. Ticket idle for (threshold - warning_time)
+2. Send warning to: ticket channel + user DM + assigned staff
+3. If activity → reset timer completely
+4. If still idle → auto-close at threshold
+5. Log action for audit trail
+```
+
+**Multi-Staff Coordination:**
+- **Claim Mode**: Warnings go to claimed staff only
+- **Collaborative**: Warnings go to all staff who participated
+- **Activity Mode**: Warnings based on last responder
+- **Escalation**: Can auto-ping different role if no response to warning
+
+---
+
 This specification represents a **fully modular, endlessly customizable ticket system** where every aspect can be tailored to a guild's specific needs. The system grows with the community, from simple support tickets to complex multi-department helpdesks.
