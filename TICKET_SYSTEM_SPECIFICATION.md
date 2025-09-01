@@ -2,6 +2,38 @@
 
 > **Note**: This is the specification for the ticketing system in the FiveBot template. All configuration is done through the FiveBot web dashboard, not through config files.
 
+## 🚀 Executive Summary
+
+### What is this?
+A **fully modular ticket system** where every aspect can be customized through a web dashboard. Think of it as "Lego blocks" for support tickets.
+
+### Key Features
+- 🎨 **Visual State System**: Tickets change color based on activity (gray → orange → green)
+- 🤖 **Smart Automation**: Auto-close, warnings, escalation rules
+- 👥 **Flexible Staff Models**: From free-for-all to strict assignment
+- 🔧 **Zero Code Config**: Everything configured via dashboard
+
+### Visual Flow
+```
+User Creates Ticket → 🕔 Gray (New)
+        ↓
+User Sends Message → 🟡 Orange (Waiting for Staff)
+        ↓
+Staff Replies → 🟢 Green (Waiting for User)
+        ↓
+[Cycles based on who replies last]
+        ↓
+No Activity → 🔴 Red (Idle) → ⚠️ Warning → 🔒 Auto-Close
+```
+
+### Quick Start
+1. Choose a **preset** (Minimal, Gaming, Enterprise)
+2. Customize via **dashboard wizards**
+3. Enable/disable **modules** as needed
+4. Deploy and monitor
+
+---
+
 ## 🎯 Core Philosophy
 
 This ticketing system is designed with **infinite modularity** at its core:
