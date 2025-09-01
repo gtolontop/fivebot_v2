@@ -59,6 +59,25 @@ interface BotConfig {
   ticketCategoryId?: string;
   ticketStaffRoleId?: string;
   ticketTranscriptChannelId?: string;
+  ticketNamingFormat?: string;
+  maxTicketsPerUser?: number;
+  autoCloseHours?: number;
+  inactivityWarningHours?: number;
+  ticketThreads?: boolean;
+  ticketMentionStaff?: boolean;
+  ticketDMNotifications?: boolean;
+  ticketRequireReason?: boolean;
+  autoSaveTranscripts?: boolean;
+  sendTranscriptToUser?: boolean;
+  includeAttachments?: boolean;
+  autoWelcomeEnabled?: boolean;
+  autoWelcomeMessage?: string;
+  inactivityWarningEnabled?: boolean;
+  inactivityWarningMessage?: string;
+  autoAssignStaff?: boolean;
+  autoTagUrgent?: boolean;
+  autoEscalate?: boolean;
+  ticketData?: any;
 }
 
 interface DiscordGuild {
@@ -141,7 +160,35 @@ export default function BotConfigPage() {
       const response = await botsAPI.getById(botId);
       setBot(response.data);
       if (response.data.config) {
-        setConfig(response.data.config);
+        const configData = response.data.config;
+        const ticketData = configData.ticketData || {};
+        
+        // Merge ticketData fields into config
+        setConfig({
+          ...configData,
+          ticketEnabled: ticketData.ticketEnabled || false,
+          ticketCategoryId: ticketData.ticketCategoryId || '',
+          ticketStaffRoleId: ticketData.ticketStaffRoleId || '',
+          ticketTranscriptChannelId: ticketData.ticketTranscriptChannelId || '',
+          ticketNamingFormat: ticketData.ticketNamingFormat || 'number',
+          maxTicketsPerUser: ticketData.maxTicketsPerUser || 3,
+          autoCloseHours: ticketData.autoCloseHours || 72,
+          inactivityWarningHours: ticketData.inactivityWarningHours || 24,
+          ticketThreads: ticketData.ticketThreads || false,
+          ticketMentionStaff: ticketData.ticketMentionStaff || false,
+          ticketDMNotifications: ticketData.ticketDMNotifications || false,
+          ticketRequireReason: ticketData.ticketRequireReason || false,
+          autoSaveTranscripts: ticketData.autoSaveTranscripts || false,
+          sendTranscriptToUser: ticketData.sendTranscriptToUser || false,
+          includeAttachments: ticketData.includeAttachments || false,
+          autoWelcomeEnabled: ticketData.autoWelcomeEnabled || false,
+          autoWelcomeMessage: ticketData.autoWelcomeMessage || '',
+          inactivityWarningEnabled: ticketData.inactivityWarningEnabled || false,
+          inactivityWarningMessage: ticketData.inactivityWarningMessage || '',
+          autoAssignStaff: ticketData.autoAssignStaff || false,
+          autoTagUrgent: ticketData.autoTagUrgent || false,
+          autoEscalate: ticketData.autoEscalate || false,
+        });
       }
     } catch (error) {
       console.error('Error loading bot:', error);
@@ -255,8 +302,21 @@ export default function BotConfigPage() {
     }
   };
 
-  const updateConfig = (updates: Partial<BotConfig>) => {
+  const updateConfig = async (updates: Partial<BotConfig>) => {
     setConfig(prev => ({ ...prev, ...updates }));
+    
+    // Auto-save for important toggles
+    if ('ticketEnabled' in updates || 'welcomeEnabled' in updates || 
+        'moderationEnabled' in updates || 'autoRoleEnabled' in updates) {
+      try {
+        await botsAPI.updateConfig(botId, { ...config, ...updates });
+        toast.success('Settings updated');
+      } catch (error: any) {
+        toast.error('Failed to save settings');
+        // Revert the change
+        setConfig(prev => ({ ...prev, ...config }));
+      }
+    }
   };
 
   const updateWelcomeEmbed = (updates: Partial<BotConfig['welcomeEmbedJson']>) => {

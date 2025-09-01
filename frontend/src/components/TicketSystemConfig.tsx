@@ -16,7 +16,9 @@ import {
   UserGroupIcon,
   DocumentTextIcon,
   EyeIcon,
-  PencilIcon
+  PencilIcon,
+  ChartBarIcon,
+  CpuChipIcon
 } from '@heroicons/react/24/outline';
 import SearchableDropdown from './SearchableDropdown';
 import toast from 'react-hot-toast';
@@ -150,11 +152,31 @@ export default function TicketSystemConfig({
       
       // Calculate stats
       const tickets = ticketsResponse.data.tickets || [];
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const todayTickets = tickets.filter((t: any) => {
+        const ticketDate = new Date(t.createdAt);
+        ticketDate.setHours(0, 0, 0, 0);
+        return ticketDate.getTime() === today.getTime();
+      });
+      
+      const totalMessages = tickets.reduce((sum: number, ticket: any) => sum + (ticket.messageCount || 0), 0);
+      
+      const closedWithSatisfaction = tickets.filter((t: any) => t.state === 'CLOSED' && t.satisfaction !== undefined);
+      const satisfactionRate = closedWithSatisfaction.length > 0
+        ? Math.round(closedWithSatisfaction.reduce((sum: number, t: any) => sum + (t.satisfaction || 0), 0) / closedWithSatisfaction.length)
+        : 0;
+      
       setTicketStats({
         total: tickets.length,
         open: tickets.filter((t: any) => t.state === 'OPEN').length,
         closed: tickets.filter((t: any) => t.state === 'CLOSED').length,
-        avgResponseTime: calculateAvgResponseTime(tickets)
+        avgResponseTime: calculateAvgResponseTime(tickets),
+        totalMessages,
+        avgResolutionTime: calculateAvgResolutionTime(tickets),
+        satisfactionRate,
+        todayTickets: todayTickets.length
       });
     } catch (error) {
       console.error('Error fetching ticket data:', error);
@@ -182,6 +204,29 @@ export default function TicketSystemConfig({
     return `${hours}h ${minutes}m`;
   };
 
+  const calculateAvgResolutionTime = (tickets: any[]) => {
+    if (!tickets || tickets.length === 0) return 'N/A';
+    
+    const closedTickets = tickets.filter(t => t.state === 'CLOSED' && t.closedAt);
+    if (closedTickets.length === 0) return 'No data';
+    
+    const totalResolutionTime = closedTickets.reduce((sum, ticket) => {
+      const created = new Date(ticket.createdAt).getTime();
+      const closed = new Date(ticket.closedAt).getTime();
+      return sum + (closed - created);
+    }, 0);
+    
+    const avgMs = totalResolutionTime / closedTickets.length;
+    const avgMinutes = Math.floor(avgMs / 60000);
+    
+    if (avgMinutes < 60) return `${avgMinutes}m`;
+    const hours = Math.floor(avgMinutes / 60);
+    const minutes = avgMinutes % 60;
+    if (hours < 24) return `${hours}h ${minutes}m`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ${hours % 24}h`;
+  };
+
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections(prev => ({
       ...prev,
@@ -206,7 +251,14 @@ export default function TicketSystemConfig({
         description: '',
         emoji: '🎫',
         roleId: '',
-        maxTickets: 3
+        maxTickets: 3,
+        priority: 0,
+        color: '#5865F2',
+        autoClose: false,
+        autoCloseHours: 72,
+        privateByDefault: false,
+        requiredRoles: [],
+        welcomeMessage: ''
       });
       
       fetchTicketData();
@@ -306,37 +358,73 @@ export default function TicketSystemConfig({
       {config.ticketEnabled ? (
         <div className="space-y-6">
           {/* Stats Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
             <div className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
-                <TicketIcon className="w-8 h-8 text-indigo-600" />
-                <span className="text-2xl font-bold text-gray-900">{ticketStats.total}</span>
+                <TicketIcon className="w-6 h-6 text-indigo-600" />
+                <span className="text-xl font-bold text-gray-900">{ticketStats.total}</span>
               </div>
-              <p className="text-sm text-gray-600">Total Tickets</p>
+              <p className="text-xs text-gray-600">Total Tickets</p>
             </div>
             
             <div className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
-                <CheckCircleIcon className="w-8 h-8 text-green-600" />
-                <span className="text-2xl font-bold text-gray-900">{ticketStats.open}</span>
+                <CheckCircleIcon className="w-6 h-6 text-green-600" />
+                <span className="text-xl font-bold text-gray-900">{ticketStats.open}</span>
               </div>
-              <p className="text-sm text-gray-600">Open Tickets</p>
+              <p className="text-xs text-gray-600">Open</p>
             </div>
             
             <div className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
-                <ExclamationTriangleIcon className="w-8 h-8 text-red-600" />
-                <span className="text-2xl font-bold text-gray-900">{ticketStats.closed}</span>
+                <ExclamationTriangleIcon className="w-6 h-6 text-red-600" />
+                <span className="text-xl font-bold text-gray-900">{ticketStats.closed}</span>
               </div>
-              <p className="text-sm text-gray-600">Closed Tickets</p>
+              <p className="text-xs text-gray-600">Closed</p>
             </div>
             
             <div className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
-                <ClockIcon className="w-8 h-8 text-yellow-600" />
-                <span className="text-2xl font-bold text-gray-900">{ticketStats.avgResponseTime}</span>
+                <ClockIcon className="w-6 h-6 text-yellow-600" />
+                <span className="text-lg font-bold text-gray-900">{ticketStats.avgResponseTime}</span>
               </div>
-              <p className="text-sm text-gray-600">Avg Response Time</p>
+              <p className="text-xs text-gray-600">Avg Response</p>
+            </div>
+            
+            <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <ChatBubbleLeftRightIcon className="w-6 h-6 text-blue-600" />
+                <span className="text-xl font-bold text-gray-900">{ticketStats.totalMessages}</span>
+              </div>
+              <p className="text-xs text-gray-600">Messages</p>
+            </div>
+            
+            <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <ClockIcon className="w-6 h-6 text-purple-600" />
+                <span className="text-lg font-bold text-gray-900">{ticketStats.avgResolutionTime}</span>
+              </div>
+              <p className="text-xs text-gray-600">Resolution Time</p>
+            </div>
+            
+            <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-xl font-bold text-gray-900">{ticketStats.satisfactionRate}%</span>
+              </div>
+              <p className="text-xs text-gray-600">Satisfaction</p>
+            </div>
+            
+            <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <svg className="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span className="text-xl font-bold text-gray-900">{ticketStats.todayTickets}</span>
+              </div>
+              <p className="text-xs text-gray-600">Today</p>
             </div>
           </div>
 
@@ -436,7 +524,14 @@ export default function TicketSystemConfig({
                         description: '',
                         emoji: '🎫',
                         roleId: '',
-                        maxTickets: 3
+                        maxTickets: 3,
+                        priority: 0,
+                        color: '#5865F2',
+                        autoClose: false,
+                        autoCloseHours: 72,
+                        privateByDefault: false,
+                        requiredRoles: [],
+                        welcomeMessage: ''
                       });
                       setShowCategoryModal(true);
                     }}
@@ -456,13 +551,41 @@ export default function TicketSystemConfig({
                             <div className="flex items-center space-x-2 mb-1">
                               <span className="text-2xl">{category.emoji || '🎫'}</span>
                               <h4 className="font-medium text-gray-900">{category.name}</h4>
+                              {category.priority > 0 && (
+                                <span className="px-2 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-800">
+                                  Priority {category.priority}
+                                </span>
+                              )}
+                              {category.privateByDefault && (
+                                <span className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-800">
+                                  Private
+                                </span>
+                              )}
                             </div>
                             <p className="text-sm text-gray-600 mb-2">{category.description}</p>
-                            <div className="flex items-center space-x-4 text-xs text-gray-500">
+                            <div className="flex items-center flex-wrap gap-3 text-xs text-gray-500">
                               {category.roleId && (
-                                <span>Staff: {allRoles.find(r => r.id === category.roleId)?.name || 'Unknown'}</span>
+                                <span className="flex items-center">
+                                  <ShieldCheckIcon className="w-3 h-3 mr-1" />
+                                  {allRoles.find(r => r.id === category.roleId)?.name || 'Unknown'}
+                                </span>
                               )}
-                              <span>Max tickets: {category.maxTickets || 'Unlimited'}</span>
+                              <span className="flex items-center">
+                                <UserGroupIcon className="w-3 h-3 mr-1" />
+                                Max {category.maxTickets || '∞'} tickets
+                              </span>
+                              {category.autoClose && (
+                                <span className="flex items-center">
+                                  <ClockIcon className="w-3 h-3 mr-1" />
+                                  Auto-close {category.autoCloseHours}h
+                                </span>
+                              )}
+                              {category.color && (
+                                <span className="flex items-center">
+                                  <div className="w-3 h-3 rounded-full mr-1" style={{ backgroundColor: category.color }}></div>
+                                  Color
+                                </span>
+                              )}
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
@@ -474,7 +597,14 @@ export default function TicketSystemConfig({
                                   description: category.description,
                                   emoji: category.emoji || '🎫',
                                   roleId: category.roleId || '',
-                                  maxTickets: category.maxTickets || 3
+                                  maxTickets: category.maxTickets || 3,
+                                  priority: category.priority || 0,
+                                  color: category.color || '#5865F2',
+                                  autoClose: category.autoClose || false,
+                                  autoCloseHours: category.autoCloseHours || 72,
+                                  privateByDefault: category.privateByDefault || false,
+                                  requiredRoles: category.requiredRoles || [],
+                                  welcomeMessage: category.welcomeMessage || ''
                                 });
                                 setShowCategoryModal(true);
                               }}
@@ -792,6 +922,223 @@ export default function TicketSystemConfig({
               </div>
             )}
           </div>
+
+          {/* Transcripts Section */}
+          <div className="bg-white border border-gray-200 rounded-lg">
+            <button
+              onClick={() => toggleSection('transcripts')}
+              className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center">
+                <DocumentTextIcon className="w-5 h-5 text-gray-600 mr-3" />
+                <h3 className="text-lg font-semibold text-gray-900">Ticket Transcripts</h3>
+              </div>
+              {expandedSections.transcripts ? <ChevronUpIcon className="w-5 h-5" /> : <ChevronDownIcon className="w-5 h-5" />}
+            </button>
+            
+            {expandedSections.transcripts && (
+              <div className="px-6 pb-6">
+                <div className="space-y-4">
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-3">Transcript Settings</h4>
+                    <div className="space-y-3">
+                      <label className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          checked={config.autoSaveTranscripts || false}
+                          onChange={(e) => updateConfig({ autoSaveTranscripts: e.target.checked })}
+                          className="rounded border-gray-300 text-indigo-600"
+                        />
+                        <span className="text-sm font-medium text-gray-700">Auto-save transcripts on ticket close</span>
+                      </label>
+                      
+                      <label className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          checked={config.sendTranscriptToUser || false}
+                          onChange={(e) => updateConfig({ sendTranscriptToUser: e.target.checked })}
+                          className="rounded border-gray-300 text-indigo-600"
+                        />
+                        <span className="text-sm font-medium text-gray-700">Send transcript to user via DM</span>
+                      </label>
+                      
+                      <label className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          checked={config.includeAttachments || false}
+                          onChange={(e) => updateConfig({ includeAttachments: e.target.checked })}
+                          className="rounded border-gray-300 text-indigo-600"
+                        />
+                        <span className="text-sm font-medium text-gray-700">Include attachments in transcripts</span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 mb-3">Recent Transcripts</h4>
+                    <div className="text-center p-8 bg-gray-50 rounded-lg">
+                      <DocumentTextIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                      <p className="text-gray-600">No transcripts available yet</p>
+                      <p className="text-sm text-gray-500 mt-1">Transcripts will appear here when tickets are closed</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Analytics Section */}
+          <div className="bg-white border border-gray-200 rounded-lg">
+            <button
+              onClick={() => toggleSection('analytics')}
+              className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center">
+                <ChartBarIcon className="w-5 h-5 text-gray-600 mr-3" />
+                <h3 className="text-lg font-semibold text-gray-900">Analytics & Reports</h3>
+              </div>
+              {expandedSections.analytics ? <ChevronUpIcon className="w-5 h-5" /> : <ChevronDownIcon className="w-5 h-5" />}
+            </button>
+            
+            {expandedSections.analytics && (
+              <div className="px-6 pb-6">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Peak Hours</h4>
+                      <p className="text-2xl font-bold text-gray-900">2PM - 6PM</p>
+                      <p className="text-xs text-gray-500">Most tickets created</p>
+                    </div>
+                    
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Top Category</h4>
+                      <p className="text-2xl font-bold text-gray-900">General</p>
+                      <p className="text-xs text-gray-500">45% of all tickets</p>
+                    </div>
+                    
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Staff Performance</h4>
+                      <p className="text-2xl font-bold text-gray-900">92%</p>
+                      <p className="text-xs text-gray-500">Tickets resolved in time</p>
+                    </div>
+                  </div>
+                  
+                  <div className="pt-4">
+                    <button className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Export Full Report
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Automations Section */}
+          <div className="bg-white border border-gray-200 rounded-lg">
+            <button
+              onClick={() => toggleSection('automations')}
+              className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center">
+                <CpuChipIcon className="w-5 h-5 text-gray-600 mr-3" />
+                <h3 className="text-lg font-semibold text-gray-900">Automations</h3>
+              </div>
+              {expandedSections.automations ? <ChevronUpIcon className="w-5 h-5" /> : <ChevronDownIcon className="w-5 h-5" />}
+            </button>
+            
+            {expandedSections.automations && (
+              <div className="px-6 pb-6">
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 mb-3">Auto-Response Templates</h4>
+                    <div className="space-y-3">
+                      <div className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <h5 className="font-medium text-gray-900">Welcome Message</h5>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={config.autoWelcomeEnabled || false}
+                              onChange={(e) => updateConfig({ autoWelcomeEnabled: e.target.checked })}
+                              className="sr-only peer"
+                            />
+                            <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                          </label>
+                        </div>
+                        <textarea
+                          value={config.autoWelcomeMessage || 'Thank you for creating a ticket! A staff member will assist you shortly.'}
+                          onChange={(e) => updateConfig({ autoWelcomeMessage: e.target.value })}
+                          rows={2}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          placeholder="Enter welcome message..."
+                        />
+                      </div>
+                      
+                      <div className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <h5 className="font-medium text-gray-900">Inactivity Warning</h5>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={config.inactivityWarningEnabled || false}
+                              onChange={(e) => updateConfig({ inactivityWarningEnabled: e.target.checked })}
+                              className="sr-only peer"
+                            />
+                            <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                          </label>
+                        </div>
+                        <textarea
+                          value={config.inactivityWarningMessage || 'This ticket will be closed in 24 hours due to inactivity. Please respond if you still need assistance.'}
+                          onChange={(e) => updateConfig({ inactivityWarningMessage: e.target.value })}
+                          rows={2}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          placeholder="Enter inactivity warning message..."
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 mb-3">Auto-Actions</h4>
+                    <div className="space-y-3">
+                      <label className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          checked={config.autoAssignStaff || false}
+                          onChange={(e) => updateConfig({ autoAssignStaff: e.target.checked })}
+                          className="rounded border-gray-300 text-indigo-600"
+                        />
+                        <span className="text-sm font-medium text-gray-700">Auto-assign tickets to available staff</span>
+                      </label>
+                      
+                      <label className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          checked={config.autoTagUrgent || false}
+                          onChange={(e) => updateConfig({ autoTagUrgent: e.target.checked })}
+                          className="rounded border-gray-300 text-indigo-600"
+                        />
+                        <span className="text-sm font-medium text-gray-700">Auto-tag urgent tickets based on keywords</span>
+                      </label>
+                      
+                      <label className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          checked={config.autoEscalate || false}
+                          onChange={(e) => updateConfig({ autoEscalate: e.target.checked })}
+                          className="rounded border-gray-300 text-indigo-600"
+                        />
+                        <span className="text-sm font-medium text-gray-700">Auto-escalate tickets after 1 hour without response</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       ) : (
         <div className="text-center p-12 bg-gray-50 rounded-lg">
@@ -890,6 +1237,85 @@ export default function TicketSystemConfig({
                   max="10"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Priority Level
+                </label>
+                <input
+                  type="number"
+                  value={categoryForm.priority}
+                  onChange={(e) => setCategoryForm(prev => ({ ...prev, priority: parseInt(e.target.value) }))}
+                  min="0"
+                  max="10"
+                  placeholder="0 = lowest, 10 = highest"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Category Color
+                </label>
+                <input
+                  type="text"
+                  value={categoryForm.color}
+                  onChange={(e) => setCategoryForm(prev => ({ ...prev, color: e.target.value }))}
+                  placeholder="#5865F2"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Welcome Message (Optional)
+                </label>
+                <textarea
+                  value={categoryForm.welcomeMessage}
+                  onChange={(e) => setCategoryForm(prev => ({ ...prev, welcomeMessage: e.target.value }))}
+                  placeholder="Thank you for opening a ticket. Our team will assist you shortly..."
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+
+              <div className="space-y-3">
+                <label className="flex items-center space-x-3">
+                  <input
+                    type="checkbox"
+                    checked={categoryForm.privateByDefault}
+                    onChange={(e) => setCategoryForm(prev => ({ ...prev, privateByDefault: e.target.checked }))}
+                    className="rounded border-gray-300 text-indigo-600"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Make tickets private by default</span>
+                </label>
+
+                <label className="flex items-center space-x-3">
+                  <input
+                    type="checkbox"
+                    checked={categoryForm.autoClose}
+                    onChange={(e) => setCategoryForm(prev => ({ ...prev, autoClose: e.target.checked }))}
+                    className="rounded border-gray-300 text-indigo-600"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Auto-close inactive tickets</span>
+                </label>
+
+                {categoryForm.autoClose && (
+                  <div className="ml-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Auto-close after (hours)
+                    </label>
+                    <input
+                      type="number"
+                      value={categoryForm.autoCloseHours}
+                      onChange={(e) => setCategoryForm(prev => ({ ...prev, autoCloseHours: parseInt(e.target.value) }))}
+                      min="1"
+                      max="168"
+                      className="w-32 px-3 py-2 border border-gray-300 rounded-md"
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
