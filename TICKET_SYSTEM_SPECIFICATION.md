@@ -288,19 +288,21 @@ notifications:
 
 ### 7. Control Interface
 
-#### Available Actions
+#### Available Actions (Dashboard Toggles)
 
-| Action | Description | Configurable |
-|--------|-------------|--------------|
-| **Create** | Open new ticket | Entry method, fields |
-| **Claim** | Take ownership | Permissions, notifications |
-| **Release** | Give up ownership | Return to pool behavior |
-| **Transfer** | Change owner | Target selection method |
-| **Invite** | Add participants | Duration, permissions |
-| **Close** | End active support | Confirmation, message |
-| **Reopen** | Reactivate closed | Time limit, permissions |
-| **Archive** | Move to storage | Location, duration |
-| **Delete** | Permanent removal | Confirmation level |
+| Action | Description | Dashboard Setting |
+|--------|-------------|------------------|
+| **Create** | Open new ticket | Entry panel builder |
+| **Claim** | Take ownership | Enable/disable per mode |
+| **Release** | Give up ownership | Auto-return to pool |
+| **Transfer** | Change owner | Staff selector type |
+| **Invite** | Add participants | Time limits, role limits |
+| **Close** | End active support | Custom close message |
+| **Reopen** | Reactivate closed | Time window setting |
+| **Archive** | Move to storage | Auto-archive delay |
+| **Delete** | Remove permanently | Permission level |
+
+**Important**: Delete is a **destructive action**, not a state. It permanently removes the ticket.
 
 #### Interface Options
 ```yaml
