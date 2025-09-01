@@ -420,6 +420,7 @@ export default function BotConfigPage() {
     { id: 'welcome', name: 'Welcome', icon: HandRaisedIcon, description: 'Welcome messages' },
     { id: 'moderation', name: 'Moderation', icon: ShieldCheckIcon, description: 'Auto-moderation' },
     { id: 'roles', name: 'Auto-Roles', icon: UserGroupIcon, description: 'Automatic role assignment' },
+    { id: 'tickets', name: 'Tickets', icon: TicketIcon, description: 'Support ticket system' },
     { id: 'commands', name: 'Commands', icon: ChatBubbleLeftRightIcon, description: 'Custom commands' },
     { id: 'advanced', name: 'Advanced', icon: WrenchScrewdriverIcon, description: 'Advanced settings' },
   ];
@@ -1086,6 +1087,145 @@ export default function BotConfigPage() {
                           className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
                         >
                           Enable Auto-Role
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Tickets Tab */}
+                {activeTab === 'tickets' && (
+                  <div className="p-6">
+                    <div className="mb-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h2 className="text-2xl font-bold text-gray-900 mb-2">Ticket System</h2>
+                          <p className="text-gray-600">Configure support ticket system for your server</p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={config.ticketEnabled || false}
+                            onChange={(e) => updateConfig({ ticketEnabled: e.target.checked })}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                          <span className="ml-3 text-sm font-medium text-gray-900">
+                            {config.ticketEnabled ? 'Enabled' : 'Disabled'}
+                          </span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {config.ticketEnabled && (
+                      <div className="space-y-6">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Ticket Category
+                          </label>
+                          <SearchableDropdown
+                            options={guilds.flatMap(guild => 
+                              guild.channels.filter(channel => channel.type === 4).map(channel => ({
+                                ...channel,
+                                guildName: guild.name
+                              }))
+                            )}
+                            value={config.ticketCategoryId || ''}
+                            onChange={(value) => updateConfig({ ticketCategoryId: value })}
+                            placeholder="Select a category for ticket channels"
+                            emptyMessage="No categories available"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            Tickets will be created as channels in this category
+                          </p>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Staff Role
+                          </label>
+                          <SearchableDropdown
+                            options={allRoles.map(role => ({ ...role, isRole: true }))}
+                            value={config.ticketStaffRoleId || ''}
+                            onChange={(value) => updateConfig({ ticketStaffRoleId: value })}
+                            placeholder="Select a staff role"
+                            emptyMessage="No roles available"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            Members with this role can manage all tickets
+                          </p>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Transcript Channel (Optional)
+                          </label>
+                          <SearchableDropdown
+                            options={textChannels}
+                            value={config.ticketTranscriptChannelId || ''}
+                            onChange={(value) => updateConfig({ ticketTranscriptChannelId: value })}
+                            placeholder="Select a channel for ticket transcripts"
+                            emptyMessage="No text channels available"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            Closed ticket transcripts will be sent to this channel
+                          </p>
+                        </div>
+
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                          <h4 className="font-medium text-blue-900 mb-2">Quick Setup Guide</h4>
+                          <ol className="text-sm text-blue-800 space-y-2">
+                            <li>1. Make sure your bot has "Manage Channels" and "Manage Roles" permissions</li>
+                            <li>2. Run <code className="bg-blue-100 px-1 rounded">/ticket setup</code> in your Discord server</li>
+                            <li>3. Run <code className="bg-blue-100 px-1 rounded">/ticket panel #channel</code> to create a ticket panel</li>
+                            <li>4. Members can click the button in the panel to create tickets</li>
+                          </ol>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                            <div className="flex items-center mb-3">
+                              <TicketIcon className="w-6 h-6 text-purple-600 mr-2" />
+                              <h4 className="font-medium text-purple-900">Ticket Features</h4>
+                            </div>
+                            <ul className="text-xs text-purple-700 space-y-1">
+                              <li>• Create tickets via button or dropdown</li>
+                              <li>• Auto-assign staff members</li>
+                              <li>• Close, reopen, and delete tickets</li>
+                              <li>• Add/remove members from tickets</li>
+                              <li>• Generate ticket transcripts</li>
+                              <li>• Customizable ticket categories</li>
+                            </ul>
+                          </div>
+
+                          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                            <div className="flex items-center mb-3">
+                              <ShieldCheckIcon className="w-6 h-6 text-green-600 mr-2" />
+                              <h4 className="font-medium text-green-900">Security Features</h4>
+                            </div>
+                            <ul className="text-xs text-green-700 space-y-1">
+                              <li>• Private ticket channels</li>
+                              <li>• Staff-only controls</li>
+                              <li>• Ticket claim system</li>
+                              <li>• Activity tracking</li>
+                              <li>• Spam prevention</li>
+                              <li>• Audit logging</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {!config.ticketEnabled && (
+                      <div className="text-center p-12 bg-gray-50 rounded-lg">
+                        <TicketIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">Ticket System Disabled</h3>
+                        <p className="text-gray-600 mb-4">Enable the ticket system to provide organized support to your members.</p>
+                        <button
+                          onClick={() => updateConfig({ ticketEnabled: true })}
+                          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                        >
+                          Enable Ticket System
                         </button>
                       </div>
                     )}
