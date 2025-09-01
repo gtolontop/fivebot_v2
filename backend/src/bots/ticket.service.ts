@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { BotsService } from './bots.service';
 
-interface TicketCategory {
+export interface TicketCategory {
   id: string;
   name: string;
   description: string;
@@ -11,7 +11,7 @@ interface TicketCategory {
   maxTickets?: number;
 }
 
-interface TicketPanel {
+export interface TicketPanel {
   id: string;
   channelId: string;
   title: string;
@@ -22,7 +22,7 @@ interface TicketPanel {
   messageId?: string;
 }
 
-interface TicketData {
+export interface TicketData {
   categories: TicketCategory[];
   panels: TicketPanel[];
   tickets: any[];
