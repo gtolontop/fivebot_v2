@@ -335,16 +335,31 @@ export class BotsService {
       }
     });
 
-    await this.queueService.addJob('start-bot', { botId });
+    // Add job to queue with timeout handling
+    try {
+      await Promise.race([
+        this.queueService.addJob('start-bot', { botId }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Queue timeout')), 3000)
+        )
+      ]);
+    } catch (error) {
+      console.error('Warning: Queue operation delayed, continuing anyway:', error.message);
+      // Still try to add the job in background
+      this.queueService.addJob('start-bot', { botId }).catch(e => 
+        console.error('Background queue add failed:', e)
+      );
+    }
 
-    await this.prisma.auditLog.create({
+    // Create audit log asynchronously to not block
+    this.prisma.auditLog.create({
       data: {
         userId: ownerId,
         botId,
         action: 'BOT_STARTED',
         resource: 'bot',
       },
-    });
+    }).catch(error => console.error('Failed to create audit log:', error));
 
     return this.findOne(botId, ownerId);
   }

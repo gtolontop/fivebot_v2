@@ -89,21 +89,51 @@ export class BotsController {
     try {
       console.log(`🚀 Starting bot ${id} for user ${req.user.id}${body?.force ? ' (forced)' : ''}`);
       
-      if (body?.force) {
-        // Force restart: stop first then start
-        try {
-          await this.botsService.stop(id, req.user.id);
-          await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
-        } catch (stopError) {
-          console.log('Could not stop bot (maybe already stopped):', stopError.message);
-        }
+      // Get current bot to return immediately
+      const bot = await this.botsService.findOne(id, req.user.id);
+      if (!bot) {
+        throw new NotFoundException('Bot not found');
       }
       
-      const result = await this.botsService.start(id, req.user.id);
-      console.log(`✅ Bot ${id} start command sent successfully`);
-      return result;
+      if (body?.force) {
+        // Force restart: stop first then start - do it async
+        setImmediate(async () => {
+          try {
+            await this.botsService.stop(id, req.user.id);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            await this.botsService.start(id, req.user.id);
+            console.log(`✅ Bot ${id} force restart completed`);
+          } catch (error) {
+            console.error(`❌ Bot ${id} force restart failed:`, error);
+          }
+        });
+        
+        // Return immediately with starting status
+        return {
+          ...bot,
+          status: 'STARTING',
+          message: 'Bot restart initiated'
+        };
+      }
+      
+      // Start the bot asynchronously
+      setImmediate(async () => {
+        try {
+          await this.botsService.start(id, req.user.id);
+          console.log(`✅ Bot ${id} start completed`);
+        } catch (error) {
+          console.error(`❌ Bot ${id} start failed:`, error);
+        }
+      });
+      
+      // Return immediately with starting status
+      return {
+        ...bot,
+        status: 'STARTING',
+        message: 'Bot start command sent'
+      };
     } catch (error) {
-      console.error(`❌ Error starting bot ${id}:`, error);
+      console.error(`❌ Error initiating bot start ${id}:`, error);
       throw error;
     }
   }
