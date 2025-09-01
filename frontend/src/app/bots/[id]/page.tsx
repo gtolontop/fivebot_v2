@@ -307,7 +307,7 @@ export default function BotDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Header 
         title={bot.name}
         subtitle={`Bot ID: ${bot.id}`}
@@ -328,402 +328,243 @@ export default function BotDetailPage() {
       />
 
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <div className="space-y-6">
-          
-          {/* Control Panel */}
-          <div className="bg-white shadow-sm rounded-lg p-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-              <button
-                onClick={handleStart}
-                disabled={bot.status !== 'OFFLINE' || actionLoading !== null}
-                className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Console - Left Side (2/3 width) */}
+          <div className="lg:col-span-2">
+            <div className="bg-white shadow-sm rounded-lg p-6 h-full">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-4">
+                  <h3 className="text-lg font-medium text-gray-900">Console</h3>
+                  {bot.status === 'ONLINE' && wsConnection ? (
+                    <div className="flex items-center text-green-600">
+                      <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse mr-2"></div>
+                      <span className="text-sm">Connected</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center text-gray-400">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full mr-2"></div>
+                      <span className="text-sm">Disconnected</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div 
+                ref={consoleRef}
+                className="bg-gray-900 text-gray-100 p-4 rounded-lg h-[600px] overflow-y-auto font-mono text-sm"
+                style={{ scrollbarGutter: 'stable' }}
               >
-                {actionLoading === 'start' ? (
-                  <ArrowPathIcon className="w-4 h-4 mr-2 animate-spin" />
+                {logs.length === 0 ? (
+                  <div className="text-gray-500">Waiting for logs...</div>
                 ) : (
-                  <PlayIcon className="w-4 h-4 mr-2" />
+                  logs.slice(-200).map((log, index) => {
+                    const logMatch = log.match(/\[(\d{2}:\d{2}:\d{2})\] \[([^\]]+)\]: (.*)/);
+                    
+                    if (logMatch) {
+                      const [, time, prefix, message] = logMatch;
+                      
+                      let prefixColor = 'text-gray-400';
+                      if (prefix.includes('bot@')) prefixColor = 'text-blue-400';
+                      else if (prefix.includes('container@')) prefixColor = 'text-yellow-400';
+                      else if (prefix.includes('system@')) prefixColor = 'text-green-400';
+                      
+                      let messageColor = 'text-gray-300';
+                      if (message.toLowerCase().includes('error')) messageColor = 'text-red-400';
+                      else if (message.toLowerCase().includes('warning')) messageColor = 'text-yellow-400';
+                      else if (message.toLowerCase().includes('success') || message.includes('✅')) messageColor = 'text-green-400';
+                      else if (message.toLowerCase().includes('starting')) messageColor = 'text-yellow-400';
+                      else if (message.toLowerCase().includes('stopping')) messageColor = 'text-orange-400';
+                      
+                      return (
+                        <div key={index} className="py-0.5 hover:bg-gray-800 -mx-2 px-2 rounded transition-colors">
+                          <span className="text-gray-500">[{time}]</span>
+                          <span className={`${prefixColor} ml-2`}>[{prefix}]:</span>
+                          <span className={`${messageColor} ml-2`}>{message}</span>
+                        </div>
+                      );
+                    }
+                    
+                    return (
+                      <div key={index} className="text-gray-400 py-0.5">
+                        {log}
+                      </div>
+                    );
+                  })
                 )}
-                Start
-              </button>
-
-              <button
-                onClick={handleStop}
-                disabled={bot.status !== 'ONLINE' || actionLoading !== null}
-                className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {actionLoading === 'stop' ? (
-                  <ArrowPathIcon className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <StopIcon className="w-4 h-4 mr-2" />
-                )}
-                Stop
-              </button>
-
-              <button
-                onClick={handleRestart}
-                disabled={bot.status !== 'ONLINE' || actionLoading !== null}
-                className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {actionLoading === 'restart' ? (
-                  <ArrowPathIcon className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <ArrowPathIcon className="w-4 h-4 mr-2" />
-                )}
-                Restart
-              </button>
-
-              <button
-                onClick={() => router.push(`/bots/${botId}/config`)}
-                className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-              >
-                <CogIcon className="w-4 h-4 mr-2" />
-                Settings
-              </button>
-
-              <button
-                onClick={generateInviteLink}
-                className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-              >
-                <LinkIcon className="w-4 h-4 mr-2" />
-                Invite
-              </button>
-
-              <button
-                onClick={() => router.push(`/bots/${botId}/analytics`)}
-                className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-              >
-                <ChartBarIcon className="w-4 h-4 mr-2" />
-                Analytics
-              </button>
-
-              <button
-                onClick={handleDelete}
-                className="inline-flex items-center justify-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
-              >
-                <TrashIcon className="w-4 h-4 mr-2" />
-                Delete
-              </button>
+              </div>
             </div>
           </div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Controls and Stats - Right Side (1/3 width) */}
+          <div className="space-y-6">
+            {/* Control Buttons */}
             <div className="bg-white shadow-sm rounded-lg p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <ServerIcon className="h-8 w-8 text-indigo-600" />
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Control Panel</h3>
+              <div className="space-y-3">
+                <button
+                  onClick={handleStart}
+                  disabled={bot.status !== 'OFFLINE' || actionLoading !== null}
+                  className="w-full inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                >
+                  {actionLoading === 'start' ? (
+                    <ArrowPathIcon className="w-5 h-5 mr-2 animate-spin" />
+                  ) : (
+                    <PlayIcon className="w-5 h-5 mr-2" />
+                  )}
+                  Start
+                </button>
+
+                <button
+                  onClick={handleRestart}
+                  disabled={bot.status !== 'ONLINE' || actionLoading !== null}
+                  className="w-full inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-md text-gray-700 bg-yellow-500 hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                >
+                  {actionLoading === 'restart' ? (
+                    <ArrowPathIcon className="w-5 h-5 mr-2 animate-spin" />
+                  ) : (
+                    <ArrowPathIcon className="w-5 h-5 mr-2" />
+                  )}
+                  Restart
+                </button>
+
+                <button
+                  onClick={handleStop}
+                  disabled={bot.status !== 'ONLINE' || actionLoading !== null}
+                  className="w-full inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                >
+                  {actionLoading === 'stop' ? (
+                    <ArrowPathIcon className="w-5 h-5 mr-2 animate-spin" />
+                  ) : (
+                    <StopIcon className="w-5 h-5 mr-2" />
+                  )}
+                  {actionLoading === 'stop' && bot.status === 'STOPPING' ? 'Kill' : 'Stop'}
+                </button>
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-gray-200 space-y-3">
+                <button
+                  onClick={() => router.push(`/bots/${botId}/config`)}
+                  className="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all"
+                >
+                  <CogIcon className="w-4 h-4 mr-2" />
+                  Settings
+                </button>
+
+                <button
+                  onClick={generateInviteLink}
+                  className="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all"
+                >
+                  <LinkIcon className="w-4 h-4 mr-2" />
+                  Invite Link
+                </button>
+
+                <button
+                  onClick={() => router.push(`/bots/${botId}/analytics`)}
+                  className="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all"
+                >
+                  <ChartBarIcon className="w-4 h-4 mr-2" />
+                  Analytics
+                </button>
+              </div>
+            </div>
+
+            {/* Bot Information */}
+            <div className="bg-white shadow-sm rounded-lg p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Information</h3>
+              <div className="space-y-4">
+                <div>
+                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Address</div>
+                  <div className="mt-1 text-sm text-gray-900 font-mono">{bot.clientId || 'Not Connected'}</div>
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Servers</p>
-                  <p className="text-2xl font-semibold text-gray-900">{guilds.length}</p>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">CPU Load</div>
+                    <div className="mt-1">
+                      <div className="flex items-baseline">
+                        <span className="text-2xl font-semibold text-gray-900">{realTimeStats.cpuUsage.toFixed(0)}</span>
+                        <span className="ml-1 text-sm text-gray-600">%</span>
+                      </div>
+                      <div className="mt-1 w-full bg-gray-200 rounded-full h-1.5">
+                        <div 
+                          className={`h-1.5 rounded-full transition-all duration-500 ${
+                            realTimeStats.cpuUsage > 80 ? 'bg-red-500' :
+                            realTimeStats.cpuUsage > 60 ? 'bg-yellow-500' : 'bg-green-500'
+                          }`}
+                          style={{ width: `${realTimeStats.cpuUsage}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Memory</div>
+                    <div className="mt-1">
+                      <div className="flex items-baseline">
+                        <span className="text-2xl font-semibold text-gray-900">{realTimeStats.memoryUsage.toFixed(0)}</span>
+                        <span className="ml-1 text-sm text-gray-600">%</span>
+                      </div>
+                      <div className="mt-1 w-full bg-gray-200 rounded-full h-1.5">
+                        <div 
+                          className={`h-1.5 rounded-full transition-all duration-500 ${
+                            realTimeStats.memoryUsage > 80 ? 'bg-red-500' :
+                            realTimeStats.memoryUsage > 60 ? 'bg-yellow-500' : 'bg-blue-500'
+                          }`}
+                          style={{ width: `${realTimeStats.memoryUsage}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Uptime</div>
+                  <div className="mt-1 text-sm text-gray-900 font-medium">
+                    {bot.status === 'ONLINE' ? formatUptime(realTimeStats.uptime) : 'Offline'}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Disk</div>
+                  <div className="mt-1 text-sm text-gray-900">0 MB / 1024 MB</div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Network ⬇</div>
+                    <div className="mt-1 text-sm text-gray-900">0 KB/s</div>
+                  </div>
+                  <div>
+                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Network ⬆</div>
+                    <div className="mt-1 text-sm text-gray-900">0 KB/s</div>
+                  </div>
                 </div>
               </div>
             </div>
 
+            {/* Quick Stats */}
             <div className="bg-white shadow-sm rounded-lg p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <UsersIcon className="h-8 w-8 text-green-600" />
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Stats</h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Servers</span>
+                  <span className="text-sm font-medium text-gray-900">{guilds.length}</span>
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Total Users</p>
-                  <p className="text-2xl font-semibold text-gray-900">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Total Users</span>
+                  <span className="text-sm font-medium text-gray-900">
                     {guilds.reduce((acc, guild) => acc + (guild.memberCount || 0), 0).toLocaleString()}
-                  </p>
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Messages</span>
+                  <span className="text-sm font-medium text-gray-900">{realTimeStats.messageCount.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Commands</span>
+                  <span className="text-sm font-medium text-gray-900">{realTimeStats.commandCount.toLocaleString()}</span>
                 </div>
               </div>
-            </div>
-
-            <div className="bg-white shadow-sm rounded-lg p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <ClockIcon className="h-8 w-8 text-yellow-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Uptime</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {bot.status === 'ONLINE' ? formatUptime(realTimeStats.uptime) : '0s'}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white shadow-sm rounded-lg p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <SignalIcon className="h-8 w-8 text-purple-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Response Time</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {bot.status === 'ONLINE' ? `${realTimeStats.responseTime}ms` : '0ms'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Tabs */}
-          <div className="bg-white shadow-sm rounded-lg">
-            <div className="border-b border-gray-200">
-              <nav className="-mb-px flex">
-                <button
-                  onClick={() => setActiveTab('console')}
-                  className={`py-3 px-8 border-b-2 font-medium text-sm transition-colors ${
-                    activeTab === 'console'
-                      ? 'border-indigo-500 text-indigo-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <CommandLineIcon className="w-5 h-5 inline-block mr-2" />
-                  Console
-                </button>
-                <button
-                  onClick={() => setActiveTab('performance')}
-                  className={`py-3 px-8 border-b-2 font-medium text-sm transition-colors ${
-                    activeTab === 'performance'
-                      ? 'border-indigo-500 text-indigo-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <CpuChipIcon className="w-5 h-5 inline-block mr-2" />
-                  Performance
-                </button>
-                <button
-                  onClick={() => setActiveTab('settings')}
-                  className={`py-3 px-8 border-b-2 font-medium text-sm transition-colors ${
-                    activeTab === 'settings'
-                      ? 'border-indigo-500 text-indigo-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <CogIcon className="w-5 h-5 inline-block mr-2" />
-                  Details
-                </button>
-              </nav>
-            </div>
-
-            <div className="p-6">
-              {/* Console Tab */}
-              {activeTab === 'console' && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-4">
-                      <h3 className="text-lg font-medium text-gray-900">Live Console</h3>
-                      {bot.status === 'ONLINE' && wsConnection ? (
-                        <div className="flex items-center text-green-600">
-                          <WifiIcon className="w-4 h-4 mr-1" />
-                          <span className="text-sm">Connected</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center text-gray-400">
-                          <WifiIcon className="w-4 h-4 mr-1" />
-                          <span className="text-sm">Disconnected</span>
-                        </div>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => router.push(`/bots/${botId}/logs`)}
-                      className="text-sm text-indigo-600 hover:text-indigo-500"
-                    >
-                      View Full Logs →
-                    </button>
-                  </div>
-
-                  <div 
-                    ref={consoleRef}
-                    className="bg-gray-900 text-gray-100 p-4 rounded-lg h-96 overflow-y-auto font-mono text-sm"
-                    style={{ scrollbarGutter: 'stable' }}
-                  >
-                    {logs.length === 0 ? (
-                      <div className="text-gray-500">No logs available...</div>
-                    ) : (
-                      logs.slice(-100).map((log, index) => {
-                        const logMatch = log.match(/\[(\d{2}:\d{2}:\d{2})\] \[([^\]]+)\]: (.*)/);
-                        
-                        if (logMatch) {
-                          const [, time, prefix, message] = logMatch;
-                          
-                          let prefixColor = 'text-gray-400';
-                          if (prefix.includes('bot@')) prefixColor = 'text-blue-400';
-                          else if (prefix.includes('container@')) prefixColor = 'text-yellow-400';
-                          else if (prefix.includes('system@')) prefixColor = 'text-green-400';
-                          
-                          let messageColor = 'text-gray-300';
-                          if (message.toLowerCase().includes('error')) messageColor = 'text-red-400';
-                          else if (message.toLowerCase().includes('warning')) messageColor = 'text-yellow-400';
-                          else if (message.toLowerCase().includes('success') || message.includes('✅')) messageColor = 'text-green-400';
-                          
-                          return (
-                            <div key={index} className="py-0.5 hover:bg-gray-800 -mx-2 px-2 rounded">
-                              <span className="text-gray-500">[{time}]</span>
-                              <span className={`${prefixColor} ml-2`}>[{prefix}]:</span>
-                              <span className={`${messageColor} ml-2`}>{message}</span>
-                            </div>
-                          );
-                        }
-                        
-                        return (
-                          <div key={index} className="text-gray-400 py-0.5">
-                            {log}
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Performance Tab */}
-              {activeTab === 'performance' && (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-700 mb-4">Resource Usage</h4>
-                      <div className="space-y-4">
-                        <div>
-                          <div className="flex justify-between mb-1">
-                            <span className="text-sm text-gray-600">CPU Usage</span>
-                            <span className="text-sm font-medium">{realTimeStats.cpuUsage.toFixed(1)}%</span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div 
-                              className={`h-2 rounded-full transition-all duration-500 ${
-                                realTimeStats.cpuUsage > 80 ? 'bg-red-500' :
-                                realTimeStats.cpuUsage > 60 ? 'bg-yellow-500' : 'bg-green-500'
-                              }`}
-                              style={{ width: `${realTimeStats.cpuUsage}%` }}
-                            />
-                          </div>
-                        </div>
-
-                        <div>
-                          <div className="flex justify-between mb-1">
-                            <span className="text-sm text-gray-600">Memory Usage</span>
-                            <span className="text-sm font-medium">{realTimeStats.memoryUsage.toFixed(1)}%</span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div 
-                              className={`h-2 rounded-full transition-all duration-500 ${
-                                realTimeStats.memoryUsage > 80 ? 'bg-red-500' :
-                                realTimeStats.memoryUsage > 60 ? 'bg-yellow-500' : 'bg-blue-500'
-                              }`}
-                              style={{ width: `${realTimeStats.memoryUsage}%` }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-700 mb-4">Activity Stats</h4>
-                      <div className="space-y-3">
-                        <div className="flex justify-between py-2 border-b border-gray-100">
-                          <span className="text-sm text-gray-600">Events Processed</span>
-                          <span className="text-sm font-medium">{realTimeStats.eventCount.toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between py-2 border-b border-gray-100">
-                          <span className="text-sm text-gray-600">Messages Received</span>
-                          <span className="text-sm font-medium">{realTimeStats.messageCount.toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between py-2">
-                          <span className="text-sm text-gray-600">Commands Executed</span>
-                          <span className="text-sm font-medium">{realTimeStats.commandCount.toLocaleString()}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="pt-6 border-t border-gray-200">
-                    <h4 className="text-sm font-medium text-gray-700 mb-4">Server Distribution</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {guilds.slice(0, 6).map((guild) => (
-                        <div key={guild.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                          {guild.icon ? (
-                            <img 
-                              src={`https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`}
-                              alt={guild.name}
-                              className="w-10 h-10 rounded-full"
-                            />
-                          ) : (
-                            <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                              <ServerIcon className="w-5 h-5 text-gray-600" />
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">{guild.name}</p>
-                            <p className="text-xs text-gray-500">{guild.memberCount?.toLocaleString()} members</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    {guilds.length > 6 && (
-                      <p className="text-sm text-gray-500 text-center mt-4">
-                        And {guilds.length - 6} more servers...
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Settings Tab */}
-              {activeTab === 'settings' && (
-                <div className="space-y-6">
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-4">Bot Information</h4>
-                    <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="bg-gray-50 px-4 py-3 rounded-lg">
-                        <dt className="text-xs font-medium text-gray-500">Bot ID</dt>
-                        <dd className="mt-1 text-sm text-gray-900 font-mono">{bot.id}</dd>
-                      </div>
-                      <div className="bg-gray-50 px-4 py-3 rounded-lg">
-                        <dt className="text-xs font-medium text-gray-500">Client ID</dt>
-                        <dd className="mt-1 text-sm text-gray-900 font-mono">{bot.clientId || 'Not available'}</dd>
-                      </div>
-                      <div className="bg-gray-50 px-4 py-3 rounded-lg">
-                        <dt className="text-xs font-medium text-gray-500">Prefix</dt>
-                        <dd className="mt-1 text-sm text-gray-900 font-mono">{bot.prefix}</dd>
-                      </div>
-                      <div className="bg-gray-50 px-4 py-3 rounded-lg">
-                        <dt className="text-xs font-medium text-gray-500">Created At</dt>
-                        <dd className="mt-1 text-sm text-gray-900">
-                          {new Date(bot.createdAt).toLocaleDateString()}
-                        </dd>
-                      </div>
-                    </dl>
-                  </div>
-
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-4">Features Status</h4>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between py-2">
-                        <span className="text-sm text-gray-600">Welcome Messages</span>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          bot.config?.welcomeEnabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {bot.config?.welcomeEnabled ? 'Enabled' : 'Disabled'}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between py-2">
-                        <span className="text-sm text-gray-600">Auto Moderation</span>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          bot.config?.moderationEnabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {bot.config?.moderationEnabled ? 'Enabled' : 'Disabled'}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between py-2">
-                        <span className="text-sm text-gray-600">Auto Role</span>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          bot.config?.autoRoleEnabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {bot.config?.autoRoleEnabled ? 'Enabled' : 'Disabled'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>

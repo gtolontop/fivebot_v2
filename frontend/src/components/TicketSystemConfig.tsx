@@ -38,6 +38,13 @@ interface TicketCategory {
   emoji?: string;
   roleId?: string;
   maxTickets?: number;
+  priority?: number;
+  color?: string;
+  autoClose?: boolean;
+  autoCloseHours?: number;
+  privateByDefault?: boolean;
+  requiredRoles?: string[];
+  welcomeMessage?: string;
 }
 
 interface TicketPanel {
@@ -46,8 +53,13 @@ interface TicketPanel {
   title: string;
   description: string;
   color: string;
-  type: 'BUTTON' | 'DROPDOWN' | 'HYBRID';
+  type: 'BUTTON' | 'DROPDOWN' | 'HYBRID' | 'REACTION';
   categories: string[];
+  messageId?: string;
+  buttonStyle?: 'PRIMARY' | 'SECONDARY' | 'SUCCESS' | 'DANGER';
+  emoji?: string;
+  requireReason?: boolean;
+  cooldown?: number;
 }
 
 export default function TicketSystemConfig({
@@ -63,7 +75,11 @@ export default function TicketSystemConfig({
     total: 0,
     open: 0,
     closed: 0,
-    avgResponseTime: '0m'
+    avgResponseTime: 'N/A',
+    totalMessages: 0,
+    avgResolutionTime: 'N/A',
+    satisfactionRate: 0,
+    todayTickets: 0
   });
   const [categories, setCategories] = useState<TicketCategory[]>([]);
   const [panels, setPanels] = useState<TicketPanel[]>([]);
@@ -76,7 +92,10 @@ export default function TicketSystemConfig({
     categories: true,
     panels: true,
     active: false,
-    settings: false
+    settings: false,
+    transcripts: false,
+    analytics: false,
+    automations: false
   });
 
   // Category form state
@@ -85,7 +104,14 @@ export default function TicketSystemConfig({
     description: '',
     emoji: '🎫',
     roleId: '',
-    maxTickets: 3
+    maxTickets: 3,
+    priority: 0,
+    color: '#5865F2',
+    autoClose: false,
+    autoCloseHours: 72,
+    privateByDefault: false,
+    requiredRoles: [] as string[],
+    welcomeMessage: ''
   });
 
   // Panel form state
@@ -94,8 +120,12 @@ export default function TicketSystemConfig({
     title: '🎫 Support Tickets',
     description: 'Click the button below to create a support ticket.',
     color: '#5865F2',
-    type: 'BUTTON' as 'BUTTON' | 'DROPDOWN' | 'HYBRID',
-    selectedCategories: [] as string[]
+    type: 'BUTTON' as 'BUTTON' | 'DROPDOWN' | 'HYBRID' | 'REACTION',
+    selectedCategories: [] as string[],
+    buttonStyle: 'PRIMARY' as 'PRIMARY' | 'SECONDARY' | 'SUCCESS' | 'DANGER',
+    emoji: '🎫',
+    requireReason: false,
+    cooldown: 0
   });
 
   useEffect(() => {
@@ -132,8 +162,24 @@ export default function TicketSystemConfig({
   };
 
   const calculateAvgResponseTime = (tickets: any[]) => {
-    // Calculate average response time logic
-    return '15m'; // Placeholder
+    if (!tickets || tickets.length === 0) return 'N/A';
+    
+    const ticketsWithResponse = tickets.filter(t => t.firstResponseAt);
+    if (ticketsWithResponse.length === 0) return 'No data';
+    
+    const totalResponseTime = ticketsWithResponse.reduce((sum, ticket) => {
+      const created = new Date(ticket.createdAt).getTime();
+      const responded = new Date(ticket.firstResponseAt).getTime();
+      return sum + (responded - created);
+    }, 0);
+    
+    const avgMs = totalResponseTime / ticketsWithResponse.length;
+    const avgMinutes = Math.floor(avgMs / 60000);
+    
+    if (avgMinutes < 60) return `${avgMinutes}m`;
+    const hours = Math.floor(avgMinutes / 60);
+    const minutes = avgMinutes % 60;
+    return `${hours}h ${minutes}m`;
   };
 
   const toggleSection = (section: keyof typeof expandedSections) => {
