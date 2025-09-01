@@ -69,6 +69,7 @@ model BotConfig {
   autoRoleId          String? @map("auto_role_id")
   loggingChannelId    String? @map("logging_channel_id")
   customCommands      Json?   @map("custom_commands")
+  ticketData          Json?   @map("ticket_data") // Store ticket categories, panels, etc.
   createdAt           DateTime @default(now()) @map("created_at")
   updatedAt           DateTime @updatedAt @map("updated_at")
 
