@@ -34,6 +34,26 @@ No Activity → 🔴 Red (Idle) → ⚠️ Warning → 🔒 Auto-Close
 
 ---
 
+## 📚 Table of Contents
+
+### Core Concepts
+- [Core Philosophy](#-core-philosophy)
+- [System Architecture](#-system-architecture-overview)
+- [Core Components](#-core-components-deep-dive)
+
+### Configuration
+- [Lifecycle Engine](#3-dynamic-lifecycle-engine)
+- [Assignment Models](#4-assignment-models)
+- [Automation](#8-automation-engine)
+- [Presets](#-configuration-presets-dashboard)
+
+### Advanced Topics
+- [Advanced Considerations](#-advanced-considerations)
+- [Developer Checklist](#-developer-implementation-checklist)
+- [Future Roadmap](#-future-roadmap)
+
+---
+
 ## 🎯 Core Philosophy
 
 This ticketing system is designed with **infinite modularity** at its core:
