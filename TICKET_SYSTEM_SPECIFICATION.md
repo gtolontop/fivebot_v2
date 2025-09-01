@@ -670,19 +670,36 @@ Timer checks run every minute:
 
 ### 6. Channel Naming Security
 
+**Discord Limits:**
+- Maximum channel name length: **100 characters**
+- Allowed characters: `a-z`, `0-9`, `-`, `_`
+- No spaces, special chars, or unicode
+
 **Variable Sanitization:**
 ```javascript
-sanitize_for_channel_name(text) {
+function sanitize_for_channel_name(text, maxLength = 50) {
+    // Reserve space for prefix/suffix (e.g., "ticket-" = 7 chars)
+    const safeLength = Math.min(maxLength, 93);
+    
     return text
         .toLowerCase()
         .replace(/[^a-z0-9-_]/g, '-')  // Only safe chars
         .replace(/--+/g, '-')           // No double dashes
-        .substring(0, 50)               // Length limit
+        .substring(0, safeLength)       // Respect Discord limit
         .replace(/^-|-$/g, '');         // No leading/trailing dash
 }
+
+// UUID format options
+const UUID_FORMATS = {
+    short: () => Math.random().toString(36).substr(2, 6),     // "a1b2c3"
+    medium: () => Date.now().toString(36),                     // "kx3j4n5"
+    full: () => crypto.randomUUID().split('-')[0]             // "f47ac10b"
+};
 ```
 
-**Fallback**: If sanitized name is empty → use `ticket-{uuid}`
+**Fallback Strategy**: 
+- Empty result → `ticket-{short-uuid}` (e.g., `ticket-a1b2c3`)
+- Collision → append counter (e.g., `ticket-a1b2c3-2`)
 
 ### 7. Audit & Permissions
 
