@@ -31,7 +31,6 @@ export default function BotsPage() {
   const [botStats, setBotStats] = useState<{ [botId: string]: BotStats }>({});
   const [openMenus, setOpenMenus] = useState<{ [botId: string]: boolean }>({});
   const [verifyingStatuses, setVerifyingStatuses] = useState(false);
-  const [startingAllBots, setStartingAllBots] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
@@ -279,47 +278,6 @@ export default function BotsPage() {
     }
   };
 
-  const startAllBots = async () => {
-    setStartingAllBots(true);
-    try {
-      const offlineBots = bots.filter(bot => bot.status === 'OFFLINE');
-      
-      if (offlineBots.length === 0) {
-        toast.info('No offline bots to start');
-        return;
-      }
-
-      let started = 0;
-      let errors = 0;
-
-      for (const bot of offlineBots) {
-        try {
-          await botsAPI.start(bot.id);
-          started++;
-          toast.success(`${bot.name} started`);
-        } catch (error: any) {
-          errors++;
-          console.error(`Error starting bot ${bot.name}:`, error);
-          toast.error(`Failed to start ${bot.name}`);
-        }
-      }
-
-      if (started > 0) {
-        toast.success(`Started ${started} bots successfully`);
-        await fetchBots(); // Refresh the list
-      }
-      
-      if (errors > 0) {
-        toast.error(`${errors} bots failed to start`);
-      }
-
-    } catch (error) {
-      console.error('Error starting all bots:', error);
-      toast.error('Error starting bots');
-    } finally {
-      setStartingAllBots(false);
-    }
-  };
 
   const fixConcurrencyIssues = async () => {
     try {
@@ -423,24 +381,6 @@ export default function BotsPage() {
         }}
         actions={
           <div className="flex items-center space-x-4">
-            <button
-              onClick={startAllBots}
-              disabled={startingAllBots || bots.filter(bot => bot.status === 'OFFLINE').length === 0}
-              className="flex items-center space-x-2 px-3 py-2 bg-orange-600 text-white text-sm font-medium rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50"
-              title="Start all offline bots"
-            >
-              {startingAllBots ? (
-                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"/>
-                  <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8v8H4z"/>
-                </svg>
-              ) : (
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd"/>
-                </svg>
-              )}
-              <span>{startingAllBots ? 'Starting...' : 'Start All'}</span>
-            </button>
             <button
               onClick={() => router.push('/bots/create')}
               className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
