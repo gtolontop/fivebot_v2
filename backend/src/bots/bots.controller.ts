@@ -520,45 +520,6 @@ export class BotsController {
     return { success: true };
   }
 
-  @Post('start-all')
-  @UseGuards(AuthGuard('jwt'))
-  async startAllBots(@Req() req: any) {
-    try {
-      console.log('🚀 Start all bots called for user:', req.user?.id);
-      
-      // Get user's offline bots
-      const userBots = await this.botsService.findAll(req.user.id);
-      const offlineBots = userBots.filter(bot => bot.status === 'OFFLINE');
-      
-      console.log(`📊 Found ${offlineBots.length} offline bots to start`);
-      
-      let started = 0;
-      let errors = 0;
-
-      for (const bot of offlineBots) {
-        try {
-          await this.botsService.start(bot.id, req.user.id);
-          started++;
-          console.log(`✅ Started bot: ${bot.name}`);
-        } catch (error) {
-          errors++;
-          console.error(`❌ Failed to start bot ${bot.name}:`, error.message);
-        }
-      }
-
-      console.log(`🎯 Start all complete: ${started} started, ${errors} errors`);
-      
-      return {
-        message: 'Start all bots completed',
-        started,
-        errors,
-        total: offlineBots.length
-      };
-    } catch (error) {
-      console.error('❌ Error in start all bots:', error);
-      throw error;
-    }
-  }
 
   @Post('setup/metrics')
   @UseGuards(AuthGuard('jwt'))
