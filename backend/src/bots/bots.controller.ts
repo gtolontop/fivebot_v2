@@ -19,6 +19,7 @@ import { BotMonitorService } from './bot-monitor.service';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { QueueService } from '../queue/queue.service';
 import { BotLogsService } from './bot-logs.service';
+import { TicketService } from './ticket.service';
 import { ConsoleBufferService } from './console-buffer.service';
 import { BotRealtimeMetricsService } from './bot-realtime-metrics.service';
 import { LogLevel } from '@prisma/client';
@@ -54,6 +55,7 @@ export class BotsController {
     private botLogsService: BotLogsService,
     private consoleBufferService: ConsoleBufferService,
     private botRealtimeMetricsService: BotRealtimeMetricsService,
+    private ticketService: TicketService,
   ) {}
 
   @Post()
@@ -366,20 +368,16 @@ export class BotsController {
   @Get(':id/tickets')
   @UseGuards(AuthGuard('jwt'))
   async getTickets(@Param('id') id: string, @Req() req: any) {
-    try {
-      const bot = await this.botsService.findOne(id, req.user.id);
-      if (!bot) {
-        throw new NotFoundException('Bot not found');
-      }
-      
-      // For now, return mock data - later integrate with actual ticket system
-      return {
-        tickets: [],
-        total: 0
-      };
-    } catch (error) {
-      throw error;
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
     }
+    
+    const tickets = await this.ticketService.getTickets(id);
+    return {
+      tickets,
+      total: tickets.length
+    };
   }
 
   @Post(':id/tickets/:ticketId/close')
@@ -394,7 +392,7 @@ export class BotsController {
       throw new NotFoundException('Bot not found');
     }
     
-    // TODO: Implement ticket closing logic
+    await this.ticketService.closeTicket(id, ticketId);
     return { success: true, message: 'Ticket closed' };
   }
 
