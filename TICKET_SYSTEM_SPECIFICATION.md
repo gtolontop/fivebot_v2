@@ -349,79 +349,51 @@ notifications:
 
 ## 🎨 Customization Framework
 
-### Visual Customization
-```yaml
-theme:
-  colors:
-    new: "#95a5a6"
-    active: "#3498db"
-    waiting: "#f39c12"
-    resolved: "#2ecc71"
-    closed: "#34495e"
-  
-  emojis:
-    ticket: "🎫"
-    new: "🕔"
-    claimed: "👤"
-    transferred: "↔️"
-    closed: "🔒"
-    use_custom: true  # allows custom server emojis
-```
+### Visual Customization (Dashboard)
 
-### Language Customization
-```yaml
-language:
-  ticket_noun: "ticket"  # or "case", "issue", "request"
-  create_verb: "open"    # or "create", "submit", "start"
-  staff_noun: "staff"    # or "agent", "moderator", "support"
-  close_verb: "close"    # or "resolve", "complete", "finish"
-```
+**Theme Builder:**
+- 🎨 **Color Picker**: Choose colors for each state
+- 😀 **Emoji Selector**: 
+  - Default emojis
+  - Custom server emojis
+  - Unicode emoji picker
+- 🖌️ **Embed Designer**:
+  - Live preview
+  - Variable insertion
+  - Template library
+
+### Language Customization (Dashboard)
+
+**Terminology Settings:**
+- 📝 **Nouns**: ticket/case/issue/request
+- 🎯 **Verbs**: open/create/submit/start
+- 👥 **Roles**: staff/agent/moderator/support
+- 🌐 **Translations**: Multi-language support
 
 ---
 
-## 🔧 Configuration Examples
+## 🔧 Configuration Presets (Dashboard)
 
-### Minimal Configuration
-```yaml
-name: "Simple Support"
-mode: "threads"
-lifecycle: "basic"  # new → active → closed
-controls: ["create", "close"]
-notifications: false
-```
+### Preset: Minimal Support
+- **Container**: Threads in single channel
+- **Lifecycle**: Pure activity-driven (green/orange)
+- **Controls**: Just close button
+- **Assignment**: Everyone can reply
+- **Auto-close**: After 48h idle
 
-### Enterprise Configuration
-```yaml
-name: "Corporate Helpdesk"
-mode: "channels"
-categories:
-  model: "department-based"
-  departments: ["IT", "HR", "Finance", "Legal"]
-lifecycle: "sla-driven"
-sla:
-  first_response: "30m"
-  resolution: "24h"
-  escalation: "auto"
-integrations:
-  webhook: true
-  dashboard: true
-  metrics: true
-```
+### Preset: Enterprise Helpdesk  
+- **Container**: Channels with departments
+- **Lifecycle**: SLA-driven with timers
+- **Controls**: Full suite with escalation
+- **Assignment**: Round-robin with skills
+- **Integration**: Webhooks & analytics
 
-### Gaming Community Configuration
-```yaml
-name: "Gaming Support"
-mode: "hybrid"
-entry:
-  quick_actions: ["report-player", "appeal-ban", "tech-issue"]
-  forms: true
-assignment: "skill-based"
-skills:
-  moderation: ["report-player", "appeal-ban"]
-  technical: ["tech-issue", "bug-report"]
-auto_close: "48h"
-fun_mode: true  # adds achievements, streaks, etc.
-```
+### Preset: Gaming Community
+- **Container**: Hybrid (threads + channels)
+- **Entry**: Quick report buttons
+- **Lifecycle**: Activity + priority tags
+- **Assignment**: Skill-based routing
+- **Features**: Achievements, streaks
 
 ---
 
