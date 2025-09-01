@@ -399,16 +399,33 @@ notifications:
 
 ## 📊 Lifecycle Configuration Matrix
 
-| Event | Possible Transitions | Conditions | Configurable |
-|-------|---------------------|------------|--------------|
-| **Ticket Created** | → New, Assigned, Routed | Auto-assign rules | ✓ |
-| **Staff Message** | → Staff Responded, Active | Role check | ✓ |
-| **User Message** | → Awaiting Staff, Active | Is creator | ✓ |
-| **No Activity** | → Idle, Warning, Auto-close | Time threshold | ✓ |
-| **Claim Action** | → Assigned, Owned | Permissions | ✓ |
-| **Transfer Action** | → New Owner, Routed | Target available | ✓ |
-| **Close Action** | → Closed, Archived | Confirmation | ✓ |
-| **Keyword Detected** | → Escalated, Prioritized | Keyword list | ✓ |
+### State Transition Rules
+
+| Event | Current State | Next State | Condition |
+|-------|--------------|------------|-----------|
+| **Ticket Created** | - | 🕔 Gray (New) | Always |
+| **User Message** | Any active | 🟡 Orange | Not closed |
+| **Staff Message** | Any active | 🟢 Green | Not closed |
+| **Multiple User Messages** | Orange | 🟡 Stays Orange | Consecutive |
+| **Multiple Staff Messages** | Green | 🟢 Stays Green | Consecutive |
+| **No Activity** | Green/Orange | 🔴 Red (Idle) | After timeout |
+| **Close Action** | Any | 🔒 Closed | Permission check |
+| **Delete Action** | Any | ❌ Removed | Higher permission |
+
+### Activity-Driven Flow Example
+
+```
+User creates ticket → 🕔 Gray
+User adds details → 🟡 Orange (waiting for staff)
+User adds more info → 🟡 Still Orange
+Staff member replies → 🟢 Green (waiting for user)
+Different staff adds note → 🟢 Still Green
+User responds → 🟡 Orange again
+[24h no activity] → 🔴 Red (idle warning sent)
+[48h total] → 🔒 Auto-closed
+```
+
+**Key Point**: Assignment (claim) and activity colors are **independent systems**!
 
 ---
 
