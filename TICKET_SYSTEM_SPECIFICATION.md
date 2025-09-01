@@ -889,6 +889,7 @@ CREATE INDEX idx_tickets_deleted ON tickets(deleted_at, permanent_delete_at) WHE
 
 ### Testing Matrix
 
+#### Basic Tests
 | Feature | Test Case | Expected Result |
 |---------|-----------|-----------------|
 | **Timers** | Different types with different thresholds | Each runs independently |
@@ -897,6 +898,15 @@ CREATE INDEX idx_tickets_deleted ON tickets(deleted_at, permanent_delete_at) WHE
 | **Load Balance** | 10 staff, 100 tickets | Even distribution |
 | **Soft Delete** | Delete → Wait 7 days | Auto-removed after 7d |
 | **Concurrency** | 5 simultaneous claims | Only 1 succeeds |
+
+#### Advanced Tests
+| Test Type | Scenario | Success Criteria |
+|-----------|----------|------------------|
+| **Stress Test** | 1000 concurrent tickets | <2s response time |
+| **Trigger Conflicts** | Timer + Message + Action simultaneously | Correct priority order |
+| **Audit Recovery** | Restore soft-deleted after 6 days | Full data intact |
+| **Cascade Effects** | Close parent → sub-tickets | Configurable behavior |
+| **Rate Limiting** | 50 tickets/minute from same user | Graceful throttling |
 
 ---
 
