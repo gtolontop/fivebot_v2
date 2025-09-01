@@ -537,4 +537,125 @@ Examples:
 
 ---
 
+## ⚠️ Implementation Safeguards & Edge Cases
+
+### 1. Activity vs Assignment Coherence
+
+**Resolution Strategy:**
+```
+IF activity_mode_enabled:
+    Color changes based on last message author
+    IF claim_mode_also_enabled:
+        Notifications respect claim (warnings → claimed staff)
+        BUT colors still change based on activity
+    ELSE:
+        Notifications go to all participating staff
+```
+
+**Example**: Claimed ticket where different staff replies → Color changes to green, but close permission stays with claimed staff.
+
+### 2. Message Type Handling
+
+**What Counts as Activity:**
+- ✅ Text messages
+- ✅ Messages with attachments (even without text)
+- ✅ Embed messages from staff
+- ❌ Reactions (unless configured)
+- ❌ System messages (joins/leaves)
+- ❌ Bot messages (unless whitelisted)
+
+**Keyword Triggers:**
+- Only scan actual message content
+- Ignore attachment names for security
+- Case-insensitive matching
+- Regex support with sanitization
+
+### 3. Multi-Staff Notification Logic
+
+```python
+def determine_notification_targets(ticket):
+    if ticket.mode == "claimed":
+        return [ticket.claimed_staff]
+    elif ticket.mode == "collaborative":
+        return ticket.all_participating_staff
+    elif ticket.mode == "activity":
+        return [ticket.last_responder]
+    else:  # fallback
+        return ticket.all_staff_with_access
+```
+
+### 4. Load Balancing Metrics
+
+**"Busy" Calculation:**
+- ✅ Count: Active tickets (new, waiting, in-progress)
+- ❌ Exclude: Closed, archived, deleted tickets
+- ⚖️ Weight: Priority tickets count as 2x
+- 📊 Time-based: Recent activity weighted higher
+
+### 5. Timer Conflict Resolution
+
+**Multiple Timer Handling:**
+```
+Each ticket maintains:
+- creation_time
+- last_activity_time
+- warning_sent_time
+- state_change_times[]
+
+Timer checks run every minute:
+- IF (now - last_activity) > idle_threshold AND !warning_sent:
+    Send warning, set warning_sent_time
+- IF (now - last_activity) > close_threshold:
+    Auto-close (even if warning failed)
+```
+
+**Activity During Warning:**
+- Any new message → Reset ALL timers
+- State change → Reset activity timer only
+- Close/reopen → Clear all timers
+
+### 6. Channel Naming Security
+
+**Variable Sanitization:**
+```javascript
+sanitize_for_channel_name(text) {
+    return text
+        .toLowerCase()
+        .replace(/[^a-z0-9-_]/g, '-')  // Only safe chars
+        .replace(/--+/g, '-')           // No double dashes
+        .substring(0, 50)               // Length limit
+        .replace(/^-|-$/g, '');         // No leading/trailing dash
+}
+```
+
+**Fallback**: If sanitized name is empty → use `ticket-{uuid}`
+
+### 7. Audit & Permissions
+
+**Delete Action Security:**
+- **Permission Check**: Requires admin or specific "delete ticket" permission
+- **Confirmation**: Double modal confirmation
+- **Audit Log**: 
+  ```json
+  {
+    "action": "ticket_delete",
+    "ticket_id": "...",
+    "deleted_by": "user_id",
+    "timestamp": "...",
+    "reason": "optional reason",
+    "ticket_snapshot": {...}  // Backup data
+  }
+  ```
+- **Recovery**: Soft delete for 7 days before permanent removal
+
+### 8. Race Condition Prevention
+
+**Concurrent Update Handling:**
+- Database transactions for state changes
+- Optimistic locking for claim/transfer
+- Message queue for notification delivery
+- Debounce rapid state changes (2-second window)
+
+---
+
 This specification represents a **fully modular, endlessly customizable ticket system** where every aspect can be tailored to a guild's specific needs. The system grows with the community, from simple support tickets to complex multi-department helpdesks.
