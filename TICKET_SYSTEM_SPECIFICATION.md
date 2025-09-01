@@ -437,14 +437,14 @@ notifications:
 
 ## 📋 Implementation Priorities
 
-1. **Core State Machine** - Flexible lifecycle engine
-2. **Modular UI System** - Configurable panels and controls
-3. **Permission Framework** - Granular access control
-4. **Storage Backend** - Scalable database design
-5. **Configuration System** - YAML/JSON-based setup
-6. **API Layer** - External integrations
-7. **Analytics Engine** - Metrics and reporting
-8. **Web Dashboard** - Visual management interface
+1. **Core State Machine** - Activity-driven lifecycle engine
+2. **Dashboard Integration** - All config via web interface
+3. **Modular Components** - Enable/disable any feature
+4. **Database Backend** - Scalable ticket storage
+5. **Real-time Updates** - WebSocket state changes
+6. **API Layer** - Dashboard ↔ Bot communication
+7. **Analytics Engine** - Usage metrics & reporting
+8. **Permission System** - Flexible access control
 
 ---
 
