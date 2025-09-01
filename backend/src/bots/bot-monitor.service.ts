@@ -16,6 +16,45 @@ export class BotMonitorService {
   ) {}
 
   // Aggressive heartbeat check every 15 seconds
+  /**
+   * Helper method to update bot status with retry logic and exponential backoff
+   * @param botId - The bot ID to update
+   * @param data - The data to update
+   * @param maxRetries - Maximum number of retry attempts (default: 3)
+   * @param initialDelay - Initial delay in milliseconds (default: 100)
+   */
+  private async updateBotWithRetry(
+    botId: string,
+    data: any,
+    maxRetries: number = 3,
+    initialDelay: number = 100
+  ): Promise<void> {
+    let lastError: Error;
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        await this.prisma.bot.update({
+          where: { id: botId },
+          data
+        });
+        return; // Success, exit the function
+      } catch (error) {
+        lastError = error;
+        
+        if (attempt < maxRetries) {
+          // Calculate exponential backoff delay
+          const delay = initialDelay * Math.pow(2, attempt);
+          console.log(`⚠️ Bot update failed for ${botId}, attempt ${attempt + 1}/${maxRetries + 1}. Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    }
+    
+    // All retries failed
+    console.error(`❌ Failed to update bot ${botId} after ${maxRetries + 1} attempts:`, lastError);
+    throw lastError;
+  }
+
   @Cron('*/15 * * * * *')
   async heartbeatCheck() {
     try {
@@ -36,24 +75,26 @@ export class BotMonitorService {
         // Quick correction for obvious mismatches
         if (bot.status === 'ONLINE' && !isProcessRunning) {
           console.log(`💓 Heartbeat correcting bot ${bot.id} (${bot.name}): ONLINE → OFFLINE`);
-          await this.prisma.bot.update({
-            where: { id: bot.id },
-            data: { 
+          try {
+            await this.updateBotWithRetry(bot.id, { 
               status: 'OFFLINE',
               updatedAt: new Date()
-            }
-          });
-          corrections++;
+            });
+            corrections++;
+          } catch (error) {
+            console.error(`❌ Failed to correct bot ${bot.id} status in heartbeat check:`, error);
+          }
         } else if (bot.status === 'ERROR' && !isProcessRunning) {
           console.log(`💓 Heartbeat correcting bot ${bot.id} (${bot.name}): ERROR → OFFLINE`);
-          await this.prisma.bot.update({
-            where: { id: bot.id },
-            data: { 
+          try {
+            await this.updateBotWithRetry(bot.id, { 
               status: 'OFFLINE',
               updatedAt: new Date()
-            }
-          });
-          corrections++;
+            });
+            corrections++;
+          } catch (error) {
+            console.error(`❌ Failed to correct bot ${bot.id} status in heartbeat check:`, error);
+          }
         }
       }
       
@@ -144,11 +185,13 @@ export class BotMonitorService {
 
       const expectedStatus = isOnline ? 'ONLINE' : 'OFFLINE';
       if (currentBot.status !== expectedStatus) {
-        await this.prisma.bot.update({
-          where: { id: botId },
-          data: { status: expectedStatus }
-        });
-        console.log(`🔄 Updated bot "${bot.name}" status to ${expectedStatus}`);
+        try {
+          await this.updateBotWithRetry(botId, { status: expectedStatus });
+          console.log(`🔄 Updated bot "${bot.name}" status to ${expectedStatus}`);
+        } catch (error) {
+          console.error(`❌ Failed to update bot "${bot.name}" status:`, error);
+          throw error; // Re-throw to maintain original behavior
+        }
       }
 
       return isOnline;
@@ -196,12 +239,14 @@ export class BotMonitorService {
         const expectedStatus = isOnline ? 'ONLINE' : 'OFFLINE';
         
         if (bot.status !== expectedStatus) {
-          await this.prisma.bot.update({
-            where: { id: bot.id },
-            data: { status: expectedStatus }
-          });
-          updated++;
-          console.log(`🔄 Bot "${bot.name}": ${bot.status} → ${expectedStatus}`);
+          try {
+            await this.updateBotWithRetry(bot.id, { status: expectedStatus });
+            updated++;
+            console.log(`🔄 Bot "${bot.name}": ${bot.status} → ${expectedStatus}`);
+          } catch (updateError) {
+            errors++;
+            console.error(`❌ Failed to update bot "${bot.name}" after retries:`, updateError);
+          }
         }
       } catch (error) {
         errors++;
