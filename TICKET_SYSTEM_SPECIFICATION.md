@@ -304,38 +304,34 @@ notifications:
 
 **Important**: Delete is a **destructive action**, not a state. It permanently removes the ticket.
 
-#### Interface Options
-```yaml
-controls:
-  display_as: ["buttons", "dropdown", "commands"]
-  layout: "compact"  # or "expanded"
-  confirmations:
-    close: true
-    delete: "double"  # requires two confirmations
-    archive: false
-  custom_buttons:
-    - label: "Escalate to Admin"
-      emoji: "⚠️"
-      action: "escalate"
-      style: "danger"
-```
+#### Dashboard Interface Builder
+
+**Control Display Options:**
+- 🎯 **Layout Style**: Buttons, dropdown, or slash commands
+- 📍 **Button Positioning**: Below messages or in separate embed
+- ✅ **Confirmations**: 
+  - Simple click
+  - "Are you sure?" modal
+  - Double confirmation for delete
+- 🎨 **Custom Actions**:
+  - Add custom buttons
+  - Set emojis and colors
+  - Link to specific workflows
 
 ---
 
 ### 8. Automation Engine
 
-#### Auto-Close Configuration
-```yaml
-auto_close:
-  enabled: true
-  idle_time: "72h"
-  warning:
-    enabled: true
-    before: "24h"
-    message: "This ticket will close in 24 hours due to inactivity."
-  exclude_states: ["escalated", "on_hold"]
-  final_message: "Ticket closed due to inactivity. Create a new ticket if you need further assistance."
-```
+#### Auto-Management (Dashboard Settings)
+
+**Auto-Close Settings:**
+- 🕒 **Idle Timer**: Set hours/days before auto-close
+- ⚠️ **Warning System**:
+  - Send warning before closing
+  - Customizable warning message
+  - Warning lead time
+- 🚫 **Exclusions**: States that prevent auto-close
+- 💬 **Close Message**: Custom message template
 
 #### Escalation Rules
 ```yaml
