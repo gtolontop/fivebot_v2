@@ -60,7 +60,7 @@ export class TicketStateManager {
   private async processTicketStates(): Promise<void> {
     try {
       // Get all active tickets that might need state updates
-      const tickets = await prisma.ticket.findMany({
+      const tickets = await this.ticketService.prismaClient.ticket.findMany({
         where: {
           state: {
             notIn: [TicketState.CLOSED, TicketState.RESOLVED]
@@ -264,7 +264,7 @@ export class TicketStateManager {
     });
 
     // Reset any active timers
-    await prisma.ticketTimer.updateMany({
+    await this.ticketService.prismaClient.ticketTimer.updateMany({
       where: {
         ticketId,
         active: true
@@ -309,7 +309,7 @@ export class TicketStateManager {
 
   // Create or update timer for a ticket
   async createTimer(ticketId: string, type: TimerType, threshold: number, ticketType: string): Promise<void> {
-    await prisma.ticketTimer.upsert({
+    await this.ticketService.prismaClient.ticketTimer.upsert({
       where: {
         ticketId_type: { ticketId, type }
       },
@@ -345,7 +345,7 @@ export class TicketStateManager {
     }
 
     // Check cooldown
-    const lastTicket = await prisma.ticket.findFirst({
+    const lastTicket = await this.ticketService.prismaClient.ticket.findFirst({
       where: {
         guildId,
         creatorId: userId

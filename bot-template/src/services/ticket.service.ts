@@ -23,6 +23,11 @@ export class TicketService {
     this.client = client;
   }
 
+  // Get prisma instance for other services
+  get prismaClient() {
+    return prisma;
+  }
+
   // Configuration Management
   async getConfig(guildId: string): Promise<TicketConfig | null> {
     return await prisma.ticketConfig.findUnique({
