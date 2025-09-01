@@ -13,7 +13,9 @@ export class TicketStateManager {
   private client: Client;
   private ticketService: TicketService;
   private globalTimer: NodeJS.Timer | null = null;
+  private cleanupTimer: NodeJS.Timer | null = null;
   private checkInterval = 60000; // Check every minute
+  private cleanupInterval = 3600000; // Check every hour
 
   constructor(client: Client, ticketService: TicketService) {
     this.client = client;
@@ -30,15 +32,28 @@ export class TicketStateManager {
       this.processTicketStates();
     }, this.checkInterval);
 
-    console.log('[TicketStateManager] Global timer started');
+    // Start cleanup timer
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer);
+    }
+
+    this.cleanupTimer = setInterval(() => {
+      this.cleanupDeletedTickets();
+    }, this.cleanupInterval);
+
+    console.log('[TicketStateManager] Global timer and cleanup timer started');
   }
 
   stopGlobalTimer(): void {
     if (this.globalTimer) {
       clearInterval(this.globalTimer);
       this.globalTimer = null;
-      console.log('[TicketStateManager] Global timer stopped');
     }
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer);
+      this.cleanupTimer = null;
+    }
+    console.log('[TicketStateManager] Timers stopped');
   }
 
   // Process all active tickets for state changes
@@ -354,5 +369,17 @@ export class TicketStateManager {
     }
 
     return { allowed: true };
+  }
+
+  // Cleanup soft-deleted tickets
+  private async cleanupDeletedTickets(): Promise<void> {
+    try {
+      const deletedCount = await this.ticketService.cleanupDeletedTickets();
+      if (deletedCount > 0) {
+        console.log(`[TicketStateManager] Cleaned up ${deletedCount} soft-deleted tickets`);
+      }
+    } catch (error) {
+      console.error('[TicketStateManager] Error cleaning up deleted tickets:', error);
+    }
   }
 }
