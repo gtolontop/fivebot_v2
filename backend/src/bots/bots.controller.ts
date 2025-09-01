@@ -405,8 +405,9 @@ export class BotsController {
       throw new NotFoundException('Bot not found');
     }
     
+    const categories = await this.ticketService.getCategories(id);
     return {
-      categories: []
+      categories
     };
   }
 
@@ -422,11 +423,7 @@ export class BotsController {
       throw new NotFoundException('Bot not found');
     }
     
-    // TODO: Implement category creation
-    return { 
-      id: Date.now().toString(),
-      ...data 
-    };
+    return await this.ticketService.createCategory(id, data);
   }
 
   @Put(':id/ticket-categories/:categoryId')
@@ -442,10 +439,7 @@ export class BotsController {
       throw new NotFoundException('Bot not found');
     }
     
-    return { 
-      id: categoryId,
-      ...data 
-    };
+    return await this.ticketService.updateCategory(id, categoryId, data);
   }
 
   @Delete(':id/ticket-categories/:categoryId')
@@ -460,6 +454,7 @@ export class BotsController {
       throw new NotFoundException('Bot not found');
     }
     
+    await this.ticketService.deleteCategory(id, categoryId);
     return { success: true };
   }
 
