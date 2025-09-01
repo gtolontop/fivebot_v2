@@ -361,6 +361,175 @@ export class BotsController {
     }
   }
 
+  // Ticket endpoints
+  @Get(':id/tickets')
+  @UseGuards(AuthGuard('jwt'))
+  async getTickets(@Param('id') id: string, @Req() req: any) {
+    try {
+      const bot = await this.botsService.findOne(id, req.user.id);
+      if (!bot) {
+        throw new NotFoundException('Bot not found');
+      }
+      
+      // For now, return mock data - later integrate with actual ticket system
+      return {
+        tickets: [],
+        total: 0
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @Post(':id/tickets/:ticketId/close')
+  @UseGuards(AuthGuard('jwt'))
+  async closeTicket(
+    @Param('id') id: string, 
+    @Param('ticketId') ticketId: string,
+    @Req() req: any
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+    
+    // TODO: Implement ticket closing logic
+    return { success: true, message: 'Ticket closed' };
+  }
+
+  // Ticket Categories
+  @Get(':id/ticket-categories')
+  @UseGuards(AuthGuard('jwt'))
+  async getTicketCategories(@Param('id') id: string, @Req() req: any) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+    
+    return {
+      categories: []
+    };
+  }
+
+  @Post(':id/ticket-categories')
+  @UseGuards(AuthGuard('jwt'))
+  async createTicketCategory(
+    @Param('id') id: string,
+    @Body() data: any,
+    @Req() req: any
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+    
+    // TODO: Implement category creation
+    return { 
+      id: Date.now().toString(),
+      ...data 
+    };
+  }
+
+  @Put(':id/ticket-categories/:categoryId')
+  @UseGuards(AuthGuard('jwt'))
+  async updateTicketCategory(
+    @Param('id') id: string,
+    @Param('categoryId') categoryId: string,
+    @Body() data: any,
+    @Req() req: any
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+    
+    return { 
+      id: categoryId,
+      ...data 
+    };
+  }
+
+  @Delete(':id/ticket-categories/:categoryId')
+  @UseGuards(AuthGuard('jwt'))
+  async deleteTicketCategory(
+    @Param('id') id: string,
+    @Param('categoryId') categoryId: string,
+    @Req() req: any
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+    
+    return { success: true };
+  }
+
+  // Ticket Panels
+  @Get(':id/ticket-panels')
+  @UseGuards(AuthGuard('jwt'))
+  async getTicketPanels(@Param('id') id: string, @Req() req: any) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+    
+    return {
+      panels: []
+    };
+  }
+
+  @Post(':id/ticket-panels')
+  @UseGuards(AuthGuard('jwt'))
+  async createTicketPanel(
+    @Param('id') id: string,
+    @Body() data: any,
+    @Req() req: any
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+    
+    return { 
+      id: Date.now().toString(),
+      ...data 
+    };
+  }
+
+  @Put(':id/ticket-panels/:panelId')
+  @UseGuards(AuthGuard('jwt'))
+  async updateTicketPanel(
+    @Param('id') id: string,
+    @Param('panelId') panelId: string,
+    @Body() data: any,
+    @Req() req: any
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+    
+    return { 
+      id: panelId,
+      ...data 
+    };
+  }
+
+  @Delete(':id/ticket-panels/:panelId')
+  @UseGuards(AuthGuard('jwt'))
+  async deleteTicketPanel(
+    @Param('id') id: string,
+    @Param('panelId') panelId: string,
+    @Req() req: any
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+    
+    return { success: true };
+  }
+
   @Post('start-all')
   @UseGuards(AuthGuard('jwt'))
   async startAllBots(@Req() req: any) {
