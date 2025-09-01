@@ -108,12 +108,30 @@ node scripts/check-mysql-config.js
 node scripts/monitor-db-performance.js
 ```
 
+## Transaction Configuration
+
+All database transactions have been configured with the following settings to prevent timeout issues:
+
+```typescript
+{
+  maxWait: 10000,              // Maximum time to wait for a transaction slot (10 seconds)
+  timeout: 60000,              // Maximum time for the transaction to complete (60 seconds)
+  isolationLevel: 'ReadCommitted', // Use less strict isolation to reduce locks
+}
+```
+
+**Note**: Different services may have different timeout values based on their needs:
+- Bot status updates: 60 seconds (complex operations with multiple queries)
+- Credit operations: 30 seconds (simpler operations)
+- General operations: 30-60 seconds depending on complexity
+
 ## Best Practices
 
 1. **Use Transactions Wisely**
    - Keep transactions as short as possible
-   - Use appropriate isolation levels
-   - Add timeout to long-running transactions
+   - Use appropriate isolation levels (ReadCommitted recommended)
+   - Always configure timeout for long-running transactions
+   - Use the retry mechanism for critical operations
 
 2. **Optimize Queries**
    - Use proper indexes
