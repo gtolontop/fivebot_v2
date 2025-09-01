@@ -90,14 +90,12 @@ export class TicketInteractionHandler {
       case 'transcript':
       case 'reopen':
       case 'delete':
-        await this.controlsHandler.handleButtonInteraction(interaction);
-        break;
-      
-      case 'delete':
         if (interaction.customId === 'ticket:delete:confirm') {
           await this.handleDeleteConfirm(interaction);
         } else if (interaction.customId === 'ticket:delete:cancel') {
           await this.handleDeleteCancel(interaction);
+        } else {
+          await this.controlsHandler.handleButtonInteraction(interaction);
         }
         break;
     }
