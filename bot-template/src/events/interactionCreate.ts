@@ -1,14 +1,22 @@
 import { BaseInteraction, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { PrismaClient } from '@prisma/client';
 import { ConfigService } from '../services/config.service';
+import { TicketInteractionHandler } from '../handlers/ticketInteraction.handler';
 import * as statsCommand from '../commands/stats';
 
 export async function interactionCreate(
   interaction: BaseInteraction,
   prisma: PrismaClient,
-  configService: ConfigService
+  configService: ConfigService,
+  ticketHandler?: TicketInteractionHandler
 ) {
-  if (!interaction.isChatInputCommand()) return;
+  // Handle ticket interactions (buttons, select menus, modals)
+  if (!interaction.isChatInputCommand()) {
+    if (ticketHandler && (interaction.isButton() || interaction.isStringSelectMenu() || interaction.isModalSubmit())) {
+      await ticketHandler.handleInteraction(interaction);
+    }
+    return;
+  }
 
   // Log command execution
   const user = interaction.user;
