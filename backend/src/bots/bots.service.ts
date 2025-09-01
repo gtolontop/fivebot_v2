@@ -316,12 +316,8 @@ export class BotsService {
       throw new BadRequestException('Bot is already starting');
     }
 
-    await this.prisma.bot.update({
-      where: { id: botId },
-      data: { 
-        status: BotStatus.STARTING,
-        shouldAutoRestart: true, // Enable auto-restart when user manually starts
-      },
+    await this.updateStatus(botId, BotStatus.STARTING, {
+      shouldAutoRestart: true, // Enable auto-restart when user manually starts
     });
 
     // Create detailed job log for bot start
@@ -377,12 +373,8 @@ export class BotsService {
       return bot;
     }
 
-    await this.prisma.bot.update({
-      where: { id: botId },
-      data: { 
-        status: BotStatus.STOPPING,
-        shouldAutoRestart: false, // Disable auto-restart when user manually stops
-      },
+    await this.updateStatus(botId, BotStatus.STOPPING, {
+      shouldAutoRestart: false, // Disable auto-restart when user manually stops
     });
 
     await this.queueService.addJob('stop-bot', { botId });
@@ -712,43 +704,134 @@ export class BotsService {
 
   // Force sync bot status with actual Discord state
   async forceSyncBotStatus(botId: string): Promise<BotStatus> {
-    try {
-      const connectionStatus = await this.checkDiscordConnectionStatus(botId);
-      const isProcessRunning = this.queueService.getRunningBots?.().includes(botId) ?? false;
-      
-      let newStatus: BotStatus;
-      
-      if (connectionStatus.isConnected && isProcessRunning) {
-        newStatus = BotStatus.ONLINE;
-      } else if (isProcessRunning && !connectionStatus.isConnected) {
-        newStatus = BotStatus.ERROR;
-      } else {
-        newStatus = BotStatus.OFFLINE;
+    let retries = 8; // Increased retries for better resilience
+    let lastError: any = null;
+    
+    while (retries > 0) {
+      try {
+        // First, get the current bot to ensure it exists and get its current state
+        const currentBot = await this.prisma.bot.findUnique({
+          where: { id: botId },
+          select: { id: true, status: true, updatedAt: true }
+        });
+
+        if (!currentBot) {
+          console.warn(`⚠️ Bot ${botId} not found during force sync`);
+          return BotStatus.ERROR;
+        }
+
+        // Check actual Discord connection and process status
+        const connectionStatus = await this.checkDiscordConnectionStatus(botId);
+        const isProcessRunning = this.queueService.getRunningBots?.().includes(botId) ?? false;
+        
+        let newStatus: BotStatus;
+        
+        if (connectionStatus.isConnected && isProcessRunning) {
+          newStatus = BotStatus.ONLINE;
+        } else if (isProcessRunning && !connectionStatus.isConnected) {
+          newStatus = BotStatus.ERROR;
+        } else {
+          newStatus = BotStatus.OFFLINE;
+        }
+
+        // Only update if status has actually changed
+        if (currentBot.status === newStatus) {
+          console.log(`🔄 Bot ${botId} status already synced as ${newStatus}`);
+          return newStatus;
+        }
+
+        // Update with optimistic locking
+        await this.prisma.bot.update({
+          where: { 
+            id: botId,
+            updatedAt: currentBot.updatedAt // Optimistic locking
+          },
+          data: { 
+            status: newStatus,
+            updatedAt: new Date()
+          }
+        });
+
+        console.log(`🔄 Force synced bot ${botId} status: ${currentBot.status} → ${newStatus} (Discord: ${connectionStatus.isConnected}, Process: ${isProcessRunning})`);
+        
+        return newStatus;
+        
+      } catch (error: any) {
+        lastError = error;
+        
+        const isConcurrencyError = 
+          error.code === 'P2034' || // Prisma concurrency error
+          error.code === 'P2025' || // Record not found
+          (error.message && (
+            error.message.includes('Record has changed') ||
+            error.message.includes('ConnectorError') ||
+            error.message.includes('code: 1020') ||
+            error.message.includes('HY000') ||
+            error.message.includes('Lock wait timeout') ||
+            error.message.includes('Deadlock found') ||
+            error.message.includes('Record to update not found')
+          ));
+          
+        if (isConcurrencyError) {
+          retries--;
+          console.log(`⚠️ Concurrency conflict during force sync for bot ${botId}, retrying... (${retries} retries left)`);
+          
+          if (retries > 0) {
+            // Exponential backoff with jitter
+            const baseDelay = Math.min(2000, (9 - retries) * 250);
+            const jitter = Math.random() * 500;
+            const delay = baseDelay + jitter;
+            
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue;
+          }
+        } else {
+          // Non-concurrency error, log and exit
+          console.error(`❌ Failed to force sync bot ${botId} status due to non-concurrency error:`, error.message || error);
+          break;
+        }
       }
-
-      // Force update the status in database
-      await this.prisma.bot.update({
-        where: { id: botId },
-        data: { 
-          status: newStatus,
-          updatedAt: new Date()
-        }
-      });
-
-      console.log(`🔄 Force synced bot ${botId} status to ${newStatus} (Discord: ${connectionStatus.isConnected}, Process: ${isProcessRunning})`);
-      
-      return newStatus;
-    } catch (error) {
-      console.error(`Error force syncing bot ${botId} status:`, error);
-      // If we can't determine, mark as error
-      await this.prisma.bot.update({
-        where: { id: botId },
-        data: { 
-          status: BotStatus.ERROR,
-          updatedAt: new Date()
-        }
-      });
-      return BotStatus.ERROR;
     }
+
+    // If all retries failed, attempt to mark as error with retry logic
+    console.error(`❌ Failed to force sync bot ${botId} status after all retries. Last error:`, lastError?.message || lastError);
+    
+    // Try to update to ERROR status with separate retry logic
+    let errorRetries = 3;
+    while (errorRetries > 0) {
+      try {
+        const currentBot = await this.prisma.bot.findUnique({
+          where: { id: botId },
+          select: { id: true, updatedAt: true }
+        });
+
+        if (!currentBot) {
+          break;
+        }
+
+        await this.prisma.bot.update({
+          where: { 
+            id: botId,
+            updatedAt: currentBot.updatedAt
+          },
+          data: { 
+            status: BotStatus.ERROR,
+            updatedAt: new Date()
+          }
+        });
+        
+        console.log(`⚠️ Set bot ${botId} status to ERROR after force sync failure`);
+        return BotStatus.ERROR;
+        
+      } catch (errorUpdateError: any) {
+        errorRetries--;
+        if (errorRetries > 0) {
+          await new Promise(resolve => setTimeout(resolve, 200 + Math.random() * 200));
+        }
+      }
+    }
+    
+    // If we couldn't even set error status, return ERROR anyway
+    return BotStatus.ERROR;
   }
 }
