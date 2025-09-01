@@ -152,36 +152,43 @@ export class CreditsService {
     type: CreditType = CreditType.ADMIN_ADJUSTMENT,
     metadata?: any,
   ): Promise<CreditsHistory> {
-    return this.prisma.$transaction(async (tx) => {
-      // Update user credits
-      await tx.user.update({
-        where: { id: userId },
-        data: {
-          credits: {
-            increment: amount,
-          },
-        },
-      });
-
-      // Create history record
-      return tx.creditsHistory.create({
-        data: {
-          userId,
-          amount,
-          reason,
-          type,
-          metadata,
-        },
-        include: {
-          user: {
-            select: {
-              username: true,
-              credits: true,
+    return this.prisma.$transaction(
+      async (tx) => {
+        // Update user credits
+        await tx.user.update({
+          where: { id: userId },
+          data: {
+            credits: {
+              increment: amount,
             },
           },
-        },
-      });
-    });
+        });
+
+        // Create history record
+        return tx.creditsHistory.create({
+          data: {
+            userId,
+            amount,
+            reason,
+            type,
+            metadata,
+          },
+          include: {
+            user: {
+              select: {
+                username: true,
+                credits: true,
+              },
+            },
+          },
+        });
+      },
+      {
+        maxWait: 10000, // Maximum time to wait for a transaction slot (10 seconds)
+        timeout: 30000, // Maximum time for the transaction to complete (30 seconds)
+        isolationLevel: 'ReadCommitted', // Use less strict isolation to reduce locks
+      }
+    );
   }
 
   async getUserBalance(userId: string): Promise<{ credits: number }> {

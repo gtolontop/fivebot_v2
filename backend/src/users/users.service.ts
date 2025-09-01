@@ -72,29 +72,36 @@ export class UsersService {
   }
 
   async addCredits(userId: string, amount: number, reason: string): Promise<User> {
-    return this.prisma.$transaction(async (tx) => {
-      // Update user credits
-      const user = await tx.user.update({
-        where: { id: userId },
-        data: {
-          credits: {
-            increment: amount,
+    return this.prisma.$transaction(
+      async (tx) => {
+        // Update user credits
+        const user = await tx.user.update({
+          where: { id: userId },
+          data: {
+            credits: {
+              increment: amount,
+            },
           },
-        },
-      });
+        });
 
-      // Log the credit transaction
-      await tx.creditsHistory.create({
-        data: {
-          userId,
-          amount,
+        // Log the credit transaction
+        await tx.creditsHistory.create({
+          data: {
+            userId,
+            amount,
           reason,
           type: amount > 0 ? 'PURCHASE' : 'SPEND',
         },
       });
 
-      return user;
-    });
+        return user;
+      },
+      {
+        maxWait: 10000, // Maximum time to wait for a transaction slot (10 seconds)
+        timeout: 30000, // Maximum time for the transaction to complete (30 seconds)
+        isolationLevel: 'ReadCommitted', // Use less strict isolation to reduce locks
+      }
+    );
   }
 
   async spendCredits(userId: string, amount: number, reason: string): Promise<User> {
