@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import { ready } from './events/ready';
 import { guildMemberAdd } from './events/guildMemberAdd';
 import { interactionCreate } from './events/interactionCreate';
+import messageCreate from './events/messageCreate';
 
 // Import commands
 import { commands } from './commands';
@@ -14,6 +15,9 @@ import { commands } from './commands';
 import { ConfigService } from './services/config.service';
 import { WelcomeService } from './services/welcome.service';
 import { MetricsService } from './services/metrics.service';
+import { TicketInteractionHandler } from './handlers/ticketInteraction.handler';
+import { TicketService } from './services/ticket.service';
+import { TicketStateManager } from './services/ticketStateManager.service';
 
 dotenv.config();
 
@@ -37,15 +41,17 @@ class ChildBot {
   private configService: ConfigService;
   private welcomeService: WelcomeService;
   private metricsService: MetricsService | null = null;
+  private ticketHandler: TicketInteractionHandler | null = null;
+  private ticketService: TicketService | null = null;
+  private ticketStateManager: TicketStateManager | null = null;
 
   constructor() {
     this.client = new Client({
       intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMembers,
-        // Suppression de GuildMessages et MessageContent pour utiliser uniquement les slash commands
-        // GatewayIntentBits.GuildMessages,
-        // GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent,
       ],
     });
 
@@ -97,6 +103,13 @@ class ChildBot {
       // Initialize metrics service after bot is ready
       this.metricsService = new MetricsService(this.client, this.prisma, this.botId);
       console.log('📊 Metrics tracking initialized');
+      
+      // Initialize ticket system
+      this.ticketHandler = new TicketInteractionHandler(this.client);
+      const services = this.ticketHandler.getServices();
+      this.ticketService = services.ticketService;
+      this.ticketStateManager = services.stateManager;
+      console.log('🎫 Ticket system initialized');
     });
     
     this.client.on('guildMemberAdd', (member) => 
@@ -104,8 +117,14 @@ class ChildBot {
     );
     
     this.client.on('interactionCreate', (interaction) => 
-      interactionCreate(interaction, this.prisma, this.configService)
+      interactionCreate(interaction, this.prisma, this.configService, this.ticketHandler || undefined)
     );
+    
+    this.client.on('messageCreate', (message) => {
+      if (this.ticketService && this.ticketStateManager) {
+        messageCreate.execute(message, this.ticketService, this.ticketStateManager);
+      }
+    });
     
     // Guild events
     this.client.on('guildCreate', (guild) => {
@@ -292,6 +311,12 @@ class ChildBot {
         } catch (metricsError) {
           console.warn('⚠️ Could not send final metrics:', metricsError);
         }
+      }
+      
+      console.log('🎫 Shutting down ticket system...');
+      // Shutdown ticket system
+      if (this.ticketHandler) {
+        this.ticketHandler.shutdown();
       }
       
       console.log('🔌 Destroying Discord client...');
