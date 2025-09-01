@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
 import SearchableDropdown from '@/components/SearchableDropdown';
+import TicketSystemConfig from '@/components/TicketSystemConfig';
 import { 
   ChartBarIcon, 
   Cog6ToothIcon, 

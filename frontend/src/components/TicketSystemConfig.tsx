@@ -1,0 +1,1047 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { 
+  TicketIcon, 
+  PlusIcon, 
+  TrashIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  Cog6ToothIcon,
+  ChatBubbleLeftRightIcon,
+  ShieldCheckIcon,
+  ClockIcon,
+  UserGroupIcon,
+  DocumentTextIcon,
+  EyeIcon,
+  PencilIcon
+} from '@heroicons/react/24/outline';
+import SearchableDropdown from './SearchableDropdown';
+import toast from 'react-hot-toast';
+import { botsAPI } from '@/utils/api';
+
+interface TicketSystemConfigProps {
+  botId: string;
+  guilds: any[];
+  config: any;
+  updateConfig: (updates: any) => void;
+  textChannels: any[];
+  allRoles: any[];
+}
+
+interface TicketCategory {
+  id: string;
+  name: string;
+  description: string;
+  emoji?: string;
+  roleId?: string;
+  maxTickets?: number;
+}
+
+interface TicketPanel {
+  id: string;
+  channelId: string;
+  title: string;
+  description: string;
+  color: string;
+  type: 'BUTTON' | 'DROPDOWN' | 'HYBRID';
+  categories: string[];
+}
+
+export default function TicketSystemConfig({
+  botId,
+  guilds,
+  config,
+  updateConfig,
+  textChannels,
+  allRoles
+}: TicketSystemConfigProps) {
+  const [activeTickets, setActiveTickets] = useState<any[]>([]);
+  const [ticketStats, setTicketStats] = useState({
+    total: 0,
+    open: 0,
+    closed: 0,
+    avgResponseTime: '0m'
+  });
+  const [categories, setCategories] = useState<TicketCategory[]>([]);
+  const [panels, setPanels] = useState<TicketPanel[]>([]);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showPanelModal, setShowPanelModal] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<TicketCategory | null>(null);
+  const [editingPanel, setEditingPanel] = useState<TicketPanel | null>(null);
+  const [expandedSections, setExpandedSections] = useState({
+    setup: true,
+    categories: true,
+    panels: true,
+    active: false,
+    settings: false
+  });
+
+  // Category form state
+  const [categoryForm, setCategoryForm] = useState({
+    name: '',
+    description: '',
+    emoji: '🎫',
+    roleId: '',
+    maxTickets: 3
+  });
+
+  // Panel form state
+  const [panelForm, setPanelForm] = useState({
+    channelId: '',
+    title: '🎫 Support Tickets',
+    description: 'Click the button below to create a support ticket.',
+    color: '#5865F2',
+    type: 'BUTTON' as 'BUTTON' | 'DROPDOWN' | 'HYBRID',
+    selectedCategories: [] as string[]
+  });
+
+  useEffect(() => {
+    if (config.ticketEnabled && botId) {
+      fetchTicketData();
+    }
+  }, [config.ticketEnabled, botId]);
+
+  const fetchTicketData = async () => {
+    try {
+      // Fetch active tickets
+      const ticketsResponse = await botsAPI.getTickets(botId);
+      setActiveTickets(ticketsResponse.data.tickets || []);
+      
+      // Fetch categories
+      const categoriesResponse = await botsAPI.getTicketCategories(botId);
+      setCategories(categoriesResponse.data.categories || []);
+      
+      // Fetch panels
+      const panelsResponse = await botsAPI.getTicketPanels(botId);
+      setPanels(panelsResponse.data.panels || []);
+      
+      // Calculate stats
+      const tickets = ticketsResponse.data.tickets || [];
+      setTicketStats({
+        total: tickets.length,
+        open: tickets.filter((t: any) => t.state === 'OPEN').length,
+        closed: tickets.filter((t: any) => t.state === 'CLOSED').length,
+        avgResponseTime: calculateAvgResponseTime(tickets)
+      });
+    } catch (error) {
+      console.error('Error fetching ticket data:', error);
+    }
+  };
+
+  const calculateAvgResponseTime = (tickets: any[]) => {
+    // Calculate average response time logic
+    return '15m'; // Placeholder
+  };
+
+  const toggleSection = (section: keyof typeof expandedSections) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
+  const saveCategory = async () => {
+    try {
+      if (editingCategory) {
+        await botsAPI.updateTicketCategory(botId, editingCategory.id, categoryForm);
+        toast.success('Category updated successfully');
+      } else {
+        await botsAPI.createTicketCategory(botId, categoryForm);
+        toast.success('Category created successfully');
+      }
+      
+      setShowCategoryModal(false);
+      setEditingCategory(null);
+      setCategoryForm({
+        name: '',
+        description: '',
+        emoji: '🎫',
+        roleId: '',
+        maxTickets: 3
+      });
+      
+      fetchTicketData();
+    } catch (error) {
+      toast.error('Failed to save category');
+    }
+  };
+
+  const deleteCategory = async (categoryId: string) => {
+    if (!confirm('Are you sure you want to delete this category?')) return;
+    
+    try {
+      await botsAPI.deleteTicketCategory(botId, categoryId);
+      toast.success('Category deleted successfully');
+      fetchTicketData();
+    } catch (error) {
+      toast.error('Failed to delete category');
+    }
+  };
+
+  const savePanel = async () => {
+    try {
+      const panelData = {
+        ...panelForm,
+        categories: panelForm.selectedCategories
+      };
+      
+      if (editingPanel) {
+        await botsAPI.updateTicketPanel(botId, editingPanel.id, panelData);
+        toast.success('Panel updated successfully');
+      } else {
+        await botsAPI.createTicketPanel(botId, panelData);
+        toast.success('Panel created successfully');
+      }
+      
+      setShowPanelModal(false);
+      setEditingPanel(null);
+      setPanelForm({
+        channelId: '',
+        title: '🎫 Support Tickets',
+        description: 'Click the button below to create a support ticket.',
+        color: '#5865F2',
+        type: 'BUTTON',
+        selectedCategories: []
+      });
+      
+      fetchTicketData();
+    } catch (error) {
+      toast.error('Failed to save panel');
+    }
+  };
+
+  const deletePanel = async (panelId: string) => {
+    if (!confirm('Are you sure you want to delete this panel?')) return;
+    
+    try {
+      await botsAPI.deleteTicketPanel(botId, panelId);
+      toast.success('Panel deleted successfully');
+      fetchTicketData();
+    } catch (error) {
+      toast.error('Failed to delete panel');
+    }
+  };
+
+  const closeTicket = async (ticketId: string) => {
+    try {
+      await botsAPI.closeTicket(botId, ticketId);
+      toast.success('Ticket closed successfully');
+      fetchTicketData();
+    } catch (error) {
+      toast.error('Failed to close ticket');
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Ticket System</h2>
+          <p className="text-gray-600">Complete ticket management system for your Discord server</p>
+        </div>
+        <label className="relative inline-flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            checked={config.ticketEnabled || false}
+            onChange={(e) => updateConfig({ ticketEnabled: e.target.checked })}
+            className="sr-only peer"
+          />
+          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+          <span className="ml-3 text-sm font-medium text-gray-900">
+            {config.ticketEnabled ? 'Enabled' : 'Disabled'}
+          </span>
+        </label>
+      </div>
+
+      {config.ticketEnabled ? (
+        <div className="space-y-6">
+          {/* Stats Overview */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <TicketIcon className="w-8 h-8 text-indigo-600" />
+                <span className="text-2xl font-bold text-gray-900">{ticketStats.total}</span>
+              </div>
+              <p className="text-sm text-gray-600">Total Tickets</p>
+            </div>
+            
+            <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <CheckCircleIcon className="w-8 h-8 text-green-600" />
+                <span className="text-2xl font-bold text-gray-900">{ticketStats.open}</span>
+              </div>
+              <p className="text-sm text-gray-600">Open Tickets</p>
+            </div>
+            
+            <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <ExclamationTriangleIcon className="w-8 h-8 text-red-600" />
+                <span className="text-2xl font-bold text-gray-900">{ticketStats.closed}</span>
+              </div>
+              <p className="text-sm text-gray-600">Closed Tickets</p>
+            </div>
+            
+            <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <ClockIcon className="w-8 h-8 text-yellow-600" />
+                <span className="text-2xl font-bold text-gray-900">{ticketStats.avgResponseTime}</span>
+              </div>
+              <p className="text-sm text-gray-600">Avg Response Time</p>
+            </div>
+          </div>
+
+          {/* Basic Setup Section */}
+          <div className="bg-white border border-gray-200 rounded-lg">
+            <button
+              onClick={() => toggleSection('setup')}
+              className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center">
+                <Cog6ToothIcon className="w-5 h-5 text-gray-600 mr-3" />
+                <h3 className="text-lg font-semibold text-gray-900">Basic Setup</h3>
+              </div>
+              {expandedSections.setup ? <ChevronUpIcon className="w-5 h-5" /> : <ChevronDownIcon className="w-5 h-5" />}
+            </button>
+            
+            {expandedSections.setup && (
+              <div className="px-6 pb-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Default Ticket Category
+                  </label>
+                  <SearchableDropdown
+                    options={guilds.flatMap(guild => 
+                      guild.channels.filter((channel: any) => channel.type === 4).map((channel: any) => ({
+                        ...channel,
+                        guildName: guild.name
+                      }))
+                    )}
+                    value={config.ticketCategoryId || ''}
+                    onChange={(value) => updateConfig({ ticketCategoryId: value })}
+                    placeholder="Select a category for ticket channels"
+                    emptyMessage="No categories available"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    New tickets will be created in this Discord category
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Staff Role
+                  </label>
+                  <SearchableDropdown
+                    options={allRoles.map(role => ({ ...role, isRole: true }))}
+                    value={config.ticketStaffRoleId || ''}
+                    onChange={(value) => updateConfig({ ticketStaffRoleId: value })}
+                    placeholder="Select a staff role"
+                    emptyMessage="No roles available"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Members with this role can manage all tickets
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Transcript Channel (Optional)
+                  </label>
+                  <SearchableDropdown
+                    options={textChannels}
+                    value={config.ticketTranscriptChannelId || ''}
+                    onChange={(value) => updateConfig({ ticketTranscriptChannelId: value })}
+                    placeholder="Select a channel for ticket transcripts"
+                    emptyMessage="No text channels available"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Ticket transcripts will be saved here when tickets are closed
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Ticket Categories Section */}
+          <div className="bg-white border border-gray-200 rounded-lg">
+            <button
+              onClick={() => toggleSection('categories')}
+              className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center">
+                <UserGroupIcon className="w-5 h-5 text-gray-600 mr-3" />
+                <h3 className="text-lg font-semibold text-gray-900">Ticket Categories</h3>
+                <span className="ml-2 text-sm text-gray-500">({categories.length})</span>
+              </div>
+              {expandedSections.categories ? <ChevronUpIcon className="w-5 h-5" /> : <ChevronDownIcon className="w-5 h-5" />}
+            </button>
+            
+            {expandedSections.categories && (
+              <div className="px-6 pb-6">
+                <div className="mb-4">
+                  <button
+                    onClick={() => {
+                      setEditingCategory(null);
+                      setCategoryForm({
+                        name: '',
+                        description: '',
+                        emoji: '🎫',
+                        roleId: '',
+                        maxTickets: 3
+                      });
+                      setShowCategoryModal(true);
+                    }}
+                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                  >
+                    <PlusIcon className="w-4 h-4 mr-1" />
+                    Add Category
+                  </button>
+                </div>
+
+                {categories.length > 0 ? (
+                  <div className="space-y-3">
+                    {categories.map((category) => (
+                      <div key={category.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2 mb-1">
+                              <span className="text-2xl">{category.emoji || '🎫'}</span>
+                              <h4 className="font-medium text-gray-900">{category.name}</h4>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-2">{category.description}</p>
+                            <div className="flex items-center space-x-4 text-xs text-gray-500">
+                              {category.roleId && (
+                                <span>Staff: {allRoles.find(r => r.id === category.roleId)?.name || 'Unknown'}</span>
+                              )}
+                              <span>Max tickets: {category.maxTickets || 'Unlimited'}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => {
+                                setEditingCategory(category);
+                                setCategoryForm({
+                                  name: category.name,
+                                  description: category.description,
+                                  emoji: category.emoji || '🎫',
+                                  roleId: category.roleId || '',
+                                  maxTickets: category.maxTickets || 3
+                                });
+                                setShowCategoryModal(true);
+                              }}
+                              className="text-gray-400 hover:text-gray-600"
+                            >
+                              <PencilIcon className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => deleteCategory(category.id)}
+                              className="text-red-400 hover:text-red-600"
+                            >
+                              <TrashIcon className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center p-8 bg-gray-50 rounded-lg">
+                    <UserGroupIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-600">No ticket categories yet</p>
+                    <p className="text-sm text-gray-500 mt-1">Create categories to organize different types of tickets</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Ticket Panels Section */}
+          <div className="bg-white border border-gray-200 rounded-lg">
+            <button
+              onClick={() => toggleSection('panels')}
+              className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center">
+                <ChatBubbleLeftRightIcon className="w-5 h-5 text-gray-600 mr-3" />
+                <h3 className="text-lg font-semibold text-gray-900">Ticket Panels</h3>
+                <span className="ml-2 text-sm text-gray-500">({panels.length})</span>
+              </div>
+              {expandedSections.panels ? <ChevronUpIcon className="w-5 h-5" /> : <ChevronDownIcon className="w-5 h-5" />}
+            </button>
+            
+            {expandedSections.panels && (
+              <div className="px-6 pb-6">
+                <div className="mb-4">
+                  <button
+                    onClick={() => {
+                      setEditingPanel(null);
+                      setPanelForm({
+                        channelId: '',
+                        title: '🎫 Support Tickets',
+                        description: 'Click the button below to create a support ticket.',
+                        color: '#5865F2',
+                        type: 'BUTTON',
+                        selectedCategories: []
+                      });
+                      setShowPanelModal(true);
+                    }}
+                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                  >
+                    <PlusIcon className="w-4 h-4 mr-1" />
+                    Create Panel
+                  </button>
+                </div>
+
+                {panels.length > 0 ? (
+                  <div className="space-y-3">
+                    {panels.map((panel) => {
+                      const channel = textChannels.find(c => c.id === panel.channelId);
+                      return (
+                        <div key={panel.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h4 className="font-medium text-gray-900 mb-1">{panel.title}</h4>
+                              <p className="text-sm text-gray-600 mb-2">{panel.description}</p>
+                              <div className="flex items-center space-x-4 text-xs text-gray-500">
+                                <span>Channel: #{channel?.name || 'Unknown'}</span>
+                                <span>Type: {panel.type}</span>
+                                <span>Categories: {panel.categories.length}</span>
+                                <span style={{ color: panel.color }}>● Color</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() => {
+                                  setEditingPanel(panel);
+                                  setPanelForm({
+                                    channelId: panel.channelId,
+                                    title: panel.title,
+                                    description: panel.description,
+                                    color: panel.color,
+                                    type: panel.type,
+                                    selectedCategories: panel.categories
+                                  });
+                                  setShowPanelModal(true);
+                                }}
+                                className="text-gray-400 hover:text-gray-600"
+                              >
+                                <PencilIcon className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => deletePanel(panel.id)}
+                                className="text-red-400 hover:text-red-600"
+                              >
+                                <TrashIcon className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center p-8 bg-gray-50 rounded-lg">
+                    <ChatBubbleLeftRightIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-600">No ticket panels yet</p>
+                    <p className="text-sm text-gray-500 mt-1">Create panels for users to open tickets</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Active Tickets Section */}
+          <div className="bg-white border border-gray-200 rounded-lg">
+            <button
+              onClick={() => toggleSection('active')}
+              className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center">
+                <DocumentTextIcon className="w-5 h-5 text-gray-600 mr-3" />
+                <h3 className="text-lg font-semibold text-gray-900">Active Tickets</h3>
+                <span className="ml-2 text-sm text-gray-500">({activeTickets.length})</span>
+              </div>
+              {expandedSections.active ? <ChevronUpIcon className="w-5 h-5" /> : <ChevronDownIcon className="w-5 h-5" />}
+            </button>
+            
+            {expandedSections.active && (
+              <div className="px-6 pb-6">
+                {activeTickets.length > 0 ? (
+                  <div className="space-y-3">
+                    {activeTickets.map((ticket) => (
+                      <div key={ticket.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2 mb-1">
+                              <span className={`px-2 py-1 text-xs rounded-full font-medium ${
+                                ticket.state === 'OPEN' ? 'bg-green-100 text-green-800' :
+                                ticket.state === 'CLOSED' ? 'bg-gray-100 text-gray-800' :
+                                'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {ticket.state}
+                              </span>
+                              <h4 className="font-medium text-gray-900">Ticket #{ticket.number}</h4>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-2">
+                              Created by {ticket.creatorName} • {new Date(ticket.createdAt).toLocaleString()}
+                            </p>
+                            <div className="flex items-center space-x-4 text-xs text-gray-500">
+                              <span>Category: {ticket.categoryName || 'General'}</span>
+                              <span>Messages: {ticket.messageCount || 0}</span>
+                              {ticket.claimedBy && <span>Claimed by: {ticket.claimedByName}</span>}
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <a
+                              href={`https://discord.com/channels/${ticket.guildId}/${ticket.channelId}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-indigo-600 hover:text-indigo-800"
+                            >
+                              <EyeIcon className="w-4 h-4" />
+                            </a>
+                            {ticket.state === 'OPEN' && (
+                              <button
+                                onClick={() => closeTicket(ticket.id)}
+                                className="text-red-600 hover:text-red-800"
+                              >
+                                <TrashIcon className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center p-8 bg-gray-50 rounded-lg">
+                    <TicketIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-600">No active tickets</p>
+                    <p className="text-sm text-gray-500 mt-1">Tickets will appear here when users create them</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Advanced Settings Section */}
+          <div className="bg-white border border-gray-200 rounded-lg">
+            <button
+              onClick={() => toggleSection('settings')}
+              className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center">
+                <ShieldCheckIcon className="w-5 h-5 text-gray-600 mr-3" />
+                <h3 className="text-lg font-semibold text-gray-900">Advanced Settings</h3>
+              </div>
+              {expandedSections.settings ? <ChevronUpIcon className="w-5 h-5" /> : <ChevronDownIcon className="w-5 h-5" />}
+            </button>
+            
+            {expandedSections.settings && (
+              <div className="px-6 pb-6 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Ticket Naming Format
+                    </label>
+                    <select
+                      value={config.ticketNamingFormat || 'number'}
+                      onChange={(e) => updateConfig({ ticketNamingFormat: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="number">ticket-0001</option>
+                      <option value="username">ticket-username</option>
+                      <option value="category">category-0001</option>
+                      <option value="date">ticket-2024-01-01</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Max Tickets Per User
+                    </label>
+                    <input
+                      type="number"
+                      value={config.maxTicketsPerUser || 3}
+                      onChange={(e) => updateConfig({ maxTicketsPerUser: parseInt(e.target.value) })}
+                      min="1"
+                      max="10"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Auto Close After (hours)
+                    </label>
+                    <input
+                      type="number"
+                      value={config.autoCloseHours || 72}
+                      onChange={(e) => updateConfig({ autoCloseHours: parseInt(e.target.value) })}
+                      min="0"
+                      placeholder="0 to disable"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Inactivity Warning (hours)
+                    </label>
+                    <input
+                      type="number"
+                      value={config.inactivityWarningHours || 24}
+                      onChange={(e) => updateConfig({ inactivityWarningHours: parseInt(e.target.value) })}
+                      min="0"
+                      placeholder="0 to disable"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-3 pt-4">
+                  <label className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      checked={config.ticketThreads || false}
+                      onChange={(e) => updateConfig({ ticketThreads: e.target.checked })}
+                      className="rounded border-gray-300 text-indigo-600"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Use threads instead of channels</span>
+                  </label>
+
+                  <label className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      checked={config.ticketMentionStaff || false}
+                      onChange={(e) => updateConfig({ ticketMentionStaff: e.target.checked })}
+                      className="rounded border-gray-300 text-indigo-600"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Mention staff role on ticket creation</span>
+                  </label>
+
+                  <label className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      checked={config.ticketDMNotifications || false}
+                      onChange={(e) => updateConfig({ ticketDMNotifications: e.target.checked })}
+                      className="rounded border-gray-300 text-indigo-600"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Send DM notifications to users</span>
+                  </label>
+
+                  <label className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      checked={config.ticketRequireReason || false}
+                      onChange={(e) => updateConfig({ ticketRequireReason: e.target.checked })}
+                      className="rounded border-gray-300 text-indigo-600"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Require reason when closing tickets</span>
+                  </label>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="text-center p-12 bg-gray-50 rounded-lg">
+          <TicketIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Ticket System Disabled</h3>
+          <p className="text-gray-600 mb-4">Enable the ticket system to provide organized support to your members.</p>
+          <button
+            onClick={() => updateConfig({ ticketEnabled: true })}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+          >
+            Enable Ticket System
+          </button>
+        </div>
+      )}
+
+      {/* Category Modal */}
+      {showCategoryModal && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {editingCategory ? 'Edit Category' : 'Create Category'}
+              </h3>
+              <button 
+                onClick={() => setShowCategoryModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Category Name *
+                </label>
+                <input
+                  type="text"
+                  value={categoryForm.name}
+                  onChange={(e) => setCategoryForm(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="General Support"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description
+                </label>
+                <textarea
+                  value={categoryForm.description}
+                  onChange={(e) => setCategoryForm(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="For general questions and support"
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Emoji
+                </label>
+                <input
+                  type="text"
+                  value={categoryForm.emoji}
+                  onChange={(e) => setCategoryForm(prev => ({ ...prev, emoji: e.target.value }))}
+                  placeholder="🎫"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Auto-Assign Role (Optional)
+                </label>
+                <SearchableDropdown
+                  options={allRoles.map(role => ({ ...role, isRole: true }))}
+                  value={categoryForm.roleId}
+                  onChange={(value) => setCategoryForm(prev => ({ ...prev, roleId: value }))}
+                  placeholder="Select a role to auto-assign"
+                  emptyMessage="No roles available"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Max Tickets Per User
+                </label>
+                <input
+                  type="number"
+                  value={categoryForm.maxTickets}
+                  onChange={(e) => setCategoryForm(prev => ({ ...prev, maxTickets: parseInt(e.target.value) }))}
+                  min="1"
+                  max="10"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3 p-6 border-t border-gray-200">
+              <button 
+                onClick={() => setShowCategoryModal(false)}
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={saveCategory}
+                className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+              >
+                {editingCategory ? 'Update' : 'Create'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Panel Modal */}
+      {showPanelModal && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {editingPanel ? 'Edit Panel' : 'Create Ticket Panel'}
+              </h3>
+              <button 
+                onClick={() => setShowPanelModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Channel *
+                </label>
+                <SearchableDropdown
+                  options={textChannels}
+                  value={panelForm.channelId}
+                  onChange={(value) => setPanelForm(prev => ({ ...prev, channelId: value }))}
+                  placeholder="Select a channel for the panel"
+                  emptyMessage="No text channels available"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Panel Title *
+                </label>
+                <input
+                  type="text"
+                  value={panelForm.title}
+                  onChange={(e) => setPanelForm(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="🎫 Support Tickets"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description
+                </label>
+                <textarea
+                  value={panelForm.description}
+                  onChange={(e) => setPanelForm(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Click the button below to create a support ticket."
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Panel Type
+                </label>
+                <select
+                  value={panelForm.type}
+                  onChange={(e) => setPanelForm(prev => ({ ...prev, type: e.target.value as any }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                >
+                  <option value="BUTTON">Button (Simple)</option>
+                  <option value="DROPDOWN">Dropdown (Categories)</option>
+                  <option value="HYBRID">Hybrid (Button + Dropdown)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Embed Color
+                </label>
+                <input
+                  type="text"
+                  value={panelForm.color}
+                  onChange={(e) => setPanelForm(prev => ({ ...prev, color: e.target.value }))}
+                  placeholder="#5865F2"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+
+              {(panelForm.type === 'DROPDOWN' || panelForm.type === 'HYBRID') && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Categories
+                  </label>
+                  <div className="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md p-3">
+                    {categories.map((category) => (
+                      <label key={category.id} className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          checked={panelForm.selectedCategories.includes(category.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setPanelForm(prev => ({ 
+                                ...prev, 
+                                selectedCategories: [...prev.selectedCategories, category.id] 
+                              }));
+                            } else {
+                              setPanelForm(prev => ({ 
+                                ...prev, 
+                                selectedCategories: prev.selectedCategories.filter(id => id !== category.id) 
+                              }));
+                            }
+                          }}
+                          className="rounded border-gray-300 text-indigo-600"
+                        />
+                        <span className="text-sm">
+                          {category.emoji} {category.name}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Preview */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Preview
+                </label>
+                <div className="bg-gray-800 rounded-lg p-4">
+                  <div className="bg-gray-700 rounded-md p-4" style={{
+                    borderLeft: `4px solid ${panelForm.color}`
+                  }}>
+                    <h5 className="text-white font-semibold mb-2">{panelForm.title}</h5>
+                    <p className="text-gray-300 text-sm mb-4">{panelForm.description}</p>
+                    
+                    {panelForm.type === 'BUTTON' && (
+                      <button className="bg-indigo-600 text-white px-4 py-2 rounded text-sm">
+                        Create Ticket
+                      </button>
+                    )}
+                    
+                    {panelForm.type === 'DROPDOWN' && (
+                      <select className="bg-gray-600 text-white px-4 py-2 rounded text-sm w-48">
+                        <option>Select a category...</option>
+                      </select>
+                    )}
+                    
+                    {panelForm.type === 'HYBRID' && (
+                      <div className="flex items-center space-x-2">
+                        <button className="bg-indigo-600 text-white px-4 py-2 rounded text-sm">
+                          Quick Ticket
+                        </button>
+                        <select className="bg-gray-600 text-white px-4 py-2 rounded text-sm">
+                          <option>Or select category...</option>
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3 p-6 border-t border-gray-200">
+              <button 
+                onClick={() => setShowPanelModal(false)}
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={savePanel}
+                className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+              >
+                {editingPanel ? 'Update' : 'Create'} Panel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
