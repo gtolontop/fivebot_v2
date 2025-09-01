@@ -8,6 +8,7 @@ import { BotMonitorService } from './bot-monitor.service';
 import { BotLogsService } from './bot-logs.service';
 import { ConsoleBufferService } from './console-buffer.service';
 import { BotRealtimeMetricsService } from './bot-realtime-metrics.service';
+import { TicketService } from './ticket.service';
 import { EncryptionService } from '../common/encryption/encryption.service';
 import { DiscordModule } from '../common/discord/discord.module';
 import { QueueModule } from '../queue/queue.module';
@@ -16,7 +17,7 @@ import { UsersModule } from '../users/users.module';
 @Module({
   imports: [QueueModule, UsersModule, DiscordModule],
   controllers: [BotsController],
-  providers: [BotsService, BotRecoveryService, BotMetricsService, SetupMetricsService, BotMonitorService, BotLogsService, ConsoleBufferService, BotRealtimeMetricsService, EncryptionService],
+  providers: [BotsService, BotRecoveryService, BotMetricsService, SetupMetricsService, BotMonitorService, BotLogsService, ConsoleBufferService, BotRealtimeMetricsService, TicketService, EncryptionService],
   exports: [BotsService, BotRecoveryService, BotLogsService, ConsoleBufferService, BotMetricsService],
 })
 export class BotsModule {}
