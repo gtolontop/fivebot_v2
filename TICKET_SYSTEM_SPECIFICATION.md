@@ -50,7 +50,12 @@ No Activity → 🔴 Red (Idle) → ⚠️ Warning → 🔒 Auto-Close
 ### Advanced Topics
 - [Advanced Considerations](#-advanced-considerations)
 - [Developer Checklist](#-developer-implementation-checklist)
+- [Testing Framework](#automated-testing-framework)
 - [Future Roadmap](#-future-roadmap)
+
+### Reference
+- [Glossary](#-glossary)
+- [Discord Limits](#-discord-limits--rate-limits)
 
 ---
 
@@ -1023,6 +1028,125 @@ jobs:
 ---
 
 This specification represents a **fully modular, endlessly customizable ticket system** where every aspect can be tailored to a guild's specific needs. The system grows with the community, from simple support tickets to complex multi-department helpdesks.
+
+---
+
+## 📖 Glossary
+
+### Core Terms
+
+**Activity-Driven Mode**  
+Ticket state/color changes automatically based on who sent the last message. No manual claiming required.
+
+**Assignment Model**  
+How staff members are associated with tickets (claim-only, collaborative, hybrid, round-robin).
+
+**Auto-Close**  
+Automatic ticket closure after a configured period of inactivity.
+
+**Channel Container**  
+Tickets created as Discord channels within categories (vs threads).
+
+**Claim System**  
+Staff must explicitly claim a ticket before they can manage it exclusively.
+
+**Collaborative Mode**  
+All staff can respond to any ticket without claiming.
+
+**Dashboard**  
+FiveBot web interface where all configuration happens (no config files).
+
+**Entry Point**  
+How users create tickets (buttons, dropdowns, commands).
+
+**Global Timer**  
+Single timer that checks all tickets periodically (for large servers).
+
+**Hybrid Container**  
+Mix of threads for simple tickets and channels for complex ones.
+
+**Idle State**  
+Ticket with no activity for configured threshold (usually red indicator).
+
+**Lifecycle Engine**  
+System that manages ticket state transitions based on rules.
+
+**Modal**  
+Discord popup form for collecting structured input.
+
+**Preset**  
+Pre-configured template (Minimal, Gaming, Enterprise).
+
+**Soft Delete**  
+Ticket marked as deleted but retained for 7 days before permanent removal.
+
+**Thread Container**  
+Tickets created as Discord threads within a hub channel.
+
+**UUID**  
+Unique identifier used in ticket names when sanitization fails.
+
+**Warning System**  
+Notifications sent before auto-close triggers.
+
+**Webhook Events**  
+HTTP callbacks sent to external systems on state changes.
+
+### State Colors
+
+- 🕔 **Gray**: New ticket, no activity
+- 🟡 **Orange**: Waiting for staff response
+- 🟢 **Green**: Waiting for user response
+- 🔴 **Red**: Idle/inactive
+- 🔒 **Closed**: Ticket resolved
+- ❌ **Deleted**: Permanently removed (not a state)
+
+---
+
+## ⚠️ Discord Limits & Rate Limits
+
+### Thread Limits
+- **Max active threads per channel**: 1000
+- **Max archived threads**: Unlimited (but affects performance)
+- **Thread name length**: 100 characters
+- **Auto-archive options**: 1h, 24h, 3d, 7d
+
+### Channel Limits
+- **Max channels per category**: 50
+- **Max categories per server**: 500
+- **Channel name length**: 100 characters
+- **Permission overwrites per channel**: 500
+
+### Rate Limits
+```typescript
+// Discord API Rate Limits to consider
+const RATE_LIMITS = {
+    channelCreate: '5 per 5 seconds per guild',
+    threadCreate: '5 per 5 seconds per channel',
+    messageCreate: '5 per 5 seconds per channel',
+    webhookExecute: '30 per minute per webhook',
+    memberUpdate: '10 per 10 seconds per guild'
+};
+
+// Implement queue system for high-volume servers
+class RateLimitQueue {
+    async createTicket(data: TicketData) {
+        await this.bucket.wait('channelCreate');
+        return await this.discord.createChannel(data);
+    }
+}
+```
+
+### Recommended Limits by Server Size
+
+| Server Size | Container Type | Max Concurrent | Auto-Close |
+|-------------|---------------|----------------|------------|
+| Small (<1k) | Threads | 50 | 72h |
+| Medium (<10k) | Threads | 200 | 48h |
+| Large (<50k) | Channels | 500 | 24h |
+| Massive (50k+) | Hybrid | 1000 | 12h |
+
+---
 
 **Version**: 1.0.0  
 **Last Updated**: January 2025  
