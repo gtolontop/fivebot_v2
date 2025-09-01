@@ -260,10 +260,9 @@ export class BotsService {
     const ticketData: any = {};
     const configData: any = {};
 
-    // Get existing ticketData
+    // Get existing config with ticketData
     const existingConfig = await this.prisma.botConfig.findUnique({
-      where: { botId },
-      select: { ticketData: true }
+      where: { botId }
     });
 
     const currentTicketData = (existingConfig?.ticketData as any) || {};
