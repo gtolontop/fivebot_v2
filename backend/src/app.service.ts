@@ -15,26 +15,68 @@ export class AppService implements OnApplicationBootstrap {
     
     // Optional: Add a delay and then try to reset in background
     setTimeout(async () => {
+      await this.resetBotStatusesWithRetry();
+    }, 5000); // Wait 5 seconds after app start
+  }
+
+  // Helper method to reset bot statuses with retry logic and exponential backoff
+  private async resetBotStatusesWithRetry(maxRetries: number = 3): Promise<void> {
+    const baseDelay = 1000; // Start with 1 second delay
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        console.log('🔄 Attempting to reset bot statuses in background...');
-        const result = await this.prisma.bot.updateMany({
-          where: {
-            status: {
-              in: [BotStatus.STARTING, BotStatus.STOPPING] // Only reset transitional states
-            }
+        console.log(`🔄 Attempting to reset bot statuses (attempt ${attempt}/${maxRetries})...`);
+        
+        // Use a transaction with a timeout to prevent long locks
+        const result = await this.prisma.$transaction(
+          async (tx) => {
+            return await tx.bot.updateMany({
+              where: {
+                status: {
+                  in: [BotStatus.STARTING, BotStatus.STOPPING] // Only reset transitional states
+                }
+              },
+              data: {
+                status: BotStatus.OFFLINE
+              }
+            });
           },
-          data: {
-            status: BotStatus.OFFLINE
+          {
+            maxWait: 5000, // Maximum time to wait for a transaction slot (5 seconds)
+            timeout: 10000, // Maximum time for the transaction to complete (10 seconds)
           }
-        });
+        );
         
         if (result.count > 0) {
-          console.log(`✅ Reset ${result.count} bots from transitional states to OFFLINE`);
+          console.log(`✅ Successfully reset ${result.count} bots from transitional states to OFFLINE`);
+        } else {
+          console.log('✅ No bots needed to be reset');
         }
+        
+        return; // Success, exit the retry loop
+        
       } catch (error) {
-        console.log('⚠️ Could not reset bot statuses, will skip for now');
+        const isLockTimeout = 
+          error.code === 'P2034' || // Prisma transaction failed
+          error.code === 'ER_LOCK_WAIT_TIMEOUT' || // MySQL lock wait timeout
+          error.message?.includes('lock') ||
+          error.message?.includes('timeout');
+        
+        if (isLockTimeout && attempt < maxRetries) {
+          const delay = baseDelay * Math.pow(2, attempt - 1); // Exponential backoff: 1s, 2s, 4s
+          console.log(`⚠️ Lock timeout detected, retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        
+        // Final attempt failed or non-retryable error
+        console.error(`❌ Failed to reset bot statuses after ${attempt} attempts:`, {
+          code: error.code,
+          message: error.message
+        });
+        console.log('⚠️ Bot statuses will remain in their current state');
       }
-    }, 5000); // Wait 5 seconds after app start
+    }
   }
 
   // Helper method to safely update bot status with retry logic
