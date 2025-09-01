@@ -46,33 +46,39 @@ export class BotRecoveryService implements OnApplicationBootstrap {
       this.logger.log(`🔍 Found ${botsToRecover.length} bots to recover`);
 
       // Set all bots to OFFLINE first to avoid conflicts
-      await this.prisma.bot.updateMany({
-        where: {
-          id: {
-            in: botsToRecover.map(bot => bot.id),
+      await this.updateManyWithRetry(
+        () => this.prisma.bot.updateMany({
+          where: {
+            id: {
+              in: botsToRecover.map(bot => bot.id),
+            },
           },
-        },
-        data: {
-          status: BotStatus.OFFLINE,
-          containerId: null,
-        },
-      });
+          data: {
+            status: BotStatus.OFFLINE,
+            containerId: null,
+          },
+        }),
+        'setting bots to OFFLINE status'
+      );
 
       // Update host statuses to DOWN
-      await this.prisma.host.updateMany({
-        where: {
-          botId: {
-            in: botsToRecover.map(bot => bot.id),
+      await this.updateManyWithRetry(
+        () => this.prisma.host.updateMany({
+          where: {
+            botId: {
+              in: botsToRecover.map(bot => bot.id),
+            },
+            status: {
+              not: 'DOWN',
+            },
           },
-          status: {
-            not: 'DOWN',
+          data: {
+            status: 'DOWN',
+            stoppedAt: new Date(),
           },
-        },
-        data: {
-          status: 'DOWN',
-          stoppedAt: new Date(),
-        },
-      });
+        }),
+        'updating host statuses to DOWN'
+      );
 
       // Queue start jobs for each bot with a delay to avoid overwhelming the system
       for (let i = 0; i < botsToRecover.length; i++) {
@@ -120,6 +126,51 @@ export class BotRecoveryService implements OnApplicationBootstrap {
     } catch (error) {
       this.logger.error('❌ Bot recovery process failed:', error);
     }
+  }
+
+  /**
+   * Helper method to execute updateMany with retry logic and exponential backoff
+   */
+  private async updateManyWithRetry<T>(
+    operation: () => Promise<T>,
+    description: string,
+    maxRetries: number = 3
+  ): Promise<T | null> {
+    const baseDelay = 1000; // Start with 1 second delay
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        this.logger.log(`🔄 Attempting ${description} (attempt ${attempt}/${maxRetries})...`);
+        const result = await operation();
+        this.logger.log(`✅ Successfully completed ${description}`);
+        return result;
+      } catch (error) {
+        const isLockTimeout =
+          error.code === 'P2034' || // Prisma transaction failed
+          error.code === 'ER_LOCK_WAIT_TIMEOUT' || // MySQL lock wait timeout
+          error.message?.includes('lock') ||
+          error.message?.includes('timeout');
+
+        if (isLockTimeout && attempt < maxRetries) {
+          const delay = baseDelay * Math.pow(2, attempt - 1); // Exponential backoff: 1s, 2s, 4s
+          this.logger.warn(`⚠️ Lock timeout detected for ${description}, retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+
+        // Final attempt failed or non-retryable error
+        this.logger.error(`❌ Failed ${description} after ${attempt} attempts:`, {
+          code: error.code,
+          message: error.message,
+        });
+        
+        if (attempt === maxRetries) {
+          throw error; // Re-throw on final attempt
+        }
+      }
+    }
+    
+    return null;
   }
 
   /**
