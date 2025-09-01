@@ -87,6 +87,12 @@ async function handleBuiltInCommands(
         await handleHelp(interaction);
         break;
       
+      case 'ticket':
+        // Import dynamically to avoid circular dependency
+        const ticketCommand = await import('../commands/ticket');
+        await ticketCommand.execute(interaction);
+        break;
+      
       default:
         // Handle custom commands if any
         await handleCustomCommand(interaction, configService);
