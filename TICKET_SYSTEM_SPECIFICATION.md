@@ -658,4 +658,139 @@ sanitize_for_channel_name(text) {
 
 ---
 
+## 🔨 Developer Implementation Checklist
+
+### Pre-Development Verification Points
+
+#### 1. Timer Architecture
+```typescript
+interface TicketTimer {
+    ticketId: string;
+    type: 'idle' | 'warning' | 'autoclose';
+    threshold: number;  // ms
+    startTime: Date;
+    lastReset: Date;
+    ticketType: string;  // for type-specific timers
+}
+
+// Ensure each ticket type can have different timers
+const timerConfig = {
+    'support': { idle: 24*60*60*1000, warning: 2*60*60*1000 },
+    'report': { idle: 72*60*60*1000, warning: 12*60*60*1000 },
+    'priority': { idle: 6*60*60*1000, warning: 30*60*1000 }
+};
+```
+
+#### 2. Channel Name Generation Tests
+```javascript
+// Test cases for sanitization
+const testNames = [
+    { input: "John Doe", expected: "john-doe" },
+    { input: "🎫・User#1234", expected: "user-1234" },
+    { input: "!!!@@@###", expected: "ticket-{uuid}" },  // fallback
+    { input: "Very Long Username That Exceeds The Maximum", expected: "very-long-username-that-exceeds-the-maximum" },
+    { input: "--test--", expected: "test" },
+    { input: "Ñoño José", expected: "nono-jose" }
+];
+```
+
+#### 3. Message Activity Detection
+```typescript
+function isActivityMessage(message: Message): boolean {
+    // Whitelist specific bots
+    const whitelistedBots = dashboard.getWhitelistedBots();
+    
+    if (message.author.bot && !whitelistedBots.includes(message.author.id)) {
+        return false;
+    }
+    
+    // Count attachments even without text
+    if (message.attachments.size > 0) return true;
+    
+    // Count embeds from staff
+    if (message.embeds.length > 0 && isStaff(message.author)) return true;
+    
+    // Regular text messages
+    if (message.content.trim().length > 0) return true;
+    
+    return false;
+}
+```
+
+#### 4. Load Balancing Algorithm
+```sql
+-- Query for least busy staff
+SELECT 
+    staff_id,
+    COUNT(CASE WHEN status IN ('new', 'waiting', 'active') THEN 1 END) as active_tickets,
+    SUM(CASE WHEN priority = 'high' THEN 2 ELSE 1 END) as weighted_load
+FROM tickets
+WHERE deleted_at IS NULL
+GROUP BY staff_id
+ORDER BY weighted_load ASC
+LIMIT 1;
+```
+
+#### 5. Soft Delete Implementation
+```typescript
+interface SoftDeletableTicket {
+    id: string;
+    deleted_at: Date | null;
+    deleted_by: string | null;
+    deletion_reason: string | null;
+    permanent_delete_at: Date | null;  // deleted_at + 7 days
+    backup_data: object;  // Full ticket snapshot
+}
+
+// Cron job for permanent deletion
+async function cleanupSoftDeleted() {
+    const sevenDaysAgo = new Date(Date.now() - 7*24*60*60*1000);
+    await db.tickets.deleteMany({
+        deleted_at: { $lt: sevenDaysAgo },
+        permanent_delete_at: { $lt: new Date() }
+    });
+}
+```
+
+#### 6. Concurrency Testing Scenarios
+```typescript
+// Test concurrent operations
+async function testConcurrentClaims() {
+    const ticketId = 'test-ticket';
+    
+    // Simulate 3 staff trying to claim simultaneously
+    const results = await Promise.allSettled([
+        claimTicket(ticketId, 'staff1'),
+        claimTicket(ticketId, 'staff2'),
+        claimTicket(ticketId, 'staff3')
+    ]);
+    
+    // Only one should succeed
+    const successes = results.filter(r => r.status === 'fulfilled');
+    assert(successes.length === 1, 'Only one claim should succeed');
+}
+```
+
+### Critical Database Indexes
+```sql
+-- Essential indexes for performance
+CREATE INDEX idx_tickets_status_type ON tickets(status, ticket_type);
+CREATE INDEX idx_tickets_staff_active ON tickets(assigned_staff_id) WHERE status != 'closed';
+CREATE INDEX idx_tickets_timers ON tickets(last_activity, warning_sent_at);
+CREATE INDEX idx_tickets_deleted ON tickets(deleted_at, permanent_delete_at) WHERE deleted_at IS NOT NULL;
+```
+
+### Testing Matrix
+
+| Feature | Test Case | Expected Result |
+|---------|-----------|-----------------|
+| **Timers** | Different types with different thresholds | Each runs independently |
+| **Names** | Unicode, emojis, special chars | Safe channel names |
+| **Activity** | Attachments, embeds, bot messages | Correct state changes |
+| **Load Balance** | 10 staff, 100 tickets | Even distribution |
+| **Soft Delete** | Delete → Wait 7 days | Auto-removed after 7d |
+| **Concurrency** | 5 simultaneous claims | Only 1 succeeds |
+
+---
+
 This specification represents a **fully modular, endlessly customizable ticket system** where every aspect can be tailored to a guild's specific needs. The system grows with the community, from simple support tickets to complex multi-department helpdesks.
