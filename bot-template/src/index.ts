@@ -109,6 +109,8 @@ class ChildBot {
       const services = this.ticketHandler.getServices();
       this.ticketService = services.ticketService;
       this.ticketStateManager = services.stateManager;
+      // Store on client for command access
+      (this.client as any).ticketHandler = this.ticketHandler;
       console.log('🎫 Ticket system initialized');
     });
     
