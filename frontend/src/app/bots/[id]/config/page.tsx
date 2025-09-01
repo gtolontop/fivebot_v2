@@ -23,7 +23,8 @@ import {
   ServerIcon,
   ClockIcon,
   ExclamationTriangleIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  TicketIcon
 } from '@heroicons/react/24/outline';
 
 interface Bot {
@@ -53,6 +54,10 @@ interface BotConfig {
   autoRoleId?: string;
   loggingChannelId?: string;
   customCommands?: any;
+  ticketEnabled?: boolean;
+  ticketCategoryId?: string;
+  ticketStaffRoleId?: string;
+  ticketTranscriptChannelId?: string;
 }
 
 interface DiscordGuild {
