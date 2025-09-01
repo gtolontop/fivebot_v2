@@ -734,6 +734,8 @@ const UUID_FORMATS = {
 ### Pre-Development Verification Points
 
 #### 1. Timer Architecture
+
+**Individual Timer Approach (Small Servers <100 tickets):**
 ```typescript
 interface TicketTimer {
     ticketId: string;
@@ -743,14 +745,48 @@ interface TicketTimer {
     lastReset: Date;
     ticketType: string;  // for type-specific timers
 }
-
-// Ensure each ticket type can have different timers
-const timerConfig = {
-    'support': { idle: 24*60*60*1000, warning: 2*60*60*1000 },
-    'report': { idle: 72*60*60*1000, warning: 12*60*60*1000 },
-    'priority': { idle: 6*60*60*1000, warning: 30*60*1000 }
-};
 ```
+
+**Global Timer Approach (Large Servers 100+ tickets):**
+```typescript
+// Single timer checks all tickets every minute
+class GlobalTicketTimer {
+    private interval: NodeJS.Timer;
+    
+    start() {
+        this.interval = setInterval(async () => {
+            const batch = await db.tickets.find({
+                status: { $in: ['active', 'waiting'] },
+                lastActivity: { $lt: new Date(Date.now() - WARNING_THRESHOLD) }
+            }).limit(100);  // Process in batches
+            
+            await this.processBatch(batch);
+        }, 60000);  // Every minute
+    }
+    
+    async processBatch(tickets: Ticket[]) {
+        const notifications = [];
+        
+        for (const ticket of tickets) {
+            const timeSinceActivity = Date.now() - ticket.lastActivity;
+            const config = timerConfig[ticket.type];
+            
+            if (timeSinceActivity > config.close && !ticket.closedAt) {
+                await this.closeTicket(ticket);
+            } else if (timeSinceActivity > config.warning && !ticket.warningsentAt) {
+                notifications.push(this.sendWarning(ticket));
+            }
+        }
+        
+        // Batch send notifications
+        await Promise.all(notifications);
+    }
+}
+```
+
+**Performance Comparison:**
+- Individual timers: More accurate, higher memory usage
+- Global timer: Less accurate (±1 min), much better for scale
 
 #### 2. Channel Name Generation Tests
 ```javascript
