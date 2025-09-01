@@ -123,6 +123,39 @@ export const botsAPI = {
   getDashboardStats: () => api.get('/bots/dashboard/stats'),
   getMetrics: (id: string) => api.get(`/bots/${id}/metrics`),
   setupMetrics: () => api.post('/bots/setup/metrics'),
+  
+  // Tickets
+  getTickets: (botId: string) => 
+    api.get(`/bots/${botId}/tickets`),
+  
+  closeTicket: (botId: string, ticketId: string) => 
+    api.post(`/bots/${botId}/tickets/${ticketId}/close`),
+
+  // Ticket Categories
+  getTicketCategories: (botId: string) => 
+    api.get(`/bots/${botId}/ticket-categories`),
+  
+  createTicketCategory: (botId: string, data: any) => 
+    api.post(`/bots/${botId}/ticket-categories`, data),
+  
+  updateTicketCategory: (botId: string, categoryId: string, data: any) => 
+    api.put(`/bots/${botId}/ticket-categories/${categoryId}`, data),
+  
+  deleteTicketCategory: (botId: string, categoryId: string) => 
+    api.delete(`/bots/${botId}/ticket-categories/${categoryId}`),
+
+  // Ticket Panels
+  getTicketPanels: (botId: string) => 
+    api.get(`/bots/${botId}/ticket-panels`),
+  
+  createTicketPanel: (botId: string, data: any) => 
+    api.post(`/bots/${botId}/ticket-panels`, data),
+  
+  updateTicketPanel: (botId: string, panelId: string, data: any) => 
+    api.put(`/bots/${botId}/ticket-panels/${panelId}`, data),
+  
+  deleteTicketPanel: (botId: string, panelId: string) => 
+    api.delete(`/bots/${botId}/ticket-panels/${panelId}`),
 };
 
 export const usersAPI = {
