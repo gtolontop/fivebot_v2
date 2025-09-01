@@ -13,18 +13,18 @@ export const data = new SlashCommandBuilder()
     subcommand
       .setName('setup')
       .setDescription('Set up the ticket system')
+      .addRoleOption(option =>
+        option
+          .setName('staff-role')
+          .setDescription('Staff role that can manage tickets')
+          .setRequired(true)
+      )
       .addChannelOption(option =>
         option
           .setName('category')
           .setDescription('Category for ticket channels')
           .setRequired(false)
           .addChannelTypes(ChannelType.GuildCategory)
-      )
-      .addRoleOption(option =>
-        option
-          .setName('staff-role')
-          .setDescription('Staff role that can manage tickets')
-          .setRequired(true)
       )
   )
   .addSubcommand(subcommand =>
