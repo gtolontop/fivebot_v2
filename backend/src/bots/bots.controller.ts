@@ -467,8 +467,9 @@ export class BotsController {
       throw new NotFoundException('Bot not found');
     }
     
+    const panels = await this.ticketService.getPanels(id);
     return {
-      panels: []
+      panels
     };
   }
 
@@ -484,10 +485,7 @@ export class BotsController {
       throw new NotFoundException('Bot not found');
     }
     
-    return { 
-      id: Date.now().toString(),
-      ...data 
-    };
+    return await this.ticketService.createPanel(id, data);
   }
 
   @Put(':id/ticket-panels/:panelId')
@@ -503,10 +501,7 @@ export class BotsController {
       throw new NotFoundException('Bot not found');
     }
     
-    return { 
-      id: panelId,
-      ...data 
-    };
+    return await this.ticketService.updatePanel(id, panelId, data);
   }
 
   @Delete(':id/ticket-panels/:panelId')
@@ -521,6 +516,7 @@ export class BotsController {
       throw new NotFoundException('Bot not found');
     }
     
+    await this.ticketService.deletePanel(id, panelId);
     return { success: true };
   }
 
