@@ -908,6 +908,77 @@ CREATE INDEX idx_tickets_deleted ON tickets(deleted_at, permanent_delete_at) WHE
 | **Cascade Effects** | Close parent → sub-tickets | Configurable behavior |
 | **Rate Limiting** | 50 tickets/minute from same user | Graceful throttling |
 
+### Automated Testing Framework
+
+**Recommended Stack:**
+- **Test Runner**: [Vitest](https://vitest.dev/) - Fast, Discord.js compatible
+- **Integration Tests**: [Discord.js Test Utils](https://github.com/discordjs/discord.js/tree/main/packages/discord.js/test)
+- **Database Tests**: [MongoDB Memory Server](https://github.com/nodkz/mongodb-memory-server)
+- **API Tests**: [Supertest](https://github.com/visionmedia/supertest) for dashboard endpoints
+
+**Test Structure:**
+```typescript
+// tests/tickets/lifecycle.test.ts
+import { describe, it, expect, beforeEach } from 'vitest';
+import { createMockGuild, createMockUser } from '@/test-utils';
+
+describe('Ticket Lifecycle', () => {
+    describe('Activity-Driven States', () => {
+        it('should change to orange when user sends message', async () => {
+            const ticket = await createTicket({ mode: 'activity-driven' });
+            await ticket.sendMessage(user, 'Help needed');
+            
+            expect(ticket.state).toBe('waiting_for_staff');
+            expect(ticket.color).toBe('orange');
+        });
+        
+        it('should stay orange with consecutive user messages', async () => {
+            const ticket = await createTicket({ mode: 'activity-driven' });
+            await ticket.sendMessage(user, 'First message');
+            await ticket.sendMessage(user, 'Second message');
+            
+            expect(ticket.state).toBe('waiting_for_staff');
+            expect(ticket.messageCount).toBe(2);
+        });
+    });
+    
+    describe('Timer Conflicts', () => {
+        it('should prioritize message over timer', async () => {
+            const ticket = await createTicket();
+            
+            // Start auto-close timer
+            ticket.startTimer('auto-close', 1000);
+            
+            // User sends message before timer expires
+            await sleep(500);
+            await ticket.sendMessage(user, 'Still need help');
+            
+            // Timer should be cancelled
+            expect(ticket.hasActiveTimer('auto-close')).toBe(false);
+            expect(ticket.state).not.toBe('closed');
+        });
+    });
+});
+```
+
+**CI/CD Integration:**
+```yaml
+# .github/workflows/test.yml
+name: Ticket System Tests
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - run: npm ci
+      - run: npm run test:unit
+      - run: npm run test:integration
+      - run: npm run test:stress
+```
+
 ---
 
 ## 🚀 Future Roadmap
