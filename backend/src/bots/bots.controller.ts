@@ -41,6 +41,28 @@ interface UpdateBotConfigDto {
   autoRoleId?: string;
   loggingChannelId?: string;
   customCommands?: any;
+  ticketEnabled?: boolean;
+  ticketCategoryId?: string;
+  ticketStaffRoleId?: string;
+  ticketTranscriptChannelId?: string;
+  ticketNamingFormat?: string;
+  maxTicketsPerUser?: number;
+  autoCloseHours?: number;
+  inactivityWarningHours?: number;
+  ticketThreads?: boolean;
+  ticketMentionStaff?: boolean;
+  ticketDMNotifications?: boolean;
+  ticketRequireReason?: boolean;
+  autoSaveTranscripts?: boolean;
+  sendTranscriptToUser?: boolean;
+  includeAttachments?: boolean;
+  autoWelcomeEnabled?: boolean;
+  autoWelcomeMessage?: string;
+  inactivityWarningEnabled?: boolean;
+  inactivityWarningMessage?: string;
+  autoAssignStaff?: boolean;
+  autoTagUrgent?: boolean;
+  autoEscalate?: boolean;
 }
 
 @Controller('bots')

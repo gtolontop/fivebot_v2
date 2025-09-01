@@ -247,9 +247,44 @@ export class BotsService {
       throw new NotFoundException('Bot not found');
     }
 
+    // Extract ticket-related fields
+    const ticketFields = [
+      'ticketEnabled', 'ticketCategoryId', 'ticketStaffRoleId', 'ticketTranscriptChannelId',
+      'ticketNamingFormat', 'maxTicketsPerUser', 'autoCloseHours', 'inactivityWarningHours',
+      'ticketThreads', 'ticketMentionStaff', 'ticketDMNotifications', 'ticketRequireReason',
+      'autoSaveTranscripts', 'sendTranscriptToUser', 'includeAttachments',
+      'autoWelcomeEnabled', 'autoWelcomeMessage', 'inactivityWarningEnabled', 
+      'inactivityWarningMessage', 'autoAssignStaff', 'autoTagUrgent', 'autoEscalate'
+    ];
+
+    const ticketData: any = {};
+    const configData: any = {};
+
+    // Get existing ticketData
+    const existingConfig = await this.prisma.botConfig.findUnique({
+      where: { botId },
+      select: { ticketData: true }
+    });
+
+    const currentTicketData = (existingConfig?.ticketData as any) || {};
+
+    // Separate ticket fields from other config fields
+    for (const [key, value] of Object.entries(data)) {
+      if (ticketFields.includes(key)) {
+        ticketData[key] = value;
+      } else {
+        configData[key] = value;
+      }
+    }
+
+    // Merge with existing ticketData
+    if (Object.keys(ticketData).length > 0) {
+      configData.ticketData = { ...currentTicketData, ...ticketData };
+    }
+
     const config = await this.prisma.botConfig.update({
       where: { botId },
-      data,
+      data: configData,
     });
 
     // Log the action
