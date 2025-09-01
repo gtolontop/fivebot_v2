@@ -450,46 +450,67 @@ export class BotsService {
   }
 
   async updateStatus(botId: string, status: BotStatus, metadata?: any): Promise<void> {
-    let retries = 8; // Increase retries significantly
+    let retries = 10; // Increase retries for better resilience
+    const baseDelay = 2000; // Start with 2 seconds base delay
     
     while (retries > 0) {
       try {
-        // First, get the current bot to ensure it exists and get its current state
-        const currentBot = await this.prisma.bot.findUnique({
-          where: { id: botId },
-          select: { id: true, status: true, updatedAt: true }
-        });
+        // Use a transaction with timeout to prevent long locks
+        await this.prisma.$transaction(
+          async (tx) => {
+            // First, get the current bot to ensure it exists and get its current state
+            const currentBot = await tx.bot.findUnique({
+              where: { id: botId },
+              select: { id: true, status: true, updatedAt: true }
+            });
 
-        if (!currentBot) {
-          console.warn(`⚠️ Bot ${botId} not found, skipping status update to ${status}`);
-          return;
-        }
+            if (!currentBot) {
+              console.warn(`⚠️ Bot ${botId} not found, skipping status update to ${status}`);
+              return;
+            }
 
-        // Only update if status has actually changed to reduce unnecessary updates
-        if (currentBot.status === status) {
-          return;
-        }
+            // Only update if status has actually changed to reduce unnecessary updates
+            if (currentBot.status === status) {
+              return;
+            }
 
-        // Use upsert with optimistic locking based on updatedAt
-        await this.prisma.bot.update({
-          where: { 
-            id: botId,
-            updatedAt: currentBot.updatedAt // Optimistic locking
+            // Use update with optimistic locking based on updatedAt
+            await tx.bot.update({
+              where: { 
+                id: botId,
+                updatedAt: currentBot.updatedAt // Optimistic locking
+              },
+              data: { 
+                status,
+                updatedAt: new Date(), // Force timestamp update
+                ...(metadata || {})
+              },
+            });
+            
+            // Log successful status changes
+            console.log(`✅ Successfully updated bot ${botId} status: ${currentBot.status} → ${status}`);
           },
-          data: { 
-            status,
-            updatedAt: new Date(), // Force timestamp update
-            ...(metadata || {})
-          },
-        });
+          {
+            maxWait: 5000, // Maximum time to wait for a transaction slot (5 seconds)
+            timeout: 10000, // Maximum time for the transaction to complete (10 seconds)
+          }
+        );
         
-        // Log successful status changes
-        console.log(`✅ Successfully updated bot ${botId} status: ${currentBot.status} → ${status}`);
         return; // Success, exit function
         
       } catch (error: any) {
+        // Enhanced error detection for MySQL lock timeouts
+        const isLockTimeout = 
+          error.code === 'P2034' || // Prisma transaction failed
+          error.code === 'ER_LOCK_WAIT_TIMEOUT' || // MySQL lock wait timeout
+          error.code === 'ER_LOCK_DEADLOCK' || // MySQL deadlock
+          error.message?.includes('lock') ||
+          error.message?.includes('timeout') ||
+          error.message?.includes('deadlock') ||
+          error.message?.includes('Lock wait timeout exceeded');
+          
         const isConcurrencyError = 
-          error.code === 'P2034' || // Prisma concurrency error
+          isLockTimeout ||
           error.code === 'P2025' || // Record not found (might be due to concurrent deletion)
           (error.message && (
             error.message.includes('Record has changed') ||
@@ -501,18 +522,21 @@ export class BotsService {
           
         if (isConcurrencyError) {
           retries--;
-          console.log(`⚠️ Concurrency conflict updating bot ${botId} status to ${status}, retrying... (${retries} retries left)`);
+          const errorType = isLockTimeout ? 'Lock timeout' : 'Concurrency conflict';
+          console.log(`⚠️ ${errorType} updating bot ${botId} status to ${status}, retrying... (${retries} retries left)`);
           
           if (retries > 0) {
-            // More aggressive exponential backoff with jitter
-            const baseDelay = Math.min(2000, (9 - retries) * 250);
-            const jitter = Math.random() * 500;
-            const delay = baseDelay + jitter;
+            // Exponential backoff with increased delays for lock timeouts
+            const attempt = 10 - retries;
+            const delay = baseDelay * Math.pow(1.5, attempt); // 2s, 3s, 4.5s, 6.75s, etc.
+            const jitter = Math.random() * 1000; // Up to 1 second jitter
+            const totalDelay = Math.min(delay + jitter, 30000); // Cap at 30 seconds
             
-            await new Promise(resolve => setTimeout(resolve, delay));
+            console.log(`⏳ Waiting ${Math.round(totalDelay)}ms before retry...`);
+            await new Promise(resolve => setTimeout(resolve, totalDelay));
             continue;
           } else {
-            console.error(`❌ Failed to update bot ${botId} status to ${status} after all retries due to concurrency conflicts`);
+            console.error(`❌ Failed to update bot ${botId} status to ${status} after all retries due to ${errorType.toLowerCase()}`);
             return; // Give up gracefully
           }
         } else {
