@@ -333,25 +333,17 @@ notifications:
 - 🚫 **Exclusions**: States that prevent auto-close
 - 💬 **Close Message**: Custom message template
 
-#### Escalation Rules
-```yaml
-escalation:
-  rules:
-    - name: "Unclaimed too long"
-      condition:
-        state: "new"
-        duration: "30m"
-      action:
-        ping_role: "@senior-staff"
-        change_priority: "high"
-    
-    - name: "Contains keywords"
-      condition:
-        keywords: ["urgent", "emergency", "legal"]
-      action:
-        route_to: "admin-team"
-        add_tag: "priority"
-```
+**Smart Escalation Rules:**
+- ⏰ **Time-Based**:
+  - "If unclaimed for 30 minutes → ping senior staff"
+  - "If idle in 'waiting for staff' for 2 hours → escalate"
+- 🔍 **Keyword Detection**:
+  - Define trigger words (urgent, emergency, legal)
+  - Auto-route to specialized teams
+  - Add priority tags
+- 📈 **Load Balancing**:
+  - Redistribute if staff has too many tickets
+  - Auto-assign based on availability
 
 ---
 
