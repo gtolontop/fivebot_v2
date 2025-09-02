@@ -372,7 +372,7 @@ export default function HomePage() {
                 </div>
                 
                 {/* Page 1: Welcome */}
-                <div className="page-1 absolute inset-0 flex items-center justify-center p-12 animate-page-in">
+                <div className="absolute inset-0 flex items-center justify-center p-12 animate-page-1">
                   <div className="text-center">
                     <h1 className="text-5xl font-bold text-white mb-6">
                       Welcome to{" "}
@@ -381,14 +381,14 @@ export default function HomePage() {
                       </span>
                     </h1>
                     <p className="text-xl text-gray-400 mb-12">Create your Discord bot in seconds</p>
-                    <button className="animate-cursor-click px-8 py-4 bg-gradient-to-r from-discord-500 to-discord-600 text-white font-semibold rounded-xl hover:from-discord-600 hover:to-discord-700 transition-all transform hover:scale-105 shadow-2xl">
+                    <button className="px-8 py-4 bg-gradient-to-r from-discord-500 to-discord-600 text-white font-semibold rounded-xl hover:from-discord-600 hover:to-discord-700 transition-all transform hover:scale-105 shadow-2xl">
                       Create Your Bot
                     </button>
                   </div>
                 </div>
                 
                 {/* Page 2: Bot Configuration */}
-                <div className="page-2 absolute inset-0 flex items-center justify-center p-12 opacity-0 animate-page-in-delayed">
+                <div className="absolute inset-0 flex items-center justify-center p-12 animate-page-2">
                   <div className="w-full max-w-2xl">
                     <h2 className="text-3xl font-bold text-white mb-8 text-center">Configure Your Bot</h2>
                     <div className="space-y-6">
@@ -412,7 +412,7 @@ export default function HomePage() {
                           readOnly
                         />
                       </div>
-                      <button className="w-full animate-cursor-click-2 px-8 py-4 bg-gradient-to-r from-discord-500 to-discord-600 text-white font-semibold rounded-xl hover:from-discord-600 hover:to-discord-700 transition-all transform hover:scale-105">
+                      <button className="w-full px-8 py-4 bg-gradient-to-r from-discord-500 to-discord-600 text-white font-semibold rounded-xl hover:from-discord-600 hover:to-discord-700 transition-all transform hover:scale-105">
                         Create Bot
                       </button>
                     </div>
@@ -420,7 +420,7 @@ export default function HomePage() {
                 </div>
                 
                 {/* Page 3: Dashboard */}
-                <div className="page-3 absolute inset-0 p-12 opacity-0 animate-page-in-final">
+                <div className="absolute inset-0 p-12 animate-page-3">
                   <div className="h-full">
                     <h2 className="text-2xl font-bold text-white mb-6">Bot Dashboard</h2>
                     <div className="grid grid-cols-3 gap-6">
