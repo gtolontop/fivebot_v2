@@ -11,7 +11,9 @@ export function parseTicketConfig(config: TicketConfig & { categories?: TicketCa
   return {
     ...config,
     staffRoles: (config.staffRoles as string[]) || [],
-    allowedFileTypes: (config.allowedFileTypes as string[]) || []
+    allowedFileTypes: (config.allowedFileTypes as string[]) || [],
+    categories: config.categories,
+    panels: config.panels
   };
 }
 
