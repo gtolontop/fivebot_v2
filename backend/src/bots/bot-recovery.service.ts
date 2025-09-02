@@ -102,11 +102,11 @@ export class BotRecoveryService implements OnApplicationBootstrap {
               botId: bot.id,
               action: 'BOT_AUTO_RECOVERED',
               resource: 'bot',
-              metadata: {
+              metadata: JSON.stringify({
                 reason: 'System restart auto-recovery',
                 originalStatus: bot.status,
                 recoveryDelay: i * 3000,
-              },
+              }),
             },
           });
 

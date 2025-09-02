@@ -26,7 +26,8 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(dir node_modules.prismaclient)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(taskkill:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",
