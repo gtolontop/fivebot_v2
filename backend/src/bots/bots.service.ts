@@ -265,7 +265,11 @@ export class BotsService {
       where: { botId }
     });
 
-    const currentTicketData = (existingConfig?.ticketData as any) || {};
+    const currentTicketData = existingConfig?.ticketData 
+      ? (typeof existingConfig.ticketData === 'string' 
+        ? JSON.parse(existingConfig.ticketData) 
+        : existingConfig.ticketData)
+      : {};
 
     // Separate ticket fields from other config fields
     for (const [key, value] of Object.entries(data)) {
@@ -278,7 +282,7 @@ export class BotsService {
 
     // Merge with existing ticketData
     if (Object.keys(ticketData).length > 0) {
-      configData.ticketData = { ...currentTicketData, ...ticketData };
+      configData.ticketData = JSON.stringify({ ...currentTicketData, ...ticketData });
     }
 
     const config = await this.prisma.botConfig.update({
