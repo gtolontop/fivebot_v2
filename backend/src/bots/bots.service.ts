@@ -364,23 +364,14 @@ export class BotsService {
       throw new NotFoundException('Bot not found');
     }
 
-    // Force sync status before starting to ensure clean state
-    console.log(`🔄 Pre-start sync for bot ${botId}`);
-    const currentStatus = await this.forceSyncBotStatus(botId);
-
-    // Add simple starting message
+    // Skip the force sync - it's causing locks and timeouts
+    // Just add the starting message
     await this.botLogsService.addLog(
       botId, 
       LogLevel.INFO, 
       'Server marked as starting...', 
       'System'
     );
-
-    // Re-fetch bot to get updated status
-    bot = await this.findOne(botId, ownerId);
-    if (!bot) {
-      throw new NotFoundException('Bot not found after sync');
-    }
 
     // Check if bot is actually running, not just marked as ONLINE
     if (bot.status === BotStatus.ONLINE) {
@@ -549,50 +540,26 @@ export class BotsService {
   }
 
   async updateStatus(botId: string, status: BotStatus, metadata?: any): Promise<void> {
-    let retries = 10; // Increase retries for better resilience
-    const baseDelay = 2000; // Start with 2 seconds base delay
+    let retries = 3; // Reduce retries for faster failure
     
     while (retries > 0) {
       try {
-        // Use a transaction with timeout to prevent long locks
-        await this.prisma.$transaction(
-          async (tx) => {
-            // First, get the current bot to ensure it exists and get its current state
-            const currentBot = await tx.bot.findUnique({
-              where: { id: botId },
-              select: { id: true, status: true, updatedAt: true }
-            });
-
-            if (!currentBot) {
-              console.warn(`⚠️ Bot ${botId} not found, skipping status update to ${status}`);
-              return;
-            }
-
-            // Only update if status has actually changed to reduce unnecessary updates
-            if (currentBot.status === status) {
-              return;
-            }
-
-            // Update without optimistic locking to avoid lock issues
-            await tx.bot.update({
-              where: { 
-                id: botId
-              },
-              data: { 
-                status,
-                ...(metadata || {})
-              },
-            });
-            
-            // Log successful status changes
-            console.log(`✅ Successfully updated bot ${botId} status: ${currentBot.status} → ${status}`);
+        // Simple update without transaction to avoid locks
+        const result = await this.prisma.bot.updateMany({
+          where: { 
+            id: botId,
+            // Only update if status is different to avoid unnecessary writes
+            NOT: { status }
           },
-          {
-            maxWait: 5000, // Maximum time to wait for a transaction slot (5 seconds)
-            timeout: 15000, // Maximum time for the transaction to complete (15 seconds)
-            isolationLevel: 'ReadCommitted', // Use less strict isolation to reduce locks
-          }
-        );
+          data: { 
+            status,
+            ...(metadata || {})
+          },
+        });
+        
+        if (result.count > 0) {
+          console.log(`✅ Successfully updated bot ${botId} status to ${status}`);
+        }
         
         return; // Success, exit function
         
@@ -618,28 +585,16 @@ export class BotsService {
             error.message.includes('Record to update not found')
           ));
           
-        if (isConcurrencyError) {
+        if (isConcurrencyError && retries > 1) {
           retries--;
-          const errorType = isLockTimeout ? 'Lock timeout' : 'Concurrency conflict';
-          console.log(`⚠️ ${errorType} updating bot ${botId} status to ${status}, retrying... (${retries} retries left)`);
+          console.log(`⚠️ Lock/concurrency issue, retrying... (${retries} retries left)`);
           
-          if (retries > 0) {
-            // Exponential backoff with increased delays for lock timeouts
-            const attempt = 10 - retries;
-            const delay = baseDelay * Math.pow(1.5, attempt); // 2s, 3s, 4.5s, 6.75s, etc.
-            const jitter = Math.random() * 1000; // Up to 1 second jitter
-            const totalDelay = Math.min(delay + jitter, 30000); // Cap at 30 seconds
-            
-            console.log(`⏳ Waiting ${Math.round(totalDelay)}ms before retry...`);
-            await new Promise(resolve => setTimeout(resolve, totalDelay));
-            continue;
-          } else {
-            console.error(`❌ Failed to update bot ${botId} status to ${status} after all retries due to ${errorType.toLowerCase()}`);
-            return; // Give up gracefully
-          }
+          // Simple delay before retry
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          continue;
         } else {
-          // Non-concurrency error, log and give up immediately
-          console.error(`❌ Failed to update bot ${botId} status to ${status} due to non-concurrency error:`, error.message || error);
+          // Give up on error
+          console.error(`❌ Failed to update bot ${botId} status to ${status}:`, error.message || error);
           return;
         }
       }
