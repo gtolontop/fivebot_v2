@@ -15,177 +15,238 @@ import {
   CubeIcon,
   ChatBubbleLeftRightIcon,
   DocumentTextIcon,
+  PlayIcon,
+  UserGroupIcon,
+  CommandLineIcon,
+  CpuChipIcon,
+  GlobeAltIcon,
+  ClockIcon,
+  ArrowPathIcon,
+  FireIcon,
+  StarIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "@/contexts/AuthContext";
 
+const stats = [
+  { number: "99.9%", label: "Uptime", icon: ClockIcon },
+  { number: "50ms", label: "Response Time", icon: BoltIcon },
+  { number: "10k+", label: "Active Bots", icon: CubeIcon },
+  { number: "24/7", label: "Support", icon: ChatBubbleLeftRightIcon },
+];
+
 const features = [
   {
-    name: "Quick Setup",
-    description:
-      "Deploy Discord bots in seconds with our intuitive automated interface.",
+    title: "Lightning Fast Deployment",
+    description: "Deploy your bot in under 10 seconds with our automated containerization system",
     icon: RocketLaunchIcon,
+    color: "from-blue-500 to-cyan-500",
   },
   {
-    name: "Enterprise Security",
-    description:
-      "Encrypted tokens and complete Docker isolation for optimal bot protection.",
+    title: "Bank-Level Security",
+    description: "AES-256 encryption, isolated containers, and real-time threat monitoring",
     icon: ShieldCheckIcon,
+    color: "from-purple-500 to-pink-500",
   },
   {
-    name: "Real-time Analytics",
-    description:
-      "Monitor bot performance and activity with comprehensive metrics dashboard.",
+    title: "Smart Analytics",
+    description: "AI-powered insights to optimize your bot performance and user engagement",
     icon: ChartBarIcon,
+    color: "from-green-500 to-emerald-500",
   },
   {
-    name: "Modern Interface",
-    description:
-      "Elegant responsive dashboard to manage all your bots from one place.",
-    icon: SparklesIcon,
+    title: "Auto-Scaling Infrastructure",
+    description: "Automatically scales resources based on your bot's demand",
+    icon: CloudArrowUpIcon,
+    color: "from-orange-500 to-red-500",
+  },
+  {
+    title: "Developer API",
+    description: "Powerful REST API with webhooks for seamless integrations",
+    icon: CodeBracketIcon,
+    color: "from-indigo-500 to-purple-500",
+  },
+  {
+    title: "Global CDN",
+    description: "Distributed across 30+ regions for minimal latency worldwide",
+    icon: GlobeAltIcon,
+    color: "from-pink-500 to-rose-500",
   },
 ];
 
 const pricingPlans = [
   {
-    name: "Free",
+    name: "Starter",
     price: "0",
-    description: "Perfect to get started",
+    period: "forever",
+    description: "Perfect for trying out FiveBot",
     features: [
-      "Up to 3 bots",
-      "100 free credits",
-      "Full dashboard access",
+      "Up to 2 bots",
+      "100 commands/day",
+      "Basic analytics",
       "Community support",
+      "99.5% uptime SLA",
     ],
-    cta: "Start for free",
+    notIncluded: [
+      "Custom branding",
+      "Advanced analytics",
+      "Priority support",
+    ],
+    cta: "Start Free",
     popular: false,
   },
   {
     name: "Pro",
-    price: "9.99",
-    description: "For power users",
+    price: "19",
+    period: "per month",
+    description: "Everything you need to scale",
     features: [
       "Unlimited bots",
-      "1000 credits/month",
-      "Priority support",
-      "Advanced analytics",
+      "Unlimited commands",
+      "Advanced analytics & AI insights",
+      "Priority 24/7 support",
+      "99.9% uptime SLA",
       "Custom webhooks",
+      "API access",
+      "White-label options",
     ],
-    cta: "Coming soon",
+    notIncluded: [
+      "Dedicated infrastructure",
+    ],
+    cta: "Start 14-day trial",
     popular: true,
+    savings: "Save 20% yearly",
+  },
+  {
+    name: "Enterprise",
+    price: "99",
+    period: "per month",
+    description: "For large-scale operations",
+    features: [
+      "Everything in Pro",
+      "Dedicated infrastructure",
+      "Custom integrations",
+      "SLA guarantees",
+      "Dedicated account manager",
+      "On-premise deployment option",
+      "Advanced security features",
+      "Custom training for your team",
+      "Phone support",
+    ],
+    notIncluded: [],
+    cta: "Contact Sales",
+    popular: false,
   },
 ];
 
-const useCases = [
+const testimonials = [
   {
-    title: "Community Management",
-    description: "Automate moderation, welcome messages, and role management",
-    icon: ChatBubbleLeftRightIcon,
+    name: "Alex Chen",
+    role: "Community Manager",
+    company: "Gaming Guild",
+    content: "FiveBot transformed how we manage our 50k+ member Discord. The automation saves us 20+ hours per week.",
+    avatar: "AC",
+    rating: 5,
   },
   {
-    title: "Gaming Servers",
-    description: "Stats tracking, tournament management, and game integrations",
-    icon: CubeIcon,
+    name: "Sarah Williams",
+    role: "Developer",
+    company: "Tech Startup",
+    content: "The API is incredibly well-designed. We integrated FiveBot into our workflow in just 2 hours.",
+    avatar: "SW",
+    rating: 5,
   },
   {
-    title: "Educational",
-    description: "Quiz bots, scheduling, and resource management",
-    icon: DocumentTextIcon,
-  },
-  {
-    title: "Custom Solutions",
-    description: "Build unique bots tailored to your specific needs",
-    icon: CodeBracketIcon,
+    name: "Mike Johnson",
+    role: "Server Owner",
+    company: "Crypto Community",
+    content: "Best investment for our Discord. The analytics help us understand our community better.",
+    avatar: "MJ",
+    rating: 5,
   },
 ];
 
 export default function HomePage() {
   const { user, loading } = useAuth();
   const [scrollY, setScrollY] = useState(0);
-  const [demoActive, setDemoActive] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [selectedPlan, setSelectedPlan] = useState("Pro");
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrollY(window.scrollY);
+    const handleScroll = () => setScrollY(window.scrollY);
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
     };
 
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener("mousemove", handleMouseMove);
+    
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("mousemove", handleMouseMove);
+    };
   }, []);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-discord-100 to-blue-100">
-        <div className="discord-spinner w-12 h-12 border-4 border-discord-200 border-t-discord-500 rounded-full"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="relative">
+          <div className="discord-spinner w-16 h-16 border-4 border-discord-200 border-t-discord-500 rounded-full"></div>
+          <div className="absolute inset-0 discord-spinner w-16 h-16 border-4 border-transparent border-t-discord-300 rounded-full animate-ping"></div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
-      {/* Animated Background */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div
-          className="absolute w-96 h-96 bg-discord-500/20 rounded-full blur-3xl"
+    <div className="min-h-screen bg-white overflow-x-hidden">
+      {/* Animated gradient background */}
+      <div className="fixed inset-0 -z-10">
+        <div 
+          className="absolute inset-0 opacity-30"
           style={{
-            transform: `translate(${mousePosition.x * 0.05}px, ${mousePosition.y * 0.05}px)`,
-            left: "20%",
-            top: "10%",
-          }}
-        />
-        <div
-          className="absolute w-96 h-96 bg-purple-500/20 rounded-full blur-3xl"
-          style={{
-            transform: `translate(${-mousePosition.x * 0.05}px, ${-mousePosition.y * 0.05}px)`,
-            right: "20%",
-            bottom: "10%",
+            background: `radial-gradient(circle at ${mousePos.x}px ${mousePos.y}px, rgba(88, 101, 242, 0.1) 0%, transparent 50%)`,
           }}
         />
       </div>
 
       {/* Header */}
-      <header className="relative z-50 backdrop-blur-md bg-gray-900/80 border-b border-gray-800">
+      <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
+          <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-8">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-discord-400 to-purple-400 bg-clip-text text-transparent">
-                FiveBot v2
-              </h1>
-              <nav className="hidden md:flex space-x-6">
-                <a href="#features" className="text-gray-300 hover:text-white transition-colors">
-                  Fonctionnalités
-                </a>
-                <a href="#pricing" className="text-gray-300 hover:text-white transition-colors">
-                  Tarifs
-                </a>
-                <a href="#stats" className="text-gray-300 hover:text-white transition-colors">
-                  Statistiques
-                </a>
+              <Link href="/" className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-gradient-to-br from-discord-500 to-discord-600 rounded-lg flex items-center justify-center">
+                  <BoltIcon className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-xl font-bold text-gray-900">FiveBot</span>
+              </Link>
+              <nav className="hidden md:flex space-x-8">
+                <a href="#features" className="text-sm font-medium text-gray-600 hover:text-discord-600 transition-colors">Features</a>
+                <a href="#how-it-works" className="text-sm font-medium text-gray-600 hover:text-discord-600 transition-colors">How it works</a>
+                <a href="#pricing" className="text-sm font-medium text-gray-600 hover:text-discord-600 transition-colors">Pricing</a>
+                <a href="#testimonials" className="text-sm font-medium text-gray-600 hover:text-discord-600 transition-colors">Testimonials</a>
               </nav>
             </div>
             <div className="flex items-center space-x-4">
               {user ? (
                 <>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-gradient-to-r from-discord-400 to-purple-400 rounded-full"></div>
-                    <span className="text-gray-300">{user.username}</span>
-                  </div>
-                  <Link
-                    href="/dashboard"
-                    className="bg-gradient-to-r from-discord-500 to-discord-600 hover:from-discord-600 hover:to-discord-700 text-white font-semibold py-2 px-6 rounded-lg transition-all transform hover:scale-105"
-                  >
-                    Dashboard
+                  <span className="text-sm text-gray-600">Welcome back, {user.username}!</span>
+                  <Link href="/dashboard" className="btn-primary">
+                    Open Dashboard
                   </Link>
                 </>
               ) : (
-                <Link
-                  href="http://localhost:8000/api/auth/discord"
-                  className="bg-gradient-to-r from-discord-500 to-discord-600 hover:from-discord-600 hover:to-discord-700 text-white font-semibold py-2 px-6 rounded-lg transition-all transform hover:scale-105 flex items-center gap-2"
-                >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
-                  </svg>
-                  Se connecter
-                </Link>
+                <>
+                  <Link href="/auth/login" className="text-sm font-medium text-gray-600 hover:text-discord-600">
+                    Sign in
+                  </Link>
+                  <Link href="http://localhost:8000/api/auth/discord" className="btn-discord flex items-center gap-2">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
+                    </svg>
+                    Get Started
+                  </Link>
+                </>
               )}
             </div>
           </div>
@@ -193,305 +254,316 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-40">
+      <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <div className="inline-flex items-center px-3 py-1 rounded-full bg-discord-500/10 border border-discord-500/20 mb-8">
-              <StarIcon className="w-4 h-4 text-discord-400 mr-2" />
-              <span className="text-sm text-discord-400">Plus de 2500 bots actifs</span>
+            <div className="inline-flex items-center px-4 py-2 rounded-full bg-discord-100 text-discord-700 text-sm font-medium mb-8">
+              <FireIcon className="w-4 h-4 mr-2" />
+              Trusted by 10,000+ Discord servers
             </div>
-            <h1 className="text-5xl sm:text-7xl font-bold mb-6">
-              La plateforme Discord
-              <span className="block bg-gradient-to-r from-discord-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                nouvelle génération
+            <h1 className="text-5xl lg:text-7xl font-bold text-gray-900 tracking-tight">
+              The Future of
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-discord-500 to-discord-600 mt-2">
+                Discord Bot Management
               </span>
             </h1>
-            <p className="text-xl text-gray-400 mb-12 max-w-3xl mx-auto leading-relaxed">
-              Créez, déployez et gérez vos bots Discord avec une technologie de pointe.
-              Infrastructure cloud, sécurité renforcée et analytics en temps réel.
+            <p className="mt-6 text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              Create, deploy, and scale Discord bots with zero configuration. 
+              Powered by AI, secured by default, loved by developers.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href={user ? "/dashboard" : "/auth/login"}
-                className="group relative px-8 py-4 bg-gradient-to-r from-discord-500 to-discord-600 rounded-lg font-semibold text-lg transition-all transform hover:scale-105 hover:shadow-2xl hover:shadow-discord-500/25"
+                className="group inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-white bg-discord-600 rounded-xl hover:bg-discord-700 transition-all transform hover:scale-105 hover:shadow-lg"
               >
-                <span className="flex items-center">
-                  {user ? "Accéder au Dashboard" : "Commencer maintenant"}
-                  <ArrowRightIcon className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </span>
+                Start Building for Free
+                <ArrowRightIcon className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
-              <Link
-                href="#demo"
-                className="group px-8 py-4 border border-gray-700 rounded-lg font-semibold text-lg hover:bg-gray-800 transition-all"
-              >
-                <span className="flex items-center">
-                  <BeakerIcon className="mr-2 w-5 h-5" />
-                  Voir la démo
-                </span>
-              </Link>
+              <button className="inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all">
+                <PlayIcon className="mr-2 w-5 h-5" />
+                Watch 2-min Demo
+              </button>
             </div>
-            <div className="mt-8 flex items-center justify-center space-x-8 text-sm text-gray-500">
-              <div className="flex items-center">
-                <CheckIcon className="w-4 h-4 text-green-400 mr-2" />
-                Aucune carte requise
-              </div>
-              <div className="flex items-center">
-                <CheckIcon className="w-4 h-4 text-green-400 mr-2" />
-                Setup en 30 secondes
-              </div>
-              <div className="flex items-center">
-                <CheckIcon className="w-4 h-4 text-green-400 mr-2" />
-                Support 24/7
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section id="stats" className="py-20 border-y border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <div
-                key={stat.label}
-                className="text-center"
-                style={{
-                  transform: `translateY(${scrollY * 0.1 * (index + 1)}px)`,
-                }}
-              >
-                <div className="text-4xl font-bold bg-gradient-to-r from-discord-400 to-purple-400 bg-clip-text text-transparent">
-                  {stat.value}
+            <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
+              {stats.map((stat) => (
+                <div key={stat.label} className="text-center">
+                  <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-100 rounded-lg mb-3">
+                    <stat.icon className="w-6 h-6 text-discord-600" />
+                  </div>
+                  <div className="text-3xl font-bold text-gray-900">{stat.number}</div>
+                  <div className="text-sm text-gray-600">{stat.label}</div>
                 </div>
-                <div className="text-gray-400 mt-2">{stat.label}</div>
-                <div className="text-sm text-green-400 mt-1">{stat.trend}</div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="py-32">
+      {/* Features Grid */}
+      <section id="features" className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl font-bold mb-4">
-              Fonctionnalités{" "}
-              <span className="bg-gradient-to-r from-discord-400 to-purple-400 bg-clip-text text-transparent">
-                révolutionnaires
-              </span>
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Everything you need, nothing you don't
             </h2>
-            <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-              Tout ce dont vous avez besoin pour créer des bots Discord professionnels
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Powerful features designed to make bot development a breeze
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
               <div
-                key={feature.name}
-                className="group relative p-8 rounded-2xl bg-gray-800/50 backdrop-blur-sm border border-gray-700 hover:border-gray-600 transition-all hover:transform hover:scale-105"
-                style={{
-                  animationDelay: `${index * 100}ms`,
-                }}
+                key={feature.title}
+                className="group relative bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div
-                  className={`absolute inset-0 bg-gradient-to-r ${feature.gradient} opacity-0 group-hover:opacity-10 rounded-2xl transition-opacity`}
-                />
-                <div
-                  className={`inline-flex p-3 rounded-lg bg-gradient-to-r ${feature.gradient} mb-4`}
-                >
-                  <feature.icon className="h-6 w-6 text-white" />
+                <div className={`inline-flex p-3 rounded-xl bg-gradient-to-br ${feature.color} mb-6`}>
+                  <feature.icon className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold mb-3">{feature.name}</h3>
-                <p className="text-gray-400">{feature.description}</p>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">{feature.title}</h3>
+                <p className="text-gray-600">{feature.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section id="pricing" className="py-32 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-discord-900/20 to-transparent" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl font-bold mb-4">
-              Plans{" "}
-              <span className="bg-gradient-to-r from-discord-400 to-purple-400 bg-clip-text text-transparent">
-                flexibles
-              </span>
+      {/* How it works */}
+      <section id="how-it-works" className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Get started in 3 simple steps
             </h2>
-            <p className="text-xl text-gray-400">
-              Choisissez le plan qui correspond à vos besoins
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              No complex setup. No infrastructure headaches. Just bots.
             </p>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="relative inline-block">
+                <div className="w-20 h-20 bg-discord-100 rounded-full flex items-center justify-center mb-6">
+                  <span className="text-3xl font-bold text-discord-600">1</span>
+                </div>
+                <div className="hidden md:block absolute top-10 left-full w-full h-0.5 bg-gradient-to-r from-discord-200 to-discord-100"></div>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Connect Discord</h3>
+              <p className="text-gray-600">Sign in with Discord and authorize FiveBot to manage your bots</p>
+            </div>
+            <div className="text-center">
+              <div className="relative inline-block">
+                <div className="w-20 h-20 bg-discord-100 rounded-full flex items-center justify-center mb-6">
+                  <span className="text-3xl font-bold text-discord-600">2</span>
+                </div>
+                <div className="hidden md:block absolute top-10 left-full w-full h-0.5 bg-gradient-to-r from-discord-200 to-discord-100"></div>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Configure Bot</h3>
+              <p className="text-gray-600">Use our visual builder or import your existing bot code</p>
+            </div>
+            <div className="text-center">
+              <div className="w-20 h-20 bg-discord-100 rounded-full flex items-center justify-center mb-6 mx-auto">
+                <span className="text-3xl font-bold text-discord-600">3</span>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Deploy & Scale</h3>
+              <p className="text-gray-600">Hit deploy and watch your bot come to life instantly</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section id="pricing" className="py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Simple pricing, powerful features
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Choose the perfect plan for your needs. Always flexible to scale.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {pricingPlans.map((plan) => (
               <div
                 key={plan.name}
-                className={`relative rounded-2xl p-8 ${
-                  plan.popular
-                    ? "bg-gradient-to-b from-discord-500/20 to-discord-600/20 border-2 border-discord-500 transform scale-105"
-                    : "bg-gray-800/50 border border-gray-700"
-                } backdrop-blur-sm hover:transform hover:scale-105 transition-all`}
+                className={`relative bg-white rounded-2xl ${
+                  plan.popular 
+                    ? 'ring-2 ring-discord-500 shadow-xl scale-105' 
+                    : 'shadow-sm hover:shadow-lg'
+                } transition-all duration-300`}
               >
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <span className="bg-gradient-to-r from-discord-500 to-discord-600 text-white px-4 py-1 text-sm font-semibold rounded-full">
-                      Plus populaire
-                    </span>
+                    <div className="bg-gradient-to-r from-discord-500 to-discord-600 text-white px-4 py-1 rounded-full text-sm font-medium flex items-center">
+                      <StarIcon className="w-4 h-4 mr-1" />
+                      Most Popular
+                    </div>
                   </div>
                 )}
-                <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-                  <p className="text-gray-400 mb-4">{plan.description}</p>
-                  <div className="mb-4">
-                    {plan.price === "Custom" ? (
-                      <span className="text-4xl font-bold">Sur devis</span>
-                    ) : (
-                      <>
-                        <span className="text-4xl font-bold">€{plan.price}</span>
-                        {plan.price !== "0" && (
-                          <span className="text-gray-400">/mois</span>
-                        )}
-                      </>
+                
+                <div className="p-8">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
+                  <p className="text-gray-600 mb-6">{plan.description}</p>
+                  
+                  <div className="mb-6">
+                    <span className="text-5xl font-bold text-gray-900">${plan.price}</span>
+                    <span className="text-gray-600 ml-2">/{plan.period}</span>
+                    {plan.savings && (
+                      <span className="block text-sm text-green-600 font-medium mt-2">{plan.savings}</span>
                     )}
                   </div>
+                  
+                  <Link
+                    href="/auth/login"
+                    className={`block w-full text-center py-3 px-6 rounded-xl font-medium transition-all ${
+                      plan.popular
+                        ? 'bg-discord-600 text-white hover:bg-discord-700'
+                        : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                    }`}
+                  >
+                    {plan.cta}
+                  </Link>
+                  
+                  <div className="mt-8 space-y-4">
+                    <p className="text-sm font-medium text-gray-900">Everything in {plan.name}:</p>
+                    <ul className="space-y-3">
+                      {plan.features.map((feature) => (
+                        <li key={feature} className="flex items-start">
+                          <CheckIcon className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
+                          <span className="text-gray-600 text-sm">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-                <ul className="space-y-4 mb-8">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start">
-                      <CheckIcon className="h-5 w-5 text-green-400 mr-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-300">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href="/auth/login"
-                  className={`block w-full text-center py-3 px-6 rounded-lg font-semibold transition-all ${
-                    plan.popular
-                      ? "bg-gradient-to-r from-discord-500 to-discord-600 hover:from-discord-600 hover:to-discord-700 text-white"
-                      : "bg-gray-700 hover:bg-gray-600 text-white"
-                  }`}
-                >
-                  {plan.cta}
-                </Link>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-32 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-discord-600/20 via-purple-600/20 to-pink-600/20" />
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
-          <h2 className="text-4xl font-bold mb-6">
-            Prêt à révolutionner vos{" "}
-            <span className="bg-gradient-to-r from-discord-400 to-purple-400 bg-clip-text text-transparent">
-              bots Discord ?
-            </span>
+      {/* Testimonials */}
+      <section id="testimonials" className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Loved by communities worldwide
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              See what Discord server owners are saying about FiveBot
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {testimonials.map((testimonial) => (
+              <div key={testimonial.name} className="bg-gray-50 rounded-2xl p-8">
+                <div className="flex items-center mb-4">
+                  {[...Array(testimonial.rating)].map((_, i) => (
+                    <StarIcon key={i} className="w-5 h-5 text-yellow-400 fill-current" />
+                  ))}
+                </div>
+                <p className="text-gray-700 mb-6">"{testimonial.content}"</p>
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-discord-500 rounded-full flex items-center justify-center text-white font-semibold mr-4">
+                    {testimonial.avatar}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">{testimonial.name}</p>
+                    <p className="text-sm text-gray-600">{testimonial.role}, {testimonial.company}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-20 bg-gradient-to-br from-discord-500 to-discord-600">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-4xl font-bold text-white mb-6">
+            Ready to supercharge your Discord server?
           </h2>
-          <p className="text-xl text-gray-400 mb-12 max-w-2xl mx-auto">
-            Rejoignez des milliers de créateurs qui utilisent FiveBot v2 pour
-            propulser leurs communautés vers de nouveaux sommets.
+          <p className="text-xl text-discord-100 mb-8">
+            Join thousands of communities using FiveBot to automate and scale.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href={user ? "/dashboard" : "/auth/login"}
-              className="group px-8 py-4 bg-gradient-to-r from-discord-500 to-discord-600 rounded-lg font-semibold text-lg transition-all transform hover:scale-105 hover:shadow-2xl hover:shadow-discord-500/25"
+              className="inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-discord-600 bg-white rounded-xl hover:bg-gray-100 transition-all transform hover:scale-105"
             >
-              <span className="flex items-center justify-center">
-                {user ? "Accéder au Dashboard" : "Démarrer maintenant"}
-                <ArrowRightIcon className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </span>
+              Get Started Free
+              <ArrowRightIcon className="ml-2 w-5 h-5" />
             </Link>
-            <a
-              href="#"
-              className="px-8 py-4 border border-gray-700 rounded-lg font-semibold text-lg hover:bg-gray-800 transition-all flex items-center justify-center"
+            <Link
+              href="https://docs.fivebot.app"
+              className="inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-white border-2 border-white/20 rounded-xl hover:bg-white/10 transition-all"
             >
-              <ChatBubbleBottomCenterTextIcon className="mr-2 w-5 h-5" />
-              Parler à un expert
-            </a>
+              Read Documentation
+            </Link>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-gray-800 py-16">
+      <footer className="bg-gray-900 text-gray-400 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <h3 className="text-2xl font-bold bg-gradient-to-r from-discord-400 to-purple-400 bg-clip-text text-transparent mb-4">
-                FiveBot v2
-              </h3>
-              <p className="text-gray-400">
-                La nouvelle génération de gestion de bots Discord.
+            <div className="col-span-1 md:col-span-2">
+              <div className="flex items-center space-x-2 mb-4">
+                <div className="w-8 h-8 bg-discord-500 rounded-lg flex items-center justify-center">
+                  <BoltIcon className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-xl font-bold text-white">FiveBot</span>
+              </div>
+              <p className="text-gray-400 mb-4 max-w-md">
+                The most powerful platform for creating and managing Discord bots. 
+                Built by developers, for developers.
               </p>
+              <div className="flex space-x-4">
+                <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
+                  </svg>
+                </a>
+                <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
+                  </svg>
+                </a>
+                <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
+                  </svg>
+                </a>
+              </div>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Produit</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Fonctionnalités
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Tarifs
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Roadmap
-                  </a>
-                </li>
+              <h4 className="font-semibold text-white mb-4">Product</h4>
+              <ul className="space-y-2">
+                <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
+                <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Changelog</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Roadmap</a></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Ressources</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Documentation
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    API
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Support
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Légal</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Confidentialité
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    CGU
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Cookies
-                  </a>
-                </li>
+              <h4 className="font-semibold text-white mb-4">Support</h4>
+              <ul className="space-y-2">
+                <li><a href="#" className="hover:text-white transition-colors">Documentation</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">API Reference</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Status</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
-            <p>© 2024 FiveBot Team. Tous droits réservés.</p>
+          <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
+            <p className="text-gray-400">© 2024 FiveBot. All rights reserved.</p>
+            <div className="flex space-x-6 mt-4 md:mt-0">
+              <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
+              <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
+              <a href="#" className="hover:text-white transition-colors">Cookie Policy</a>
+            </div>
           </div>
         </div>
       </footer>
