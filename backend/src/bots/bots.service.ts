@@ -824,15 +824,13 @@ export class BotsService {
           return newStatus;
         }
 
-        // Update with optimistic locking
+        // Update without optimistic locking to avoid conflicts
         await this.prisma.bot.update({
           where: { 
-            id: botId,
-            updatedAt: currentBot.updatedAt // Optimistic locking
+            id: botId
           },
           data: { 
-            status: newStatus,
-            updatedAt: new Date()
+            status: newStatus
           }
         });
 
