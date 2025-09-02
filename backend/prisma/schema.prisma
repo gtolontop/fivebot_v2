@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,86 +8,80 @@ datasource db {
 }
 
 model User {
-  id         String   @id @default(uuid())
-  discordId  String   @unique @map("discord_id")
-  username   String
-  email      String?
-  avatar     String?
-  role       UserRole @default(USER)
-  credits    Int      @default(100)
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
-
-  // Relations
+  id             String           @id @default(uuid())
+  discordId      String           @unique @map("discord_id")
+  username       String
+  email          String?
+  avatar         String?
+  role           UserRole         @default(USER)
+  credits        Int              @default(100)
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+  auditLogs      AuditLog[]
   bots           Bot[]
   creditsHistory CreditsHistory[]
-  auditLogs      AuditLog[]
 
   @@map("users")
 }
 
 model Bot {
-  id                String    @id @default(uuid())
-  ownerId           String    @map("owner_id")
+  id                String       @id @default(uuid())
+  ownerId           String       @map("owner_id")
   name              String
-  tokenEncrypted    String    @map("token_encrypted") @db.Text
-  clientId          String?   @map("client_id")
-  prefix            String    @default("!")
-  isActive          Boolean   @default(false) @map("is_active")
-  containerId       String?   @map("container_id")
-  instanceId        String?   @map("instance_id")
-  status            BotStatus @default(OFFLINE)
-  shouldAutoRestart Boolean   @default(true) @map("should_auto_restart")
-  createdAt         DateTime  @default(now()) @map("created_at")
-  updatedAt         DateTime  @updatedAt @map("updated_at")
+  tokenEncrypted    String       @map("token_encrypted") @db.Text
+  clientId          String?      @map("client_id")
+  prefix            String       @default("!")
+  isActive          Boolean      @default(false) @map("is_active")
+  containerId       String?      @map("container_id")
+  instanceId        String?      @map("instance_id")
+  status            BotStatus    @default(OFFLINE)
+  shouldAutoRestart Boolean      @default(true) @map("should_auto_restart")
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+  auditLogs         AuditLog[]
+  config            BotConfig?
+  logs              BotLog[]
+  metrics           BotMetrics[]
+  owner             User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  hosts             Host[]
+  jobLogs           JobLog[]
 
-  // Relations
-  owner       User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  config      BotConfig?
-  hosts       Host[]
-  jobLogs     JobLog[]
-  auditLogs   AuditLog[]
-  metrics     BotMetrics[]
-  logs        BotLog[]
-
+  @@index([ownerId], map: "bots_owner_id_fkey")
   @@map("bots")
 }
 
 model BotConfig {
-  id                  String  @id @default(uuid())
-  botId               String  @unique @map("bot_id")
-  welcomeEnabled      Boolean @default(false) @map("welcome_enabled")
-  welcomeChannelId    String? @map("welcome_channel_id")
-  welcomeEmbedJson    Json?   @map("welcome_embed_json")
-  welcomeLogoUrl      String? @map("welcome_logo_url")
-  welcomeThumbnailUrl String? @map("welcome_thumbnail_url")
-  moderationEnabled   Boolean @default(false) @map("moderation_enabled")
-  autoRoleEnabled     Boolean @default(false) @map("auto_role_enabled")
-  autoRoleId          String? @map("auto_role_id")
-  loggingChannelId    String? @map("logging_channel_id")
-  customCommands      Json?   @map("custom_commands")
-  ticketData          Json?   @map("ticket_data") // Store ticket categories, panels, etc.
+  id                  String   @id @default(uuid())
+  botId               String   @unique @map("bot_id")
+  welcomeEnabled      Boolean  @default(false) @map("welcome_enabled")
+  welcomeChannelId    String?  @map("welcome_channel_id")
+  welcomeEmbedJson    String?  @map("welcome_embed_json") @db.LongText
+  welcomeLogoUrl      String?  @map("welcome_logo_url")
+  welcomeThumbnailUrl String?  @map("welcome_thumbnail_url")
+  moderationEnabled   Boolean  @default(false) @map("moderation_enabled")
+  autoRoleEnabled     Boolean  @default(false) @map("auto_role_enabled")
+  autoRoleId          String?  @map("auto_role_id")
+  loggingChannelId    String?  @map("logging_channel_id")
+  customCommands      String?  @map("custom_commands") @db.LongText
+  ticketData          String?  @map("ticket_data") @db.LongText
   createdAt           DateTime @default(now()) @map("created_at")
   updatedAt           DateTime @updatedAt @map("updated_at")
-
-  // Relations
-  bot Bot @relation(fields: [botId], references: [id], onDelete: Cascade)
+  bot                 Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
 
   @@map("bot_configs")
 }
 
 model CreditsHistory {
-  id        String      @id @default(uuid())
-  userId    String      @map("user_id")
+  id        String     @id @default(uuid())
+  userId    String     @map("user_id")
   amount    Int
   reason    String
   type      CreditType
-  metadata  Json?
-  createdAt DateTime    @default(now()) @map("created_at")
+  metadata  String?    @db.LongText
+  createdAt DateTime   @default(now()) @map("created_at")
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  @@index([userId], map: "credits_history_user_id_fkey")
   @@map("credits_history")
 }
 
@@ -106,10 +97,9 @@ model Host {
   stoppedAt   DateTime?  @map("stopped_at")
   createdAt   DateTime   @default(now()) @map("created_at")
   updatedAt   DateTime   @updatedAt @map("updated_at")
+  bot         Bot        @relation(fields: [botId], references: [id], onDelete: Cascade)
 
-  // Relations
-  bot Bot @relation(fields: [botId], references: [id], onDelete: Cascade)
-
+  @@index([botId], map: "hosts_bot_id_fkey")
   @@map("hosts")
 }
 
@@ -120,12 +110,11 @@ model JobLog {
   jobType   String    @map("job_type")
   status    JobStatus
   message   String?   @db.Text
-  metadata  Json?
+  metadata  String?   @db.LongText
   createdAt DateTime  @default(now()) @map("created_at")
+  bot       Bot?      @relation(fields: [botId], references: [id])
 
-  // Relations
-  bot Bot? @relation(fields: [botId], references: [id], onDelete: SetNull)
-
+  @@index([botId], map: "job_logs_bot_id_fkey")
   @@map("job_logs")
 }
 
@@ -134,15 +123,60 @@ model BotLog {
   botId     String   @map("bot_id")
   level     LogLevel @default(INFO)
   message   String   @db.Text
-  source    String?  // Discord, Command, System, etc.
-  metadata  Json?    // Additional context data
+  source    String?
+  metadata  String?  @db.LongText
   createdAt DateTime @default(now()) @map("created_at")
-
-  // Relations
-  bot Bot @relation(fields: [botId], references: [id], onDelete: Cascade)
+  bot       Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
 
   @@index([botId, createdAt])
   @@map("bot_logs")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  botId     String?  @map("bot_id")
+  action    String
+  resource  String?
+  metadata  String?  @db.LongText
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+  bot       Bot?     @relation(fields: [botId], references: [id])
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@index([botId], map: "audit_logs_bot_id_fkey")
+  @@index([userId], map: "audit_logs_user_id_fkey")
+  @@map("audit_logs")
+}
+
+model BotMetrics {
+  id                String   @id @default(uuid())
+  botId             String   @map("bot_id")
+  date              DateTime @map("date") @db.Date
+  commandsUsed      Int      @default(0) @map("commands_used")
+  messagesProcessed Int      @default(0) @map("messages_processed")
+  guildsCount       Int      @default(0) @map("guilds_count")
+  usersCount        Int      @default(0) @map("users_count")
+  uptimeSeconds     Int      @default(0) @map("uptime_seconds")
+  avgResponseTime   Int      @default(0) @map("avg_response_time_ms")
+  errorsCount       Int      @default(0) @map("errors_count")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  bot               Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
+
+  @@unique([botId, date])
+  @@map("bot_metrics")
+}
+
+model SecurityKey {
+  id        String   @id @default(uuid())
+  purpose   String   @unique
+  keyMeta   String?  @map("key_meta") @db.LongText
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("security_keys")
 }
 
 enum LogLevel {
@@ -153,56 +187,6 @@ enum LogLevel {
   SUCCESS
 }
 
-model AuditLog {
-  id        String   @id @default(uuid())
-  userId    String?  @map("user_id")
-  botId     String?  @map("bot_id")
-  action    String
-  resource  String?
-  metadata  Json?
-  ipAddress String?  @map("ip_address")
-  userAgent String?  @map("user_agent")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  // Relations
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
-  bot  Bot?  @relation(fields: [botId], references: [id], onDelete: SetNull)
-
-  @@map("audit_logs")
-}
-
-model BotMetrics {
-  id              String   @id @default(uuid())
-  botId           String   @map("bot_id")
-  date            DateTime @map("date") @db.Date
-  commandsUsed    Int      @default(0) @map("commands_used")
-  messagesProcessed Int    @default(0) @map("messages_processed")
-  guildsCount     Int      @default(0) @map("guilds_count")
-  usersCount      Int      @default(0) @map("users_count")
-  uptimeSeconds   Int      @default(0) @map("uptime_seconds")
-  avgResponseTime Int      @default(0) @map("avg_response_time_ms")
-  errorsCount     Int      @default(0) @map("errors_count")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
-
-  // Relations
-  bot Bot @relation(fields: [botId], references: [id], onDelete: Cascade)
-
-  @@unique([botId, date])
-  @@map("bot_metrics")
-}
-
-model SecurityKey {
-  id        String   @id @default(uuid())
-  purpose   String   @unique
-  keyMeta   Json?    @map("key_meta")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("security_keys")
-}
-
-// Enums
 enum UserRole {
   USER
   ADMIN
