@@ -170,6 +170,9 @@ export default function HomePage() {
   const [scrollY, setScrollY] = useState(0);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [selectedPlan, setSelectedPlan] = useState("Pro");
+  const [activeFeature, setActiveFeature] = useState(0);
+  const [commandCount, setCommandCount] = useState(0);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -180,9 +183,21 @@ export default function HomePage() {
     window.addEventListener("scroll", handleScroll);
     window.addEventListener("mousemove", handleMouseMove);
     
+    // Animate command counter
+    const interval = setInterval(() => {
+      setCommandCount(prev => prev + Math.floor(Math.random() * 10) + 1);
+    }, 100);
+
+    // Rotate features
+    const featureInterval = setInterval(() => {
+      setActiveFeature(prev => (prev + 1) % features.length);
+    }, 3000);
+    
     return () => {
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("mousemove", handleMouseMove);
+      clearInterval(interval);
+      clearInterval(featureInterval);
     };
   }, []);
 
@@ -269,7 +284,7 @@ export default function HomePage() {
           </div>
           <h1 className="text-6xl lg:text-8xl font-bold text-gray-900 tracking-tight animate-fade-in-up">
             The Future of
-            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-discord-500 to-discord-600 mt-2">
+            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-discord-500 to-discord-600 mt-2 pb-2">
               Discord Bot Management
             </span>
           </h1>
