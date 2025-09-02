@@ -300,9 +300,12 @@ export default function HomePage() {
               Start Building for Free
               <ArrowRightIcon className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
-            <button className="inline-flex items-center justify-center px-10 py-5 text-lg font-medium text-gray-700 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl hover:bg-white transition-all hover:shadow-lg">
+            <button 
+              onClick={() => setIsVideoPlaying(true)}
+              className="inline-flex items-center justify-center px-10 py-5 text-lg font-medium text-gray-700 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl hover:bg-white transition-all hover:shadow-lg"
+            >
               <PlayIcon className="mr-2 w-5 h-5" />
-              Watch 2-min Demo
+              Watch Live Demo
             </button>
           </div>
           <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto animate-fade-in-up animation-delay-600">
@@ -311,10 +314,22 @@ export default function HomePage() {
                 <div className="inline-flex items-center justify-center w-14 h-14 bg-white/80 backdrop-blur-sm rounded-xl mb-3 group-hover:shadow-lg transition-all">
                   <stat.icon className="w-7 h-7 text-discord-600" />
                 </div>
-                <div className="text-3xl font-bold text-gray-900">{stat.number}</div>
+                <div className="text-3xl font-bold text-gray-900">
+                  {stat.label === "Active Bots" ? commandCount.toLocaleString() : stat.number}
+                </div>
                 <div className="text-sm text-gray-600">{stat.label}</div>
               </div>
             ))}
+          </div>
+          
+          {/* Live command counter */}
+          <div className="mt-16 animate-fade-in-up animation-delay-800">
+            <div className="inline-flex items-center px-6 py-3 bg-white/80 backdrop-blur-sm rounded-full border border-gray-200">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-3"></div>
+              <span className="text-sm font-medium text-gray-700">
+                <span className="font-bold text-discord-600">{(commandCount * 127).toLocaleString()}</span> commands processed today
+              </span>
+            </div>
           </div>
           
           {/* Scroll indicator */}
@@ -325,6 +340,58 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Video Demo Modal */}
+      {isVideoPlaying && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setIsVideoPlaying(false)}>
+          <div className="relative max-w-6xl w-full" onClick={(e) => e.stopPropagation()}>
+            <button 
+              onClick={() => setIsVideoPlaying(false)}
+              className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors"
+            >
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <div className="bg-gray-900 rounded-2xl overflow-hidden shadow-2xl">
+              <div className="bg-gray-800 p-4 flex items-center justify-between">
+                <div className="flex space-x-2">
+                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                  <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                </div>
+                <span className="text-gray-400 text-sm font-medium">FiveBot Live Demo</span>
+                <div></div>
+              </div>
+              <div className="relative aspect-video bg-gray-900 p-8">
+                <div className="h-full flex flex-col">
+                  {/* Terminal simulation */}
+                  <div className="flex-1 bg-black rounded-lg p-6 font-mono text-sm overflow-hidden">
+                    <div className="text-green-400 mb-4">$ fivebot create my-awesome-bot</div>
+                    <div className="text-gray-400 mb-2">✓ Bot configuration detected</div>
+                    <div className="text-gray-400 mb-2">✓ Installing dependencies...</div>
+                    <div className="text-gray-400 mb-2">✓ Building Docker container...</div>
+                    <div className="text-gray-400 mb-2">✓ Deploying to cloud...</div>
+                    <div className="text-green-400 mb-4">✅ Bot deployed successfully!</div>
+                    <div className="text-blue-400 mb-2">🔗 Dashboard: https://fivebot.app/bots/my-awesome-bot</div>
+                    <div className="text-yellow-400">⚡ Your bot is now online and ready!</div>
+                    
+                    <div className="mt-8 p-4 bg-gray-900 rounded border border-gray-700">
+                      <div className="text-gray-300 mb-2">📊 Real-time Stats:</div>
+                      <div className="grid grid-cols-2 gap-4 text-xs">
+                        <div>Status: <span className="text-green-400">Online</span></div>
+                        <div>Uptime: <span className="text-green-400">99.9%</span></div>
+                        <div>Commands: <span className="text-blue-400">1,247</span></div>
+                        <div>Response: <span className="text-blue-400">42ms</span></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Features Grid */}
       <section id="features" className="py-20 bg-gray-50">
