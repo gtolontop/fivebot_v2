@@ -408,14 +408,24 @@ export default function HomePage() {
             {features.map((feature, index) => (
               <div
                 key={feature.title}
-                className="group relative bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                className={`group relative bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${
+                  index === activeFeature ? 'ring-2 ring-discord-500 shadow-lg' : ''
+                }`}
                 style={{ animationDelay: `${index * 100}ms` }}
+                onMouseEnter={() => setActiveFeature(index)}
               >
-                <div className={`inline-flex p-3 rounded-xl bg-gradient-to-br ${feature.color} mb-6`}>
+                <div className={`inline-flex p-3 rounded-xl bg-gradient-to-br ${feature.color} mb-6 ${
+                  index === activeFeature ? 'scale-110' : ''
+                } transition-transform`}>
                   <feature.icon className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-3">{feature.title}</h3>
                 <p className="text-gray-600">{feature.description}</p>
+                {index === activeFeature && (
+                  <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
+                    <div className="w-16 h-1 bg-gradient-to-r from-discord-500 to-discord-600 rounded-full"></div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -423,8 +433,9 @@ export default function HomePage() {
       </section>
 
       {/* How it works */}
-      <section id="how-it-works" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="how-it-works" className="py-20 bg-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-discord-50 to-transparent opacity-50"></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
               Get started in 3 simple steps
@@ -433,33 +444,67 @@ export default function HomePage() {
               No complex setup. No infrastructure headaches. Just bots.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+            {/* Animated connection line */}
+            <div className="hidden md:block absolute top-20 left-1/4 right-1/4 h-0.5 bg-gradient-to-r from-discord-200 via-discord-400 to-discord-200">
+              <div className="absolute inset-0 bg-gradient-to-r from-discord-400 to-discord-600 animate-pulse"></div>
+            </div>
+            
+            <div className="text-center relative">
               <div className="relative inline-block">
-                <div className="w-20 h-20 bg-discord-100 rounded-full flex items-center justify-center mb-6">
-                  <span className="text-3xl font-bold text-discord-600">1</span>
+                <div className="w-20 h-20 bg-gradient-to-br from-discord-400 to-discord-600 text-white rounded-full flex items-center justify-center mb-6 shadow-lg transform hover:scale-110 transition-transform cursor-pointer">
+                  <UserGroupIcon className="w-10 h-10" />
                 </div>
-                <div className="hidden md:block absolute top-10 left-full w-full h-0.5 bg-gradient-to-r from-discord-200 to-discord-100"></div>
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3">Connect Discord</h3>
               <p className="text-gray-600">Sign in with Discord and authorize FiveBot to manage your bots</p>
             </div>
-            <div className="text-center">
+            <div className="text-center relative">
               <div className="relative inline-block">
-                <div className="w-20 h-20 bg-discord-100 rounded-full flex items-center justify-center mb-6">
-                  <span className="text-3xl font-bold text-discord-600">2</span>
+                <div className="w-20 h-20 bg-gradient-to-br from-discord-400 to-discord-600 text-white rounded-full flex items-center justify-center mb-6 shadow-lg transform hover:scale-110 transition-transform cursor-pointer">
+                  <CpuChipIcon className="w-10 h-10" />
                 </div>
-                <div className="hidden md:block absolute top-10 left-full w-full h-0.5 bg-gradient-to-r from-discord-200 to-discord-100"></div>
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3">Configure Bot</h3>
               <p className="text-gray-600">Use our visual builder or import your existing bot code</p>
             </div>
-            <div className="text-center">
-              <div className="w-20 h-20 bg-discord-100 rounded-full flex items-center justify-center mb-6 mx-auto">
-                <span className="text-3xl font-bold text-discord-600">3</span>
+            <div className="text-center relative">
+              <div className="w-20 h-20 bg-gradient-to-br from-discord-400 to-discord-600 text-white rounded-full flex items-center justify-center mb-6 mx-auto shadow-lg transform hover:scale-110 transition-transform cursor-pointer">
+                <RocketLaunchIcon className="w-10 h-10" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3">Deploy & Scale</h3>
               <p className="text-gray-600">Hit deploy and watch your bot come to life instantly</p>
+            </div>
+          </div>
+
+          {/* Live bot creation preview */}
+          <div className="mt-20 bg-gray-900 rounded-2xl p-8 max-w-4xl mx-auto shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-white font-semibold text-lg">Live Bot Creation</h3>
+              <div className="flex space-x-2">
+                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-green-400 text-sm">Creating bot...</span>
+              </div>
+            </div>
+            <div className="bg-black rounded-lg p-6 font-mono text-sm">
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <CheckIcon className="w-4 h-4 text-green-400" />
+                  <span className="text-gray-400">Bot template selected: <span className="text-white">Multi-purpose</span></span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <CheckIcon className="w-4 h-4 text-green-400" />
+                  <span className="text-gray-400">Commands configured: <span className="text-white">47 commands</span></span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <CheckIcon className="w-4 h-4 text-green-400" />
+                  <span className="text-gray-400">Permissions set: <span className="text-white">Administrator</span></span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 border-2 border-discord-400 rounded-full animate-spin"></div>
+                  <span className="text-yellow-400">Deploying to cloud infrastructure...</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
