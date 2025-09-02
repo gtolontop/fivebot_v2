@@ -480,11 +480,46 @@
     opacity: 1;
     visibility: visible;
   }
-  60%, 95% {
+  60%, 77% {
+    opacity: 1;
+    visibility: visible;
+  }
+  78% {
+    opacity: 0;
+    visibility: hidden;
+  }
+  87% {
+    opacity: 1;
+    visibility: visible;
+  }
+  87%, 95% {
     opacity: 1;
     visibility: visible;
   }
   100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes page-4-sequence {
+  0%, 77% {
+    opacity: 0;
+    visibility: hidden;
+  }
+  80% {
+    opacity: 1;
+    visibility: visible;
+  }
+  80%, 85% {
+    opacity: 1;
+    visibility: visible;
+  }
+  86% {
+    opacity: 0;
+    visibility: hidden;
+  }
+  87%, 100% {
     opacity: 0;
     visibility: hidden;
   }
@@ -502,56 +537,41 @@
   animation: page-3-sequence 20s ease-out infinite;
 }
 
+.animate-page-4 {
+  animation: page-4-sequence 20s ease-out infinite;
+}
+
 /* Auto typing */
 @keyframes auto-type-name {
-  0%, 30% {
-    color: transparent;
+  0%, 26% {
+    content: "";
   }
-  35% {
-    color: white;
+  28% {
     content: "M";
   }
-  40% {
+  29% {
     content: "Me";
   }
-  45% {
+  30% {
     content: "Meg";
   }
-  50% {
+  31% {
     content: "Mega";
   }
-  55% {
+  32% {
     content: "MegaB";
   }
-  60% {
+  33% {
     content: "MegaBo";
   }
-  65% {
+  34%, 100% {
     content: "MegaBot";
-  }
-  70% {
-    content: "MegaBot ";
-  }
-  75% {
-    content: "MegaBot U";
-  }
-  80% {
-    content: "MegaBot Ul";
-  }
-  85% {
-    content: "MegaBot Ult";
-  }
-  90% {
-    content: "MegaBot Ultr";
-  }
-  95%, 100% {
-    content: "MegaBot Ultra";
   }
 }
 
 .animate-auto-type-name::after {
-  content: "MegaBot Ultra";
-  animation: auto-type-name 6s ease-out 4s forwards;
+  content: "";
+  animation: auto-type-name 20s ease-out infinite;
 }
 
 @keyframes auto-type-prefix {
@@ -565,54 +585,35 @@
 }
 
 @keyframes auto-type-token {
-  0%, 35% {
-    color: transparent;
+  0%, 36% {
+    content: "";
   }
-  40% {
-    color: white;
+  38% {
     content: "N";
   }
-  42% {
+  39% {
     content: "NT";
   }
-  44% {
+  40% {
     content: "NTA";
   }
-  46% {
+  41% {
     content: "NTAz";
   }
-  48% {
+  42% {
     content: "NTAzM";
   }
-  50% {
+  43% {
     content: "NTAzMj";
   }
-  52% {
-    content: "NTAzMjI";
-  }
-  54% {
-    content: "NTAzMjIx";
-  }
-  56% {
-    content: "NTAzMjIx.";
-  }
-  58% {
-    content: "NTAzMjIx.D";
-  }
-  60% {
-    content: "NTAzMjIx.Dq";
-  }
-  62% {
-    content: "NTAzMjIx.Dqz";
-  }
-  64%, 100% {
-    content: "NTAzMjIx.Dqz...";
+  44%, 100% {
+    content: "NTAzMjI•••";
   }
 }
 
 .animate-auto-type-token::after {
-  content: "NTAzMjIx.Dqz...";
-  animation: auto-type-token 8s ease-out 3s forwards;
+  content: "";
+  animation: auto-type-token 20s ease-out infinite;
 }
 
 /* Console animations - after bot start */
@@ -752,4 +753,31 @@
 .animate-count-up::after {
   content: "0";
   animation: count-up 3s ease-out 11s forwards;
+}
+
+/* Toggle switch animation */
+@keyframes toggle-on {
+  0%, 82% {
+    background-color: rgb(75 85 99);
+  }
+  84%, 100% {
+    background-color: rgb(34 197 94);
+  }
+}
+
+@keyframes toggle-slide {
+  0%, 82% {
+    transform: translateX(4px);
+  }
+  84%, 100% {
+    transform: translateX(20px);
+  }
+}
+
+.animate-toggle-on {
+  animation: toggle-on 20s ease-out infinite;
+}
+
+.animate-toggle-slide {
+  animation: toggle-slide 20s ease-out infinite;
 }

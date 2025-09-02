@@ -486,6 +486,54 @@ export default function HomePage() {
                     </div>
                   </div>
                 </div>
+                
+                {/* Page 4: Configuration */}
+                <div className="absolute inset-0 p-12 animate-page-4">
+                  <div className="h-full">
+                    <h2 className="text-2xl font-bold text-white mb-6">Bot Configuration</h2>
+                    <div className="bg-gray-800 rounded-xl p-8 border border-gray-700">
+                      <h3 className="text-xl font-semibold text-white mb-6">Welcome Messages</h3>
+                      
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
+                          <div>
+                            <p className="text-white font-medium">Enable Welcome Messages</p>
+                            <p className="text-gray-400 text-sm">Send a message when new users join</p>
+                          </div>
+                          <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-600 transition-colors animate-toggle-on">
+                            <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1 animate-toggle-slide"></span>
+                          </button>
+                        </div>
+                        
+                        <div className="p-4 bg-gray-700 rounded-lg">
+                          <label className="block text-gray-300 mb-2">Welcome Channel</label>
+                          <select className="w-full bg-gray-600 border border-gray-500 rounded-lg px-4 py-2 text-white">
+                            <option>#welcome</option>
+                            <option>#general</option>
+                          </select>
+                        </div>
+                        
+                        <div className="p-4 bg-gray-700 rounded-lg">
+                          <label className="block text-gray-300 mb-2">Welcome Message</label>
+                          <textarea 
+                            className="w-full bg-gray-600 border border-gray-500 rounded-lg px-4 py-2 text-white h-24 resize-none" 
+                            placeholder="Welcome {user} to the server!"
+                            defaultValue="Welcome to our server! 🎉"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-end mt-6 space-x-4">
+                        <button className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-medium rounded-lg transition-all">
+                          Cancel
+                        </button>
+                        <button className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-all">
+                          Save Changes
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
