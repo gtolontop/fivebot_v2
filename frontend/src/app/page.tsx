@@ -334,145 +334,134 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Video Demo Modal */}
+      {/* Video Demo Modal - Motion Design */}
       {isVideoPlaying && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setIsVideoPlaying(false)}>
-          <div className="relative max-w-6xl w-full" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4" onClick={() => setIsVideoPlaying(false)}>
+          <div className="relative max-w-5xl w-full" onClick={(e) => e.stopPropagation()}>
             <button 
               onClick={() => setIsVideoPlaying(false)}
-              className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors"
+              className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors z-50"
             >
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-            <div className="bg-gray-900 rounded-2xl overflow-hidden shadow-2xl">
-              <div className="bg-gray-800 p-4 flex items-center justify-between">
-                <div className="flex space-x-2">
-                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                  <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                </div>
-                <span className="text-gray-400 text-sm font-medium">FiveBot Live Demo</span>
-                <div></div>
+            
+            {/* Epic Motion Design Demo */}
+            <div className="relative bg-black rounded-3xl overflow-hidden shadow-2xl" style={{ aspectRatio: '16/9' }}>
+              <div className="absolute inset-0 bg-gradient-to-br from-discord-600/20 via-purple-600/10 to-pink-600/20"></div>
+              
+              {/* Animated Background */}
+              <div className="absolute inset-0">
+                <div className="absolute top-0 left-0 w-96 h-96 bg-discord-500/30 rounded-full blur-3xl animate-float"></div>
+                <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl animate-float-delayed"></div>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500/20 rounded-full blur-3xl animate-pulse"></div>
               </div>
-              <div className="relative bg-gradient-to-br from-gray-900 to-black p-2">
-                {/* Browser UI */}
-                <div className="bg-gray-800 rounded-t-lg px-4 py-3 flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <div className="text-gray-400 text-sm">fivebot.app/dashboard</div>
-                  </div>
-                  <div className="flex space-x-2">
-                    <div className="w-3 h-3 bg-gray-600 rounded-full"></div>
-                    <div className="w-3 h-3 bg-gray-600 rounded-full"></div>
-                    <div className="w-3 h-3 bg-gray-600 rounded-full"></div>
-                  </div>
-                </div>
-                
-                {/* Dashboard Demo */}
-                <div className="bg-gray-900 p-8">
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Bot Card */}
-                    <div className="bg-gray-800 rounded-xl p-6 transform hover:scale-105 transition-all duration-500 border border-gray-700">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-12 h-12 bg-gradient-to-br from-discord-400 to-discord-600 rounded-full flex items-center justify-center">
-                            <BoltIcon className="w-6 h-6 text-white" />
-                          </div>
-                          <div>
-                            <h4 className="text-white font-semibold">MusicBot Pro</h4>
-                            <p className="text-gray-400 text-sm">47 servers</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                          <span className="text-green-400 text-sm">Online</span>
-                        </div>
-                      </div>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Commands today</span>
-                          <span className="text-white font-medium">2,847</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Uptime</span>
-                          <span className="text-white font-medium">99.8%</span>
-                        </div>
+              
+              {/* Main Content */}
+              <div className="relative h-full flex items-center justify-center p-16">
+                <div className="w-full max-w-4xl">
+                  {/* Bot Builder Interface */}
+                  <div className="relative">
+                    {/* Animated Cursor */}
+                    <div className="absolute z-50 pointer-events-none animate-cursor">
+                      <div className="relative">
+                        <div className="w-4 h-4 bg-white rounded-full shadow-2xl"></div>
+                        <div className="absolute inset-0 w-4 h-4 bg-white rounded-full animate-ping"></div>
                       </div>
                     </div>
                     
-                    {/* Creating New Bot Animation */}
-                    <div className="lg:col-span-2 bg-gray-800 rounded-xl p-6 border-2 border-discord-500 relative overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-r from-discord-500/10 to-purple-500/10 animate-pulse"></div>
-                      <div className="relative">
-                        <h4 className="text-white font-semibold mb-4 flex items-center">
-                          <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse mr-2"></div>
-                          Creating New Bot...
-                        </h4>
-                        <div className="space-y-3">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center">
-                              <CheckIcon className="w-4 h-4 text-green-400" />
-                            </div>
-                            <div className="flex-1">
-                              <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                                <div className="h-full bg-gradient-to-r from-discord-400 to-discord-600 rounded-full animate-progress" style={{width: '100%'}}></div>
-                              </div>
-                            </div>
-                            <span className="text-gray-400 text-sm">Bot configured</span>
+                    {/* Step 1: Name Your Bot */}
+                    <div className="step-1 opacity-0 animate-step-in">
+                      <h3 className="text-3xl font-bold text-white mb-8 text-center">
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-discord-400 to-purple-400">
+                          Create Your Bot
+                        </span>
+                      </h3>
+                      <div className="bg-gray-900/80 backdrop-blur-xl rounded-2xl p-8 border border-gray-800">
+                        <input 
+                          type="text"
+                          className="w-full bg-gray-800 border-2 border-gray-700 rounded-xl px-6 py-4 text-white text-xl focus:border-discord-500 transition-all animate-type-text"
+                          placeholder="Bot Name"
+                          value="UltraBot Pro"
+                          readOnly
+                        />
+                      </div>
+                    </div>
+                    
+                    {/* Step 2: Select Features */}
+                    <div className="step-2 opacity-0 animate-step-in-delayed mt-8">
+                      <div className="grid grid-cols-3 gap-4">
+                        {[
+                          { name: "Music", icon: "🎵", delay: "0ms" },
+                          { name: "Moderation", icon: "🛡️", delay: "100ms" },
+                          { name: "Games", icon: "🎮", delay: "200ms" },
+                          { name: "Analytics", icon: "📊", delay: "300ms" },
+                          { name: "AI Chat", icon: "🤖", delay: "400ms" },
+                          { name: "Events", icon: "📅", delay: "500ms" },
+                        ].map((feature) => (
+                          <div
+                            key={feature.name}
+                            className="feature-card bg-gray-900/80 backdrop-blur-xl rounded-xl p-6 border-2 border-gray-800 hover:border-discord-500 transition-all transform hover:scale-105 cursor-pointer animate-feature-select"
+                            style={{ animationDelay: feature.delay }}
+                          >
+                            <div className="text-4xl mb-2 text-center">{feature.icon}</div>
+                            <p className="text-white text-center font-medium">{feature.name}</p>
                           </div>
-                          
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center">
-                              <CheckIcon className="w-4 h-4 text-green-400" />
-                            </div>
-                            <div className="flex-1">
-                              <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                                <div className="h-full bg-gradient-to-r from-discord-400 to-discord-600 rounded-full animate-progress" style={{width: '100%'}}></div>
-                              </div>
-                            </div>
-                            <span className="text-gray-400 text-sm">Dependencies installed</span>
-                          </div>
-                          
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-yellow-500/20 rounded-full flex items-center justify-center">
-                              <div className="w-4 h-4 border-2 border-yellow-400 rounded-full animate-spin border-t-transparent"></div>
-                            </div>
-                            <div className="flex-1">
-                              <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                                <div className="h-full bg-gradient-to-r from-discord-400 to-discord-600 rounded-full animate-progress-active" style={{width: '60%'}}></div>
-                              </div>
-                            </div>
-                            <span className="text-yellow-400 text-sm">Deploying...</span>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Step 3: Deploy Animation */}
+                    <div className="step-3 opacity-0 animate-step-in-final mt-12">
+                      <button className="w-full relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-gradient-to-r from-discord-500 via-purple-500 to-pink-500 animate-gradient-shift"></div>
+                        <div className="relative bg-black/50 backdrop-blur-sm m-0.5 rounded-2xl py-6 px-12">
+                          <span className="text-2xl font-bold text-white flex items-center justify-center">
+                            <RocketLaunchIcon className="w-8 h-8 mr-3 animate-bounce" />
+                            Deploy Bot
+                          </span>
+                        </div>
+                      </button>
+                    </div>
+                    
+                    {/* Success Animation */}
+                    <div className="success-state opacity-0 animate-success-in absolute inset-0 flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="w-32 h-32 mx-auto mb-8 relative">
+                          <div className="absolute inset-0 bg-green-500 rounded-full animate-success-scale"></div>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <CheckIcon className="w-16 h-16 text-white animate-check-in" />
                           </div>
                         </div>
-                        
-                        <div className="mt-6 p-4 bg-gray-900/50 rounded-lg">
-                          <p className="text-gray-300 text-sm font-mono">
-                            <span className="text-discord-400">$</span> docker build -t fivebot/musicbot:latest .
-                          </p>
+                        <h3 className="text-4xl font-bold text-white mb-4">Bot Deployed!</h3>
+                        <p className="text-xl text-gray-300">Your bot is now live on Discord</p>
+                        <div className="mt-8 flex items-center justify-center space-x-4">
+                          <div className="flex items-center space-x-2 text-green-400">
+                            <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                            <span>Online</span>
+                          </div>
+                          <span className="text-gray-400">•</span>
+                          <span className="text-gray-300">0 servers</span>
+                          <span className="text-gray-400">•</span>
+                          <span className="text-gray-300">Ready to use</span>
                         </div>
                       </div>
                     </div>
                   </div>
-                  
-                  {/* Quick Stats */}
-                  <div className="mt-6 grid grid-cols-4 gap-4">
-                    {[
-                      { label: "Total Bots", value: "12", icon: CubeIcon, color: "text-blue-400" },
-                      { label: "Active Users", value: "48.2k", icon: UserGroupIcon, color: "text-green-400" },
-                      { label: "Commands/Day", value: "127k", icon: CommandLineIcon, color: "text-purple-400" },
-                      { label: "Uptime", value: "99.9%", icon: ClockIcon, color: "text-yellow-400" },
-                    ].map((stat) => (
-                      <div key={stat.label} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-                        <div className="flex items-center justify-between mb-2">
-                          <stat.icon className={`w-5 h-5 ${stat.color}`} />
-                          <span className={`text-2xl font-bold ${stat.color}`}>{stat.value}</span>
-                        </div>
-                        <p className="text-gray-400 text-sm">{stat.label}</p>
-                      </div>
-                    ))}
-                  </div>
+                </div>
+              </div>
+              
+              {/* Progress Indicator */}
+              <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex space-x-2">
+                <div className="w-16 h-1 bg-white/20 rounded-full overflow-hidden">
+                  <div className="h-full bg-white rounded-full animate-progress-step-1"></div>
+                </div>
+                <div className="w-16 h-1 bg-white/20 rounded-full overflow-hidden">
+                  <div className="h-full bg-white rounded-full animate-progress-step-2"></div>
+                </div>
+                <div className="w-16 h-1 bg-white/20 rounded-full overflow-hidden">
+                  <div className="h-full bg-white rounded-full animate-progress-step-3"></div>
                 </div>
               </div>
             </div>
