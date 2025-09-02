@@ -264,7 +264,15 @@ export default function BotConfigPage() {
     try {
       await botsAPI.updateConfig(botId, config);
       toast.success('Configuration saved successfully');
-      await fetchBot(); // Refresh data
+      
+      // If bot was online, it will restart automatically
+      if (bot?.status === 'ONLINE') {
+        setBot(prev => prev ? { ...prev, status: 'RESTARTING' } : null);
+        toast.info('Bot is restarting to apply new configuration...');
+      }
+      
+      // Refresh bot status after a delay
+      setTimeout(fetchBot, 3000);
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Error saving configuration');
     } finally {
