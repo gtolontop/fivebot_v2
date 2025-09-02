@@ -547,10 +547,11 @@ export default function BotConfigPage() {
               <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(bot.status)}`}>
                 {bot.status === 'ONLINE' && <CheckCircleIcon className="w-4 h-4 mr-1" />}
                 {bot.status === 'ERROR' && <ExclamationTriangleIcon className="w-4 h-4 mr-1" />}
-                {(bot.status === 'STARTING' || bot.status === 'STOPPING' || bot.status === 'OFFLINE') && <ClockIcon className="w-4 h-4 mr-1" />}
+                {(bot.status === 'STARTING' || bot.status === 'STOPPING' || bot.status === 'RESTARTING' || bot.status === 'OFFLINE') && <ClockIcon className="w-4 h-4 mr-1" />}
                 {bot.status === 'ONLINE' ? 'Online' : 
                  bot.status === 'STARTING' ? 'Starting...' :
                  bot.status === 'STOPPING' ? 'Stopping...' :
+                 bot.status === 'RESTARTING' ? 'Restarting...' :
                  bot.status === 'ERROR' ? 'Error' : 'Offline'}
               </div>
 
