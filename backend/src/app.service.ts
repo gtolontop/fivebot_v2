@@ -13,10 +13,11 @@ export class AppService implements OnApplicationBootstrap {
     // Let the bots keep their current status - users can manage them manually
     console.log('🚀 Application ready - bot statuses preserved from previous session');
     
-    // Optional: Add a delay and then try to reset in background
-    setTimeout(async () => {
-      await this.resetBotStatusesWithRetry();
-    }, 5000); // Wait 5 seconds after app start
+    // Disabled automatic reset to avoid conflicts with manual bot operations
+    // Users can start/stop bots manually without lock issues
+    // setTimeout(async () => {
+    //   await this.resetBotStatusesWithRetry();
+    // }, 5000); // Wait 5 seconds after app start
   }
 
   // Helper method to reset bot statuses with retry logic and exponential backoff
