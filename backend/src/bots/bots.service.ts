@@ -588,8 +588,8 @@ export class BotsService {
             console.log(`✅ Successfully updated bot ${botId} status: ${currentBot.status} → ${status}`);
           },
           {
-            maxWait: 10000, // Maximum time to wait for a transaction slot (10 seconds)
-            timeout: 60000, // Maximum time for the transaction to complete (60 seconds)
+            maxWait: 5000, // Maximum time to wait for a transaction slot (5 seconds)
+            timeout: 15000, // Maximum time for the transaction to complete (15 seconds)
             isolationLevel: 'ReadCommitted', // Use less strict isolation to reduce locks
           }
         );
