@@ -486,19 +486,19 @@
     opacity: 1;
     visibility: visible;
   }
-  60%, 77% {
+  60%, 62% {
     opacity: 1;
     visibility: visible;
   }
-  78% {
+  63% {
     opacity: 0;
     visibility: hidden;
   }
-  87% {
+  75% {
     opacity: 1;
     visibility: visible;
   }
-  87%, 95% {
+  75%, 95% {
     opacity: 1;
     visibility: visible;
   }
@@ -509,23 +509,23 @@
 }
 
 @keyframes page-4-sequence {
-  0%, 77% {
+  0%, 62% {
     opacity: 0;
     visibility: hidden;
   }
-  80% {
+  65% {
     opacity: 1;
     visibility: visible;
   }
-  80%, 85% {
+  65%, 73% {
     opacity: 1;
     visibility: visible;
   }
-  86% {
+  74% {
     opacity: 0;
     visibility: hidden;
   }
-  87%, 100% {
+  75%, 100% {
     opacity: 0;
     visibility: hidden;
   }
@@ -636,40 +636,40 @@
 
 .animate-console-line-1 {
   opacity: 0;
-  animation: console-line 0.3s ease-out 13s forwards;
+  animation: console-line 0.3s ease-out 16.4s forwards;
 }
 
 .animate-console-line-2 {
   opacity: 0;
-  animation: console-line 0.3s ease-out 13.3s forwards;
+  animation: console-line 0.3s ease-out 16.7s forwards;
 }
 
 .animate-console-line-3 {
   opacity: 0;
-  animation: console-line 0.3s ease-out 13.6s forwards;
+  animation: console-line 0.3s ease-out 17s forwards;
 }
 
 .animate-console-line-4 {
   opacity: 0;
-  animation: console-line 0.3s ease-out 14s forwards;
+  animation: console-line 0.3s ease-out 17.3s forwards;
 }
 
 .animate-console-line-5 {
   opacity: 0;
-  animation: console-line 0.3s ease-out 14.3s forwards;
+  animation: console-line 0.3s ease-out 17.6s forwards;
 }
 
 .animate-console-line-6 {
   opacity: 0;
-  animation: console-line 0.3s ease-out 14.6s forwards;
+  animation: console-line 0.3s ease-out 17.9s forwards;
 }
 
 /* Bot status change */
 @keyframes bot-online {
-  0%, 65% {
+  0%, 82% {
     background-color: rgb(156 163 175);
   }
-  70%, 100% {
+  85%, 100% {
     background-color: rgb(34 197 94);
   }
 }
@@ -680,30 +680,30 @@
 
 /* Bot status text animations */
 @keyframes bot-status-offline {
-  0%, 65% {
+  0%, 82% {
     opacity: 1;
     display: inline;
   }
-  70% {
+  85% {
     opacity: 0;
     display: none;
   }
-  71%, 100% {
+  86%, 100% {
     opacity: 0;
     display: none;
   }
 }
 
 @keyframes bot-status-online {
-  0%, 65% {
+  0%, 82% {
     opacity: 0;
     display: none;
   }
-  70% {
+  85% {
     opacity: 1;
     display: inline;
   }
-  71%, 100% {
+  86%, 100% {
     opacity: 1;
     display: inline;
   }
@@ -763,19 +763,19 @@
 
 /* Toggle switch animation */
 @keyframes toggle-on {
-  0%, 82% {
+  0%, 67% {
     background-color: rgb(75 85 99);
   }
-  84%, 100% {
+  69%, 100% {
     background-color: rgb(34 197 94);
   }
 }
 
 @keyframes toggle-slide {
-  0%, 82% {
+  0%, 67% {
     transform: translateX(4px);
   }
-  84%, 100% {
+  69%, 100% {
     transform: translateX(20px);
   }
 }
