@@ -1,7 +1,7 @@
-import { AssignmentModel, Ticket, TicketConfig } from '@prisma/client';
+import { AssignmentModel, Ticket } from '@prisma/client';
 import { prisma } from '../lib/database';
 import { Guild, GuildMember } from 'discord.js';
-import { TicketService } from './ticket.service';
+import { TicketService, TicketConfigWithArrays } from './ticket.service';
 
 interface StaffWorkload {
   staffId: string;
@@ -21,7 +21,7 @@ export class TicketAssignmentService {
   async autoAssignTicket(
     guild: Guild,
     ticket: Ticket,
-    config: TicketConfig
+    config: TicketConfigWithArrays
   ): Promise<string | null> {
     if (config.assignmentModel !== AssignmentModel.AUTO_ASSIGN) {
       return null;
@@ -65,7 +65,7 @@ export class TicketAssignmentService {
   // Get available staff members
   private async getAvailableStaff(
     guild: Guild,
-    config: TicketConfig
+    config: TicketConfigWithArrays
   ): Promise<GuildMember[]> {
     const availableStaff: GuildMember[] = [];
 
@@ -142,7 +142,7 @@ export class TicketAssignmentService {
   private async assignByCategory(
     availableStaff: GuildMember[],
     ticket: Ticket,
-    config: TicketConfig
+    config: TicketConfigWithArrays
   ): Promise<string | null> {
     if (!ticket.category) {
       return this.assignLeastBusy(availableStaff, ticket.guildId);
@@ -212,7 +212,7 @@ export class TicketAssignmentService {
     userId: string,
     ticket: Ticket,
     action: 'reply' | 'close' | 'manage',
-    config: TicketConfig
+    config: TicketConfigWithArrays
   ): Promise<boolean> {
     const isStaff = await this.ticketService.isStaff(ticket.guildId, userId);
     const isAssigned = ticket.assignedStaffId === userId;
@@ -254,7 +254,7 @@ export class TicketAssignmentService {
   }
 
   // Get assignment strategy from config metadata
-  private getAssignmentStrategy(config: TicketConfig): string {
+  private getAssignmentStrategy(config: TicketConfigWithArrays): string {
     // This would typically come from config metadata
     // For now, default to least-busy
     return 'least-busy';

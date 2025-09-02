@@ -11,7 +11,7 @@ import {
   ChannelType,
   PermissionsBitField
 } from 'discord.js';
-import { TicketService } from '../services/ticket.service';
+import { TicketService, TicketConfigWithArrays } from '../services/ticket.service';
 import { TicketStateManager } from '../services/ticketStateManager.service';
 import { ContainerType, TicketPriority } from '@prisma/client';
 
@@ -293,11 +293,15 @@ export class TicketCreationHandler {
         throw new Error('Invalid parent channel for thread creation');
       }
 
-      return await parentChannel.threads.create({
-        name: channelName,
-        autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,
-        reason: `Ticket created by ${interaction.user.tag}`
-      });
+      if ('threads' in parentChannel) {
+        return await parentChannel.threads.create({
+          name: channelName,
+          autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,
+          reason: `Ticket created by ${interaction.user.tag}`
+        });
+      } else {
+        throw new Error('Channel does not support threads');
+      }
     } else {
       // Create channel
       const category = config.supportCategoryId

@@ -908,4 +908,41 @@ export class BotsService {
     // If we couldn't even set error status, return ERROR anyway
     return BotStatus.ERROR;
   }
+
+  async sendCommandToBot(botId: string, command: { action: string; data: any }): Promise<void> {
+    // Get bot process info
+    const bot = await this.prisma.bot.findUnique({
+      where: { id: botId },
+      select: { id: true, status: true }
+    });
+
+    if (!bot) {
+      throw new Error('Bot not found');
+    }
+
+    if (bot.status !== BotStatus.ONLINE) {
+      throw new Error('Bot is not online');
+    }
+
+    // Send command to bot process via the bot manager
+    // This will be handled by the bot manager which has WebSocket connections to bot processes
+    await this.sendBotCommand(botId, command);
+  }
+
+  private async sendBotCommand(botId: string, command: any): Promise<void> {
+    // This will be implemented to communicate with the bot process
+    // For now, we'll store the command in a queue that the bot process can poll
+    console.log(`Sending command to bot ${botId}:`, command);
+    
+    // Store command in Redis or database for bot to pick up
+    // The bot process will poll for commands and execute them
+    // For now, we'll just log it
+    
+    // TODO: Implement actual communication mechanism
+    // Options:
+    // 1. Redis pub/sub
+    // 2. WebSocket from bot manager
+    // 3. Database polling
+    // 4. Message queue (RabbitMQ, etc.)
+  }
 }

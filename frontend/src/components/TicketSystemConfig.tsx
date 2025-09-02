@@ -690,6 +690,22 @@ export default function TicketSystemConfig({
                             </div>
                             <div className="flex items-center space-x-2">
                               <button
+                                onClick={async () => {
+                                  try {
+                                    await botsAPI.sendTicketPanel(botId, panel.id);
+                                    toast.success('Panel sent successfully!');
+                                  } catch (error) {
+                                    toast.error('Failed to send panel');
+                                  }
+                                }}
+                                className="text-green-600 hover:text-green-800"
+                                title="Send Panel"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                </svg>
+                              </button>
+                              <button
                                 onClick={() => {
                                   setEditingPanel(panel);
                                   setPanelForm({

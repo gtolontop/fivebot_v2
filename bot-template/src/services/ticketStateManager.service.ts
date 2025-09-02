@@ -11,8 +11,8 @@ interface TimerConfig {
 export class TicketStateManager {
   private client: Client;
   private ticketService: TicketService;
-  private globalTimer: NodeJS.Timer | null = null;
-  private cleanupTimer: NodeJS.Timer | null = null;
+  private globalTimer: NodeJS.Timeout | null = null;
+  private cleanupTimer: NodeJS.Timeout | null = null;
   private checkInterval = 60000; // Check every minute
   private cleanupInterval = 3600000; // Check every hour
 

@@ -9,8 +9,8 @@ import {
   OverwriteData,
   GuildMember
 } from 'discord.js';
-import { ContainerType, Ticket, TicketConfig } from '@prisma/client';
-import { TicketService } from './ticket.service';
+import { ContainerType, Ticket } from '@prisma/client';
+import { TicketService, TicketConfigWithArrays } from './ticket.service';
 
 export class TicketContainerService {
   private ticketService: TicketService;
@@ -22,7 +22,7 @@ export class TicketContainerService {
   // Create container based on configuration
   async createContainer(
     guild: Guild,
-    config: TicketConfig,
+    config: TicketConfigWithArrays,
     creator: GuildMember,
     ticketNumber: number,
     categoryId?: string
@@ -70,7 +70,7 @@ export class TicketContainerService {
   // Create thread container
   private async createThreadContainer(
     guild: Guild,
-    config: TicketConfig,
+    config: TicketConfigWithArrays,
     name: string,
     creator: GuildMember
   ): Promise<ThreadChannel | null> {
@@ -176,7 +176,7 @@ export class TicketContainerService {
   // Create channel container
   private async createChannelContainer(
     guild: Guild,
-    config: TicketConfig,
+    config: TicketConfigWithArrays,
     name: string,
     creator: GuildMember
   ): Promise<TextChannel | null> {
@@ -263,7 +263,7 @@ export class TicketContainerService {
           await container.setLocked(true);
           await container.setArchived(true);
         }
-      } else {
+      } else if ('permissionOverwrites' in container) {
         // Handle channel permissions
         if (updates.addUsers) {
           for (const userId of updates.addUsers) {
@@ -315,8 +315,8 @@ export class TicketContainerService {
           ch => ch.type === ChannelType.GuildCategory && ch.name.toLowerCase().includes('archive')
         ) as CategoryChannel;
 
-        if (archiveCategory) {
-          await container.setParent(archiveCategory, { reason });
+        if (archiveCategory && 'setParent' in container) {
+          await (container as TextChannel).setParent(archiveCategory, { reason });
         }
 
         // Update channel name to indicate closed

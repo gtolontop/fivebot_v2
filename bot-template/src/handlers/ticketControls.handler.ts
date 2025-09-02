@@ -11,7 +11,7 @@ import {
   StringSelectMenuOptionBuilder,
   ComponentType
 } from 'discord.js';
-import { TicketService } from '../services/ticket.service';
+import { TicketService, TicketConfigWithArrays } from '../services/ticket.service';
 import { TicketContainerService } from '../services/ticketContainer.service';
 import { TicketStateManager } from '../services/ticketStateManager.service';
 import { AssignmentModel, TicketState } from '@prisma/client';
@@ -256,16 +256,20 @@ export class TicketControlsHandler {
           for (const roleId of config.staffRoles) {
             if (container.isThread()) continue; // Can't modify thread permissions like this
             
-            await container.permissionOverwrites.edit(roleId, {
-              SendMessages: false
-            });
+            if ('permissionOverwrites' in container) {
+              await container.permissionOverwrites.edit(roleId, {
+                SendMessages: false
+              });
+            }
           }
 
           // Grant permission to claimer
-          await container.permissionOverwrites.edit(interaction.user.id, {
-            SendMessages: true,
-            ManageMessages: true
-          });
+          if ('permissionOverwrites' in container) {
+            await container.permissionOverwrites.edit(interaction.user.id, {
+              SendMessages: true,
+              ManageMessages: true
+            });
+          }
         }
       }
 
@@ -318,7 +322,7 @@ export class TicketControlsHandler {
       // Restore permissions
       if (config.assignmentModel === AssignmentModel.STRICT_CLAIM) {
         const container = await this.containerService.getContainer(interaction.guild!, ticket);
-        if (container && !container.isThread()) {
+        if (container && !container.isThread() && 'permissionOverwrites' in container) {
           // Restore staff role permissions
           for (const roleId of config.staffRoles) {
             await container.permissionOverwrites.edit(roleId, {
@@ -370,7 +374,7 @@ export class TicketControlsHandler {
     }
 
     // Create staff member select menu
-    const staffMembers = [];
+    const staffMembers: any[] = [];
     for (const roleId of config.staffRoles) {
       const role = interaction.guild!.roles.cache.get(roleId);
       if (role) {
@@ -437,8 +441,8 @@ export class TicketControlsHandler {
     await interaction.deferReply({ ephemeral: true });
 
     try {
-      const messages = await this.ticketService.getTicket(ticket.id)
-        .then(t => t?.messages || []);
+      const fullTicket = await this.ticketService.getTicket(ticket.id);
+      const messages = fullTicket?.messages || [];
 
       if (messages.length === 0) {
         await interaction.editReply({
@@ -513,7 +517,7 @@ export class TicketControlsHandler {
         if (container.isThread()) {
           await container.setLocked(false);
           await container.setArchived(false);
-        } else {
+        } else if ('permissionOverwrites' in container) {
           await container.permissionOverwrites.edit(ticket.creatorId, {
             SendMessages: true,
             AddReactions: true

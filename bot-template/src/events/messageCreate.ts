@@ -1,4 +1,4 @@
-import { Client, Events, Message } from 'discord.js';
+import { Client, Events, Message, TextChannel } from 'discord.js';
 import { TicketService } from '../services/ticket.service';
 import { TicketStateManager } from '../services/ticketStateManager.service';
 
@@ -85,7 +85,12 @@ async function updateChannelWithActivityState(
     const channel = message.channel;
     if (!channel.isTextBased() || channel.isThread()) return;
 
-    const currentName = channel.name;
+    // Check if channel has a name property (not DM)
+    if (!('name' in channel)) return;
+
+    const currentName = (channel as any).name;
+    if (!currentName) return;
+    
     const stateEmoji = stateManager.getStateEmoji(ticket.activityState);
 
     // Remove existing state emoji if present
@@ -96,8 +101,8 @@ async function updateChannelWithActivityState(
     const newName = `${stateEmoji}・${baseName}`;
 
     // Only update if name changed and within Discord limits
-    if (newName !== currentName && newName.length <= 100) {
-      await channel.setName(newName);
+    if (newName !== currentName && newName.length <= 100 && 'setName' in channel) {
+      await (channel as TextChannel).setName(newName);
     }
   } catch (error) {
     console.error('[MessageCreate] Error updating channel name:', error);

@@ -10,11 +10,39 @@ import {
   TicketPriority,
   ParticipantRole,
   AssignmentModel,
-  TicketCategory,
-  TicketPanel
+  TicketCategory as PrismaTicketCategory,
+  TicketPanel as PrismaTicketPanel
 } from '@prisma/client';
 import { prisma } from '../lib/database';
 import { Client, Guild, GuildMember, TextChannel, ThreadChannel, User } from 'discord.js';
+import { parseTicketConfig, TicketConfigWithArrays } from '../utils/ticketConfigHelpers';
+
+// Export types for other services
+export { TicketConfigWithArrays } from '../utils/ticketConfigHelpers';
+
+// Export interfaces used by other services
+export interface TicketCategory {
+  id: string;
+  name: string;
+  emoji?: string | null;
+  description?: string | null;
+  staffRoleId?: string | null;
+  channelId?: string | null;
+  order?: number | null;
+  active: boolean;
+}
+
+export interface TicketPanel {
+  id: string;
+  messageId?: string | null;
+  active: boolean;
+}
+
+export interface TicketData extends Ticket {
+  messages: TicketMessage[];
+  participants: TicketParticipant[];
+  timers: any[];
+}
 
 export class TicketService {
   private client: Client;
@@ -29,8 +57,8 @@ export class TicketService {
   }
 
   // Configuration Management
-  async getConfig(guildId: string): Promise<TicketConfig | null> {
-    return await prisma.ticketConfig.findUnique({
+  async getConfig(guildId: string): Promise<TicketConfigWithArrays | null> {
+    const config = await prisma.ticketConfig.findUnique({
       where: { guildId },
       include: {
         categories: {
@@ -42,22 +70,28 @@ export class TicketService {
         }
       }
     });
+    
+    return config ? parseTicketConfig(config) : null;
   }
 
-  async createConfig(guildId: string, data?: Partial<TicketConfig>): Promise<TicketConfig> {
-    return await prisma.ticketConfig.create({
+  async createConfig(guildId: string, data?: Partial<TicketConfigWithArrays>): Promise<TicketConfigWithArrays> {
+    const { categories, panels, ...configData } = data || {};
+    const config = await prisma.ticketConfig.create({
       data: {
         guildId,
-        ...data
+        ...configData
       }
     });
+    return parseTicketConfig(config);
   }
 
-  async updateConfig(guildId: string, data: Partial<TicketConfig>): Promise<TicketConfig> {
-    return await prisma.ticketConfig.update({
+  async updateConfig(guildId: string, data: Partial<TicketConfigWithArrays>): Promise<TicketConfigWithArrays> {
+    const { categories, panels, ...configData } = data;
+    const config = await prisma.ticketConfig.update({
       where: { guildId },
-      data
+      data: configData
     });
+    return parseTicketConfig(config);
   }
 
   // Ticket CRUD Operations
@@ -119,8 +153,8 @@ export class TicketService {
     return ticket;
   }
 
-  async getTicket(ticketId: string): Promise<Ticket | null> {
-    return await prisma.ticket.findUnique({
+  async getTicket(ticketId: string): Promise<TicketData | null> {
+    const ticket = await prisma.ticket.findUnique({
       where: { id: ticketId },
       include: {
         messages: {
@@ -135,6 +169,8 @@ export class TicketService {
         }
       }
     });
+    
+    return ticket as TicketData | null;
   }
 
   async getTicketByChannel(channelId: string): Promise<Ticket | null> {
@@ -161,11 +197,14 @@ export class TicketService {
     });
   }
 
-  async updateTicket(ticketId: string, data: Partial<Ticket>): Promise<Ticket> {
+  async updateTicket(ticketId: string, data: any): Promise<Ticket> {
+    // Remove fields that shouldn't be updated directly
+    const { id, guildId, ticketNumber, createdAt, ...updateData } = data;
+    
     return await prisma.ticket.update({
       where: { id: ticketId },
       data: {
-        ...data,
+        ...updateData,
         updatedAt: new Date()
       }
     });
@@ -388,7 +427,7 @@ export class TicketService {
     staffRoleId?: string;
     channelId?: string;
     order?: number;
-  }): Promise<TicketCategory> {
+  }): Promise<PrismaTicketCategory> {
     return await prisma.ticketCategory.create({
       data: {
         guildId,
@@ -398,7 +437,7 @@ export class TicketService {
     });
   }
 
-  async updateCategory(categoryId: string, data: Partial<TicketCategory>): Promise<TicketCategory> {
+  async updateCategory(categoryId: string, data: Partial<PrismaTicketCategory>): Promise<PrismaTicketCategory> {
     return await prisma.ticketCategory.update({
       where: { id: categoryId },
       data
@@ -411,7 +450,7 @@ export class TicketService {
     type: 'BUTTON' | 'DROPDOWN' | 'HYBRID';
     embedData: any;
     components: any;
-  }): Promise<TicketPanel> {
+  }): Promise<PrismaTicketPanel> {
     return await prisma.ticketPanel.create({
       data: {
         guildId,
@@ -421,11 +460,14 @@ export class TicketService {
     });
   }
 
-  async updatePanel(panelId: string, data: Partial<TicketPanel>): Promise<TicketPanel> {
+  async updatePanel(panelId: string, data: any): Promise<PrismaTicketPanel> {
+    // Remove fields that shouldn't be updated directly
+    const { id, guildId, configId, createdAt, ...updateData } = data;
+    
     return await prisma.ticketPanel.update({
       where: { id: panelId },
       data: {
-        ...data,
+        ...updateData,
         updatedAt: new Date()
       }
     });
