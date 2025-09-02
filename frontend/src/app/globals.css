@@ -328,11 +328,11 @@
     opacity: 1;
   }
   10% {
-    top: 65%;
+    top: 70%;
     left: 50%;
   }
   15% {
-    top: 65%;
+    top: 70%;
     left: 50%;
     transform: scale(0.9);
   }
@@ -340,33 +340,33 @@
     transform: scale(1);
   }
   
-  /* Page 2: Fill first input */
+  /* Page 2: Click first input */
   25% {
-    top: 45%;
-    left: 30%;
+    top: 40%;
+    left: 50%;
   }
-  30% {
+  26% {
     transform: scale(0.9);
   }
-  31% {
+  27% {
     transform: scale(1);
   }
   
-  /* Page 2: Fill second input */
+  /* Page 2: Click second input */
   35% {
-    top: 55%;
-    left: 30%;
+    top: 58%;
+    left: 50%;
   }
-  40% {
+  36% {
     transform: scale(0.9);
   }
-  41% {
+  37% {
     transform: scale(1);
   }
   
   /* Page 2: Click create button */
   45% {
-    top: 75%;
+    top: 78%;
     left: 50%;
   }
   50% {
@@ -376,10 +376,10 @@
     transform: scale(1);
   }
   
-  /* Page 3: Click start bot */
+  /* Page 3: Click start bot button */
   60% {
-    top: 75%;
-    left: 35%;
+    top: 85%;
+    left: 25%;
   }
   65% {
     transform: scale(0.9);
@@ -388,22 +388,40 @@
     transform: scale(1);
   }
   
-  /* Page 3: Wait for console then click config */
-  80% {
-    top: 75%;
-    left: 65%;
+  /* Page 3: Wait then click config */
+  75% {
+    top: 85%;
+    left: 75%;
   }
-  85% {
+  76% {
     transform: scale(0.9);
   }
-  86% {
+  77% {
     transform: scale(1);
+  }
+  
+  /* Config page: Click welcome message toggle */
+  82% {
+    top: 45%;
+    left: 70%;
+  }
+  83% {
+    transform: scale(0.9);
+  }
+  84% {
+    transform: scale(1);
+  }
+  
+  /* Return to dashboard */
+  90% {
+    top: 50%;
+    left: 50%;
   }
   
   /* End */
   95%, 100% {
-    top: 75%;
-    left: 65%;
+    top: 50%;
+    left: 50%;
     opacity: 1;
   }
 }
@@ -546,9 +564,55 @@
   }
 }
 
-.animate-auto-type-prefix::after {
-  content: "!";
-  animation: auto-type-prefix 6s ease-out 4s forwards;
+@keyframes auto-type-token {
+  0%, 35% {
+    color: transparent;
+  }
+  40% {
+    color: white;
+    content: "N";
+  }
+  42% {
+    content: "NT";
+  }
+  44% {
+    content: "NTA";
+  }
+  46% {
+    content: "NTAz";
+  }
+  48% {
+    content: "NTAzM";
+  }
+  50% {
+    content: "NTAzMj";
+  }
+  52% {
+    content: "NTAzMjI";
+  }
+  54% {
+    content: "NTAzMjIx";
+  }
+  56% {
+    content: "NTAzMjIx.";
+  }
+  58% {
+    content: "NTAzMjIx.D";
+  }
+  60% {
+    content: "NTAzMjIx.Dq";
+  }
+  62% {
+    content: "NTAzMjIx.Dqz";
+  }
+  64%, 100% {
+    content: "NTAzMjIx.Dqz...";
+  }
+}
+
+.animate-auto-type-token::after {
+  content: "NTAzMjIx.Dqz...";
+  animation: auto-type-token 8s ease-out 3s forwards;
 }
 
 /* Console animations - after bot start */
