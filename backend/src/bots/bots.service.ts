@@ -147,10 +147,10 @@ export class BotsService {
         botId: bot.id,
         action: 'BOT_CREATED',
         resource: 'bot',
-        metadata: {
+        metadata: JSON.stringify({
           botName: data.name,
           clientId: bot.clientId,
-        },
+        }),
       },
     });
     console.log('Log d\'audit créé');
@@ -293,7 +293,7 @@ export class BotsService {
         botId,
         action: 'BOT_CONFIG_UPDATED',
         resource: 'bot_config',
-        metadata: data as any,
+        metadata: JSON.stringify(data) as any,
       },
     });
 
@@ -362,10 +362,10 @@ export class BotsService {
         jobType: 'START_BOT',
         status: 'PROCESSING',
         message: `🚀 Starting bot ${bot.name}...`,
-        metadata: {
+        metadata: JSON.stringify({
           requestedBy: ownerId,
           timestamp: new Date().toISOString()
-        }
+        })
       }
     });
 
@@ -631,11 +631,11 @@ export class BotsService {
             jobType: 'STATUS_UPDATE',
             status: logStatus,
             message,
-            metadata: {
+            metadata: JSON.stringify({
               ...metadata,
               newStatus: status,
               timestamp: new Date().toISOString()
-            },
+            }),
           },
         });
       } catch (error) {

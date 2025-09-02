@@ -131,13 +131,13 @@ export class BotRealtimeMetricsService {
             jobType: 'COMMAND_EXECUTION',
             status: 'COMPLETED',
             message: `Command: ${event.commandName}`,
-            metadata: {
+            metadata: JSON.stringify({
               commandName: event.commandName,
               userId: event.userId,
               guildId: event.guildId,
               responseTime: event.responseTime,
               timestamp: event.timestamp,
-            },
+            }),
           },
         });
       } catch (error) {
@@ -157,10 +157,10 @@ export class BotRealtimeMetricsService {
             jobType: 'ERROR_REPORT',
             status: 'FAILED',
             message: event.errorMessage || 'Unknown error',
-            metadata: {
+            metadata: JSON.stringify({
               timestamp: event.timestamp,
               errorMessage: event.errorMessage,
-            },
+            }),
           },
         });
       } catch (error) {
