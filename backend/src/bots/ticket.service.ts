@@ -183,10 +183,40 @@ export class TicketService {
     }
   }
 
+  // Public method to send panel
+  async sendPanel(botId: string, panelId: string): Promise<{ success: boolean; message?: string }> {
+    const data = await this.getTicketData(botId);
+    const panel = data.panels.find(p => p.id === panelId);
+    
+    if (!panel) {
+      throw new Error('Panel not found');
+    }
+    
+    try {
+      await this.sendPanelToDiscord(botId, panel);
+      return { success: true, message: 'Panel sent successfully' };
+    } catch (error) {
+      console.error('Error sending panel:', error);
+      return { success: false, message: error.message || 'Failed to send panel' };
+    }
+  }
+
   // Discord communication methods (to be implemented)
   private async sendPanelToDiscord(botId: string, panel: TicketPanel): Promise<void> {
-    // TODO: Send panel message to Discord via bot process
-    console.log(`TODO: Send panel ${panel.id} to Discord channel ${panel.channelId}`);
+    // Send command to bot process to create panel in Discord
+    const bot = await this.prisma.bot.findUnique({
+      where: { id: botId }
+    });
+    
+    if (!bot) {
+      throw new Error('Bot not found');
+    }
+    
+    // Send command to bot process via WebSocket or other communication method
+    await this.botsService.sendCommandToBot(botId, {
+      action: 'SEND_TICKET_PANEL',
+      data: panel
+    });
   }
 
   private async updatePanelInDiscord(botId: string, panel: TicketPanel): Promise<void> {

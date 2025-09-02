@@ -542,6 +542,22 @@ export class BotsController {
     return { success: true };
   }
 
+  @Post(':id/ticket-panels/:panelId/send')
+  @UseGuards(AuthGuard('jwt'))
+  async sendTicketPanel(
+    @Param('id') id: string,
+    @Param('panelId') panelId: string,
+    @Req() req: any
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+    
+    const result = await this.ticketService.sendPanel(id, panelId);
+    return result;
+  }
+
 
   @Post('setup/metrics')
   @UseGuards(AuthGuard('jwt'))

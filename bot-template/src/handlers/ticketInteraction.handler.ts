@@ -146,6 +146,14 @@ export class TicketInteractionHandler {
     await interaction.deferReply();
 
     const reason = interaction.fields.getTextInputValue('close_reason') || 'No reason provided';
+    
+    if (!interaction.channelId) {
+      await interaction.editReply({
+        content: '❌ This command must be used in a ticket channel.'
+      });
+      return;
+    }
+    
     const ticket = await this.ticketService.getTicketByChannel(interaction.channelId);
     
     if (!ticket) {
@@ -300,6 +308,14 @@ export class TicketInteractionHandler {
     await interaction.deferReply({ ephemeral: true });
 
     const userInput = interaction.fields.getTextInputValue('user_id');
+    
+    if (!interaction.channelId) {
+      await interaction.editReply({
+        content: '❌ This command must be used in a ticket channel.'
+      });
+      return;
+    }
+    
     const ticket = await this.ticketService.getTicketByChannel(interaction.channelId);
     
     if (!ticket) {

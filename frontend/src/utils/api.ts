@@ -156,6 +156,9 @@ export const botsAPI = {
   
   deleteTicketPanel: (botId: string, panelId: string) => 
     api.delete(`/bots/${botId}/ticket-panels/${panelId}`),
+  
+  sendTicketPanel: (botId: string, panelId: string) => 
+    api.post(`/bots/${botId}/ticket-panels/${panelId}/send`),
 };
 
 export const usersAPI = {
