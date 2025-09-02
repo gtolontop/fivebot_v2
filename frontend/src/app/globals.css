@@ -257,3 +257,30 @@
 .btn-discord {
   @apply inline-flex items-center justify-center px-6 py-3 text-sm font-medium text-white bg-discord-500 rounded-lg hover:bg-discord-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-discord-500 transition-all duration-200 transform hover:scale-105;
 }
+
+/* Progress animations */
+@keyframes progress {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes progress-active {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: 60%;
+  }
+}
+
+.animate-progress {
+  animation: progress 2s ease-out;
+}
+
+.animate-progress-active {
+  animation: progress-active 3s ease-in-out infinite;
+}
