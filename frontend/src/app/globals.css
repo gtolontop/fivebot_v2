@@ -284,3 +284,257 @@
 .animate-progress-active {
   animation: progress-active 3s ease-in-out infinite;
 }
+
+/* Epic Demo Animations */
+@keyframes float {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(30px, -30px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+}
+
+@keyframes float-delayed {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(-30px, 30px) scale(1.1);
+  }
+  66% {
+    transform: translate(20px, -20px) scale(0.9);
+  }
+}
+
+.animate-float {
+  animation: float 8s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float-delayed 8s ease-in-out infinite;
+  animation-delay: 2s;
+}
+
+/* Cursor animation */
+@keyframes cursor-move {
+  0% {
+    top: 50%;
+    left: 20%;
+  }
+  15% {
+    top: 45%;
+    left: 50%;
+  }
+  30% {
+    top: 55%;
+    left: 30%;
+  }
+  45% {
+    top: 60%;
+    left: 70%;
+  }
+  60% {
+    top: 70%;
+    left: 50%;
+  }
+  75% {
+    top: 80%;
+    left: 50%;
+  }
+  100% {
+    top: 50%;
+    left: 50%;
+  }
+}
+
+.animate-cursor {
+  animation: cursor-move 12s ease-in-out infinite;
+}
+
+/* Step animations */
+@keyframes step-in {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-step-in {
+  animation: step-in 0.8s ease-out forwards;
+}
+
+.animate-step-in-delayed {
+  animation: step-in 0.8s ease-out 3s forwards;
+}
+
+.animate-step-in-final {
+  animation: step-in 0.8s ease-out 6s forwards;
+}
+
+/* Type text effect */
+@keyframes type-text {
+  0% {
+    width: 0;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+.animate-type-text::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: white;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0;
+  }
+}
+
+/* Feature selection */
+@keyframes feature-select {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) rotateZ(-10deg);
+  }
+  50% {
+    transform: scale(1.1) rotateZ(5deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotateZ(0deg);
+    border-color: rgb(88 101 242);
+    background-color: rgba(88, 101, 242, 0.1);
+  }
+}
+
+.animate-feature-select {
+  animation: feature-select 0.6s ease-out 3.5s forwards;
+}
+
+/* Gradient shift */
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient-shift {
+  background-size: 200% 200%;
+  animation: gradient-shift 3s ease infinite;
+}
+
+/* Success animations */
+@keyframes success-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes success-scale {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes check-in {
+  0% {
+    transform: scale(0) rotate(-180deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.animate-success-in {
+  animation: success-in 0.5s ease-out 9s forwards;
+}
+
+.animate-success-scale {
+  animation: success-scale 0.8s ease-out forwards;
+}
+
+.animate-check-in {
+  animation: check-in 0.6s ease-out 0.3s forwards;
+}
+
+/* Progress steps */
+@keyframes progress-step-1 {
+  0% {
+    width: 0%;
+  }
+  33% {
+    width: 100%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes progress-step-2 {
+  0%, 33% {
+    width: 0%;
+  }
+  66% {
+    width: 100%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes progress-step-3 {
+  0%, 66% {
+    width: 0%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+.animate-progress-step-1 {
+  animation: progress-step-1 12s ease-out infinite;
+}
+
+.animate-progress-step-2 {
+  animation: progress-step-2 12s ease-out infinite;
+}
+
+.animate-progress-step-3 {
+  animation: progress-step-3 12s ease-out infinite;
+}
