@@ -328,11 +328,11 @@
     opacity: 1;
   }
   10% {
-    top: 70%;
+    top: 360px;
     left: 50%;
   }
   15% {
-    top: 70%;
+    top: 360px;
     left: 50%;
     transform: scale(0.9);
   }
@@ -342,7 +342,7 @@
   
   /* Page 2: Click first input */
   25% {
-    top: 40%;
+    top: 200px;
     left: 50%;
   }
   26% {
@@ -354,7 +354,7 @@
   
   /* Page 2: Click second input */
   35% {
-    top: 58%;
+    top: 320px;
     left: 50%;
   }
   36% {
@@ -366,7 +366,7 @@
   
   /* Page 2: Click create button */
   45% {
-    top: 78%;
+    top: 440px;
     left: 50%;
   }
   50% {
@@ -376,46 +376,52 @@
     transform: scale(1);
   }
   
-  /* Page 3: Click start bot button */
+  /* Page 3: Click config button FIRST */
   60% {
-    top: 85%;
-    left: 25%;
+    top: 440px;
+    left: 550px;
   }
-  65% {
+  61% {
     transform: scale(0.9);
   }
-  66% {
-    transform: scale(1);
-  }
-  
-  /* Page 3: Wait then click config */
-  75% {
-    top: 85%;
-    left: 75%;
-  }
-  76% {
-    transform: scale(0.9);
-  }
-  77% {
+  62% {
     transform: scale(1);
   }
   
   /* Config page: Click welcome message toggle */
-  82% {
-    top: 45%;
-    left: 70%;
+  67% {
+    top: 240px;
+    left: 720px;
   }
-  83% {
+  68% {
     transform: scale(0.9);
   }
-  84% {
+  69% {
     transform: scale(1);
   }
   
-  /* Return to dashboard */
-  90% {
-    top: 50%;
-    left: 50%;
+  /* Config page: Click save */
+  72% {
+    top: 480px;
+    left: 750px;
+  }
+  73% {
+    transform: scale(0.9);
+  }
+  74% {
+    transform: scale(1);
+  }
+  
+  /* Page 3: Click start bot button */
+  80% {
+    top: 440px;
+    left: 270px;
+  }
+  81% {
+    transform: scale(0.9);
+  }
+  82% {
+    transform: scale(1);
   }
   
   /* End */
