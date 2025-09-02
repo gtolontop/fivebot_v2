@@ -322,15 +322,6 @@ export default function HomePage() {
             ))}
           </div>
           
-          {/* Live command counter */}
-          <div className="mt-16 animate-fade-in-up animation-delay-800">
-            <div className="inline-flex items-center px-6 py-3 bg-white/80 backdrop-blur-sm rounded-full border border-gray-200">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-3"></div>
-              <span className="text-sm font-medium text-gray-700">
-                <span className="font-bold text-discord-600">{(commandCount * 127).toLocaleString()}</span> commands processed today
-              </span>
-            </div>
-          </div>
         </div>
       </section>
 
