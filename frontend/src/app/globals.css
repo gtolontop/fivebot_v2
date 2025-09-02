@@ -607,6 +607,47 @@
   animation: bot-online 20s ease-out infinite;
 }
 
+/* Bot status text animations */
+@keyframes bot-status-offline {
+  0%, 65% {
+    opacity: 1;
+    display: inline;
+  }
+  70% {
+    opacity: 0;
+    display: none;
+  }
+  71%, 100% {
+    opacity: 0;
+    display: none;
+  }
+}
+
+@keyframes bot-status-online {
+  0%, 65% {
+    opacity: 0;
+    display: none;
+  }
+  70% {
+    opacity: 1;
+    display: inline;
+  }
+  71%, 100% {
+    opacity: 1;
+    display: inline;
+  }
+}
+
+.animate-bot-status-offline {
+  animation: bot-status-offline 20s ease-out infinite;
+}
+
+.animate-bot-status-online {
+  animation: bot-status-online 20s ease-out infinite;
+  position: absolute;
+  left: 0;
+}
+
 /* Count up animation */
 @keyframes count-up {
   0% {
