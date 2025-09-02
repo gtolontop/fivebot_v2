@@ -31,6 +31,7 @@ interface BotConfig {
   autoRoleId?: string;
   loggingChannelId?: string;
   customCommands?: any;
+  ticketData?: any;
 }
 
 class ChildBot {
