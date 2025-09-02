@@ -597,3 +597,193 @@
 .animate-progress-step-3 {
   animation: progress-step-3 12s ease-out infinite;
 }
+
+/* Page transitions */
+@keyframes page-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes page-out {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.05);
+  }
+}
+
+.animate-page-in {
+  animation: page-in 0.5s ease-out forwards;
+}
+
+.animate-page-out {
+  animation: page-out 0.5s ease-out 3s forwards;
+}
+
+.animate-page-in-delayed {
+  animation: page-out 0.5s ease-out 3s forwards, page-in 0.5s ease-out 3.5s forwards;
+}
+
+.animate-page-in-final {
+  animation: page-out 0.5s ease-out 8s forwards, page-in 0.5s ease-out 8.5s forwards;
+}
+
+/* Auto typing */
+@keyframes auto-type-name {
+  0%, 30% {
+    color: transparent;
+  }
+  35% {
+    color: white;
+    content: "M";
+  }
+  40% {
+    content: "Me";
+  }
+  45% {
+    content: "Meg";
+  }
+  50% {
+    content: "Mega";
+  }
+  55% {
+    content: "MegaB";
+  }
+  60% {
+    content: "MegaBo";
+  }
+  65% {
+    content: "MegaBot";
+  }
+  70% {
+    content: "MegaBot ";
+  }
+  75% {
+    content: "MegaBot U";
+  }
+  80% {
+    content: "MegaBot Ul";
+  }
+  85% {
+    content: "MegaBot Ult";
+  }
+  90% {
+    content: "MegaBot Ultr";
+  }
+  95%, 100% {
+    content: "MegaBot Ultra";
+  }
+}
+
+.animate-auto-type-name::after {
+  content: "MegaBot Ultra";
+  animation: auto-type-name 6s ease-out 4s forwards;
+}
+
+@keyframes auto-type-prefix {
+  0%, 50% {
+    color: transparent;
+  }
+  60%, 100% {
+    color: white;
+    content: "!";
+  }
+}
+
+.animate-auto-type-prefix::after {
+  content: "!";
+  animation: auto-type-prefix 6s ease-out 4s forwards;
+}
+
+/* Console animations */
+@keyframes console-line {
+  0% {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-console-line-1 {
+  opacity: 0;
+  animation: console-line 0.3s ease-out 9s forwards;
+}
+
+.animate-console-line-2 {
+  opacity: 0;
+  animation: console-line 0.3s ease-out 9.3s forwards;
+}
+
+.animate-console-line-3 {
+  opacity: 0;
+  animation: console-line 0.3s ease-out 9.6s forwards;
+}
+
+.animate-console-line-4 {
+  opacity: 0;
+  animation: console-line 0.3s ease-out 10.5s forwards;
+}
+
+.animate-console-line-5 {
+  opacity: 0;
+  animation: console-line 0.3s ease-out 10.8s forwards;
+}
+
+.animate-console-line-6 {
+  opacity: 0;
+  animation: console-line 0.3s ease-out 11.1s forwards;
+}
+
+/* Count up animation */
+@keyframes count-up {
+  0% {
+    content: "0";
+  }
+  10% {
+    content: "12";
+  }
+  20% {
+    content: "47";
+  }
+  30% {
+    content: "123";
+  }
+  40% {
+    content: "289";
+  }
+  50% {
+    content: "512";
+  }
+  60% {
+    content: "847";
+  }
+  70% {
+    content: "1,203";
+  }
+  80% {
+    content: "1,658";
+  }
+  90% {
+    content: "2,147";
+  }
+  100% {
+    content: "2,534";
+  }
+}
+
+.animate-count-up::after {
+  content: "0";
+  animation: count-up 3s ease-out 11s forwards;
+}
