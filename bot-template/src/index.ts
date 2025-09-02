@@ -75,6 +75,20 @@ class ChildBot {
       const configString = process.env.CONFIG || '{}';
       const config = JSON.parse(configString);
       
+      // Parse ticketData if it's a string
+      let ticketData = {};
+      if (config.ticketData) {
+        if (typeof config.ticketData === 'string') {
+          try {
+            ticketData = JSON.parse(config.ticketData);
+          } catch (e) {
+            console.error('Failed to parse ticketData:', e);
+          }
+        } else {
+          ticketData = config.ticketData;
+        }
+      }
+      
       return {
         welcomeEnabled: config.welcomeEnabled || false,
         welcomeChannelId: config.welcomeChannelId,
@@ -85,6 +99,7 @@ class ChildBot {
         autoRoleId: config.autoRoleId,
         loggingChannelId: config.loggingChannelId,
         customCommands: config.customCommands,
+        ticketData: ticketData,
       };
     } catch (error) {
       console.error('Error loading config:', error);
