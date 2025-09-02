@@ -30,7 +30,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const stats = [
   { number: "99.9%", label: "Uptime", icon: ClockIcon },
   { number: "50ms", label: "Response Time", icon: BoltIcon },
-  { number: "10k+", label: "Active Bots", icon: CubeIcon },
+  { number: "127", label: "Active Bots", icon: CubeIcon },
   { number: "24/7", label: "Support", icon: ChatBubbleLeftRightIcon },
 ];
 
@@ -173,6 +173,7 @@ export default function HomePage() {
   const [activeFeature, setActiveFeature] = useState(0);
   const [commandCount, setCommandCount] = useState(0);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [activeBots, setActiveBots] = useState(127);
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -182,6 +183,31 @@ export default function HomePage() {
 
     window.addEventListener("scroll", handleScroll);
     window.addEventListener("mousemove", handleMouseMove);
+    
+    // Realistic bot counter with fluctuations
+    const botInterval = setInterval(() => {
+      setActiveBots(prev => {
+        // Base it on time of day (more active during peak hours)
+        const hour = new Date().getHours();
+        const isPeakHour = hour >= 14 && hour <= 22;
+        const baseCount = isPeakHour ? 150 : 100;
+        
+        // Add realistic fluctuations
+        const change = Math.random() > 0.6 ? 
+          Math.floor(Math.random() * 3) : // 60% chance to go up by 0-2
+          -Math.floor(Math.random() * 2); // 40% chance to go down by 0-1
+        
+        const newCount = prev + change;
+        
+        // Keep it within realistic bounds
+        const minBots = baseCount - 20;
+        const maxBots = baseCount + 35;
+        
+        if (newCount < minBots) return minBots;
+        if (newCount > maxBots) return maxBots;
+        return newCount;
+      });
+    }, 2500); // Update every 2.5 seconds
     
     // Animate command counter
     const interval = setInterval(() => {
@@ -198,6 +224,7 @@ export default function HomePage() {
       window.removeEventListener("mousemove", handleMouseMove);
       clearInterval(interval);
       clearInterval(featureInterval);
+      clearInterval(botInterval);
     };
   }, []);
 
@@ -315,7 +342,7 @@ export default function HomePage() {
                   <stat.icon className="w-7 h-7 text-discord-600" />
                 </div>
                 <div className="text-3xl font-bold text-gray-900">
-                  {stat.label === "Active Bots" ? commandCount.toLocaleString() : stat.number}
+                  {stat.label === "Active Bots" ? activeBots.toLocaleString() : stat.number}
                 </div>
                 <div className="text-sm text-gray-600">{stat.label}</div>
               </div>
