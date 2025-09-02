@@ -334,134 +334,154 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Video Demo Modal - Motion Design */}
+      {/* Video Demo Modal - Interactive Flow */}
       {isVideoPlaying && (
-        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4" onClick={() => setIsVideoPlaying(false)}>
-          <div className="relative max-w-5xl w-full" onClick={(e) => e.stopPropagation()}>
-            <button 
-              onClick={() => setIsVideoPlaying(false)}
-              className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors z-50"
-            >
-              <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            
-            {/* Epic Motion Design Demo */}
-            <div className="relative bg-black rounded-3xl overflow-hidden shadow-2xl" style={{ aspectRatio: '16/9' }}>
-              <div className="absolute inset-0 bg-gradient-to-br from-discord-600/20 via-purple-600/10 to-pink-600/20"></div>
-              
-              {/* Animated Background */}
-              <div className="absolute inset-0">
-                <div className="absolute top-0 left-0 w-96 h-96 bg-discord-500/30 rounded-full blur-3xl animate-float"></div>
-                <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl animate-float-delayed"></div>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex items-center justify-center p-4">
+          <div className="relative max-w-6xl w-full">
+            {/* Clean Modal Container */}
+            <div className="bg-gray-900 rounded-2xl shadow-2xl border border-gray-800 overflow-hidden">
+              {/* Header */}
+              <div className="bg-gray-800 px-6 py-4 flex items-center justify-between border-b border-gray-700">
+                <h3 className="text-lg font-semibold text-white">FiveBot Demo</h3>
+                <button 
+                  onClick={() => setIsVideoPlaying(false)}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
               
-              {/* Main Content */}
-              <div className="relative h-full flex items-center justify-center p-16">
-                <div className="w-full max-w-4xl">
-                  {/* Bot Builder Interface */}
+              {/* Demo Content */}
+              <div className="relative" style={{ height: '600px' }}>
+                {/* Animated Background */}
+                <div className="absolute inset-0">
+                  <div className="absolute top-0 left-0 w-96 h-96 bg-discord-500/10 rounded-full blur-3xl animate-float"></div>
+                  <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-float-delayed"></div>
+                </div>
+                
+                {/* Animated Cursor */}
+                <div className="absolute z-50 pointer-events-none animate-demo-cursor">
                   <div className="relative">
-                    {/* Animated Cursor */}
-                    <div className="absolute z-50 pointer-events-none animate-cursor">
-                      <div className="relative">
-                        <div className="w-4 h-4 bg-white rounded-full shadow-2xl"></div>
-                        <div className="absolute inset-0 w-4 h-4 bg-white rounded-full animate-ping"></div>
-                      </div>
-                    </div>
-                    
-                    {/* Step 1: Name Your Bot */}
-                    <div className="step-1 opacity-0 animate-step-in">
-                      <h3 className="text-3xl font-bold text-white mb-8 text-center">
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-discord-400 to-purple-400">
-                          Create Your Bot
-                        </span>
-                      </h3>
-                      <div className="bg-gray-900/80 backdrop-blur-xl rounded-2xl p-8 border border-gray-800">
+                    <svg className="w-6 h-6 text-white drop-shadow-2xl" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M3 3l14 7-6 2-2 6-8-15z"/>
+                    </svg>
+                    <div className="absolute inset-0 w-6 h-6 bg-white/30 rounded-full animate-ping"></div>
+                  </div>
+                </div>
+                
+                {/* Page 1: Welcome */}
+                <div className="page-1 absolute inset-0 flex items-center justify-center p-12 animate-page-in">
+                  <div className="text-center">
+                    <h1 className="text-5xl font-bold text-white mb-6">
+                      Welcome to{" "}
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-discord-400 to-purple-400">
+                        FiveBot
+                      </span>
+                    </h1>
+                    <p className="text-xl text-gray-400 mb-12">Create your Discord bot in seconds</p>
+                    <button className="animate-cursor-click px-8 py-4 bg-gradient-to-r from-discord-500 to-discord-600 text-white font-semibold rounded-xl hover:from-discord-600 hover:to-discord-700 transition-all transform hover:scale-105 shadow-2xl">
+                      Create Your Bot
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Page 2: Bot Configuration */}
+                <div className="page-2 absolute inset-0 flex items-center justify-center p-12 opacity-0 animate-page-in-delayed">
+                  <div className="w-full max-w-2xl">
+                    <h2 className="text-3xl font-bold text-white mb-8 text-center">Configure Your Bot</h2>
+                    <div className="space-y-6">
+                      <div>
+                        <label className="block text-gray-400 mb-2">Bot Name</label>
                         <input 
                           type="text"
-                          className="w-full bg-gray-800 border-2 border-gray-700 rounded-xl px-6 py-4 text-white text-xl focus:border-discord-500 transition-all animate-type-text"
-                          placeholder="Bot Name"
-                          value="UltraBot Pro"
+                          className="w-full bg-gray-800 border-2 border-gray-700 rounded-xl px-6 py-4 text-white text-lg focus:border-discord-500 transition-all animate-auto-type-name"
+                          placeholder="Enter bot name..."
+                          value=""
                           readOnly
                         />
                       </div>
-                    </div>
-                    
-                    {/* Step 2: Select Features */}
-                    <div className="step-2 opacity-0 animate-step-in-delayed mt-8">
-                      <div className="grid grid-cols-3 gap-4">
-                        {[
-                          { name: "Music", icon: "🎵", delay: "0ms" },
-                          { name: "Moderation", icon: "🛡️", delay: "100ms" },
-                          { name: "Games", icon: "🎮", delay: "200ms" },
-                          { name: "Analytics", icon: "📊", delay: "300ms" },
-                          { name: "AI Chat", icon: "🤖", delay: "400ms" },
-                          { name: "Events", icon: "📅", delay: "500ms" },
-                        ].map((feature) => (
-                          <div
-                            key={feature.name}
-                            className="feature-card bg-gray-900/80 backdrop-blur-xl rounded-xl p-6 border-2 border-gray-800 hover:border-discord-500 transition-all transform hover:scale-105 cursor-pointer animate-feature-select"
-                            style={{ animationDelay: feature.delay }}
-                          >
-                            <div className="text-4xl mb-2 text-center">{feature.icon}</div>
-                            <p className="text-white text-center font-medium">{feature.name}</p>
-                          </div>
-                        ))}
+                      <div>
+                        <label className="block text-gray-400 mb-2">Bot Prefix</label>
+                        <input 
+                          type="text"
+                          className="w-full bg-gray-800 border-2 border-gray-700 rounded-xl px-6 py-4 text-white text-lg focus:border-discord-500 transition-all animate-auto-type-prefix"
+                          placeholder="!"
+                          value=""
+                          readOnly
+                        />
                       </div>
-                    </div>
-                    
-                    {/* Step 3: Deploy Animation */}
-                    <div className="step-3 opacity-0 animate-step-in-final mt-12">
-                      <button className="w-full relative overflow-hidden group">
-                        <div className="absolute inset-0 bg-gradient-to-r from-discord-500 via-purple-500 to-pink-500 animate-gradient-shift"></div>
-                        <div className="relative bg-black/50 backdrop-blur-sm m-0.5 rounded-2xl py-6 px-12">
-                          <span className="text-2xl font-bold text-white flex items-center justify-center">
-                            <RocketLaunchIcon className="w-8 h-8 mr-3 animate-bounce" />
-                            Deploy Bot
-                          </span>
-                        </div>
+                      <button className="w-full animate-cursor-click-2 px-8 py-4 bg-gradient-to-r from-discord-500 to-discord-600 text-white font-semibold rounded-xl hover:from-discord-600 hover:to-discord-700 transition-all transform hover:scale-105">
+                        Create Bot
                       </button>
                     </div>
-                    
-                    {/* Success Animation */}
-                    <div className="success-state opacity-0 animate-success-in absolute inset-0 flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="w-32 h-32 mx-auto mb-8 relative">
-                          <div className="absolute inset-0 bg-green-500 rounded-full animate-success-scale"></div>
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <CheckIcon className="w-16 h-16 text-white animate-check-in" />
+                  </div>
+                </div>
+                
+                {/* Page 3: Dashboard */}
+                <div className="page-3 absolute inset-0 p-12 opacity-0 animate-page-in-final">
+                  <div className="h-full">
+                    <h2 className="text-2xl font-bold text-white mb-6">Bot Dashboard</h2>
+                    <div className="grid grid-cols-3 gap-6">
+                      {/* Bot Card */}
+                      <div className="col-span-2 bg-gray-800 rounded-xl p-6 border border-gray-700">
+                        <div className="flex items-center justify-between mb-6">
+                          <div className="flex items-center space-x-4">
+                            <div className="w-16 h-16 bg-gradient-to-br from-discord-400 to-discord-600 rounded-xl flex items-center justify-center">
+                              <BoltIcon className="w-8 h-8 text-white" />
+                            </div>
+                            <div>
+                              <h3 className="text-xl font-semibold text-white">MegaBot Ultra</h3>
+                              <p className="text-gray-400">Prefix: !</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
+                            <span className="text-gray-400">Offline</span>
                           </div>
                         </div>
-                        <h3 className="text-4xl font-bold text-white mb-4">Bot Deployed!</h3>
-                        <p className="text-xl text-gray-300">Your bot is now live on Discord</p>
-                        <div className="mt-8 flex items-center justify-center space-x-4">
-                          <div className="flex items-center space-x-2 text-green-400">
-                            <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                            <span>Online</span>
-                          </div>
-                          <span className="text-gray-400">•</span>
-                          <span className="text-gray-300">0 servers</span>
-                          <span className="text-gray-400">•</span>
-                          <span className="text-gray-300">Ready to use</span>
+                        
+                        {/* Console */}
+                        <div className="bg-black rounded-lg p-4 font-mono text-sm h-48 overflow-hidden mb-6">
+                          <div className="text-gray-400 animate-console-line-1">&gt; Initializing bot...</div>
+                          <div className="text-gray-400 animate-console-line-2">&gt; Loading modules...</div>
+                          <div className="text-gray-400 animate-console-line-3">&gt; Connecting to Discord...</div>
+                          <div className="text-green-400 animate-console-line-4">&gt; Bot is online!</div>
+                          <div className="text-blue-400 animate-console-line-5">&gt; Joined 0 servers</div>
+                          <div className="text-yellow-400 animate-console-line-6">&gt; Ready to accept commands_</div>
+                        </div>
+                        
+                        {/* Action Buttons */}
+                        <div className="flex space-x-4">
+                          <button className="animate-cursor-click-3 flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-all flex items-center justify-center">
+                            <PlayIcon className="w-5 h-5 mr-2" />
+                            Start Bot
+                          </button>
+                          <button className="flex-1 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-medium rounded-lg transition-all">
+                            <CpuChipIcon className="w-5 h-5 mr-2 inline" />
+                            Configure
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {/* Stats */}
+                      <div className="space-y-4">
+                        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                          <h4 className="text-gray-400 text-sm mb-2">Commands Run</h4>
+                          <p className="text-3xl font-bold text-white animate-count-up">0</p>
+                        </div>
+                        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                          <h4 className="text-gray-400 text-sm mb-2">Users Served</h4>
+                          <p className="text-3xl font-bold text-white">0</p>
+                        </div>
+                        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                          <h4 className="text-gray-400 text-sm mb-2">Uptime</h4>
+                          <p className="text-3xl font-bold text-green-400">100%</p>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
-              
-              {/* Progress Indicator */}
-              <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex space-x-2">
-                <div className="w-16 h-1 bg-white/20 rounded-full overflow-hidden">
-                  <div className="h-full bg-white rounded-full animate-progress-step-1"></div>
-                </div>
-                <div className="w-16 h-1 bg-white/20 rounded-full overflow-hidden">
-                  <div className="h-full bg-white rounded-full animate-progress-step-2"></div>
-                </div>
-                <div className="w-16 h-1 bg-white/20 rounded-full overflow-hidden">
-                  <div className="h-full bg-white rounded-full animate-progress-step-3"></div>
                 </div>
               </div>
             </div>
