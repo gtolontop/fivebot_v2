@@ -437,8 +437,11 @@ export default function HomePage() {
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
-                            <span className="text-gray-400">Offline</span>
+                            <div className="w-3 h-3 bg-gray-400 rounded-full animate-bot-online"></div>
+                            <span className="text-gray-400">
+                              <span className="animate-bot-status-offline">Offline</span>
+                              <span className="animate-bot-status-online hidden">Online</span>
+                            </span>
                           </div>
                         </div>
                         
