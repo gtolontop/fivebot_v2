@@ -253,48 +253,60 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-32">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="inline-flex items-center px-4 py-2 rounded-full bg-discord-100 text-discord-700 text-sm font-medium mb-8">
-              <FireIcon className="w-4 h-4 mr-2" />
-              Trusted by 10,000+ Discord servers
-            </div>
-            <h1 className="text-5xl lg:text-7xl font-bold text-gray-900 tracking-tight">
-              The Future of
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-discord-500 to-discord-600 mt-2">
-                Discord Bot Management
-              </span>
-            </h1>
-            <p className="mt-6 text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              Create, deploy, and scale Discord bots with zero configuration. 
-              Powered by AI, secured by default, loved by developers.
-            </p>
-            <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href={user ? "/dashboard" : "/auth/login"}
-                className="group inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-white bg-discord-600 rounded-xl hover:bg-discord-700 transition-all transform hover:scale-105 hover:shadow-lg"
-              >
-                Start Building for Free
-                <ArrowRightIcon className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <button className="inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all">
-                <PlayIcon className="mr-2 w-5 h-5" />
-                Watch 2-min Demo
-              </button>
-            </div>
-            <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
-              {stats.map((stat) => (
-                <div key={stat.label} className="text-center">
-                  <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-100 rounded-lg mb-3">
-                    <stat.icon className="w-6 h-6 text-discord-600" />
-                  </div>
-                  <div className="text-3xl font-bold text-gray-900">{stat.number}</div>
-                  <div className="text-sm text-gray-600">{stat.label}</div>
+      {/* Hero Section - Full Screen */}
+      <section className="relative min-h-screen flex items-center justify-center">
+        <div className="absolute inset-0 bg-gradient-to-br from-discord-50 via-white to-blue-50"></div>
+        <div className="absolute inset-0">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-discord-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob"></div>
+          <div className="absolute top-40 right-10 w-72 h-72 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000"></div>
+          <div className="absolute -bottom-8 left-20 w-72 h-72 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-4000"></div>
+        </div>
+        
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="inline-flex items-center px-4 py-2 rounded-full bg-discord-100 text-discord-700 text-sm font-medium mb-8 animate-fade-in-down">
+            <FireIcon className="w-4 h-4 mr-2" />
+            Trusted by 10,000+ Discord servers
+          </div>
+          <h1 className="text-6xl lg:text-8xl font-bold text-gray-900 tracking-tight animate-fade-in-up">
+            The Future of
+            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-discord-500 to-discord-600 mt-2">
+              Discord Bot Management
+            </span>
+          </h1>
+          <p className="mt-6 text-xl lg:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed animate-fade-in-up animation-delay-200">
+            Create, deploy, and scale Discord bots with zero configuration. 
+            Powered by AI, secured by default, loved by developers.
+          </p>
+          <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up animation-delay-400">
+            <Link
+              href={user ? "/dashboard" : "/auth/login"}
+              className="group inline-flex items-center justify-center px-10 py-5 text-lg font-medium text-white bg-discord-600 rounded-xl hover:bg-discord-700 transition-all transform hover:scale-105 hover:shadow-2xl"
+            >
+              Start Building for Free
+              <ArrowRightIcon className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </Link>
+            <button className="inline-flex items-center justify-center px-10 py-5 text-lg font-medium text-gray-700 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl hover:bg-white transition-all hover:shadow-lg">
+              <PlayIcon className="mr-2 w-5 h-5" />
+              Watch 2-min Demo
+            </button>
+          </div>
+          <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto animate-fade-in-up animation-delay-600">
+            {stats.map((stat, index) => (
+              <div key={stat.label} className="text-center group hover:transform hover:scale-110 transition-all">
+                <div className="inline-flex items-center justify-center w-14 h-14 bg-white/80 backdrop-blur-sm rounded-xl mb-3 group-hover:shadow-lg transition-all">
+                  <stat.icon className="w-7 h-7 text-discord-600" />
                 </div>
-              ))}
-            </div>
+                <div className="text-3xl font-bold text-gray-900">{stat.number}</div>
+                <div className="text-sm text-gray-600">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+          
+          {/* Scroll indicator */}
+          <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce">
+            <svg className="w-6 h-6 text-gray-400" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+              <path d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+            </svg>
           </div>
         </div>
       </section>
