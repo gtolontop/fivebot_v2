@@ -617,29 +617,91 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* FAQ Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-xl text-gray-600">
+              Everything you need to know about FiveBot
+            </p>
+          </div>
+          <div className="space-y-8">
+            {[
+              {
+                q: "How quickly can I deploy a bot?",
+                a: "Most bots deploy in under 10 seconds. Our automated system handles everything from containerization to cloud deployment instantly."
+              },
+              {
+                q: "Do I need coding experience?",
+                a: "Not at all! Our visual builder lets you create powerful bots without writing a single line of code. Advanced users can import their own code too."
+              },
+              {
+                q: "What happens if my bot goes offline?",
+                a: "Our 99.9% uptime SLA ensures your bot stays online. If anything happens, our auto-restart system kicks in within seconds, and you'll get instant notifications."
+              },
+              {
+                q: "Can I migrate my existing bot?",
+                a: "Yes! We support all major bot frameworks. Just upload your code, and we'll handle the containerization and deployment automatically."
+              },
+            ].map((faq, index) => (
+              <div key={index} className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{faq.q}</h3>
+                <p className="text-gray-600">{faq.a}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
-      <section className="py-20 bg-gradient-to-br from-discord-500 to-discord-600">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl font-bold text-white mb-6">
-            Ready to supercharge your Discord server?
+      <section className="py-20 bg-gradient-to-br from-discord-500 to-discord-600 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-discord-400/20 rounded-full blur-3xl"></div>
+        </div>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
+          <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/20 text-white text-sm font-medium mb-6">
+            <FireIcon className="w-4 h-4 mr-2" />
+            Limited time: Get 500 bonus credits
+          </div>
+          <h2 className="text-5xl font-bold text-white mb-6">
+            Your bots deserve better
           </h2>
-          <p className="text-xl text-discord-100 mb-8">
-            Join thousands of communities using FiveBot to automate and scale.
+          <p className="text-xl text-discord-100 mb-8 max-w-2xl mx-auto">
+            Stop struggling with complex deployments. Start building amazing Discord experiences.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href={user ? "/dashboard" : "/auth/login"}
-              className="inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-discord-600 bg-white rounded-xl hover:bg-gray-100 transition-all transform hover:scale-105"
+              className="group inline-flex items-center justify-center px-10 py-5 text-lg font-medium text-discord-600 bg-white rounded-xl hover:bg-gray-100 transition-all transform hover:scale-105 hover:shadow-2xl"
             >
-              Get Started Free
-              <ArrowRightIcon className="ml-2 w-5 h-5" />
+              Claim Your Free Credits
+              <ArrowRightIcon className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
               href="https://docs.fivebot.app"
-              className="inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-white border-2 border-white/20 rounded-xl hover:bg-white/10 transition-all"
+              className="inline-flex items-center justify-center px-10 py-5 text-lg font-medium text-white border-2 border-white/20 rounded-xl hover:bg-white/10 transition-all backdrop-blur-sm"
             >
+              <DocumentTextIcon className="mr-2 w-5 h-5" />
               Read Documentation
             </Link>
+          </div>
+          <div className="mt-12 flex items-center justify-center space-x-8 text-white/80 text-sm">
+            <div className="flex items-center">
+              <CheckIcon className="w-4 h-4 mr-2" />
+              No credit card required
+            </div>
+            <div className="flex items-center">
+              <CheckIcon className="w-4 h-4 mr-2" />
+              Cancel anytime
+            </div>
+            <div className="flex items-center">
+              <CheckIcon className="w-4 h-4 mr-2" />
+              24/7 support
+            </div>
           </div>
         </div>
       </section>
