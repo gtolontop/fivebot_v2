@@ -331,13 +331,6 @@ export default function HomePage() {
               </span>
             </div>
           </div>
-          
-          {/* Scroll indicator */}
-          <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce">
-            <svg className="w-6 h-6 text-gray-400" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-              <path d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
-            </svg>
-          </div>
         </div>
       </section>
 
@@ -363,28 +356,122 @@ export default function HomePage() {
                 <span className="text-gray-400 text-sm font-medium">FiveBot Live Demo</span>
                 <div></div>
               </div>
-              <div className="relative aspect-video bg-gray-900 p-8">
-                <div className="h-full flex flex-col">
-                  {/* Terminal simulation */}
-                  <div className="flex-1 bg-black rounded-lg p-6 font-mono text-sm overflow-hidden">
-                    <div className="text-green-400 mb-4">$ fivebot create my-awesome-bot</div>
-                    <div className="text-gray-400 mb-2">✓ Bot configuration detected</div>
-                    <div className="text-gray-400 mb-2">✓ Installing dependencies...</div>
-                    <div className="text-gray-400 mb-2">✓ Building Docker container...</div>
-                    <div className="text-gray-400 mb-2">✓ Deploying to cloud...</div>
-                    <div className="text-green-400 mb-4">✅ Bot deployed successfully!</div>
-                    <div className="text-blue-400 mb-2">🔗 Dashboard: https://fivebot.app/bots/my-awesome-bot</div>
-                    <div className="text-yellow-400">⚡ Your bot is now online and ready!</div>
-                    
-                    <div className="mt-8 p-4 bg-gray-900 rounded border border-gray-700">
-                      <div className="text-gray-300 mb-2">📊 Real-time Stats:</div>
-                      <div className="grid grid-cols-2 gap-4 text-xs">
-                        <div>Status: <span className="text-green-400">Online</span></div>
-                        <div>Uptime: <span className="text-green-400">99.9%</span></div>
-                        <div>Commands: <span className="text-blue-400">1,247</span></div>
-                        <div>Response: <span className="text-blue-400">42ms</span></div>
+              <div className="relative bg-gradient-to-br from-gray-900 to-black p-2">
+                {/* Browser UI */}
+                <div className="bg-gray-800 rounded-t-lg px-4 py-3 flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="text-gray-400 text-sm">fivebot.app/dashboard</div>
+                  </div>
+                  <div className="flex space-x-2">
+                    <div className="w-3 h-3 bg-gray-600 rounded-full"></div>
+                    <div className="w-3 h-3 bg-gray-600 rounded-full"></div>
+                    <div className="w-3 h-3 bg-gray-600 rounded-full"></div>
+                  </div>
+                </div>
+                
+                {/* Dashboard Demo */}
+                <div className="bg-gray-900 p-8">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Bot Card */}
+                    <div className="bg-gray-800 rounded-xl p-6 transform hover:scale-105 transition-all duration-500 border border-gray-700">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-12 h-12 bg-gradient-to-br from-discord-400 to-discord-600 rounded-full flex items-center justify-center">
+                            <BoltIcon className="w-6 h-6 text-white" />
+                          </div>
+                          <div>
+                            <h4 className="text-white font-semibold">MusicBot Pro</h4>
+                            <p className="text-gray-400 text-sm">47 servers</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                          <span className="text-green-400 text-sm">Online</span>
+                        </div>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Commands today</span>
+                          <span className="text-white font-medium">2,847</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Uptime</span>
+                          <span className="text-white font-medium">99.8%</span>
+                        </div>
                       </div>
                     </div>
+                    
+                    {/* Creating New Bot Animation */}
+                    <div className="lg:col-span-2 bg-gray-800 rounded-xl p-6 border-2 border-discord-500 relative overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-r from-discord-500/10 to-purple-500/10 animate-pulse"></div>
+                      <div className="relative">
+                        <h4 className="text-white font-semibold mb-4 flex items-center">
+                          <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse mr-2"></div>
+                          Creating New Bot...
+                        </h4>
+                        <div className="space-y-3">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center">
+                              <CheckIcon className="w-4 h-4 text-green-400" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                                <div className="h-full bg-gradient-to-r from-discord-400 to-discord-600 rounded-full animate-progress" style={{width: '100%'}}></div>
+                              </div>
+                            </div>
+                            <span className="text-gray-400 text-sm">Bot configured</span>
+                          </div>
+                          
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center">
+                              <CheckIcon className="w-4 h-4 text-green-400" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                                <div className="h-full bg-gradient-to-r from-discord-400 to-discord-600 rounded-full animate-progress" style={{width: '100%'}}></div>
+                              </div>
+                            </div>
+                            <span className="text-gray-400 text-sm">Dependencies installed</span>
+                          </div>
+                          
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-yellow-500/20 rounded-full flex items-center justify-center">
+                              <div className="w-4 h-4 border-2 border-yellow-400 rounded-full animate-spin border-t-transparent"></div>
+                            </div>
+                            <div className="flex-1">
+                              <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                                <div className="h-full bg-gradient-to-r from-discord-400 to-discord-600 rounded-full animate-progress-active" style={{width: '60%'}}></div>
+                              </div>
+                            </div>
+                            <span className="text-yellow-400 text-sm">Deploying...</span>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-6 p-4 bg-gray-900/50 rounded-lg">
+                          <p className="text-gray-300 text-sm font-mono">
+                            <span className="text-discord-400">$</span> docker build -t fivebot/musicbot:latest .
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Quick Stats */}
+                  <div className="mt-6 grid grid-cols-4 gap-4">
+                    {[
+                      { label: "Total Bots", value: "12", icon: CubeIcon, color: "text-blue-400" },
+                      { label: "Active Users", value: "48.2k", icon: UserGroupIcon, color: "text-green-400" },
+                      { label: "Commands/Day", value: "127k", icon: CommandLineIcon, color: "text-purple-400" },
+                      { label: "Uptime", value: "99.9%", icon: ClockIcon, color: "text-yellow-400" },
+                    ].map((stat) => (
+                      <div key={stat.label} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                        <div className="flex items-center justify-between mb-2">
+                          <stat.icon className={`w-5 h-5 ${stat.color}`} />
+                          <span className={`text-2xl font-bold ${stat.color}`}>{stat.value}</span>
+                        </div>
+                        <p className="text-gray-400 text-sm">{stat.label}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -475,39 +562,7 @@ export default function HomePage() {
               <h3 className="text-xl font-semibold text-gray-900 mb-3">Deploy & Scale</h3>
               <p className="text-gray-600">Hit deploy and watch your bot come to life instantly</p>
             </div>
-          </div>
-
-          {/* Live bot creation preview */}
-          <div className="mt-20 bg-gray-900 rounded-2xl p-8 max-w-4xl mx-auto shadow-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-white font-semibold text-lg">Live Bot Creation</h3>
-              <div className="flex space-x-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-green-400 text-sm">Creating bot...</span>
-              </div>
-            </div>
-            <div className="bg-black rounded-lg p-6 font-mono text-sm">
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <CheckIcon className="w-4 h-4 text-green-400" />
-                  <span className="text-gray-400">Bot template selected: <span className="text-white">Multi-purpose</span></span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <CheckIcon className="w-4 h-4 text-green-400" />
-                  <span className="text-gray-400">Commands configured: <span className="text-white">47 commands</span></span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <CheckIcon className="w-4 h-4 text-green-400" />
-                  <span className="text-gray-400">Permissions set: <span className="text-white">Administrator</span></span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 border-2 border-discord-400 rounded-full animate-spin"></div>
-                  <span className="text-yellow-400">Deploying to cloud infrastructure...</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+          </div>        </div>
       </section>
 
       {/* Pricing */}
