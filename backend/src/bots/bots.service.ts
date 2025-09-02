@@ -217,7 +217,7 @@ export class BotsService {
     }
     // No need for isActive filter since bots are hard deleted
 
-    return this.prisma.bot.findUnique({
+    const bot = await this.prisma.bot.findUnique({
       where,
       include: {
         config: true,
@@ -238,6 +238,33 @@ export class BotsService {
         },
       },
     });
+
+    // Parse JSON fields in config
+    if (bot?.config) {
+      if (bot.config.welcomeEmbedJson && typeof bot.config.welcomeEmbedJson === 'string') {
+        try {
+          (bot.config as any).welcomeEmbedJson = JSON.parse(bot.config.welcomeEmbedJson);
+        } catch (e) {
+          console.error('Failed to parse welcomeEmbedJson:', e);
+        }
+      }
+      if (bot.config.customCommands && typeof bot.config.customCommands === 'string') {
+        try {
+          (bot.config as any).customCommands = JSON.parse(bot.config.customCommands);
+        } catch (e) {
+          console.error('Failed to parse customCommands:', e);
+        }
+      }
+      if (bot.config.ticketData && typeof bot.config.ticketData === 'string') {
+        try {
+          (bot.config as any).ticketData = JSON.parse(bot.config.ticketData);
+        } catch (e) {
+          console.error('Failed to parse ticketData:', e);
+        }
+      }
+    }
+
+    return bot;
   }
 
   async updateConfig(botId: string, ownerId: string, data: UpdateBotConfigDto): Promise<BotConfig> {
