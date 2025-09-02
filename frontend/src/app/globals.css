@@ -319,40 +319,99 @@
   animation-delay: 2s;
 }
 
-/* Cursor animation */
-@keyframes cursor-move {
+/* Demo cursor animation */
+@keyframes demo-cursor {
   0% {
     top: 50%;
-    left: 20%;
+    left: 50%;
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
   }
   15% {
-    top: 45%;
+    top: 60%;
     left: 50%;
   }
-  30% {
-    top: 55%;
+  20% {
+    top: 60%;
+    left: 50%;
+    transform: scale(0.8);
+  }
+  21% {
+    transform: scale(1);
+  }
+  35% {
+    top: 35%;
     left: 30%;
   }
-  45% {
-    top: 60%;
-    left: 70%;
+  40% {
+    transform: scale(0.8);
   }
-  60% {
+  41% {
+    transform: scale(1);
+  }
+  45% {
+    top: 50%;
+    left: 30%;
+  }
+  50% {
+    transform: scale(0.8);
+  }
+  51% {
+    transform: scale(1);
+  }
+  65% {
     top: 70%;
     left: 50%;
   }
-  75% {
-    top: 80%;
-    left: 50%;
+  70% {
+    transform: scale(0.8);
+  }
+  71% {
+    transform: scale(1);
+  }
+  85% {
+    top: 65%;
+    left: 40%;
+  }
+  90% {
+    transform: scale(0.8);
+  }
+  91% {
+    transform: scale(1);
   }
   100% {
-    top: 50%;
-    left: 50%;
+    top: 65%;
+    left: 40%;
+    opacity: 0;
   }
 }
 
-.animate-cursor {
-  animation: cursor-move 12s ease-in-out infinite;
+.animate-demo-cursor {
+  animation: demo-cursor 18s ease-in-out infinite;
+}
+
+/* Cursor click animations */
+@keyframes cursor-click {
+  20% {
+    transform: scale(0.9);
+    box-shadow: 0 0 20px rgba(88, 101, 242, 0.8);
+  }
+}
+
+.animate-cursor-click {
+  animation: cursor-click 18s ease-in-out infinite;
+}
+
+.animate-cursor-click-2 {
+  animation: cursor-click 18s ease-in-out infinite;
+  animation-delay: 3s;
+}
+
+.animate-cursor-click-3 {
+  animation: cursor-click 18s ease-in-out infinite;
+  animation-delay: 8s;
 }
 
 /* Step animations */
