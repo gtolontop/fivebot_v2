@@ -573,15 +573,13 @@ export class BotsService {
               return;
             }
 
-            // Use update with optimistic locking based on updatedAt
+            // Update without optimistic locking to avoid lock issues
             await tx.bot.update({
               where: { 
-                id: botId,
-                updatedAt: currentBot.updatedAt // Optimistic locking
+                id: botId
               },
               data: { 
                 status,
-                updatedAt: new Date(), // Force timestamp update
                 ...(metadata || {})
               },
             });
