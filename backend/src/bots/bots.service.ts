@@ -276,7 +276,12 @@ export class BotsService {
       if (ticketFields.includes(key)) {
         ticketData[key] = value;
       } else {
-        configData[key] = value;
+        // Handle JSON fields that need to be stringified
+        if ((key === 'welcomeEmbedJson' || key === 'customCommands') && value && typeof value === 'object') {
+          configData[key] = JSON.stringify(value);
+        } else {
+          configData[key] = value;
+        }
       }
     }
 
@@ -301,11 +306,12 @@ export class BotsService {
       },
     });
 
-    // If bot is running, queue config update
+    // If bot is running, restart it to apply new config
     if (bot.status === BotStatus.ONLINE) {
-      await this.queueService.addJob('update-bot-config', {
+      // Queue a restart job to apply the new configuration
+      await this.queueService.addJob('restart-bot', {
         botId,
-        config: data,
+        reason: 'Configuration updated',
       });
     }
 
