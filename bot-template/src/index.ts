@@ -119,14 +119,19 @@ class ChildBot {
       this.metricsService = new MetricsService(this.client, this.prisma, this.botId);
       console.log('📊 Metrics tracking initialized');
       
-      // Initialize ticket system
-      this.ticketHandler = new TicketInteractionHandler(this.client);
-      const services = this.ticketHandler.getServices();
-      this.ticketService = services.ticketService;
-      this.ticketStateManager = services.stateManager;
-      // Store on client for command access
-      (this.client as any).ticketHandler = this.ticketHandler;
-      console.log('🎫 Ticket system initialized');
+      // Initialize ticket system only if enabled
+      const ticketEnabled = (this.config as any).ticketData?.ticketEnabled || false;
+      if (ticketEnabled) {
+        this.ticketHandler = new TicketInteractionHandler(this.client);
+        const services = this.ticketHandler.getServices();
+        this.ticketService = services.ticketService;
+        this.ticketStateManager = services.stateManager;
+        // Store on client for command access
+        (this.client as any).ticketHandler = this.ticketHandler;
+        console.log('🎫 Ticket system initialized');
+      } else {
+        console.log('🎫 Ticket system disabled');
+      }
     });
     
     this.client.on('guildMemberAdd', (member) => 
