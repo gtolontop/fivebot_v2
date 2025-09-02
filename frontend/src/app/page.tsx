@@ -403,11 +403,11 @@ export default function HomePage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-gray-400 mb-2">Bot Prefix</label>
+                        <label className="block text-gray-400 mb-2">Bot Token</label>
                         <input 
                           type="text"
-                          className="w-full bg-gray-800 border-2 border-gray-700 rounded-xl px-6 py-4 text-white text-lg focus:border-discord-500 transition-all animate-auto-type-prefix"
-                          placeholder="!"
+                          className="w-full bg-gray-800 border-2 border-gray-700 rounded-xl px-6 py-4 text-white text-lg focus:border-discord-500 transition-all animate-auto-type-token"
+                          placeholder="Enter bot token..."
                           value=""
                           readOnly
                         />
