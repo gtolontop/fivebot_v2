@@ -159,6 +159,32 @@ export class BotsService {
     return bot;
   }
 
+  private parseConfigJsonFields(config: any): void {
+    if (!config) return;
+    
+    if (config.welcomeEmbedJson && typeof config.welcomeEmbedJson === 'string') {
+      try {
+        config.welcomeEmbedJson = JSON.parse(config.welcomeEmbedJson);
+      } catch (e) {
+        console.error('Failed to parse welcomeEmbedJson:', e);
+      }
+    }
+    if (config.customCommands && typeof config.customCommands === 'string') {
+      try {
+        config.customCommands = JSON.parse(config.customCommands);
+      } catch (e) {
+        console.error('Failed to parse customCommands:', e);
+      }
+    }
+    if (config.ticketData && typeof config.ticketData === 'string') {
+      try {
+        config.ticketData = JSON.parse(config.ticketData);
+      } catch (e) {
+        console.error('Failed to parse ticketData:', e);
+      }
+    }
+  }
+
   async findAll(ownerId: string): Promise<Bot[]> {
     const bots = await this.prisma.bot.findMany({
       where: { 
@@ -179,6 +205,13 @@ export class BotsService {
         },
       },
       orderBy: { createdAt: 'desc' },
+    });
+
+    // Parse JSON fields in configs
+    bots.forEach(bot => {
+      if (bot.config) {
+        this.parseConfigJsonFields(bot.config);
+      }
     });
 
     // Auto-sync any bots that might be out of sync (but don't await to avoid slowing the response)
