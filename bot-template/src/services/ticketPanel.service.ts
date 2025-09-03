@@ -84,27 +84,21 @@ export class TicketPanelService {
         components
       });
 
-      // Save panel to database
-      await this.ticketService.createPanel(guild.id, config.id, {
-        channelId,
-        type,
-        embedData,
-        components: this.serializeComponents(components)
-      });
-
-      // Update with message ID
-      await prisma.ticketPanel.update({
-        where: {
-          channelId_messageId: {
-            channelId,
-            messageId: null as any
-          }
-        },
+      // Save panel to database with message ID
+      await prisma.ticketPanel.create({
         data: {
-          messageId: message.id
+          guildId: guild.id,
+          configId: config.id,
+          channelId,
+          messageId: message.id,
+          type,
+          embedData,
+          components: this.serializeComponents(components),
+          active: true
         }
       });
 
+      console.log(`[TicketPanelService] Panel sent successfully! Message ID: ${message.id}`);
       return message;
     } catch (error) {
       console.error('[TicketPanelService] Error creating panel:', error);
