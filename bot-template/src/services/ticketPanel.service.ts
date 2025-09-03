@@ -17,9 +17,15 @@ import { TicketService } from './ticket.service';
 
 export class TicketPanelService {
   private ticketService: TicketService;
+  private panelCategories: Map<string, any[]> = new Map(); // Store categories by guild ID
 
   constructor(ticketService: TicketService) {
     this.ticketService = ticketService;
+  }
+  
+  // Get stored categories for a guild
+  getStoredCategories(guildId: string): any[] | undefined {
+    return this.panelCategories.get(guildId);
   }
 
   // Create a new ticket panel
@@ -30,6 +36,18 @@ export class TicketPanelService {
     embedData: any,
     categories?: TicketCategory[]
   ): Promise<Message | null> {
+    // Store categories in memory for later use
+    if (categories && categories.length > 0) {
+      this.panelCategories.set(guild.id, categories);
+      console.log(`[TicketPanelService] Stored ${categories.length} categories for guild ${guild.id}`);
+      if (categories[0]) {
+        console.log(`[TicketPanelService] First category modal config:`, {
+          useCustomModal: categories[0].useCustomModal,
+          modalTitle: categories[0].modalTitle,
+          modalFields: categories[0].modalFields?.length || 0
+        });
+      }
+    }
     try {
       const channel = await guild.channels.fetch(channelId) as TextChannel;
       if (!channel || !channel.isTextBased()) {

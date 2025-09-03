@@ -13,15 +13,21 @@ import {
 } from 'discord.js';
 import { TicketService, TicketConfigWithArrays } from '../services/ticket.service';
 import { TicketStateManager } from '../services/ticketStateManager.service';
+import { TicketPanelService } from '../services/ticketPanel.service';
 import { ContainerType, TicketPriority } from '@prisma/client';
 
 export class TicketCreationHandler {
   private ticketService: TicketService;
   private stateManager: TicketStateManager;
+  private ticketPanelService: TicketPanelService | null = null;
 
   constructor(ticketService: TicketService, stateManager: TicketStateManager) {
     this.ticketService = ticketService;
     this.stateManager = stateManager;
+  }
+  
+  setTicketPanelService(panelService: TicketPanelService) {
+    this.ticketPanelService = panelService;
   }
 
   // Handle button interaction for ticket creation
@@ -67,12 +73,38 @@ export class TicketCreationHandler {
     let category: any = null;
     
     if (categoryId !== 'general') {
-      const config = await this.ticketService.getConfig(interaction.guildId!);
-      category = config?.categories?.find(c => c.id === categoryId) as any;
+      // First try to get categories from stored panel data
+      if (this.ticketPanelService) {
+        const storedCategories = (this.ticketPanelService as any).getStoredCategories?.(interaction.guildId!);
+        if (storedCategories) {
+          category = storedCategories.find((c: any) => c.id === categoryId);
+          console.log(`[TicketCreationHandler] Found category from stored data:`, {
+            id: category?.id,
+            name: category?.name,
+            useCustomModal: category?.useCustomModal,
+            modalFields: category?.modalFields?.length || 0
+          });
+        }
+      }
+      
+      // Fallback to config categories if not found
+      if (!category) {
+        const config = await this.ticketService.getConfig(interaction.guildId!);
+        category = config?.categories?.find(c => c.id === categoryId) as any;
+      }
+      
       if (category) {
         categoryName = category.name;
       }
     }
+
+    console.log(`[TicketCreationHandler] Category check:`, {
+      categoryId,
+      hasCategory: !!category,
+      useCustomModal: category?.useCustomModal,
+      modalFieldsCount: category?.modalFields?.length || 0,
+      modalTitle: category?.modalTitle
+    });
 
     // Check if category has custom modal
     if (category?.useCustomModal && category.modalFields && category.modalFields.length > 0) {
