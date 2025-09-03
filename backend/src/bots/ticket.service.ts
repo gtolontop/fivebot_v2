@@ -45,7 +45,19 @@ export class TicketService {
       return { categories: [], panels: [], tickets: [] };
     }
 
-    const ticketData = (bot.config as any).ticketData || {};
+    // Parse ticketData if it's a string
+    let ticketData: any = {};
+    if (typeof bot.config.ticketData === 'string') {
+      try {
+        ticketData = JSON.parse(bot.config.ticketData);
+      } catch (e) {
+        console.error('Failed to parse ticketData:', e);
+        ticketData = {};
+      }
+    } else {
+      ticketData = bot.config.ticketData || {};
+    }
+
     return {
       categories: ticketData.categories || [],
       panels: ticketData.panels || [],
