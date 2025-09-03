@@ -153,6 +153,11 @@ export class CommandService {
 
   // Clean up old commands
   async cleanupOldCommands() {
+    // Check if botCommand model exists
+    if (!this.prisma.botCommand) {
+      return;
+    }
+    
     const oneDayAgo = new Date();
     oneDayAgo.setDate(oneDayAgo.getDate() - 1);
 
