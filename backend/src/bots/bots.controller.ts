@@ -624,14 +624,13 @@ export class BotsController {
       try {
         console.log('🔄 Sync statuses called for user:', req.user?.id);
         
-        // Get user's bots with shouldAutoRestart field
+        // Get user's bots
         const userBots = await this.prisma.bot.findMany({
           where: { ownerId: req.user.id },
           select: {
             id: true,
             name: true,
             status: true,
-            shouldAutoRestart: true,
             tokenEncrypted: true
           }
         });
@@ -643,7 +642,7 @@ export class BotsController {
         // Check each bot's real Discord status
         for (const bot of userBots) {
           try {
-            console.log(`🔍 Checking bot: ${bot.name} (currently marked as ${bot.status}, shouldAutoRestart: ${bot.shouldAutoRestart})`);
+            console.log(`🔍 Checking bot: ${bot.name} (currently marked as ${bot.status})`);
             
             // Get decrypted token
             const decryptedToken = await this.botsService.getDecryptedToken(bot.id);
@@ -663,18 +662,9 @@ export class BotsController {
             
             // Update status if different, but respect user intentions
             if (bot.status !== expectedStatus) {
-              // Don't override if bot is manually stopped (shouldAutoRestart = false) or in STOPPING state
-              if (bot.shouldAutoRestart === false || bot.status === 'STOPPING') {
-                console.log(`🚫 ${bot.name} is manually stopped (shouldAutoRestart: ${bot.shouldAutoRestart}) - not overriding status`);
-                
-                // If Discord shows bot as offline and we expected it to be offline (manual stop), that's correct
-                if (expectedStatus === 'OFFLINE' && bot.status !== 'OFFLINE') {
-                  const wasUpdated = await this.botsService.updateStatusSafe(bot.id, 'OFFLINE', false); // Force update to OFFLINE
-                  if (wasUpdated) {
-                    updated++;
-                    console.log(`✅ Confirmed ${bot.name} is offline as expected (manual stop)`);
-                  }
-                }
+              // Don't override if bot is in STOPPING state
+              if (bot.status === 'STOPPING') {
+                console.log(`🚫 ${bot.name} is in STOPPING state - not overriding status`);
               } else {
                 const wasUpdated = await this.botsService.updateStatusSafe(bot.id, expectedStatus as any, true);
                 if (wasUpdated) {

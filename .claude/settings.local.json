@@ -28,7 +28,8 @@
       "Bash(dir node_modules.prismaclient)",
       "Bash(sed:*)",
       "Bash(taskkill:*)",
-      "Bash(del init-data.js)"
+      "Bash(del init-data.js)",
+      "Bash(powershell:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",

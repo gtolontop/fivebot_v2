@@ -391,9 +391,7 @@ export class BotsService {
       throw new BadRequestException('Bot is already starting');
     }
 
-    await this.updateStatus(botId, BotStatus.STARTING, {
-      shouldAutoRestart: true, // Enable auto-restart when user manually starts
-    });
+    await this.updateStatus(botId, BotStatus.STARTING);
 
     // Create detailed job log for bot start
     await this.prisma.jobLog.create({
@@ -463,9 +461,7 @@ export class BotsService {
       return bot;
     }
 
-    await this.updateStatus(botId, BotStatus.STOPPING, {
-      shouldAutoRestart: false, // Disable auto-restart when user manually stops
-    });
+    await this.updateStatus(botId, BotStatus.STOPPING);
 
     await this.queueService.addJob('stop-bot', { botId });
 
@@ -678,7 +674,7 @@ export class BotsService {
           try {
             bot = await this.prisma.bot.findUnique({
               where: { id: botId },
-              select: { shouldAutoRestart: true, status: true, name: true }
+              select: { status: true, name: true }
             });
             break;
           } catch (error: any) {
@@ -696,17 +692,10 @@ export class BotsService {
           return false;
         }
 
-        // Don't override status if bot is manually stopped (shouldAutoRestart = false)
-        if (bot.shouldAutoRestart === false && status === 'ONLINE') {
-          console.log(`🚫 Bot ${bot.name} is manually stopped - not setting to ONLINE`);
+        // If bot is in STOPPING state, don't override
+        if (bot.status === 'STOPPING' && status === 'ONLINE') {
+          console.log(`🚫 Bot ${bot.name} is stopping - not setting to ONLINE`);
           return false;
-        }
-
-        // If bot is manually stopped and Discord shows offline, update to OFFLINE
-        if (bot.shouldAutoRestart === false && status === 'OFFLINE') {
-          await this.updateStatus(botId, 'OFFLINE');
-          console.log(`✅ Confirmed bot ${bot.name} is OFFLINE (manual stop)`);
-          return true;
         }
       }
 
