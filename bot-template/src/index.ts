@@ -18,6 +18,7 @@ import { MetricsService } from './services/metrics.service';
 import { TicketInteractionHandler } from './handlers/ticketInteraction.handler';
 import { TicketService } from './services/ticket.service';
 import { TicketStateManager } from './services/ticketStateManager.service';
+import { CommandService } from './services/command.service';
 
 dotenv.config();
 
