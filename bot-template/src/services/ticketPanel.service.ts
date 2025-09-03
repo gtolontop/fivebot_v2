@@ -31,8 +31,15 @@ export class TicketPanelService {
     categories?: TicketCategory[]
   ): Promise<Message | null> {
     try {
+      console.log('[TicketPanelService] Creating panel...');
+      console.log('[TicketPanelService] Guild:', guild.name);
+      console.log('[TicketPanelService] Channel ID:', channelId);
+      console.log('[TicketPanelService] Type:', type);
+      console.log('[TicketPanelService] Categories:', categories);
+      
       const channel = await guild.channels.fetch(channelId) as TextChannel;
       if (!channel || !channel.isTextBased()) {
+        console.error('[TicketPanelService] Invalid channel or not text-based');
         throw new Error('Invalid channel');
       }
 
