@@ -540,27 +540,35 @@ export class BotsService {
   }
 
   async updateStatus(botId: string, status: BotStatus, metadata?: any): Promise<void> {
-    let retries = 3; // Reduce retries for faster failure
+    let retries = 3;
     
     while (retries > 0) {
       try {
-        // Simple update without transaction to avoid locks
-        const result = await this.prisma.bot.updateMany({
-          where: { 
-            id: botId,
-            // Only update if status is different to avoid unnecessary writes
-            NOT: { status }
-          },
-          data: { 
-            status,
-            ...(metadata || {})
-          },
+        // First check if bot exists and get current status
+        const currentBot = await this.prisma.bot.findUnique({
+          where: { id: botId },
+          select: { status: true }
         });
-        
-        if (result.count > 0) {
-          console.log(`✅ Successfully updated bot ${botId} status to ${status}`);
+
+        if (!currentBot) {
+          console.error(`Bot ${botId} not found`);
+          return;
         }
+
+        // Skip update if status hasn't changed
+        if (currentBot.status === status) {
+          console.log(`Bot ${botId} already has status ${status}, skipping update`);
+          return;
+        }
+
+        // Use raw SQL to avoid Prisma's transaction overhead
+        await this.prisma.$executeRaw`
+          UPDATE bots 
+          SET status = ${status}, updated_at = NOW()
+          WHERE id = ${botId}
+        `;
         
+        console.log(`✅ Successfully updated bot ${botId} status to ${status}`);
         return; // Success, exit function
         
       } catch (error: any) {
