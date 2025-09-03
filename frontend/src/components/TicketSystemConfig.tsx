@@ -603,7 +603,20 @@ export default function TicketSystemConfig({
                         autoCloseHours: 72,
                         privateByDefault: false,
                         requiredRoles: [],
-                        welcomeMessage: ''
+                        welcomeMessage: '',
+                        useCustomModal: false,
+                        modalTitle: '',
+                        modalDescription: '',
+                        modalFields: [{
+                          id: '1',
+                          label: 'Issue Description',
+                          type: 'TEXTAREA' as const,
+                          placeholder: 'Please describe your issue in detail',
+                          required: true,
+                          rows: 4,
+                          minLength: 10,
+                          maxLength: 1000
+                        }]
                       });
                       setShowCategoryModal(true);
                     }}
