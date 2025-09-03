@@ -1173,8 +1173,8 @@ export default function TicketSystemConfig({
       {/* Category Modal */}
       {showCategoryModal && (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
               <h3 className="text-lg font-semibold text-gray-900">
                 {editingCategory ? 'Edit Category' : 'Create Category'}
               </h3>
@@ -1188,7 +1188,7 @@ export default function TicketSystemConfig({
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="p-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Category Name *
