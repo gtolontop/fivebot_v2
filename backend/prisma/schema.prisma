@@ -35,7 +35,6 @@ model Bot {
   containerId       String?      @map("container_id")
   instanceId        String?      @map("instance_id")
   status            BotStatus    @default(OFFLINE)
-  shouldAutoRestart Boolean      @default(true) @map("should_auto_restart")
   createdAt         DateTime     @default(now()) @map("created_at")
   updatedAt         DateTime     @updatedAt @map("updated_at")
   auditLogs         AuditLog[]

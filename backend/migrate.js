@@ -41,20 +41,8 @@ async function runMigration() {
     // Migration queries
     const migrations = [
       {
-        name: 'Add should_auto_restart column to bots table',
-        query: 'ALTER TABLE bots ADD COLUMN should_auto_restart BOOLEAN DEFAULT TRUE',
-      },
-      {
         name: 'Add welcome_thumbnail_url column to bot_configs table',
         query: 'ALTER TABLE bot_configs ADD COLUMN welcome_thumbnail_url VARCHAR(255)',
-      },
-      {
-        name: 'Set auto-restart true for online bots',
-        query: "UPDATE bots SET should_auto_restart = true WHERE status = 'ONLINE' AND is_active = true",
-      },
-      {
-        name: 'Set auto-restart false for offline bots',
-        query: "UPDATE bots SET should_auto_restart = false WHERE status = 'OFFLINE' AND is_active = true",
       },
     ];
     
