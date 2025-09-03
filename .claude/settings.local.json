@@ -29,7 +29,8 @@
       "Bash(sed:*)",
       "Bash(taskkill:*)",
       "Bash(del init-data.js)",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "Bash(npm uninstall:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",
