@@ -122,6 +122,9 @@ class ChildBot {
       this.metricsService = new MetricsService(this.client, this.prisma, this.botId);
       console.log('📊 Metrics tracking initialized');
       
+      // Initialize command service
+      this.commandService = new CommandService(this.client, this.prisma, this.botId);
+      
       // Initialize ticket system only if enabled
       const ticketEnabled = (this.config as any).ticketData?.ticketEnabled || false;
       if (ticketEnabled) {
@@ -131,7 +134,19 @@ class ChildBot {
         this.ticketStateManager = services.stateManager;
         // Store on client for command access
         (this.client as any).ticketHandler = this.ticketHandler;
+        
+        // Set ticket panel service in command service
+        if (this.commandService && this.ticketHandler) {
+          this.commandService.setTicketPanelService(this.ticketHandler.getServices().ticketPanelService);
+        }
+        
         console.log('🎫 Ticket system initialized');
+      }
+      
+      // Start command service
+      if (this.commandService) {
+        this.commandService.start();
+        console.log('📡 Command service started');
       }
     });
     
