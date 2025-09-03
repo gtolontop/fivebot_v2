@@ -1447,10 +1447,16 @@ export default function TicketSystemConfig({
                   onChange={(e) => setPanelForm(prev => ({ ...prev, type: e.target.value as any }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 >
-                  <option value="BUTTON">Button (Simple)</option>
-                  <option value="DROPDOWN">Dropdown (Categories)</option>
-                  <option value="HYBRID">Hybrid (Button + Dropdown)</option>
+                  <option value="BUTTON">Buttons - One button per category</option>
+                  <option value="DROPDOWN">Dropdown - Select category from menu</option>
+                  <option value="HYBRID">Hybrid - Main button + category selector</option>
                 </select>
+                {/* Type description */}
+                <p className="mt-2 text-sm text-gray-600">
+                  {panelForm.type === 'BUTTON' && "Creates one button for each selected category. Users click the category they need."}
+                  {panelForm.type === 'DROPDOWN' && "Creates a dropdown menu where users select their category before creating a ticket."}
+                  {panelForm.type === 'HYBRID' && "Creates a main 'Create Ticket' button. If categories exist, also shows a dropdown for specific categories."}
+                </p>
               </div>
 
               <div>
