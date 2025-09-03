@@ -284,7 +284,20 @@ export default function BotConfigPage() {
     try {
       await botsAPI.start(botId);
       toast.success('Bot start command sent');
-      setTimeout(fetchBot, 2000); // Refresh after 2 seconds
+      // Update status immediately to STARTING
+      setBot(prev => prev ? { ...prev, status: 'STARTING' } : null);
+      
+      // Check status multiple times
+      let attempts = 0;
+      const checkInterval = setInterval(async () => {
+        attempts++;
+        await fetchBot();
+        
+        // Stop checking after 30 seconds or when bot is online
+        if (attempts >= 15 || (bot && bot.status === 'ONLINE')) {
+          clearInterval(checkInterval);
+        }
+      }, 2000);
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Error starting bot');
     }
@@ -577,7 +590,7 @@ export default function BotConfigPage() {
                   </button>
                   <button
                     onClick={stopBot}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
                   >
                     <StopIcon className="w-4 h-4 mr-1" />
                     Stop
