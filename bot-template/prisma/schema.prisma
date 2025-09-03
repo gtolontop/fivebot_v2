@@ -49,6 +49,7 @@ model Bot {
   hosts       Host[]
   jobLogs     JobLog[]
   auditLogs   AuditLog[]
+  commands    BotCommand[]
 
   @@map("bots")
 }
