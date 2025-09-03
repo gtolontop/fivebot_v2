@@ -1496,7 +1496,8 @@ export default function TicketSystemConfig({
                           {category.emoji} {category.name}
                         </span>
                       </label>
-                    ))}
+                    ))
+                    )}
                   </div>
                 </div>
               )}
