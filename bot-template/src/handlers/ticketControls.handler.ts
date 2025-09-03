@@ -37,29 +37,32 @@ export class TicketControlsHandler {
     config: any
   ): Promise<ActionRowBuilder<ButtonBuilder>[]> {
     const rows: ActionRowBuilder<ButtonBuilder>[] = [];
-    const mainRow = new ActionRowBuilder<ButtonBuilder>();
+    const buttons: ButtonBuilder[] = [];
+    const buttonConfig = config.ticketButtons || {};
 
-    // Close button (always available)
-    mainRow.addComponents(
-      new ButtonBuilder()
-        .setCustomId('ticket:close')
-        .setLabel('Close')
-        .setEmoji('🔒')
-        .setStyle(ButtonStyle.Danger)
-    );
+    // Close button (check config)
+    if (buttonConfig.close !== false && ticket.state !== TicketState.CLOSED) {
+      buttons.push(
+        new ButtonBuilder()
+          .setCustomId('ticket:close')
+          .setLabel('Close')
+          .setEmoji('🔒')
+          .setStyle(ButtonStyle.Danger)
+      );
+    }
 
-    // Claim button (based on assignment model)
-    if ([AssignmentModel.SOFT_CLAIM, AssignmentModel.STRICT_CLAIM].includes(config.assignmentModel)) {
+    // Claim/Unclaim button (based on config and assignment model)
+    if (buttonConfig.claim && [AssignmentModel.SOFT_CLAIM, AssignmentModel.STRICT_CLAIM].includes(config.assignmentModel)) {
       if (!ticket.assignedStaffId) {
-        mainRow.addComponents(
+        buttons.push(
           new ButtonBuilder()
             .setCustomId('ticket:claim')
             .setLabel('Claim')
             .setEmoji('✋')
             .setStyle(ButtonStyle.Primary)
         );
-      } else {
-        mainRow.addComponents(
+      } else if (buttonConfig.unclaim) {
+        buttons.push(
           new ButtonBuilder()
             .setCustomId('ticket:release')
             .setLabel('Release')
@@ -69,9 +72,9 @@ export class TicketControlsHandler {
       }
     }
 
-    // Transfer button (if claimed)
-    if (ticket.assignedStaffId) {
-      mainRow.addComponents(
+    // Transfer button (if claimed and configured)
+    if (buttonConfig.transfer && ticket.assignedStaffId) {
+      buttons.push(
         new ButtonBuilder()
           .setCustomId('ticket:transfer')
           .setLabel('Transfer')
@@ -80,51 +83,85 @@ export class TicketControlsHandler {
       );
     }
 
-    rows.push(mainRow);
-
-    // Additional controls row
-    const additionalRow = new ActionRowBuilder<ButtonBuilder>();
-
     // Add member button
-    additionalRow.addComponents(
-      new ButtonBuilder()
-        .setCustomId('ticket:add_member')
-        .setLabel('Add Member')
-        .setEmoji('➕')
-        .setStyle(ButtonStyle.Secondary)
-    );
-
-    // Transcript button
-    additionalRow.addComponents(
-      new ButtonBuilder()
-        .setCustomId('ticket:transcript')
-        .setLabel('Transcript')
-        .setEmoji('📄')
-        .setStyle(ButtonStyle.Secondary)
-    );
-
-    if (ticket.state === TicketState.CLOSED) {
-      // Reopen button
-      additionalRow.addComponents(
+    if (buttonConfig.addMember) {
+      buttons.push(
         new ButtonBuilder()
-          .setCustomId('ticket:reopen')
-          .setLabel('Reopen')
-          .setEmoji('🔓')
-          .setStyle(ButtonStyle.Success)
-      );
-
-      // Delete button
-      additionalRow.addComponents(
-        new ButtonBuilder()
-          .setCustomId('ticket:delete')
-          .setLabel('Delete')
-          .setEmoji('🗑️')
-          .setStyle(ButtonStyle.Danger)
+          .setCustomId('ticket:add_member')
+          .setLabel('Add Member')
+          .setEmoji('➕')
+          .setStyle(ButtonStyle.Secondary)
       );
     }
 
-    if (additionalRow.components.length > 0) {
-      rows.push(additionalRow);
+    // Remove member button  
+    if (buttonConfig.removeMember) {
+      buttons.push(
+        new ButtonBuilder()
+          .setCustomId('ticket:remove_member')
+          .setLabel('Remove Member')
+          .setEmoji('➖')
+          .setStyle(ButtonStyle.Secondary)
+      );
+    }
+
+    // Transcript button
+    if (buttonConfig.transcript) {
+      buttons.push(
+        new ButtonBuilder()
+          .setCustomId('ticket:transcript')
+          .setLabel('Transcript')
+          .setEmoji('📄')
+          .setStyle(ButtonStyle.Secondary)
+      );
+    }
+
+    // Lock/Unlock button
+    if (buttonConfig.lock) {
+      buttons.push(
+        new ButtonBuilder()
+          .setCustomId(ticket.locked ? 'ticket:unlock' : 'ticket:lock')
+          .setLabel(ticket.locked ? 'Unlock' : 'Lock')
+          .setEmoji(ticket.locked ? '🔓' : '🔐')
+          .setStyle(ButtonStyle.Secondary)
+      );
+    }
+
+    // For closed tickets
+    if (ticket.state === TicketState.CLOSED) {
+      // Reopen button
+      if (config.closeOptions?.showReopen) {
+        buttons.push(
+          new ButtonBuilder()
+            .setCustomId('ticket:reopen')
+            .setLabel('Reopen')
+            .setEmoji('🔄')
+            .setStyle(ButtonStyle.Success)
+        );
+      }
+
+      // Delete button
+      if (config.closeOptions?.showDelete) {
+        buttons.push(
+          new ButtonBuilder()
+            .setCustomId('ticket:delete')
+            .setLabel('Delete')
+            .setEmoji('🗑️')
+            .setStyle(ButtonStyle.Danger)
+        );
+      }
+    }
+
+    // Organize buttons into rows (max 5 per row)
+    const chunks = [];
+    for (let i = 0; i < buttons.length; i += 5) {
+      chunks.push(buttons.slice(i, i + 5));
+    }
+
+    for (const chunk of chunks) {
+      if (chunk.length > 0) {
+        rows.push(new ActionRowBuilder<ButtonBuilder>().addComponents(...chunk));
+      }
     }
 
     return rows;
@@ -169,8 +206,15 @@ export class TicketControlsHandler {
       case 'add_member':
         await this.handleAddMember(interaction, ticket);
         break;
+      case 'remove_member':
+        await this.handleRemoveMember(interaction, ticket);
+        break;
       case 'transcript':
         await this.handleTranscript(interaction, ticket);
+        break;
+      case 'lock':
+      case 'unlock':
+        await this.handleLockToggle(interaction, ticket, action === 'lock');
         break;
       case 'reopen':
         await this.handleReopen(interaction, ticket, config);
@@ -199,17 +243,24 @@ export class TicketControlsHandler {
       return;
     }
 
+    // Store ticket ID for later use in modal submission
+    await this.stateManager.setUserState(interaction.user.id, 'closing_ticket', {
+      ticketId: ticket.id,
+      ticketNumber: ticket.ticketNumber
+    });
+
     // Show close reason modal
     const modal = new ModalBuilder()
-      .setCustomId('ticket:close:reason')
+      .setCustomId('ticket:close:modal')
       .setTitle('Close Ticket');
 
     const reasonInput = new TextInputBuilder()
       .setCustomId('close_reason')
-      .setLabel('Reason for closing (optional)')
+      .setLabel(config.ticketRequireReason ? 'Reason for closing' : 'Reason for closing (optional)')
       .setPlaceholder('Resolved, No response, Duplicate...')
-      .setStyle(TextInputStyle.Short)
-      .setRequired(false);
+      .setStyle(TextInputStyle.Paragraph)
+      .setRequired(config.ticketRequireReason || false)
+      .setMaxLength(500);
 
     modal.addComponents(
       new ActionRowBuilder<TextInputBuilder>().addComponents(reasonInput)
