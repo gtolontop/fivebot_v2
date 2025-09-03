@@ -351,6 +351,12 @@ class ChildBot {
         }
       }
       
+      console.log('📡 Stopping command service...');
+      // Stop command service
+      if (this.commandService) {
+        this.commandService.stop();
+      }
+      
       console.log('🎫 Shutting down ticket system...');
       // Shutdown ticket system
       if (this.ticketHandler) {
