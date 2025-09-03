@@ -555,6 +555,11 @@ export class BotsController {
     }
     
     const result = await this.ticketService.sendPanel(id, panelId);
+    
+    if (!result.success) {
+      throw new BadRequestException(result.message || 'Failed to send panel');
+    }
+    
     return result;
   }
 

@@ -209,7 +209,16 @@ export class TicketService {
       return { success: true, message: 'Panel sent successfully' };
     } catch (error) {
       console.error('Error sending panel:', error);
-      return { success: false, message: error.message || 'Failed to send panel' };
+      
+      // Provide user-friendly error messages
+      let message = 'Failed to send panel';
+      if (error.message === 'Bot is not online') {
+        message = 'Cannot send panel: Bot is offline. Please start the bot first.';
+      } else if (error.message) {
+        message = error.message;
+      }
+      
+      return { success: false, message };
     }
   }
 
