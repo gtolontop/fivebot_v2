@@ -27,7 +27,8 @@
       "Bash(git commit:*)",
       "Bash(dir node_modules.prismaclient)",
       "Bash(sed:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(del init-data.js)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",
