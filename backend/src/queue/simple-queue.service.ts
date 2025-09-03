@@ -280,15 +280,13 @@ export class SimpleQueueService implements IQueueService {
           console.error('Failed to add offline log:', logError);
         }
         
-        // Force update bot status to offline with immediate database write
+        // Use raw SQL to avoid "record has changed" error
         try {
-          await this.prisma.bot.update({
-            where: { id: botId },
-            data: { 
-              status: BotStatus.OFFLINE,
-              updatedAt: new Date()
-            },
-          });
+          await this.prisma.$executeRaw`
+            UPDATE bots 
+            SET status = ${BotStatus.OFFLINE}, updated_at = NOW()
+            WHERE id = ${botId}
+          `;
           console.log(`[Bot ${botId}] ✅ Status FORCE updated to OFFLINE after process exit`);
         } catch (dbError) {
           console.error(`[Bot ${botId}] ❌ Failed to update bot status:`, dbError);
