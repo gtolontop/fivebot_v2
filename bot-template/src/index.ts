@@ -137,7 +137,7 @@ class ChildBot {
         
         // Set ticket panel service in command service
         if (this.commandService && this.ticketHandler) {
-          this.commandService.setTicketPanelService(this.ticketHandler.getServices().ticketPanelService);
+          this.commandService.setTicketPanelService(this.ticketHandler.getServices().panelService);
         }
         
         console.log('🎫 Ticket system initialized');
