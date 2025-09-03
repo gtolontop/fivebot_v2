@@ -215,7 +215,7 @@ export class TicketService {
       
       const placeholders = guildIds.map((_, index) => `$${index + 1}`).join(', ');
       
-      const tickets = await this.prisma.$queryRawUnsafe(`
+      const tickets = await this.prisma.$queryRawUnsafe<any[]>(`
         SELECT 
           t.id,
           t.guild_id as "guildId",
@@ -244,7 +244,7 @@ export class TicketService {
         return [];
       });
       
-      return tickets || [];
+      return tickets;
     } catch (error) {
       console.error('Error fetching tickets from database:', error);
       // Fallback to old method
