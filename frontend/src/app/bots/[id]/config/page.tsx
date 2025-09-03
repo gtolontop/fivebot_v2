@@ -555,6 +555,35 @@ export default function BotConfigPage() {
                  bot.status === 'ERROR' ? 'Error' : 'Offline'}
               </div>
 
+              {/* Start/Stop/Restart Buttons */}
+              {bot.status === 'OFFLINE' && (
+                <button
+                  onClick={startBot}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+                >
+                  <PlayIcon className="w-4 h-4 mr-1" />
+                  Start Bot
+                </button>
+              )}
+              
+              {bot.status === 'ONLINE' && (
+                <>
+                  <button
+                    onClick={restartBot}
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                  >
+                    <ArrowPathIcon className="w-4 h-4 mr-1" />
+                    Restart
+                  </button>
+                  <button
+                    onClick={stopBot}
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                  >
+                    <StopIcon className="w-4 h-4 mr-1" />
+                    Stop
+                  </button>
+                </>
+              )}
 
               {/* Save Button */}
               <button
