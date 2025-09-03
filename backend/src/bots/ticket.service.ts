@@ -212,31 +212,33 @@ export class TicketService {
         return [];
       }
       
-      const tickets = await this.prisma.$queryRaw`
+      const placeholders = guildIds.map((_, index) => `$${index + 1}`).join(', ');
+      
+      const tickets = await this.prisma.$queryRawUnsafe(`
         SELECT 
           t.id,
-          t.guild_id as guildId,
-          t.ticket_number as number,
-          t.channel_id as channelId,
-          t.thread_id as threadId,
-          t.creator_id as creatorId,
-          t.assigned_staff_id as assignedStaffId,
+          t.guild_id as "guildId",
+          t.ticket_number as "number",
+          t.channel_id as "channelId",
+          t.thread_id as "threadId",
+          t.creator_id as "creatorId",
+          t.assigned_staff_id as "assignedStaffId",
           t.type,
-          t.category as categoryName,
+          t.category as "categoryName",
           t.priority,
           t.state,
-          t.activity_state as activityState,
-          t.container_type as containerType,
-          t.last_activity as lastActivity,
-          t.created_at as createdAt,
-          t.closed_at as closedAt,
-          (SELECT COUNT(*) FROM ticket_messages WHERE ticket_id = t.id) as messageCount
+          t.activity_state as "activityState",
+          t.container_type as "containerType",
+          t.last_activity as "lastActivity",
+          t.created_at as "createdAt",
+          t.closed_at as "closedAt",
+          (SELECT COUNT(*) FROM ticket_messages WHERE ticket_id = t.id) as "messageCount"
         FROM tickets t
         WHERE t.deleted_at IS NULL
-          AND t.guild_id IN (${guildIds.map(() => '?').join(', ')})
+          AND t.guild_id IN (${placeholders})
         ORDER BY t.created_at DESC
         LIMIT 100
-      `.catch((error) => {
+      `, ...guildIds).catch((error) => {
         console.error('Error fetching tickets:', error);
         return [];
       });
