@@ -1038,6 +1038,148 @@ export default function TicketSystemConfig({
                     <span className="text-sm font-medium text-gray-700">Require reason when closing tickets</span>
                   </label>
                 </div>
+
+                <div className="mt-6">
+                  <h4 className="text-sm font-medium text-gray-900 mb-3">Ticket Control Buttons</h4>
+                  <div className="space-y-3 bg-gray-50 rounded-lg p-4">
+                    <label className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        checked={config.ticketButtons?.close !== false}
+                        onChange={(e) => updateConfig({ 
+                          ticketButtons: { ...config.ticketButtons, close: e.target.checked } 
+                        })}
+                        className="rounded border-gray-300 text-indigo-600"
+                      />
+                      <span className="text-sm font-medium text-gray-700">Show Close Button</span>
+                    </label>
+                    
+                    <label className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        checked={config.ticketButtons?.claim || false}
+                        onChange={(e) => updateConfig({ 
+                          ticketButtons: { ...config.ticketButtons, claim: e.target.checked } 
+                        })}
+                        className="rounded border-gray-300 text-indigo-600"
+                      />
+                      <span className="text-sm font-medium text-gray-700">Show Claim Button</span>
+                    </label>
+                    
+                    <label className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        checked={config.ticketButtons?.unclaim || false}
+                        onChange={(e) => updateConfig({ 
+                          ticketButtons: { ...config.ticketButtons, unclaim: e.target.checked } 
+                        })}
+                        className="rounded border-gray-300 text-indigo-600"
+                      />
+                      <span className="text-sm font-medium text-gray-700">Show Unclaim Button (when claimed)</span>
+                    </label>
+                    
+                    <label className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        checked={config.ticketButtons?.addMember || false}
+                        onChange={(e) => updateConfig({ 
+                          ticketButtons: { ...config.ticketButtons, addMember: e.target.checked } 
+                        })}
+                        className="rounded border-gray-300 text-indigo-600"
+                      />
+                      <span className="text-sm font-medium text-gray-700">Show Add Member Button</span>
+                    </label>
+                    
+                    <label className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        checked={config.ticketButtons?.removeMember || false}
+                        onChange={(e) => updateConfig({ 
+                          ticketButtons: { ...config.ticketButtons, removeMember: e.target.checked } 
+                        })}
+                        className="rounded border-gray-300 text-indigo-600"
+                      />
+                      <span className="text-sm font-medium text-gray-700">Show Remove Member Button</span>
+                    </label>
+                    
+                    <label className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        checked={config.ticketButtons?.transcript || false}
+                        onChange={(e) => updateConfig({ 
+                          ticketButtons: { ...config.ticketButtons, transcript: e.target.checked } 
+                        })}
+                        className="rounded border-gray-300 text-indigo-600"
+                      />
+                      <span className="text-sm font-medium text-gray-700">Show Transcript Button</span>
+                    </label>
+                    
+                    <label className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        checked={config.ticketButtons?.lock || false}
+                        onChange={(e) => updateConfig({ 
+                          ticketButtons: { ...config.ticketButtons, lock: e.target.checked } 
+                        })}
+                        className="rounded border-gray-300 text-indigo-600"
+                      />
+                      <span className="text-sm font-medium text-gray-700">Show Lock/Unlock Button</span>
+                    </label>
+                    
+                    <label className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        checked={config.ticketButtons?.transfer || false}
+                        onChange={(e) => updateConfig({ 
+                          ticketButtons: { ...config.ticketButtons, transfer: e.target.checked } 
+                        })}
+                        className="rounded border-gray-300 text-indigo-600"
+                      />
+                      <span className="text-sm font-medium text-gray-700">Show Transfer Button</span>
+                    </label>
+                  </div>
+                  
+                  <div className="mt-4">
+                    <h5 className="text-sm font-medium text-gray-900 mb-2">Close Ticket Options</h5>
+                    <div className="space-y-3 bg-gray-50 rounded-lg p-4">
+                      <label className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          checked={config.closeOptions?.showTranscript !== false}
+                          onChange={(e) => updateConfig({ 
+                            closeOptions: { ...config.closeOptions, showTranscript: e.target.checked } 
+                          })}
+                          className="rounded border-gray-300 text-indigo-600"
+                        />
+                        <span className="text-sm font-medium text-gray-700">Show 'Save Transcript' option</span>
+                      </label>
+                      
+                      <label className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          checked={config.closeOptions?.showReopen || false}
+                          onChange={(e) => updateConfig({ 
+                            closeOptions: { ...config.closeOptions, showReopen: e.target.checked } 
+                          })}
+                          className="rounded border-gray-300 text-indigo-600"
+                        />
+                        <span className="text-sm font-medium text-gray-700">Show 'Close & Allow Reopen' option</span>
+                      </label>
+                      
+                      <label className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          checked={config.closeOptions?.showDelete || false}
+                          onChange={(e) => updateConfig({ 
+                            closeOptions: { ...config.closeOptions, showDelete: e.target.checked } 
+                          })}
+                          className="rounded border-gray-300 text-indigo-600"
+                        />
+                        <span className="text-sm font-medium text-gray-700">Show 'Delete Ticket' option</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
