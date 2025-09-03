@@ -47,6 +47,7 @@ interface TicketCategory {
   privateByDefault?: boolean;
   requiredRoles?: string[];
   welcomeMessage?: string;
+  useCustomModal?: boolean;
   modalTitle?: string;
   modalDescription?: string;
   modalFields?: {
