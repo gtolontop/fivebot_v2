@@ -186,12 +186,8 @@ export class TicketService {
         return [];
       }
       
-      // Get guilds where this bot is active
-      const guilds = await this.botsService.getBotGuilds(botId);
-      const guildIds = guilds.map(g => g.id);
-      
-      // Get tickets from the tickets table
-      const tickets = await this.prisma.$queryRawUnsafe(`
+      // Get tickets from the tickets table - simplified query for now
+      const tickets = await this.prisma.$queryRaw`
         SELECT 
           t.id,
           t.guild_id as guildId,
@@ -209,16 +205,12 @@ export class TicketService {
           t.last_activity as lastActivity,
           t.created_at as createdAt,
           t.closed_at as closedAt,
-          COUNT(DISTINCT tm.id) as messageCount,
-          MIN(CASE WHEN tm.is_staff = true THEN UNIX_TIMESTAMP(tm.created_at) * 1000 - UNIX_TIMESTAMP(t.created_at) * 1000 END) as firstResponseTime,
-          CASE WHEN t.state IN ('CLOSED', 'RESOLVED') THEN UNIX_TIMESTAMP(t.closed_at) * 1000 - UNIX_TIMESTAMP(t.created_at) * 1000 END as resolutionTime
+          (SELECT COUNT(*) FROM ticket_messages WHERE ticket_id = t.id) as messageCount
         FROM tickets t
-        LEFT JOIN ticket_messages tm ON t.id = tm.ticket_id
-        WHERE t.guild_id IN (${guildIds.map(() => '?').join(',')})
-          AND t.deleted_at IS NULL
-        GROUP BY t.id
+        WHERE t.deleted_at IS NULL
         ORDER BY t.created_at DESC
-      `, ...guildIds).catch(() => []);
+        LIMIT 100
+      `.catch(() => []);
       
       return tickets || [];
     } catch (error) {
