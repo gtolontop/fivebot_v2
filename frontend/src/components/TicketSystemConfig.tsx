@@ -218,10 +218,10 @@ export default function TicketSystemConfig({
       setTicketStats({
         total: tickets.length,
         open: openTickets.length,
-        closed: tickets.filter((t: any) => t.state === 'CLOSED').length,
-        avgResponseTime: calculateAvgResponseTime(tickets),
+        closed: closedTickets.length,
+        avgResponseTime: avgResponseTime > 0 ? `${avgResponseTime}m` : 'N/A',
         totalMessages,
-        avgResolutionTime: calculateAvgResolutionTime(tickets),
+        avgResolutionTime: avgResolutionTime > 0 ? `${avgResolutionTime}h` : 'N/A',
         satisfactionRate,
         todayTickets: todayTickets.length
       });
