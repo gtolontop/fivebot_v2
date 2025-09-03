@@ -30,6 +30,20 @@ export interface TicketCategory {
   channelId?: string | null;
   order?: number | null;
   active: boolean;
+  useCustomModal?: boolean;
+  modalTitle?: string;
+  modalDescription?: string;
+  modalFields?: {
+    id: string;
+    label: string;
+    type: 'TEXT' | 'TEXTAREA' | 'SELECT' | 'NUMBER' | 'EMAIL' | 'URL';
+    placeholder?: string;
+    required?: boolean;
+    minLength?: number;
+    maxLength?: number;
+    options?: { label: string; value: string }[];
+    rows?: number;
+  }[];
 }
 
 export interface TicketPanel {
