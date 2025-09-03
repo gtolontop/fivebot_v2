@@ -565,6 +565,27 @@ export class BotsController {
   }
 
 
+  @Post(':id/reset-status')
+  @UseGuards(AuthGuard('jwt'))
+  async resetBotStatus(
+    @Param('id') id: string,
+    @Req() req: any
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+    
+    // Force reset status using raw SQL to avoid locks
+    await this.prisma.$executeRaw`
+      UPDATE bots 
+      SET status = 'OFFLINE', updated_at = NOW()
+      WHERE id = ${id}
+    `;
+    
+    return { success: true, message: 'Bot status reset to OFFLINE' };
+  }
+
   @Post('setup/metrics')
   @UseGuards(AuthGuard('jwt'))
   async setupMetrics(@Req() req: any) {

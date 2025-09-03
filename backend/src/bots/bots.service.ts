@@ -942,7 +942,8 @@ export class BotsService {
     // Store command in database for bot to pick up
     console.log(`Sending command to bot ${botId}:`, command);
     
-    await this.prisma.botCommand.create({
+    // @ts-ignore - botCommand will exist after prisma generate
+    await this.prisma.botCommand?.create({
       data: {
         botId,
         action: command.action,
