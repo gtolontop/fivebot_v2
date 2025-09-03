@@ -1460,13 +1460,19 @@ export default function TicketSystemConfig({
                 />
               </div>
 
-              {(panelForm.type === 'DROPDOWN' || panelForm.type === 'HYBRID') && (
+              {(panelForm.type === 'BUTTON' || panelForm.type === 'DROPDOWN' || panelForm.type === 'HYBRID') && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Categories
+                    Categories to Show
+                    {panelForm.type === 'BUTTON' && (
+                      <span className="text-xs text-gray-500 ml-2">(Each category will be a separate button)</span>
+                    )}
                   </label>
                   <div className="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md p-3">
-                    {categories.map((category) => (
+                    {categories.length === 0 ? (
+                      <p className="text-sm text-gray-500 italic">No categories available. Please create categories first.</p>
+                    ) : (
+                      categories.map((category) => (
                       <label key={category.id} className="flex items-center space-x-3">
                         <input
                           type="checkbox"
@@ -1508,14 +1514,38 @@ export default function TicketSystemConfig({
                     <p className="text-gray-300 text-sm mb-4">{panelForm.description}</p>
                     
                     {panelForm.type === 'BUTTON' && (
-                      <button className="bg-indigo-600 text-white px-4 py-2 rounded text-sm">
-                        Create Ticket
-                      </button>
+                      <div className="flex flex-wrap gap-2">
+                        {panelForm.selectedCategories.length === 0 ? (
+                          <button className="bg-indigo-600 text-white px-4 py-2 rounded text-sm">
+                            Create Ticket
+                          </button>
+                        ) : (
+                          categories
+                            .filter(cat => panelForm.selectedCategories.includes(cat.id))
+                            .map((category, index) => (
+                              <button key={category.id} className="bg-gray-600 text-white px-3 py-1.5 rounded text-sm flex items-center gap-1">
+                                {category.emoji && <span>{category.emoji}</span>}
+                                {category.name}
+                              </button>
+                            ))
+                        )}
+                      </div>
                     )}
                     
                     {panelForm.type === 'DROPDOWN' && (
                       <select className="bg-gray-600 text-white px-4 py-2 rounded text-sm w-48">
                         <option>Select a category...</option>
+                        {panelForm.selectedCategories.length === 0 ? (
+                          <option>General Support</option>
+                        ) : (
+                          categories
+                            .filter(cat => panelForm.selectedCategories.includes(cat.id))
+                            .map(category => (
+                              <option key={category.id}>
+                                {category.emoji} {category.name}
+                              </option>
+                            ))
+                        )}
                       </select>
                     )}
                     
