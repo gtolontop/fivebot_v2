@@ -288,15 +288,27 @@ export default function BotConfigPage() {
       // Update status immediately to STARTING
       setBot(prev => prev ? { ...prev, status: 'STARTING' } : null);
       
+      // Clear any existing interval
+      if (statusCheckInterval.current) {
+        clearInterval(statusCheckInterval.current);
+      }
+      
       // Check status multiple times
       let attempts = 0;
-      const checkInterval = setInterval(async () => {
+      statusCheckInterval.current = setInterval(async () => {
         attempts++;
-        await fetchBot();
+        const response = await botsAPI.getById(botId);
+        setBot(response.data);
         
         // Stop checking after 30 seconds or when bot is online
-        if (attempts >= 15 || (bot && bot.status === 'ONLINE')) {
-          clearInterval(checkInterval);
+        if (attempts >= 15 || response.data.status === 'ONLINE') {
+          if (statusCheckInterval.current) {
+            clearInterval(statusCheckInterval.current);
+            statusCheckInterval.current = null;
+          }
+          if (response.data.status === 'ONLINE') {
+            toast.success('Bot is now online!');
+          }
         }
       }, 2000);
     } catch (error: any) {
