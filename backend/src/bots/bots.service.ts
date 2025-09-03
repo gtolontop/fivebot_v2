@@ -540,6 +540,12 @@ export class BotsService {
   }
 
   async updateStatus(botId: string, status: BotStatus, metadata?: any): Promise<void> {
+    // Check if status updates are disabled
+    if (process.env.DISABLE_STATUS_UPDATES === 'true') {
+      console.log(`[STATUS UPDATES DISABLED] Would update bot ${botId} to ${status}`);
+      return;
+    }
+    
     let retries = 3;
     
     while (retries > 0) {
