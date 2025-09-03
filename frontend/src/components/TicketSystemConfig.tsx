@@ -167,7 +167,8 @@ export default function TicketSystemConfig({
     try {
       // Fetch active tickets
       const ticketsResponse = await botsAPI.getTickets(botId);
-      setActiveTickets(ticketsResponse.data.tickets || []);
+      const tickets = ticketsResponse.data.tickets || [];
+      setActiveTickets(tickets);
       
       // Fetch categories
       const categoriesResponse = await botsAPI.getTicketCategories(botId);
@@ -178,9 +179,16 @@ export default function TicketSystemConfig({
       setPanels(panelsResponse.data.panels || []);
       
       // Calculate stats
-      const tickets = ticketsResponse.data.tickets || [];
       const today = new Date();
       today.setHours(0, 0, 0, 0);
+      
+      const openTickets = tickets.filter((t: any) => 
+        t.state === 'OPEN' || t.state === 'NEW' || t.state === 'IN_PROGRESS' || t.state === 'ON_HOLD'
+      );
+      
+      const closedTickets = tickets.filter((t: any) => 
+        t.state === 'CLOSED' || t.state === 'RESOLVED'
+      );
       
       const todayTickets = tickets.filter((t: any) => {
         const ticketDate = new Date(t.createdAt);
@@ -190,14 +198,26 @@ export default function TicketSystemConfig({
       
       const totalMessages = tickets.reduce((sum: number, ticket: any) => sum + (ticket.messageCount || 0), 0);
       
-      const closedWithSatisfaction = tickets.filter((t: any) => t.state === 'CLOSED' && t.satisfaction !== undefined);
+      // Calculate average response time
+      const ticketsWithResponse = tickets.filter((t: any) => t.firstResponseTime);
+      const avgResponseTime = ticketsWithResponse.length > 0
+        ? Math.round(ticketsWithResponse.reduce((sum: number, t: any) => sum + t.firstResponseTime, 0) / ticketsWithResponse.length / 60000)
+        : 0;
+      
+      // Calculate average resolution time
+      const resolvedTickets = closedTickets.filter((t: any) => t.resolutionTime);
+      const avgResolutionTime = resolvedTickets.length > 0
+        ? Math.round(resolvedTickets.reduce((sum: number, t: any) => sum + t.resolutionTime, 0) / resolvedTickets.length / 3600000)
+        : 0;
+      
+      const closedWithSatisfaction = closedTickets.filter((t: any) => t.satisfaction !== undefined);
       const satisfactionRate = closedWithSatisfaction.length > 0
         ? Math.round(closedWithSatisfaction.reduce((sum: number, t: any) => sum + (t.satisfaction || 0), 0) / closedWithSatisfaction.length)
         : 0;
       
       setTicketStats({
         total: tickets.length,
-        open: tickets.filter((t: any) => t.state === 'OPEN').length,
+        open: openTickets.length,
         closed: tickets.filter((t: any) => t.state === 'CLOSED').length,
         avgResponseTime: calculateAvgResponseTime(tickets),
         totalMessages,
