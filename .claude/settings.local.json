@@ -31,7 +31,8 @@
       "Bash(del init-data.js)",
       "Bash(powershell:*)",
       "Bash(npm uninstall:*)",
-      "Bash(move check-ticket-config.js backendcheck-ticket-config.js)"
+      "Bash(move check-ticket-config.js backendcheck-ticket-config.js)",
+      "Bash(dir prisma)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",
