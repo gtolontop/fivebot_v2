@@ -689,7 +689,20 @@ export default function TicketSystemConfig({
                                   autoCloseHours: category.autoCloseHours || 72,
                                   privateByDefault: category.privateByDefault || false,
                                   requiredRoles: category.requiredRoles || [],
-                                  welcomeMessage: category.welcomeMessage || ''
+                                  welcomeMessage: category.welcomeMessage || '',
+                                  useCustomModal: category.useCustomModal || false,
+                                  modalTitle: category.modalTitle || '',
+                                  modalDescription: category.modalDescription || '',
+                                  modalFields: category.modalFields || [{
+                                    id: '1',
+                                    label: 'Issue Description',
+                                    type: 'TEXTAREA' as const,
+                                    placeholder: 'Please describe your issue in detail',
+                                    required: true,
+                                    rows: 4,
+                                    minLength: 10,
+                                    maxLength: 1000
+                                  }]
                                 });
                                 setShowCategoryModal(true);
                               }}
