@@ -1661,6 +1661,8 @@ export default function TicketSystemConfig({
                       )}
                     </div>
                   </div>
+                  </div>
+                  )}
                 </div>
               </details>
             </div>
