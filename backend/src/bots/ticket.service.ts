@@ -60,7 +60,7 @@ export class TicketService {
     await this.prisma.botConfig.update({
       where: { botId },
       data: {
-        ticketData: updatedData as any
+        ticketData: JSON.stringify(updatedData)
       }
     });
   }
