@@ -68,7 +68,7 @@ export class TicketCreationHandler {
     
     if (categoryId !== 'general') {
       const config = await this.ticketService.getConfig(interaction.guildId!);
-      category = config?.categories?.find(c => c.id === categoryId);
+      category = config?.categories?.find(c => c.id === categoryId) as any;
       if (category) {
         categoryName = category.name;
       }
