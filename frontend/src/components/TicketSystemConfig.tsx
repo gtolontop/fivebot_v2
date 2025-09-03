@@ -1385,6 +1385,270 @@ export default function TicketSystemConfig({
                   </div>
                 </div>
               </details>
+
+              {/* Modal Customization - New Section */}
+              <details className="border border-gray-200 rounded-lg p-4 mt-4">
+                <summary className="text-sm font-medium text-gray-700 cursor-pointer hover:text-gray-900">
+                  Modal Customization
+                </summary>
+                
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Modal Title
+                    </label>
+                    <input
+                      type="text"
+                      value={categoryForm.modalTitle}
+                      onChange={(e) => setCategoryForm(prev => ({ ...prev, modalTitle: e.target.value }))}
+                      placeholder={`Create ${categoryForm.name || 'Ticket'}`}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Modal Description
+                    </label>
+                    <textarea
+                      value={categoryForm.modalDescription}
+                      onChange={(e) => setCategoryForm(prev => ({ ...prev, modalDescription: e.target.value }))}
+                      placeholder="Please fill out the form below to create a support ticket"
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Form Fields
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newField = {
+                            id: Date.now().toString(),
+                            label: '',
+                            type: 'TEXT' as const,
+                            placeholder: '',
+                            required: false,
+                            minLength: 0,
+                            maxLength: 500
+                          };
+                          setCategoryForm(prev => ({
+                            ...prev,
+                            modalFields: [...(prev.modalFields || []), newField]
+                          }));
+                        }}
+                        className="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                      >
+                        <PlusIcon className="w-3 h-3 mr-1" />
+                        Add Field
+                      </button>
+                    </div>
+
+                    <div className="space-y-3">
+                      {(categoryForm.modalFields || []).map((field, index) => (
+                        <div key={field.id} className="border border-gray-200 rounded-lg p-4 relative">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCategoryForm(prev => ({
+                                ...prev,
+                                modalFields: prev.modalFields?.filter(f => f.id !== field.id)
+                              }));
+                            }}
+                            className="absolute top-2 right-2 text-red-400 hover:text-red-600"
+                          >
+                            <TrashIcon className="w-4 h-4" />
+                          </button>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">
+                                Field Label
+                              </label>
+                              <input
+                                type="text"
+                                value={field.label}
+                                onChange={(e) => {
+                                  setCategoryForm(prev => ({
+                                    ...prev,
+                                    modalFields: prev.modalFields?.map((f, i) => 
+                                      i === index ? { ...f, label: e.target.value } : f
+                                    )
+                                  }));
+                                }}
+                                placeholder="Issue Description"
+                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">
+                                Field Type
+                              </label>
+                              <select
+                                value={field.type}
+                                onChange={(e) => {
+                                  setCategoryForm(prev => ({
+                                    ...prev,
+                                    modalFields: prev.modalFields?.map((f, i) => 
+                                      i === index ? { ...f, type: e.target.value as any } : f
+                                    )
+                                  }));
+                                }}
+                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                              >
+                                <option value="TEXT">Short Text</option>
+                                <option value="TEXTAREA">Long Text</option>
+                                <option value="SELECT">Dropdown</option>
+                                <option value="NUMBER">Number</option>
+                                <option value="EMAIL">Email</option>
+                                <option value="URL">URL</option>
+                              </select>
+                            </div>
+
+                            <div className="md:col-span-2">
+                              <label className="block text-xs font-medium text-gray-700 mb-1">
+                                Placeholder
+                              </label>
+                              <input
+                                type="text"
+                                value={field.placeholder}
+                                onChange={(e) => {
+                                  setCategoryForm(prev => ({
+                                    ...prev,
+                                    modalFields: prev.modalFields?.map((f, i) => 
+                                      i === index ? { ...f, placeholder: e.target.value } : f
+                                    )
+                                  }));
+                                }}
+                                placeholder="Enter placeholder text"
+                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                              />
+                            </div>
+
+                            <div className="md:col-span-2 flex items-center space-x-4">
+                              <label className="flex items-center space-x-2">
+                                <input
+                                  type="checkbox"
+                                  checked={field.required}
+                                  onChange={(e) => {
+                                    setCategoryForm(prev => ({
+                                      ...prev,
+                                      modalFields: prev.modalFields?.map((f, i) => 
+                                        i === index ? { ...f, required: e.target.checked } : f
+                                      )
+                                    }));
+                                  }}
+                                  className="rounded border-gray-300 text-indigo-600"
+                                />
+                                <span className="text-sm text-gray-700">Required</span>
+                              </label>
+
+                              {field.type === 'TEXTAREA' && (
+                                <div className="flex items-center space-x-2">
+                                  <label className="text-xs text-gray-700">Rows:</label>
+                                  <input
+                                    type="number"
+                                    value={field.rows || 4}
+                                    onChange={(e) => {
+                                      setCategoryForm(prev => ({
+                                        ...prev,
+                                        modalFields: prev.modalFields?.map((f, i) => 
+                                          i === index ? { ...f, rows: parseInt(e.target.value) } : f
+                                        )
+                                      }));
+                                    }}
+                                    min="2"
+                                    max="10"
+                                    className="w-16 px-2 py-1 text-sm border border-gray-300 rounded-md"
+                                  />
+                                </div>
+                              )}
+
+                              {(field.type === 'TEXT' || field.type === 'TEXTAREA') && (
+                                <>
+                                  <div className="flex items-center space-x-2">
+                                    <label className="text-xs text-gray-700">Min:</label>
+                                    <input
+                                      type="number"
+                                      value={field.minLength || 0}
+                                      onChange={(e) => {
+                                        setCategoryForm(prev => ({
+                                          ...prev,
+                                          modalFields: prev.modalFields?.map((f, i) => 
+                                            i === index ? { ...f, minLength: parseInt(e.target.value) } : f
+                                          )
+                                        }));
+                                      }}
+                                      min="0"
+                                      className="w-16 px-2 py-1 text-sm border border-gray-300 rounded-md"
+                                    />
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <label className="text-xs text-gray-700">Max:</label>
+                                    <input
+                                      type="number"
+                                      value={field.maxLength || 500}
+                                      onChange={(e) => {
+                                        setCategoryForm(prev => ({
+                                          ...prev,
+                                          modalFields: prev.modalFields?.map((f, i) => 
+                                            i === index ? { ...f, maxLength: parseInt(e.target.value) } : f
+                                          )
+                                        }));
+                                      }}
+                                      min="1"
+                                      className="w-20 px-2 py-1 text-sm border border-gray-300 rounded-md"
+                                    />
+                                  </div>
+                                </>
+                              )}
+                            </div>
+
+                            {field.type === 'SELECT' && (
+                              <div className="md:col-span-2">
+                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                  Options (one per line)
+                                </label>
+                                <textarea
+                                  value={field.options?.map(o => o.label).join('\n') || ''}
+                                  onChange={(e) => {
+                                    const options = e.target.value.split('\n').filter(line => line.trim()).map(line => ({
+                                      label: line.trim(),
+                                      value: line.trim().toLowerCase().replace(/\s+/g, '_')
+                                    }));
+                                    setCategoryForm(prev => ({
+                                      ...prev,
+                                      modalFields: prev.modalFields?.map((f, i) => 
+                                        i === index ? { ...f, options } : f
+                                      )
+                                    }));
+                                  }}
+                                  placeholder="Option 1&#10;Option 2&#10;Option 3"
+                                  rows={3}
+                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+
+                      {(!categoryForm.modalFields || categoryForm.modalFields.length === 0) && (
+                        <div className="text-center p-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                          <DocumentTextIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                          <p className="text-sm text-gray-600">No custom fields yet</p>
+                          <p className="text-xs text-gray-500 mt-1">Add fields to customize the ticket creation form</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </details>
             </div>
 
             <div className="flex justify-end space-x-3 p-6 border-t border-gray-200">
