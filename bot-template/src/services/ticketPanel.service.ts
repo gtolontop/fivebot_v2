@@ -127,7 +127,13 @@ export class TicketPanelService {
         break;
 
       case PanelType.DROPDOWN:
-        rows.push(this.buildDropdownComponent(categories));
+        // If too many categories, split into multiple dropdowns or use buttons
+        if (categories.length > 20) {
+          // Switch to button layout for many categories
+          rows.push(...this.buildButtonComponents(categories));
+        } else {
+          rows.push(this.buildDropdownComponent(categories));
+        }
         break;
 
       case PanelType.HYBRID:
@@ -218,7 +224,11 @@ export class TicketPanelService {
           .setValue(`ticket:create:${category.id}`);
 
         if (category.description) {
-          option.setDescription(category.description);
+          // Limit description to 50 characters to keep dropdown compact
+          const truncatedDesc = category.description.length > 50 
+            ? category.description.substring(0, 47) + '...'
+            : category.description;
+          option.setDescription(truncatedDesc);
         }
 
         if (category.emoji) {

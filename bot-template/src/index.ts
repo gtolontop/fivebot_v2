@@ -130,8 +130,6 @@ class ChildBot {
         // Store on client for command access
         (this.client as any).ticketHandler = this.ticketHandler;
         console.log('🎫 Ticket system initialized');
-      } else {
-        console.log('🎫 Ticket system disabled');
       }
     });
     
