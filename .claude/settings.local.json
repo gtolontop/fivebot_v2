@@ -30,7 +30,8 @@
       "Bash(taskkill:*)",
       "Bash(del init-data.js)",
       "Bash(powershell:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(move check-ticket-config.js backendcheck-ticket-config.js)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",
