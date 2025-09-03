@@ -1,0 +1,7 @@
+// TEMPORARY VERSION - Copy this content to bots.service.ts if locks persist
+
+  async updateStatus(botId: string, status: BotStatus, metadata?: any): Promise<void> {
+    // TEMPORARILY DISABLED TO AVOID LOCKS
+    console.log(`[DISABLED] Would update bot ${botId} status to ${status}`);
+    return;
+  }
