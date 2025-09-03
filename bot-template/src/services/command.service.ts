@@ -122,8 +122,6 @@ export class CommandService {
   }
 
   private async handleSendTicketPanel(data: any) {
-    console.log('[CommandService] Handling SEND_TICKET_PANEL command:', JSON.stringify(data, null, 2));
-    
     if (!this.ticketPanelService) {
       throw new Error('Ticket panel service not initialized');
     }
@@ -132,10 +130,6 @@ export class CommandService {
     if (!guild) {
       throw new Error('Bot is not in any guild');
     }
-
-    console.log(`[CommandService] Sending panel to guild: ${guild.name} (${guild.id})`);
-    console.log(`[CommandService] Channel ID: ${data.channelId}`);
-    console.log(`[CommandService] Categories:`, data.categories);
 
     // Create the panel using the ticket panel service
     const result = await this.ticketPanelService.createPanel(
@@ -150,7 +144,7 @@ export class CommandService {
       data.categories || []
     );
     
-    console.log(`[CommandService] Panel creation result:`, result ? 'Success' : 'Failed');
+    console.log(`[CommandService] Panel ${result ? 'sent successfully' : 'failed to send'} to #${data.channelId}`);
   }
 
   private async handleUpdateConfig(data: any) {
