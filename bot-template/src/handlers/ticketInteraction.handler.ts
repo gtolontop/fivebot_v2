@@ -87,13 +87,18 @@ export class TicketInteractionHandler {
       case 'release':
       case 'transfer':
       case 'add_member':
+      case 'remove_member':
       case 'transcript':
+      case 'lock':
+      case 'unlock':
       case 'reopen':
       case 'delete':
         if (interaction.customId === 'ticket:delete:confirm') {
           await this.handleDeleteConfirm(interaction);
         } else if (interaction.customId === 'ticket:delete:cancel') {
           await this.handleDeleteCancel(interaction);
+        } else if (interaction.customId.startsWith('ticket:close:')) {
+          await this.controlsHandler.handleCloseOptionButton(interaction);
         } else {
           await this.controlsHandler.handleButtonInteraction(interaction);
         }
@@ -115,6 +120,10 @@ export class TicketInteractionHandler {
       case 'transfer':
         await this.handleTransferSelect(interaction);
         break;
+      
+      case 'remove_member':
+        await this.handleRemoveMemberSelect(interaction);
+        break;
     }
   }
 
@@ -130,12 +139,75 @@ export class TicketInteractionHandler {
         break;
       
       case 'close':
-        await this.handleCloseModal(interaction);
+        if (interaction.customId === 'ticket:close:modal') {
+          await this.controlsHandler.handleCloseModalSubmit(interaction);
+        } else {
+          await this.handleCloseModal(interaction);
+        }
         break;
       
       case 'add_member':
         await this.handleAddMemberModal(interaction);
         break;
+    }
+  }
+
+  // Handle remove member selection
+  private async handleRemoveMemberSelect(interaction: StringSelectMenuInteraction): Promise<void> {
+    if (interaction.customId !== 'ticket:remove_member:select') return;
+
+    await interaction.deferUpdate();
+
+    const userIdToRemove = interaction.values[0];
+    const ticket = await this.ticketService.getTicketByChannel(interaction.channelId);
+    
+    if (!ticket) {
+      await interaction.followUp({
+        content: '❌ This channel is not associated with a ticket.',
+        ephemeral: true
+      });
+      return;
+    }
+
+    try {
+      // Remove participant
+      await this.ticketService.removeParticipant(ticket.id, userIdToRemove);
+
+      // Update container permissions
+      const container = await this.containerService.getContainer(interaction.guild!, ticket);
+      if (container) {
+        await this.containerService.updateContainerPermissions(container, {
+          removeUsers: [userIdToRemove]
+        });
+      }
+
+      const user = await interaction.client.users.fetch(userIdToRemove);
+      
+      await interaction.editReply({
+        content: `✅ Removed ${user} from the ticket.`,
+        components: []
+      });
+
+      // Send notification in ticket
+      await interaction.followUp({
+        embeds: [{
+          color: 0xFFA500,
+          description: `➖ ${user} was removed from the ticket by ${interaction.user}`,
+          timestamp: new Date().toISOString()
+        }]
+      });
+
+      // Log action
+      await this.ticketService.logAction(ticket.id, 'MEMBER_REMOVED', interaction.user.id, {
+        removedUserId: userIdToRemove
+      });
+
+    } catch (error) {
+      console.error('[TicketInteractionHandler] Error removing member:', error);
+      await interaction.followUp({
+        content: '❌ Failed to remove member. Please try again.',
+        ephemeral: true
+      });
     }
   }
 
