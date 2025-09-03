@@ -1,0 +1,7 @@
+// Add this to your schema.prisma datasource block to disable shadow database:
+
+datasource db {
+  provider          = "mysql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("DATABASE_URL")
+}
