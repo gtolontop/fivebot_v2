@@ -200,7 +200,18 @@ export class TicketService {
         return [];
       }
       
-      // Get tickets from the tickets table - simplified query for now
+      // Get tickets from the tickets table - filtered by bot's guilds
+      const guilds = await this.prisma.botGuild.findMany({
+        where: { botId },
+        select: { guildId: true }
+      });
+      
+      const guildIds = guilds.map(g => g.guildId);
+      
+      if (guildIds.length === 0) {
+        return [];
+      }
+      
       const tickets = await this.prisma.$queryRaw`
         SELECT 
           t.id,
@@ -214,17 +225,21 @@ export class TicketService {
           t.category as categoryName,
           t.priority,
           t.state,
-          t.activityState,
-          t.containerType,
+          t.activity_state as activityState,
+          t.container_type as containerType,
           t.last_activity as lastActivity,
           t.created_at as createdAt,
           t.closed_at as closedAt,
           (SELECT COUNT(*) FROM ticket_messages WHERE ticket_id = t.id) as messageCount
         FROM tickets t
         WHERE t.deleted_at IS NULL
+          AND t.guild_id IN (${guildIds.map(() => '?').join(', ')})
         ORDER BY t.created_at DESC
         LIMIT 100
-      `.catch(() => []);
+      `.catch((error) => {
+        console.error('Error fetching tickets:', error);
+        return [];
+      });
       
       return tickets || [];
     } catch (error) {
