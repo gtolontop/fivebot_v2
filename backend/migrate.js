@@ -40,10 +40,6 @@ async function runMigration() {
     
     // Migration queries
     const migrations = [
-      {
-        name: 'Add welcome_thumbnail_url column to bot_configs table',
-        query: 'ALTER TABLE bot_configs ADD COLUMN welcome_thumbnail_url VARCHAR(255)',
-      },
     ];
     
     // Run migrations
