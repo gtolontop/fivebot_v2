@@ -131,6 +131,16 @@ export class CommandService {
       throw new Error('Bot is not in any guild');
     }
 
+    console.log(`[CommandService] Received panel data with ${data.categories?.length || 0} categories`);
+    if (data.categories && data.categories.length > 0) {
+      console.log(`[CommandService] Categories modal config:`);
+      data.categories.forEach((cat: any, index: number) => {
+        console.log(`  - Category ${index}: ${cat.name}`);
+        console.log(`    useCustomModal: ${cat.useCustomModal}`);
+        console.log(`    modalFields: ${cat.modalFields?.length || 0}`);
+      });
+    }
+
     // Create the panel using the ticket panel service
     const result = await this.ticketPanelService.createPanel(
       guild,
