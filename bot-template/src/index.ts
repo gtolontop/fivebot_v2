@@ -46,6 +46,7 @@ class ChildBot {
   private ticketHandler: TicketInteractionHandler | null = null;
   private ticketService: TicketService | null = null;
   private ticketStateManager: TicketStateManager | null = null;
+  private commandService: CommandService | null = null;
 
   constructor() {
     this.client = new Client({
