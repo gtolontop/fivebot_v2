@@ -32,6 +32,12 @@ export class SimpleQueueService implements IQueueService {
 
   // Safe method to update bot status with retry logic
   private async updateBotStatusSafe(botId: string, status: BotStatus): Promise<void> {
+    // Check if status updates are disabled
+    if (process.env.DISABLE_STATUS_UPDATES === 'true') {
+      console.log(`[STATUS UPDATES DISABLED] Would update bot ${botId} to ${status} (from queue)`);
+      return;
+    }
+    
     let retries = 5;
     
     while (retries > 0) {
