@@ -281,6 +281,12 @@ export default function TicketSystemConfig({
 
   const savePanel = async () => {
     try {
+      // Validate required fields
+      if (!panelForm.channelId) {
+        toast.error('Please select a channel');
+        return;
+      }
+      
       const panelData = {
         ...panelForm,
         categories: panelForm.selectedCategories
@@ -1537,7 +1543,12 @@ export default function TicketSystemConfig({
               </button>
               <button 
                 onClick={savePanel}
-                className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+                disabled={!panelForm.channelId}
+                className={`px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white ${
+                  !panelForm.channelId 
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : 'bg-indigo-600 hover:bg-indigo-700'
+                }`}
               >
                 {editingPanel ? 'Update' : 'Create'} Panel
               </button>
