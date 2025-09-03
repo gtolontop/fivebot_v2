@@ -1563,13 +1563,23 @@ export default function TicketSystemConfig({
                     )}
                     
                     {panelForm.type === 'HYBRID' && (
-                      <div className="flex items-center space-x-2">
-                        <button className="bg-indigo-600 text-white px-4 py-2 rounded text-sm">
-                          Quick Ticket
+                      <div className="space-y-2">
+                        <button className="bg-indigo-600 text-white px-4 py-2 rounded text-sm flex items-center gap-1">
+                          <span>🎫</span> Create Ticket
                         </button>
-                        <select className="bg-gray-600 text-white px-4 py-2 rounded text-sm">
-                          <option>Or select category...</option>
-                        </select>
+                        {panelForm.selectedCategories.length > 0 && (
+                          <select className="bg-gray-600 text-white px-3 py-2 rounded text-sm w-full">
+                            <option>Or select a specific category...</option>
+                            {categories
+                              .filter(cat => panelForm.selectedCategories.includes(cat.id))
+                              .map(category => (
+                                <option key={category.id}>
+                                  {category.emoji} {category.name}
+                                </option>
+                              ))
+                            }
+                          </select>
+                        )}
                       </div>
                     )}
                   </div>
