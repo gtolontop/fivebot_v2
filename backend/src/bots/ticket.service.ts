@@ -233,10 +233,19 @@ export class TicketService {
       throw new Error('Bot not found');
     }
     
+    // Get full category data for the selected category IDs
+    const data = await this.getTicketData(botId);
+    const selectedCategories = data.categories.filter(cat => 
+      panel.categories.includes(cat.id)
+    );
+    
     // Send command to bot process via WebSocket or other communication method
     await this.botsService.sendCommandToBot(botId, {
       action: 'SEND_TICKET_PANEL',
-      data: panel
+      data: {
+        ...panel,
+        categories: selectedCategories
+      }
     });
   }
 
