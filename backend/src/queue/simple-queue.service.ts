@@ -42,13 +42,12 @@ export class SimpleQueueService implements IQueueService {
     
     while (retries > 0) {
       try {
-        await this.prisma.bot.update({
-          where: { id: botId },
-          data: { 
-            status,
-            updatedAt: new Date()
-          },
-        });
+        // Use raw SQL to avoid concurrency issues
+        await this.prisma.$executeRaw`
+          UPDATE bots 
+          SET status = ${status}, updated_at = NOW()
+          WHERE id = ${botId}
+        `;
         return;
       } catch (error: any) {
         const isConcurrencyError = 
