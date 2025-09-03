@@ -397,7 +397,7 @@ export default function TicketSystemConfig({
       {config.ticketEnabled ? (
         <div className="space-y-6">
           {/* Stats Overview */}
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
             <div className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
                 <TicketIcon className="w-6 h-6 text-indigo-600" />
