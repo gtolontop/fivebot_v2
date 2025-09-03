@@ -176,9 +176,57 @@ export class TicketService {
 
   // Tickets
   async getTickets(botId: string): Promise<any[]> {
-    const data = await this.getTicketData(botId);
-    // Return only active tickets
-    return data.tickets.filter(t => t.state !== 'CLOSED');
+    try {
+      // First try to get real tickets from the database
+      const bot = await this.prisma.bot.findUnique({
+        where: { id: botId }
+      });
+      
+      if (!bot) {
+        return [];
+      }
+      
+      // Get guilds where this bot is active
+      const guilds = await this.botsService.getBotGuilds(botId);
+      const guildIds = guilds.map(g => g.id);
+      
+      // Get tickets from the tickets table
+      const tickets = await this.prisma.$queryRawUnsafe(`
+        SELECT 
+          t.id,
+          t.guild_id as guildId,
+          t.ticket_number as number,
+          t.channel_id as channelId,
+          t.thread_id as threadId,
+          t.creator_id as creatorId,
+          t.assigned_staff_id as assignedStaffId,
+          t.type,
+          t.category as categoryName,
+          t.priority,
+          t.state,
+          t.activityState,
+          t.containerType,
+          t.last_activity as lastActivity,
+          t.created_at as createdAt,
+          t.closed_at as closedAt,
+          COUNT(DISTINCT tm.id) as messageCount,
+          MIN(CASE WHEN tm.is_staff = true THEN UNIX_TIMESTAMP(tm.created_at) * 1000 - UNIX_TIMESTAMP(t.created_at) * 1000 END) as firstResponseTime,
+          CASE WHEN t.state IN ('CLOSED', 'RESOLVED') THEN UNIX_TIMESTAMP(t.closed_at) * 1000 - UNIX_TIMESTAMP(t.created_at) * 1000 END as resolutionTime
+        FROM tickets t
+        LEFT JOIN ticket_messages tm ON t.id = tm.ticket_id
+        WHERE t.guild_id IN (${guildIds.map(() => '?').join(',')})
+          AND t.deleted_at IS NULL
+        GROUP BY t.id
+        ORDER BY t.created_at DESC
+      `, ...guildIds).catch(() => []);
+      
+      return tickets || [];
+    } catch (error) {
+      console.error('Error fetching tickets from database:', error);
+      // Fallback to old method
+      const data = await this.getTicketData(botId);
+      return data.tickets.filter(t => t.state !== 'CLOSED');
+    }
   }
 
   async closeTicket(botId: string, ticketId: string): Promise<void> {
