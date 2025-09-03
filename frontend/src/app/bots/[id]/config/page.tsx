@@ -113,6 +113,7 @@ export default function BotConfigPage() {
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
   const [guildsLoading, setGuildsLoading] = useState(false);
+  const statusCheckInterval = useRef<NodeJS.Timeout | null>(null);
   
   // Bot configuration state
   const [config, setConfig] = useState<BotConfig>({
