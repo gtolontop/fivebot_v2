@@ -561,15 +561,21 @@ export class BotsService {
           return;
         }
 
-        // Use raw SQL to avoid Prisma's transaction overhead
-        await this.prisma.$executeRaw`
-          UPDATE bots 
-          SET status = ${status}, updated_at = NOW()
-          WHERE id = ${botId}
-        `;
-        
-        console.log(`✅ Successfully updated bot ${botId} status to ${status}`);
-        return; // Success, exit function
+        // Use a simple update with timeout
+        try {
+          await this.prisma.$executeRaw`SET SESSION innodb_lock_wait_timeout = 1`;
+          await this.prisma.$executeRaw`
+            UPDATE bots 
+            SET status = ${status}, updated_at = NOW()
+            WHERE id = ${botId}
+          `;
+          
+          console.log(`✅ Successfully updated bot ${botId} status to ${status}`);
+          return; // Success, exit function
+        } finally {
+          // Reset to default timeout
+          await this.prisma.$executeRaw`SET SESSION innodb_lock_wait_timeout = 50`;
+        }
         
       } catch (error: any) {
         // Enhanced error detection for MySQL lock timeouts
