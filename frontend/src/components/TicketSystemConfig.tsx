@@ -1586,9 +1586,9 @@ export default function TicketSystemConfig({
               </button>
               <button 
                 onClick={savePanel}
-                disabled={!panelForm.channelId}
+                disabled={!panelForm.channelId || (panelForm.type === 'BUTTON' && panelForm.selectedCategories.length === 0)}
                 className={`px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white ${
-                  !panelForm.channelId 
+                  !panelForm.channelId || (panelForm.type === 'BUTTON' && panelForm.selectedCategories.length === 0)
                     ? 'bg-gray-400 cursor-not-allowed' 
                     : 'bg-indigo-600 hover:bg-indigo-700'
                 }`}
