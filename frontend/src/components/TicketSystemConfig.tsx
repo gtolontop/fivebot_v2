@@ -430,73 +430,77 @@ export default function TicketSystemConfig({
       {config.ticketEnabled ? (
         <div className="space-y-6">
           {/* Stats Overview */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
-            <div className="bg-white border border-gray-200 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <TicketIcon className="w-6 h-6 text-indigo-600" />
-                <span className="text-xl font-bold text-gray-900">{ticketStats.total}</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <TicketIcon className="w-8 h-8 text-indigo-600" />
+                <span className="text-2xl font-bold text-gray-900">{ticketStats.total}</span>
               </div>
-              <p className="text-xs text-gray-600">Total Tickets</p>
+              <p className="text-sm font-medium text-gray-700">Total Tickets</p>
             </div>
             
-            <div className="bg-white border border-gray-200 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <CheckCircleIcon className="w-6 h-6 text-green-600" />
-                <span className="text-xl font-bold text-gray-900">{ticketStats.open}</span>
+            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <CheckCircleIcon className="w-8 h-8 text-green-600" />
+                <span className="text-2xl font-bold text-gray-900">{ticketStats.open}</span>
               </div>
-              <p className="text-xs text-gray-600">Open</p>
+              <p className="text-sm font-medium text-gray-700">Open Tickets</p>
             </div>
             
-            <div className="bg-white border border-gray-200 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <ExclamationTriangleIcon className="w-6 h-6 text-red-600" />
-                <span className="text-xl font-bold text-gray-900">{ticketStats.closed}</span>
+            <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <ExclamationTriangleIcon className="w-8 h-8 text-red-600" />
+                <span className="text-2xl font-bold text-gray-900">{ticketStats.closed}</span>
               </div>
-              <p className="text-xs text-gray-600">Closed</p>
+              <p className="text-sm font-medium text-gray-700">Closed Tickets</p>
             </div>
             
-            <div className="bg-white border border-gray-200 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <ClockIcon className="w-6 h-6 text-yellow-600" />
-                <span className="text-lg font-bold text-gray-900">{ticketStats.avgResponseTime}</span>
+            <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <ClockIcon className="w-8 h-8 text-yellow-600" />
+                <span className="text-xl font-bold text-gray-900">{ticketStats.avgResponseTime}</span>
               </div>
-              <p className="text-xs text-gray-600">Avg Response</p>
+              <p className="text-sm font-medium text-gray-700">Avg Response</p>
             </div>
             
-            <div className="bg-white border border-gray-200 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <ChatBubbleLeftRightIcon className="w-6 h-6 text-blue-600" />
-                <span className="text-xl font-bold text-gray-900">{ticketStats.totalMessages}</span>
+          </div>
+          
+          {/* Additional Stats Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <ChatBubbleLeftRightIcon className="w-8 h-8 text-blue-600" />
+                <span className="text-2xl font-bold text-gray-900">{ticketStats.totalMessages}</span>
               </div>
-              <p className="text-xs text-gray-600">Messages</p>
+              <p className="text-sm font-medium text-gray-700">Total Messages</p>
             </div>
             
-            <div className="bg-white border border-gray-200 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <ClockIcon className="w-6 h-6 text-purple-600" />
-                <span className="text-lg font-bold text-gray-900">{ticketStats.avgResolutionTime}</span>
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <ClockIcon className="w-8 h-8 text-purple-600" />
+                <span className="text-xl font-bold text-gray-900">{ticketStats.avgResolutionTime}</span>
               </div>
-              <p className="text-xs text-gray-600">Resolution Time</p>
+              <p className="text-sm font-medium text-gray-700">Resolution Time</p>
             </div>
             
-            <div className="bg-white border border-gray-200 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <svg className="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span className="text-xl font-bold text-gray-900">{ticketStats.satisfactionRate}%</span>
+                <span className="text-2xl font-bold text-gray-900">{ticketStats.satisfactionRate}%</span>
               </div>
-              <p className="text-xs text-gray-600">Satisfaction</p>
+              <p className="text-sm font-medium text-gray-700">Satisfaction</p>
             </div>
             
-            <div className="bg-white border border-gray-200 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <svg className="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-lg p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <svg className="w-8 h-8 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <span className="text-xl font-bold text-gray-900">{ticketStats.todayTickets}</span>
+                <span className="text-2xl font-bold text-gray-900">{ticketStats.todayTickets}</span>
               </div>
-              <p className="text-xs text-gray-600">Today</p>
+              <p className="text-sm font-medium text-gray-700">Today's Tickets</p>
             </div>
           </div>
 
