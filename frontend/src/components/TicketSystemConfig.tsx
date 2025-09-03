@@ -1479,6 +1479,12 @@ export default function TicketSystemConfig({
                     {panelForm.type === 'BUTTON' && (
                       <span className="text-xs text-gray-500 ml-2">(Each category will be a separate button)</span>
                     )}
+                    {panelForm.type === 'DROPDOWN' && (
+                      <span className="text-xs text-gray-500 ml-2">(Options in the dropdown menu)</span>
+                    )}
+                    {panelForm.type === 'HYBRID' && (
+                      <span className="text-xs text-gray-500 ml-2">(Optional - for category-specific tickets)</span>
+                    )}
                   </label>
                   <div className="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md p-3">
                     {categories.length === 0 ? (
