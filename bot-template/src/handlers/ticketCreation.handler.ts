@@ -64,55 +64,86 @@ export class TicketCreationHandler {
 
     // Get category info if provided
     let categoryName = 'General Support';
+    let category: any = null;
+    
     if (categoryId !== 'general') {
-      const category = await this.ticketService.getConfig(interaction.guildId!)
-        .then(config => config?.categories?.find(c => c.id === categoryId));
+      const config = await this.ticketService.getConfig(interaction.guildId!);
+      category = config?.categories?.find(c => c.id === categoryId);
       if (category) {
         categoryName = category.name;
       }
     }
 
-    // Create modal
-    const modal = new ModalBuilder()
-      .setCustomId(`ticket:modal:${categoryId}`)
-      .setTitle(`Create ${categoryName} Ticket`);
+    // Check if category has custom modal
+    if (category?.useCustomModal && category.modalFields && category.modalFields.length > 0) {
+      // Create custom modal
+      const modal = new ModalBuilder()
+        .setCustomId(`ticket:modal:${categoryId}`)
+        .setTitle(category.modalTitle || `Create ${categoryName} Ticket`);
 
-    // Subject input
-    const subjectInput = new TextInputBuilder()
-      .setCustomId('ticket_subject')
-      .setLabel('Subject')
-      .setPlaceholder('Brief description of your issue')
-      .setStyle(TextInputStyle.Short)
-      .setRequired(true)
-      .setMaxLength(100);
+      const rows: ActionRowBuilder<TextInputBuilder>[] = [];
+      
+      // Add custom fields (max 5 fields per modal)
+      for (let i = 0; i < Math.min(category.modalFields.length, 5); i++) {
+        const field = category.modalFields[i];
+        const textInput = new TextInputBuilder()
+          .setCustomId(`field_${field.id}`)
+          .setLabel(field.label)
+          .setPlaceholder(field.placeholder || '')
+          .setStyle(field.type === 'TEXTAREA' ? TextInputStyle.Paragraph : TextInputStyle.Short)
+          .setRequired(field.required || false);
 
-    // Description input
-    const descriptionInput = new TextInputBuilder()
-      .setCustomId('ticket_description')
-      .setLabel('Description')
-      .setPlaceholder('Please describe your issue in detail...')
-      .setStyle(TextInputStyle.Paragraph)
-      .setRequired(true)
-      .setMinLength(20)
-      .setMaxLength(1000);
+        if (field.minLength) textInput.setMinLength(field.minLength);
+        if (field.maxLength) textInput.setMaxLength(field.maxLength);
 
-    // Priority input (optional)
-    const priorityInput = new TextInputBuilder()
-      .setCustomId('ticket_priority')
-      .setLabel('Priority (Low/Normal/High/Urgent)')
-      .setPlaceholder('Normal')
-      .setStyle(TextInputStyle.Short)
-      .setRequired(false)
-      .setValue('Normal');
+        rows.push(new ActionRowBuilder<TextInputBuilder>().addComponents(textInput));
+      }
 
-    // Add inputs to modal
-    modal.addComponents(
-      new ActionRowBuilder<TextInputBuilder>().addComponents(subjectInput),
-      new ActionRowBuilder<TextInputBuilder>().addComponents(descriptionInput),
-      new ActionRowBuilder<TextInputBuilder>().addComponents(priorityInput)
-    );
+      modal.addComponents(...rows);
+      await interaction.showModal(modal);
+    } else {
+      // Use default modal
+      const modal = new ModalBuilder()
+        .setCustomId(`ticket:modal:${categoryId}`)
+        .setTitle(`Create ${categoryName} Ticket`);
 
-    await interaction.showModal(modal);
+      // Subject input
+      const subjectInput = new TextInputBuilder()
+        .setCustomId('ticket_subject')
+        .setLabel('Subject')
+        .setPlaceholder('Brief description of your issue')
+        .setStyle(TextInputStyle.Short)
+        .setRequired(true)
+        .setMaxLength(100);
+
+      // Description input
+      const descriptionInput = new TextInputBuilder()
+        .setCustomId('ticket_description')
+        .setLabel('Description')
+        .setPlaceholder('Please describe your issue in detail...')
+        .setStyle(TextInputStyle.Paragraph)
+        .setRequired(true)
+        .setMinLength(20)
+        .setMaxLength(1000);
+
+      // Priority input (optional)
+      const priorityInput = new TextInputBuilder()
+        .setCustomId('ticket_priority')
+        .setLabel('Priority (Low/Normal/High/Urgent)')
+        .setPlaceholder('Normal')
+        .setStyle(TextInputStyle.Short)
+        .setRequired(false)
+        .setValue('Normal');
+
+      // Add inputs to modal
+      modal.addComponents(
+        new ActionRowBuilder<TextInputBuilder>().addComponents(subjectInput),
+        new ActionRowBuilder<TextInputBuilder>().addComponents(descriptionInput),
+        new ActionRowBuilder<TextInputBuilder>().addComponents(priorityInput)
+      );
+
+      await interaction.showModal(modal);
+    }
   }
 
   // Handle modal submission
