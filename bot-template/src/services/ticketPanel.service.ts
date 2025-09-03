@@ -31,12 +31,6 @@ export class TicketPanelService {
     categories?: TicketCategory[]
   ): Promise<Message | null> {
     try {
-      console.log('[TicketPanelService] Creating panel...');
-      console.log('[TicketPanelService] Guild:', guild.name);
-      console.log('[TicketPanelService] Channel ID:', channelId);
-      console.log('[TicketPanelService] Type:', type);
-      console.log('[TicketPanelService] Categories:', categories);
-      
       const channel = await guild.channels.fetch(channelId) as TextChannel;
       if (!channel || !channel.isTextBased()) {
         console.error('[TicketPanelService] Invalid channel or not text-based');
@@ -45,7 +39,6 @@ export class TicketPanelService {
 
       let config = await this.ticketService.getConfig(guild.id);
       if (!config) {
-        console.log('[TicketPanelService] No config found, creating default config...');
         // Create a default configuration for the guild
         const newConfig = await prisma.ticketConfig.create({
           data: {
@@ -69,7 +62,6 @@ export class TicketPanelService {
         if (!config) {
           throw new Error('Failed to create ticket configuration');
         }
-        console.log('[TicketPanelService] Default config created successfully');
       }
 
       // Build embed
@@ -98,7 +90,6 @@ export class TicketPanelService {
         }
       });
 
-      console.log(`[TicketPanelService] Panel sent successfully! Message ID: ${message.id}`);
       return message;
     } catch (error) {
       console.error('[TicketPanelService] Error creating panel:', error);

@@ -59,8 +59,7 @@ class ChildBot {
     });
 
     this.prisma = new PrismaClient({
-      log: ['error'],
-      // Simplify configuration to avoid compatibility issues
+      log: [],  // Pas de logs SQL
       errorFormat: 'minimal',
     });
 
