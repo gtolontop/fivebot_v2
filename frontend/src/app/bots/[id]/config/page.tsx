@@ -154,6 +154,13 @@ export default function BotConfigPage() {
       fetchBot();
       fetchDiscordGuilds();
     }
+    
+    // Cleanup interval on unmount
+    return () => {
+      if (statusCheckInterval.current) {
+        clearInterval(statusCheckInterval.current);
+      }
+    };
   }, [user, botId]);
 
   const fetchBot = async () => {
