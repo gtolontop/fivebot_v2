@@ -45,6 +45,7 @@ model Bot {
   owner             User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   hosts             Host[]
   jobLogs           JobLog[]
+  commands          BotCommand[]
 
   @@index([ownerId], map: "bots_owner_id_fkey")
   @@map("bots")
