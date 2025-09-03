@@ -421,3 +421,18 @@ enum PanelType {
   DROPDOWN
   HYBRID
 }
+
+model BotCommand {
+  id          String    @id @default(uuid())
+  botId       String    @map("bot_id")
+  bot         Bot       @relation(fields: [botId], references: [id], onDelete: Cascade)
+  action      String
+  data        Json?
+  status      String    @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  error       String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  processedAt DateTime? @map("processed_at")
+  
+  @@map("bot_commands")
+  @@index([botId, status])
+}
