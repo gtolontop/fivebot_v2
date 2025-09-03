@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
 import * as compression from 'compression';
 import { AppModule } from './app.module';
+import { setupGracefulShutdown } from './graceful-shutdown';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -35,6 +36,9 @@ async function bootstrap() {
   await app.listen(port);
   
   console.log(`🚀 FiveBot Backend API running on port ${port}`);
+  
+  // Setup graceful shutdown
+  await setupGracefulShutdown();
 }
 
 bootstrap();
