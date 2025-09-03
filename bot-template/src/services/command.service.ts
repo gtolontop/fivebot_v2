@@ -44,6 +44,12 @@ export class CommandService {
 
   private async checkForCommands() {
     try {
+      // Check if botCommand model exists
+      if (!this.prisma.botCommand) {
+        console.log('⚠️ BotCommand model not found. Please run "npx prisma generate" to update the Prisma client.');
+        return;
+      }
+      
       // Get pending commands
       const commands = await this.prisma.botCommand.findMany({
         where: {
