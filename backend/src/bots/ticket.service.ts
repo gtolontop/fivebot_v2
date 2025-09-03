@@ -201,12 +201,13 @@ export class TicketService {
       }
       
       // Get tickets from the tickets table - filtered by bot's guilds
-      const guilds = await this.prisma.botGuild.findMany({
-        where: { botId },
-        select: { guildId: true }
-      });
+      const botGuilds = await this.prisma.$queryRaw<{guildId: string}[]>`
+        SELECT DISTINCT guild_id as "guildId"
+        FROM bot_guilds
+        WHERE bot_id = ${botId}
+      `;
       
-      const guildIds = guilds.map(g => g.guildId);
+      const guildIds = botGuilds.map(g => g.guildId);
       
       if (guildIds.length === 0) {
         return [];
