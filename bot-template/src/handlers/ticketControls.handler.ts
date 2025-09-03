@@ -645,4 +645,375 @@ export class TicketControlsHandler {
       ephemeral: true
     });
   }
+
+  // Handle remove member action
+  private async handleRemoveMember(
+    interaction: ButtonInteraction,
+    ticket: any
+  ): Promise<void> {
+    // Check permissions
+    const isStaff = await this.ticketService.isStaff(ticket.guildId, interaction.user.id);
+    if (!isStaff) {
+      await interaction.reply({
+        content: '❌ Only staff members can remove members from tickets.',
+        ephemeral: true
+      });
+      return;
+    }
+
+    // Get current participants
+    const fullTicket = await this.ticketService.getTicket(ticket.id);
+    const participants = fullTicket?.participants || [];
+    
+    // Filter out creator and staff
+    const removableMembers = participants.filter(p => 
+      p.userId !== ticket.creatorId && 
+      p.role === 'MEMBER' &&
+      p.leftAt === null
+    );
+
+    if (removableMembers.length === 0) {
+      await interaction.reply({
+        content: '❌ No additional members to remove from this ticket.',
+        ephemeral: true
+      });
+      return;
+    }
+
+    const options = await Promise.all(removableMembers.map(async p => {
+      try {
+        const user = await interaction.client.users.fetch(p.userId);
+        return {
+          label: user.username,
+          value: p.userId,
+          description: user.tag
+        };
+      } catch {
+        return null;
+      }
+    }));
+
+    const validOptions = options.filter(o => o !== null) as any[];
+
+    const selectMenu = new StringSelectMenuBuilder()
+      .setCustomId('ticket:remove_member:select')
+      .setPlaceholder('Select a member to remove...')
+      .addOptions(validOptions);
+
+    await interaction.reply({
+      content: 'Select a member to remove from this ticket:',
+      components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(selectMenu)],
+      ephemeral: true
+    });
+  }
+
+  // Handle lock/unlock toggle
+  private async handleLockToggle(
+    interaction: ButtonInteraction,
+    ticket: any,
+    lock: boolean
+  ): Promise<void> {
+    // Check permissions
+    const isStaff = await this.ticketService.isStaff(ticket.guildId, interaction.user.id);
+    if (!isStaff) {
+      await interaction.reply({
+        content: '❌ Only staff members can ' + (lock ? 'lock' : 'unlock') + ' tickets.',
+        ephemeral: true
+      });
+      return;
+    }
+
+    await interaction.deferReply();
+
+    try {
+      // Update ticket lock status
+      await this.ticketService.updateTicket(ticket.id, { locked: lock });
+
+      // Update channel permissions
+      const container = await this.containerService.getContainer(interaction.guild!, ticket);
+      if (container) {
+        if (container.isThread()) {
+          await container.setLocked(lock);
+        } else if ('permissionOverwrites' in container) {
+          // Lock/unlock for creator
+          await container.permissionOverwrites.edit(ticket.creatorId, {
+            SendMessages: !lock,
+            AddReactions: !lock
+          });
+        }
+      }
+
+      await this.ticketService.logAction(
+        ticket.id, 
+        lock ? 'TICKET_LOCKED' : 'TICKET_UNLOCKED', 
+        interaction.user.id
+      );
+
+      const lockEmbed = new EmbedBuilder()
+        .setColor(lock ? 0xE74C3C : 0x00FF00)
+        .setDescription(`${lock ? '🔐 Ticket locked' : '🔓 Ticket unlocked'} by ${interaction.user}`)
+        .setTimestamp();
+
+      await interaction.editReply({ embeds: [lockEmbed] });
+
+      // Update control buttons
+      const config = await this.ticketService.getConfig(ticket.guildId);
+      if (config) {
+        const updatedTicket = { ...ticket, locked: lock };
+        const newButtons = await this.createControlButtons(updatedTicket, config);
+        if (interaction.message) {
+          await interaction.message.edit({ components: newButtons });
+        }
+      }
+    } catch (error) {
+      console.error('[TicketControls] Error toggling lock:', error);
+      await interaction.editReply({
+        content: '❌ Failed to ' + (lock ? 'lock' : 'unlock') + ' ticket.'
+      });
+    }
+  }
+
+  // Handle close modal submission
+  async handleCloseModalSubmit(interaction: ModalSubmitInteraction): Promise<void> {
+    await interaction.deferReply();
+
+    const reason = interaction.fields.getTextInputValue('close_reason') || 'No reason provided';
+    const userState = await this.stateManager.getUserState(interaction.user.id, 'closing_ticket') as any;
+    
+    const ticket = await this.ticketService.getTicketByChannel(interaction.channelId);
+    if (!ticket) {
+      await interaction.editReply({
+        content: '❌ This channel is not associated with a ticket.'
+      });
+      return;
+    }
+
+    const config = await this.ticketService.getConfig(ticket.guildId);
+    const closeOptions = config?.closeOptions || {};
+
+    // Show options if configured
+    if (closeOptions.showTranscript || closeOptions.showReopen || closeOptions.showDelete) {
+      const embed = new EmbedBuilder()
+        .setTitle('Close Ticket Options')
+        .setDescription('Select what to do with this ticket:')
+        .setColor(0xE74C3C);
+
+      const buttons: ButtonBuilder[] = [];
+
+      if (closeOptions.showTranscript !== false) {
+        buttons.push(
+          new ButtonBuilder()
+            .setCustomId('ticket:close:transcript')
+            .setLabel('Close & Save Transcript')
+            .setEmoji('📜')
+            .setStyle(ButtonStyle.Primary)
+        );
+      }
+
+      if (closeOptions.showReopen) {
+        buttons.push(
+          new ButtonBuilder()
+            .setCustomId('ticket:close:reopen')
+            .setLabel('Close & Allow Reopen')
+            .setEmoji('🔄')
+            .setStyle(ButtonStyle.Secondary)
+        );
+      }
+
+      if (closeOptions.showDelete) {
+        buttons.push(
+          new ButtonBuilder()
+            .setCustomId('ticket:close:delete')
+            .setLabel('Close & Delete')
+            .setEmoji('🗑️')
+            .setStyle(ButtonStyle.Danger)
+        );
+      }
+
+      buttons.push(
+        new ButtonBuilder()
+          .setCustomId('ticket:close:normal')
+          .setLabel('Just Close')
+          .setStyle(ButtonStyle.Secondary)
+      );
+
+      const row = new ActionRowBuilder<ButtonBuilder>().addComponents(buttons);
+
+      // Store close reason for use after button click
+      await this.stateManager.setUserState(interaction.user.id, 'close_reason', reason);
+
+      await interaction.editReply({
+        embeds: [embed],
+        components: [row]
+      });
+    } else {
+      // Just close normally
+      await this.closeTicket(interaction, ticket, reason, false, false);
+    }
+  }
+
+  // Handle close option button clicks
+  async handleCloseOptionButton(interaction: ButtonInteraction): Promise<void> {
+    const option = interaction.customId.split(':')[2];
+    const reason = (await this.stateManager.getUserState(interaction.user.id, 'close_reason')) as string || 'No reason provided';
+    
+    const ticket = await this.ticketService.getTicketByChannel(interaction.channelId);
+    if (!ticket) {
+      await interaction.update({
+        content: '❌ This channel is not associated with a ticket.',
+        embeds: [],
+        components: []
+      });
+      return;
+    }
+
+    await interaction.deferUpdate();
+
+    switch (option) {
+      case 'transcript':
+        await this.closeTicket(interaction, ticket, reason, true, false);
+        break;
+      case 'reopen':
+        await this.closeTicket(interaction, ticket, reason, false, false, true);
+        break;
+      case 'delete':
+        await this.closeTicket(interaction, ticket, reason, false, true);
+        break;
+      case 'normal':
+      default:
+        await this.closeTicket(interaction, ticket, reason, false, false);
+        break;
+    }
+
+    // Clean up state
+    await this.stateManager.deleteUserState(interaction.user.id, 'close_reason');
+    await this.stateManager.deleteUserState(interaction.user.id, 'closing_ticket');
+  }
+
+  // Close ticket with options
+  private async closeTicket(
+    interaction: ButtonInteraction | ModalSubmitInteraction,
+    ticket: any,
+    reason: string,
+    saveTranscript: boolean = false,
+    deleteAfter: boolean = false,
+    allowReopen: boolean = false
+  ): Promise<void> {
+    try {
+      // Save transcript if requested
+      if (saveTranscript) {
+        const config = await this.ticketService.getConfig(ticket.guildId);
+        if (config?.transcriptChannelId) {
+          const transcriptChannel = interaction.guild?.channels.cache.get(config.transcriptChannelId);
+          if (transcriptChannel && transcriptChannel.isTextBased()) {
+            // Generate transcript
+            const fullTicket = await this.ticketService.getTicket(ticket.id);
+            const messages = fullTicket?.messages || [];
+            
+            let transcript = `Ticket #${ticket.ticketNumber} Transcript\n`;
+            transcript += `Closed by: ${interaction.user.tag}\n`;
+            transcript += `Reason: ${reason}\n\n`;
+            transcript += '='.repeat(50) + '\n\n';
+
+            for (const msg of messages.reverse()) {
+              transcript += `[${msg.createdAt.toLocaleString()}] ${msg.authorId}: ${msg.content}\n`;
+            }
+
+            const buffer = Buffer.from(transcript, 'utf-8');
+            
+            await transcriptChannel.send({
+              embeds: [{
+                color: 0x5865F2,
+                title: `Ticket #${ticket.ticketNumber} Transcript`,
+                fields: [
+                  { name: 'Closed By', value: interaction.user.tag, inline: true },
+                  { name: 'Reason', value: reason, inline: true },
+                  { name: 'Messages', value: messages.length.toString(), inline: true }
+                ],
+                timestamp: new Date().toISOString()
+              }],
+              files: [{
+                attachment: buffer,
+                name: `ticket-${ticket.ticketNumber}-transcript.txt`
+              }]
+            });
+          }
+        }
+      }
+
+      // Close the ticket
+      await this.ticketService.closeTicket(ticket.id, interaction.user.id, reason);
+
+      // Send close message
+      const closeEmbed = new EmbedBuilder()
+        .setColor(0xE74C3C)
+        .setTitle('🔒 Ticket Closed')
+        .setDescription(`This ticket has been closed by ${interaction.user}.`)
+        .addFields([
+          { name: 'Reason', value: reason },
+          { name: 'Closed At', value: new Date().toLocaleString() }
+        ])
+        .setTimestamp();
+
+      if (allowReopen) {
+        closeEmbed.addFields([
+          { name: 'Reopen', value: 'This ticket can be reopened if needed.' }
+        ]);
+      }
+
+      await interaction.editReply({
+        embeds: [closeEmbed],
+        components: []
+      });
+
+      // Update ticket state
+      const config = await this.ticketService.getConfig(ticket.guildId);
+      if (config) {
+        const updatedTicket = { ...ticket, state: TicketState.CLOSED, allowReopen };
+        const newButtons = await this.createControlButtons(updatedTicket, config);
+        if (newButtons.length > 0) {
+          await interaction.followUp({ components: newButtons });
+        }
+      }
+
+      // Archive or delete channel
+      const container = await this.containerService.getContainer(interaction.guild!, ticket);
+      if (container) {
+        if (deleteAfter) {
+          setTimeout(async () => {
+            await this.containerService.deleteContainer(container, `Deleted after close by ${interaction.user.tag}`);
+          }, 5000); // Delete after 5 seconds
+        } else {
+          await this.containerService.archiveContainer(container, `Closed by ${interaction.user.tag}`);
+        }
+      }
+
+      // Notify creator
+      try {
+        const creator = await interaction.client.users.fetch(ticket.creatorId);
+        await creator.send({
+          embeds: [{
+            color: 0xE74C3C,
+            title: '🔒 Ticket Closed',
+            description: `Your ticket #${ticket.ticketNumber} has been closed.`,
+            fields: [
+              { name: 'Closed By', value: interaction.user.tag, inline: true },
+              { name: 'Reason', value: reason, inline: true }
+            ],
+            footer: {
+              text: allowReopen ? 'You can reopen this ticket if needed.' : 'Please create a new ticket if you need further assistance.'
+            }
+          }]
+        });
+      } catch {
+        // User has DMs disabled
+      }
+    } catch (error) {
+      console.error('[TicketControlsHandler] Error closing ticket:', error);
+      await interaction.followUp({
+        content: '❌ Failed to close ticket. Please try again.',
+        ephemeral: true
+      });
+    }
+  }
 }
