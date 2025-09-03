@@ -193,8 +193,6 @@ export class TicketCreationHandler {
     const priority = this.parsePriority(priorityText);
 
     try {
-      // Get configuration
-      const config = await this.ticketService.getConfig(interaction.guildId!);
       if (!config) {
         throw new Error('Ticket system not configured');
       }
