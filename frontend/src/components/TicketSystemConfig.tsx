@@ -287,6 +287,12 @@ export default function TicketSystemConfig({
         return;
       }
       
+      // Validate categories for BUTTON type
+      if (panelForm.type === 'BUTTON' && panelForm.selectedCategories.length === 0) {
+        toast.error('Please select at least one category for button panel');
+        return;
+      }
+      
       const panelData = {
         ...panelForm,
         categories: panelForm.selectedCategories
