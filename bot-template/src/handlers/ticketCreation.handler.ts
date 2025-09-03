@@ -156,7 +156,7 @@ export class TicketCreationHandler {
     
     // Get configuration and category
     const config = await this.ticketService.getConfig(interaction.guildId!);
-    const category = config?.categories?.find(c => c.id === categoryId);
+    const category = config?.categories?.find(c => c.id === categoryId) as any;
     
     let subject: string;
     let description: string;
