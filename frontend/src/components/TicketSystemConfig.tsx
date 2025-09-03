@@ -47,6 +47,19 @@ interface TicketCategory {
   privateByDefault?: boolean;
   requiredRoles?: string[];
   welcomeMessage?: string;
+  modalTitle?: string;
+  modalDescription?: string;
+  modalFields?: {
+    id: string;
+    label: string;
+    type: 'TEXT' | 'TEXTAREA' | 'SELECT' | 'NUMBER' | 'EMAIL' | 'URL';
+    placeholder?: string;
+    required?: boolean;
+    minLength?: number;
+    maxLength?: number;
+    options?: { label: string; value: string }[];
+    rows?: number;
+  }[];
 }
 
 interface TicketPanel {
@@ -113,7 +126,19 @@ export default function TicketSystemConfig({
     autoCloseHours: 72,
     privateByDefault: false,
     requiredRoles: [] as string[],
-    welcomeMessage: ''
+    welcomeMessage: '',
+    modalTitle: '',
+    modalDescription: '',
+    modalFields: [{
+      id: '1',
+      label: 'Issue Description',
+      type: 'TEXTAREA' as const,
+      placeholder: 'Please describe your issue in detail',
+      required: true,
+      rows: 4,
+      minLength: 10,
+      maxLength: 1000
+    }]
   });
 
   // Panel form state
