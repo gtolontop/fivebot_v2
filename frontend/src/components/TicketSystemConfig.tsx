@@ -1189,150 +1189,164 @@ export default function TicketSystemConfig({
             </div>
 
             <div className="p-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Category Name *
-                </label>
-                <input
-                  type="text"
-                  value={categoryForm.name}
-                  onChange={(e) => setCategoryForm(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="General Support"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description
-                </label>
-                <textarea
-                  value={categoryForm.description}
-                  onChange={(e) => setCategoryForm(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="For general questions and support"
-                  rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Emoji
-                </label>
-                <input
-                  type="text"
-                  value={categoryForm.emoji}
-                  onChange={(e) => setCategoryForm(prev => ({ ...prev, emoji: e.target.value }))}
-                  placeholder="🎫"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Auto-Assign Role (Optional)
-                </label>
-                <SearchableDropdown
-                  options={allRoles.map(role => ({ ...role, isRole: true }))}
-                  value={categoryForm.roleId}
-                  onChange={(value) => setCategoryForm(prev => ({ ...prev, roleId: value }))}
-                  placeholder="Select a role to auto-assign"
-                  emptyMessage="No roles available"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Max Tickets Per User
-                </label>
-                <input
-                  type="number"
-                  value={categoryForm.maxTickets}
-                  onChange={(e) => setCategoryForm(prev => ({ ...prev, maxTickets: parseInt(e.target.value) }))}
-                  min="1"
-                  max="10"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Priority Level
-                </label>
-                <input
-                  type="number"
-                  value={categoryForm.priority}
-                  onChange={(e) => setCategoryForm(prev => ({ ...prev, priority: parseInt(e.target.value) }))}
-                  min="0"
-                  max="10"
-                  placeholder="0 = lowest, 10 = highest"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Category Color
-                </label>
-                <input
-                  type="text"
-                  value={categoryForm.color}
-                  onChange={(e) => setCategoryForm(prev => ({ ...prev, color: e.target.value }))}
-                  placeholder="#5865F2"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Welcome Message (Optional)
-                </label>
-                <textarea
-                  value={categoryForm.welcomeMessage}
-                  onChange={(e) => setCategoryForm(prev => ({ ...prev, welcomeMessage: e.target.value }))}
-                  placeholder="Thank you for opening a ticket. Our team will assist you shortly..."
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                />
-              </div>
-
-              <div className="space-y-3">
-                <label className="flex items-center space-x-3">
+              {/* Essential fields - Always visible */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Category Name *
+                  </label>
                   <input
-                    type="checkbox"
-                    checked={categoryForm.privateByDefault}
-                    onChange={(e) => setCategoryForm(prev => ({ ...prev, privateByDefault: e.target.checked }))}
-                    className="rounded border-gray-300 text-indigo-600"
+                    type="text"
+                    value={categoryForm.name}
+                    onChange={(e) => setCategoryForm(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="General Support"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   />
-                  <span className="text-sm font-medium text-gray-700">Make tickets private by default</span>
-                </label>
+                </div>
 
-                <label className="flex items-center space-x-3">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Description
+                  </label>
                   <input
-                    type="checkbox"
-                    checked={categoryForm.autoClose}
-                    onChange={(e) => setCategoryForm(prev => ({ ...prev, autoClose: e.target.checked }))}
-                    className="rounded border-gray-300 text-indigo-600"
+                    type="text"
+                    value={categoryForm.description}
+                    onChange={(e) => setCategoryForm(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="For general questions and support"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   />
-                  <span className="text-sm font-medium text-gray-700">Auto-close inactive tickets</span>
-                </label>
+                </div>
 
-                {categoryForm.autoClose && (
-                  <div className="ml-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Auto-close after (hours)
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Emoji
+                  </label>
+                  <input
+                    type="text"
+                    value={categoryForm.emoji}
+                    onChange={(e) => setCategoryForm(prev => ({ ...prev, emoji: e.target.value }))}
+                    placeholder="🎫"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Max Tickets Per User
+                  </label>
+                  <input
+                    type="number"
+                    value={categoryForm.maxTickets}
+                    onChange={(e) => setCategoryForm(prev => ({ ...prev, maxTickets: parseInt(e.target.value) }))}
+                    min="1"
+                    max="10"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+              </div>
+
+              {/* Advanced options - Collapsible */}
+              <details className="border border-gray-200 rounded-lg p-4">
+                <summary className="text-sm font-medium text-gray-700 cursor-pointer hover:text-gray-900">
+                  Advanced Options
+                </summary>
+                
+                <div className="mt-4 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Priority Level
+                      </label>
+                      <input
+                        type="number"
+                        value={categoryForm.priority}
+                        onChange={(e) => setCategoryForm(prev => ({ ...prev, priority: parseInt(e.target.value) }))}
+                        min="0"
+                        max="10"
+                        placeholder="0 = lowest"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Category Color
+                      </label>
+                      <input
+                        type="text"
+                        value={categoryForm.color}
+                        onChange={(e) => setCategoryForm(prev => ({ ...prev, color: e.target.value }))}
+                        placeholder="#5865F2"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Auto-Assign Role
                     </label>
-                    <input
-                      type="number"
-                      value={categoryForm.autoCloseHours}
-                      onChange={(e) => setCategoryForm(prev => ({ ...prev, autoCloseHours: parseInt(e.target.value) }))}
-                      min="1"
-                      max="168"
-                      className="w-32 px-3 py-2 border border-gray-300 rounded-md"
+                    <SearchableDropdown
+                      options={allRoles.map(role => ({ ...role, isRole: true }))}
+                      value={categoryForm.roleId}
+                      onChange={(value) => setCategoryForm(prev => ({ ...prev, roleId: value }))}
+                      placeholder="Select a role to auto-assign"
+                      emptyMessage="No roles available"
                     />
                   </div>
-                )}
-              </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Welcome Message
+                    </label>
+                    <textarea
+                      value={categoryForm.welcomeMessage}
+                      onChange={(e) => setCategoryForm(prev => ({ ...prev, welcomeMessage: e.target.value }))}
+                      placeholder="Thank you for opening a ticket..."
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    />
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        checked={categoryForm.privateByDefault}
+                        onChange={(e) => setCategoryForm(prev => ({ ...prev, privateByDefault: e.target.checked }))}
+                        className="rounded border-gray-300 text-indigo-600"
+                      />
+                      <span className="text-sm text-gray-700">Private by default</span>
+                    </label>
+
+                    <label className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        checked={categoryForm.autoClose}
+                        onChange={(e) => setCategoryForm(prev => ({ ...prev, autoClose: e.target.checked }))}
+                        className="rounded border-gray-300 text-indigo-600"
+                      />
+                      <span className="text-sm text-gray-700">Auto-close inactive tickets</span>
+                    </label>
+
+                    {categoryForm.autoClose && (
+                      <div className="ml-6">
+                        <label className="block text-sm text-gray-700 mb-1">
+                          Close after (hours)
+                        </label>
+                        <input
+                          type="number"
+                          value={categoryForm.autoCloseHours}
+                          onChange={(e) => setCategoryForm(prev => ({ ...prev, autoCloseHours: parseInt(e.target.value) }))}
+                          min="1"
+                          max="168"
+                          className="w-20 px-2 py-1 text-sm border border-gray-300 rounded-md"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </details>
             </div>
 
             <div className="flex justify-end space-x-3 p-6 border-t border-gray-200">
