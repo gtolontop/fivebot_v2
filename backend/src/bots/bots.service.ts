@@ -931,19 +931,16 @@ export class BotsService {
   }
 
   private async sendBotCommand(botId: string, command: any): Promise<void> {
-    // This will be implemented to communicate with the bot process
-    // For now, we'll store the command in a queue that the bot process can poll
+    // Store command in database for bot to pick up
     console.log(`Sending command to bot ${botId}:`, command);
     
-    // Store command in Redis or database for bot to pick up
-    // The bot process will poll for commands and execute them
-    // For now, we'll just log it
-    
-    // TODO: Implement actual communication mechanism
-    // Options:
-    // 1. Redis pub/sub
-    // 2. WebSocket from bot manager
-    // 3. Database polling
-    // 4. Message queue (RabbitMQ, etc.)
+    await this.prisma.botCommand.create({
+      data: {
+        botId,
+        action: command.action,
+        data: command.data,
+        status: 'PENDING'
+      }
+    });
   }
 }
