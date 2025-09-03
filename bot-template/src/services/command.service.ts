@@ -72,6 +72,11 @@ export class CommandService {
   private async executeCommand(command: any) {
     console.log(`Executing command: ${command.action}`);
     
+    // Check if botCommand model exists
+    if (!this.prisma.botCommand) {
+      return;
+    }
+    
     // Mark as processing
     await this.prisma.botCommand.update({
       where: { id: command.id },
