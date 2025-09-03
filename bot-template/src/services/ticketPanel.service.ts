@@ -43,9 +43,33 @@ export class TicketPanelService {
         throw new Error('Invalid channel');
       }
 
-      const config = await this.ticketService.getConfig(guild.id);
+      let config = await this.ticketService.getConfig(guild.id);
       if (!config) {
-        throw new Error('Ticket system not configured');
+        console.log('[TicketPanelService] No config found, creating default config...');
+        // Create a default configuration for the guild
+        const newConfig = await prisma.ticketConfig.create({
+          data: {
+            guildId: guild.id,
+            enabled: true,
+            assignmentModel: 'COLLABORATIVE',
+            containerType: 'THREAD',
+            namingPattern: 'ticket-{counter}',
+            startingNumber: 1,
+            staffRoles: [],
+            autoCloseHours: 48,
+            warningHours: 24,
+            maxTicketsPerUser: 3,
+            cooldownMinutes: 5,
+            allowedFileTypes: [],
+            maxFileSize: 8388608
+          }
+        });
+        
+        config = await this.ticketService.getConfig(guild.id);
+        if (!config) {
+          throw new Error('Failed to create ticket configuration');
+        }
+        console.log('[TicketPanelService] Default config created successfully');
       }
 
       // Build embed
