@@ -150,7 +150,31 @@ export class TicketPanelService {
 
         // Add category dropdown if categories exist
         if (categories.length > 0) {
-          rows.push(this.buildDropdownComponent(categories));
+          if (categories.length > 20) {
+            // For many categories, add a compact button row instead
+            const categoryRow = new ActionRowBuilder<ButtonBuilder>();
+            for (let i = 0; i < Math.min(4, categories.length); i++) {
+              const cat = categories[i];
+              categoryRow.addComponents(
+                new ButtonBuilder()
+                  .setCustomId(`ticket:create:${cat.id}`)
+                  .setLabel(cat.name)
+                  .setEmoji(cat.emoji || '📋')
+                  .setStyle(ButtonStyle.Secondary)
+              );
+            }
+            if (categories.length > 4) {
+              categoryRow.addComponents(
+                new ButtonBuilder()
+                  .setCustomId('ticket:categories:more')
+                  .setLabel(`+${categories.length - 4} more`)
+                  .setStyle(ButtonStyle.Secondary)
+              );
+            }
+            rows.push(categoryRow);
+          } else {
+            rows.push(this.buildDropdownComponent(categories));
+          }
         }
         break;
     }
