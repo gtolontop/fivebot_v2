@@ -32,6 +32,7 @@ export class TicketInteractionHandler {
     
     // Initialize handlers
     this.creationHandler = new TicketCreationHandler(this.ticketService, this.stateManager);
+    this.creationHandler.setTicketPanelService(this.panelService);
     this.controlsHandler = new TicketControlsHandler(
       this.ticketService,
       this.containerService,
