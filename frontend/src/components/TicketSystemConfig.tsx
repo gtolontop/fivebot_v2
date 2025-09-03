@@ -128,6 +128,7 @@ export default function TicketSystemConfig({
     privateByDefault: false,
     requiredRoles: [] as string[],
     welcomeMessage: '',
+    useCustomModal: false,
     modalTitle: '',
     modalDescription: '',
     modalFields: [{
@@ -1394,6 +1395,18 @@ export default function TicketSystemConfig({
                 </summary>
                 
                 <div className="mt-4 space-y-4">
+                  <label className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      checked={categoryForm.useCustomModal}
+                      onChange={(e) => setCategoryForm(prev => ({ ...prev, useCustomModal: e.target.checked }))}
+                      className="rounded border-gray-300 text-indigo-600"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Use custom modal</span>
+                  </label>
+
+                  {categoryForm.useCustomModal && (
+                  <div className="space-y-4 pl-6 border-l-2 border-gray-200">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Modal Title
