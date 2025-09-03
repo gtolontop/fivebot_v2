@@ -153,9 +153,41 @@ export class TicketCreationHandler {
     await interaction.deferReply({ ephemeral: true });
 
     const categoryId = interaction.customId.split(':')[2];
-    const subject = interaction.fields.getTextInputValue('ticket_subject');
-    const description = interaction.fields.getTextInputValue('ticket_description');
-    const priorityText = interaction.fields.getTextInputValue('ticket_priority') || 'Normal';
+    
+    // Get configuration and category
+    const config = await this.ticketService.getConfig(interaction.guildId!);
+    const category = config?.categories?.find(c => c.id === categoryId);
+    
+    let subject: string;
+    let description: string;
+    let priorityText = 'Normal';
+    let customFieldsData: Record<string, string> = {};
+    
+    // Check if using custom modal
+    if (category?.useCustomModal && category.modalFields && category.modalFields.length > 0) {
+      // Get data from custom fields
+      const fields = category.modalFields;
+      const fieldValues: string[] = [];
+      
+      for (const field of fields) {
+        try {
+          const value = interaction.fields.getTextInputValue(`field_${field.id}`);
+          customFieldsData[field.label] = value;
+          fieldValues.push(`**${field.label}:** ${value}`);
+        } catch (e) {
+          // Field not present in modal
+        }
+      }
+      
+      // Use first field as subject, rest as description
+      subject = fieldValues[0] ? fieldValues[0].replace(/\*\*/g, '') : 'New Ticket';
+      description = fieldValues.join('\n') || 'No description provided';
+    } else {
+      // Get data from default modal
+      subject = interaction.fields.getTextInputValue('ticket_subject');
+      description = interaction.fields.getTextInputValue('ticket_description');
+      priorityText = interaction.fields.getTextInputValue('ticket_priority') || 'Normal';
+    }
 
     // Parse priority
     const priority = this.parsePriority(priorityText);
