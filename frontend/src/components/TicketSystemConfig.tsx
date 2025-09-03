@@ -695,7 +695,8 @@ export default function TicketSystemConfig({
                                     await botsAPI.sendTicketPanel(botId, panel.id);
                                     toast.success('Panel sent successfully!');
                                   } catch (error) {
-                                    toast.error('Failed to send panel');
+                                    // Error is already handled by the API interceptor
+                                    // No need to show another toast
                                   }
                                 }}
                                 className="text-green-600 hover:text-green-800"
