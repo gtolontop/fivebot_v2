@@ -40,13 +40,15 @@ export class TicketPanelService {
     if (categories && categories.length > 0) {
       this.panelCategories.set(guild.id, categories);
       console.log(`[TicketPanelService] Stored ${categories.length} categories for guild ${guild.id}`);
-      if (categories[0]) {
-        console.log(`[TicketPanelService] First category modal config:`, {
-          useCustomModal: categories[0].useCustomModal,
-          modalTitle: categories[0].modalTitle,
-          modalFields: categories[0].modalFields?.length || 0
+      categories.forEach((cat, index) => {
+        console.log(`[TicketPanelService] Category ${index} - ${cat.name}:`, {
+          id: cat.id,
+          useCustomModal: cat.useCustomModal,
+          useCustomModalType: typeof cat.useCustomModal,
+          modalTitle: cat.modalTitle,
+          modalFields: cat.modalFields?.length || 0
         });
-      }
+      });
     }
     try {
       const channel = await guild.channels.fetch(channelId) as TextChannel;
