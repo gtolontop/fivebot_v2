@@ -297,6 +297,7 @@ export default function BotDetailPage() {
       case 'ONLINE': return 'text-green-600 bg-green-100';
       case 'OFFLINE': return 'text-gray-600 bg-gray-100';
       case 'STARTING': return 'text-yellow-600 bg-yellow-100';
+      case 'STOPPING': return 'text-orange-600 bg-orange-100';
       case 'ERROR': return 'text-red-600 bg-red-100';
       default: return 'text-gray-600 bg-gray-100';
     }
@@ -332,6 +333,7 @@ export default function BotDetailPage() {
               {bot.status === 'ONLINE' && <CheckCircleIcon className="w-4 h-4 mr-1" />}
               {bot.status === 'ERROR' && <ExclamationTriangleIcon className="w-4 h-4 mr-1" />}
               {bot.status === 'STARTING' && <ArrowPathIcon className="w-4 h-4 mr-1 animate-spin" />}
+              {bot.status === 'STOPPING' && <ArrowPathIcon className="w-4 h-4 mr-1 animate-spin" />}
               {bot.status}
             </span>
           </div>
