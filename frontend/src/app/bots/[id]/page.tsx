@@ -152,12 +152,22 @@ export default function BotDetailPage() {
   useEffect(() => {
     if (!bot) return;
 
+    // Check more frequently when bot is starting
+    const interval = bot.status === 'STARTING' ? 2000 : 10000;
+    
     const statusInterval = setInterval(() => {
       fetchBot();
-    }, 10000);
+    }, interval);
 
     return () => clearInterval(statusInterval);
-  }, [bot?.id]);
+  }, [bot?.id, bot?.status]);
+
+  // Clear action loading when bot status changes
+  useEffect(() => {
+    if (bot && actionLoading === 'start' && bot.status === 'ONLINE') {
+      setActionLoading(null);
+    }
+  }, [bot?.status, actionLoading]);
 
   const fetchBot = async () => {
     try {
@@ -194,11 +204,12 @@ export default function BotDetailPage() {
     
     try {
       await botsAPI.start(botId);
-      toast.success('Bot started successfully');
+      toast.success('Bot is starting...');
       await fetchBot();
+      // Don't clear actionLoading here if bot is in STARTING state
+      // It will be cleared when bot status changes to ONLINE
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Error starting bot');
-    } finally {
       setActionLoading(null);
     }
   };
