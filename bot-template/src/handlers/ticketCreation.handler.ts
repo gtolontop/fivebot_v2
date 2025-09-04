@@ -471,4 +471,151 @@ export class TicketCreationHandler {
         return TicketPriority.NORMAL;
     }
   }
+
+  // Create ticket directly without modal
+  private async createTicketDirectly(
+    interaction: ButtonInteraction | StringSelectMenuInteraction,
+    categoryId: string,
+    categoryName: string
+  ): Promise<void> {
+    await interaction.deferReply({ ephemeral: true });
+
+    try {
+      const config = await this.ticketService.getConfig(interaction.guildId!);
+      if (!config) {
+        throw new Error('Ticket system not configured');
+      }
+
+      // Default values for direct creation
+      const subject = `${categoryName} Ticket`;
+      const description = `Ticket created by <@${interaction.user.id}>`;
+      const priority = TicketPriority.NORMAL;
+
+      // Create ticket container (thread or channel)
+      const container = await this.createTicketContainer(
+        interaction as any, // Cast to ModalSubmitInteraction-like
+        config,
+        subject,
+        categoryId
+      );
+
+      if (!container) {
+        throw new Error('Failed to create ticket container');
+      }
+
+      // Create ticket in database
+      const ticket = await this.ticketService.createTicket({
+        guildId: interaction.guildId!,
+        creatorId: interaction.user.id,
+        type: categoryId === 'general' ? 'support' : 'categorized',
+        category: categoryId !== 'general' ? categoryId : undefined,
+        priority,
+        containerType: config.containerType,
+        channelId: container.parentId || container.id,
+        threadId: container.isThread() ? container.id : undefined
+      });
+
+      // Send initial message in ticket
+      const initialEmbed = new EmbedBuilder()
+        .setColor(this.stateManager.getActivityColor('GRAY' as any))
+        .setTitle(`Ticket #${ticket.ticketNumber} - ${subject}`)
+        .setDescription(description)
+        .setFields([
+          {
+            name: 'Created By',
+            value: `<@${interaction.user.id}>`,
+            inline: true
+          },
+          {
+            name: 'Category',
+            value: categoryName,
+            inline: true
+          },
+          {
+            name: 'Status',
+            value: `${this.stateManager.getStateEmoji('GRAY' as any)} Open`,
+            inline: true
+          }
+        ])
+        .setTimestamp();
+
+      await container.send({
+        content: `<@${interaction.user.id}> ${config.staffRoles.map((r: string) => `<@&${r}>`).join(' ')}`,
+        embeds: [initialEmbed]
+      });
+
+      // Send welcome message
+      await container.send({
+        embeds: [{
+          color: 0x2F3136,
+          description: `Welcome <@${interaction.user.id}>! A staff member will assist you shortly.\n\n**Please describe your issue while you wait.**`,
+          footer: {
+            text: 'This ticket will be automatically closed after 48 hours of inactivity.'
+          }
+        }]
+      });
+
+      // Log ticket creation
+      await this.ticketService.logAction(
+        ticket.id,
+        'TICKET_CREATED',
+        interaction.user.id,
+        { subject, priority, directCreation: true }
+      );
+
+      // Send confirmation
+      await interaction.editReply({
+        content: `✅ Your ticket has been created: <#${container.id}>`,
+        embeds: [{
+          color: 0x00FF00,
+          title: 'Ticket Created Successfully',
+          fields: [
+            {
+              name: 'Ticket Number',
+              value: `#${ticket.ticketNumber}`,
+              inline: true
+            },
+            {
+              name: 'Channel',
+              value: `<#${container.id}>`,
+              inline: true
+            },
+            {
+              name: 'Category',
+              value: categoryName,
+              inline: true
+            }
+          ]
+        }]
+      });
+
+      // Send DM notification
+      try {
+        await interaction.user.send({
+          embeds: [{
+            color: 0x00FF00,
+            title: 'Ticket Created',
+            description: `Your ${categoryName} ticket #${ticket.ticketNumber} has been created in ${interaction.guild?.name}.`,
+            fields: [
+              {
+                name: 'Access Your Ticket',
+                value: `[Click here](https://discord.com/channels/${interaction.guildId}/${container.id})`
+              }
+            ],
+            footer: {
+              text: 'You will receive notifications about your ticket here.'
+            }
+          }]
+        });
+      } catch {
+        // User has DMs disabled
+      }
+
+    } catch (error) {
+      console.error('[TicketCreationHandler] Error creating ticket directly:', error);
+      await interaction.editReply({
+        content: '❌ An error occurred while creating your ticket. Please try again later.'
+      });
+    }
+  }
 }
