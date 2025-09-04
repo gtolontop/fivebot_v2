@@ -14,6 +14,28 @@ const nextConfig = {
       },
     ];
   },
+  // Désactiver le splitting automatique des chunks pour éviter les erreurs de chargement
+  experimental: {
+    optimizeCss: false,
+  },
+  // Configuration webpack pour résoudre les problèmes de chunks
+  webpack: (config, { dev, isServer }) => {
+    // Désactiver le code splitting en développement si nécessaire
+    if (dev && !isServer) {
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        cacheGroups: {
+          default: {
+            minChunks: 1,
+            priority: -10,
+            reuseExistingChunk: true
+          }
+        }
+      };
+    }
+    
+    return config;
+  },
 };
 
 module.exports = nextConfig;
