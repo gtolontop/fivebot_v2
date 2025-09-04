@@ -82,15 +82,27 @@ export class TicketCreationHandler {
             id: category?.id,
             name: category?.name,
             useCustomModal: category?.useCustomModal,
+            useCustomModalType: typeof category?.useCustomModal,
             modalFields: category?.modalFields?.length || 0
           });
+        } else {
+          console.log(`[TicketCreationHandler] No stored categories found for guild ${interaction.guildId}`);
         }
       }
       
       // Fallback to config categories if not found
       if (!category) {
+        console.log(`[TicketCreationHandler] Falling back to config categories`);
         const config = await this.ticketService.getConfig(interaction.guildId!);
         category = config?.categories?.find(c => c.id === categoryId) as any;
+        if (category) {
+          console.log(`[TicketCreationHandler] Found category from config:`, {
+            id: category.id,
+            name: category.name,
+            useCustomModal: category.useCustomModal,
+            useCustomModalType: typeof category.useCustomModal
+          });
+        }
       }
       
       if (category) {
@@ -106,14 +118,17 @@ export class TicketCreationHandler {
       modalTitle: category?.modalTitle
     });
 
-    // Check if we should skip modal and create ticket directly
-    if (category && !category.useCustomModal) {
-      // Create ticket directly without modal
-      await this.createTicketDirectly(interaction, categoryId, categoryName);
-      return;
+    // For non-general categories, check if we should skip modal
+    if (categoryId !== 'general' && category) {
+      // If useCustomModal is false (not just undefined), create ticket directly
+      if (category.useCustomModal === false) {
+        console.log(`[TicketCreationHandler] Creating ticket directly for category ${categoryName} (useCustomModal: ${category.useCustomModal})`);
+        await this.createTicketDirectly(interaction, categoryId, categoryName);
+        return;
+      }
     }
     
-    // Check if category has custom modal
+    // Check if category has custom modal with fields
     if (category?.useCustomModal && category.modalFields && category.modalFields.length > 0) {
       // Create custom modal
       const modal = new ModalBuilder()
