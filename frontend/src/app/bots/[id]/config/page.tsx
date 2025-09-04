@@ -239,7 +239,7 @@ export default function BotConfigPage() {
             icon: guild.icon,
             channels,
             roles,
-            memberCount: guild.memberCount || Math.floor(Math.random() * 1000) + 100
+            memberCount: guild.memberCount || 0
           });
         } catch (error) {
           console.error(`Error loading data for server ${guild.name}:`, error);
