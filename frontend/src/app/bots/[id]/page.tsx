@@ -152,8 +152,8 @@ export default function BotDetailPage() {
   useEffect(() => {
     if (!bot) return;
 
-    // Check more frequently when bot is starting
-    const interval = bot.status === 'STARTING' ? 2000 : 10000;
+    // Check more frequently when bot is starting or stopping
+    const interval = (bot.status === 'STARTING' || bot.status === 'STOPPING') ? 2000 : 10000;
     
     const statusInterval = setInterval(() => {
       fetchBot();
@@ -414,7 +414,7 @@ export default function BotDetailPage() {
               <div className="space-y-3">
                 <button
                   onClick={handleStart}
-                  disabled={bot.status !== 'OFFLINE' || actionLoading !== null || bot.status === 'STARTING'}
+                  disabled={bot.status !== 'OFFLINE' || actionLoading !== null}
                   className="w-full inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   {(actionLoading === 'start' || bot.status === 'STARTING') ? (
