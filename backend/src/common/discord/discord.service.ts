@@ -212,14 +212,42 @@ export class DiscordService {
           timeout: 15000,
         });
 
-        return response.data.map((guild: any) => ({
-          id: guild.id,
-          name: guild.name,
-          icon: guild.icon,
-          owner: guild.owner,
-          permissions: guild.permissions,
-          memberCount: guild.approximate_member_count || Math.floor(Math.random() * 1000) + 50
-        }));
+        // Get additional guild info including member count for each guild
+        const guildsWithDetails = await Promise.all(
+          response.data.map(async (guild: any) => {
+            try {
+              // Get guild details with approximate_member_count
+              const guildResponse = await axios.get(`${this.baseURL}/guilds/${guild.id}?with_counts=true`, {
+                headers: {
+                  Authorization: `Bot ${botToken}`,
+                },
+                timeout: 5000,
+              });
+
+              return {
+                id: guild.id,
+                name: guild.name,
+                icon: guild.icon,
+                owner: guild.owner,
+                permissions: guild.permissions,
+                memberCount: guildResponse.data.approximate_member_count || 0
+              };
+            } catch (error) {
+              // If we can't get guild details, return basic info
+              console.warn(`Failed to get member count for guild ${guild.id}:`, error.message);
+              return {
+                id: guild.id,
+                name: guild.name,
+                icon: guild.icon,
+                owner: guild.owner,
+                permissions: guild.permissions,
+                memberCount: 0
+              };
+            }
+          })
+        );
+
+        return guildsWithDetails;
       });
 
       // Cache the result for 10 minutes
