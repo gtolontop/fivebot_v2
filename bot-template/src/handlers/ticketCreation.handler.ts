@@ -106,6 +106,13 @@ export class TicketCreationHandler {
       modalTitle: category?.modalTitle
     });
 
+    // Check if we should skip modal and create ticket directly
+    if (category && !category.useCustomModal) {
+      // Create ticket directly without modal
+      await this.createTicketDirectly(interaction, categoryId, categoryName);
+      return;
+    }
+    
     // Check if category has custom modal
     if (category?.useCustomModal && category.modalFields && category.modalFields.length > 0) {
       // Create custom modal
