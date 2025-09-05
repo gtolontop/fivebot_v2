@@ -26,9 +26,11 @@ export interface ValidationWarning {
 
 export class TicketValidationService {
   private client: Client;
+  private ticketService: any;
 
-  constructor(client: Client) {
+  constructor(client: Client, ticketService?: any) {
     this.client = client;
+    this.ticketService = ticketService;
   }
 
   /**
@@ -418,9 +420,25 @@ export class TicketValidationService {
    * Get count of user's active tickets
    */
   private async getUserActiveTicketCount(guildId: string, userId: string): Promise<number> {
-    // This would normally query the database
-    // For now, return 0 as placeholder
-    return 0;
+    if (this.ticketService) {
+      const tickets = await this.ticketService.getUserActiveTickets(guildId, userId);
+      return tickets.length;
+    }
+    // Fallback: query database directly if service not available
+    try {
+      const { prisma } = await import('../lib/database');
+      const tickets = await prisma.ticket.count({
+        where: {
+          guildId,
+          creatorId: userId,
+          state: { not: 'CLOSED' },
+          deletedAt: null
+        }
+      });
+      return tickets;
+    } catch {
+      return 0;
+    }
   }
 
   /**
