@@ -123,7 +123,8 @@ export class CommandService {
 
   private async handleSendTicketPanel(data: any) {
     if (!this.ticketPanelService) {
-      throw new Error('Ticket panel service not initialized');
+      console.warn('[CommandService] Ticket panel service not initialized - ticket system may be disabled');
+      return;
     }
 
     const guild = this.client.guilds.cache.first();
