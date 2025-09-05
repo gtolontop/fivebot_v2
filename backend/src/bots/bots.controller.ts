@@ -1056,6 +1056,19 @@ export class BotsController {
     };
   }
 
+  @Get(':id/tickets/stats')
+  @UseGuards(AuthGuard('jwt'))
+  async getTicketStats(
+    @Param('id') id: string,
+    @Req() req: any,
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+    return this.ticketService.getTicketStats(id);
+  }
+
   @Get('analytics/overview')
   @UseGuards(AuthGuard('jwt'))
   async getAnalyticsOverview(@Req() req: any) {

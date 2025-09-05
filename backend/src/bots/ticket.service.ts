@@ -267,6 +267,129 @@ export class TicketService {
     }
   }
 
+  async getTicketStats(botId: string): Promise<any> {
+    try {
+      // Check if tickets table exists
+      const tableExists = await this.prisma.$queryRaw`
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_schema = DATABASE() 
+        AND table_name = 'tickets' 
+        LIMIT 1
+      ` as any[];
+      
+      if (tableExists.length === 0) {
+        return this.getDefaultTicketStats();
+      }
+      
+      // Get bot's guilds
+      const botGuilds = await this.prisma.$queryRaw<{guildId: string}[]>`
+        SELECT DISTINCT guild_id as "guildId"
+        FROM bot_guilds
+        WHERE bot_id = ${botId}
+      `;
+      
+      const guildIds = botGuilds.map(g => g.guildId);
+      
+      if (guildIds.length === 0) {
+        return this.getDefaultTicketStats();
+      }
+      
+      const placeholders = guildIds.map(() => '?').join(', ');
+      
+      // Get ticket statistics
+      const stats = await this.prisma.$queryRawUnsafe<any[]>(`
+        SELECT 
+          COUNT(*) as totalTickets,
+          COUNT(CASE WHEN state = 'OPEN' OR state = 'IN_PROGRESS' THEN 1 END) as openTickets,
+          COUNT(CASE WHEN state = 'CLOSED' THEN 1 END) as closedTickets,
+          COUNT(CASE WHEN DATE(created_at) = CURDATE() THEN 1 END) as todayTickets
+        FROM tickets
+        WHERE guild_id IN (${placeholders})
+          AND deleted_at IS NULL
+      `, ...guildIds);
+      
+      // Get message count and average response time
+      const messageStats = await this.prisma.$queryRawUnsafe<any[]>(`
+        SELECT 
+          COUNT(DISTINCT tm.id) as totalMessages,
+          AVG(CASE 
+            WHEN tm.is_staff = 1 AND tm.message_number > 1 
+            THEN TIMESTAMPDIFF(SECOND, t.created_at, tm.created_at)
+          END) as avgResponseTime
+        FROM tickets t
+        LEFT JOIN ticket_messages tm ON t.id = tm.ticket_id
+        WHERE t.guild_id IN (${placeholders})
+          AND t.deleted_at IS NULL
+      `, ...guildIds);
+      
+      // Get average resolution time
+      const resolutionStats = await this.prisma.$queryRawUnsafe<any[]>(`
+        SELECT 
+          AVG(TIMESTAMPDIFF(HOUR, created_at, closed_at)) as avgResolutionTime
+        FROM tickets
+        WHERE guild_id IN (${placeholders})
+          AND deleted_at IS NULL
+          AND state = 'CLOSED'
+          AND closed_at IS NOT NULL
+      `, ...guildIds);
+      
+      // Get satisfaction score (if feedback exists)
+      const satisfactionStats = await this.prisma.$queryRawUnsafe<any[]>(`
+        SELECT 
+          AVG(CASE 
+            WHEN feedback_rating IS NOT NULL 
+            THEN feedback_rating * 20 
+          END) as satisfactionScore
+        FROM tickets
+        WHERE guild_id IN (${placeholders})
+          AND deleted_at IS NULL
+          AND feedback_rating IS NOT NULL
+      `, ...guildIds);
+      
+      const result = stats[0] || {};
+      const msgResult = messageStats[0] || {};
+      const resResult = resolutionStats[0] || {};
+      const satResult = satisfactionStats[0] || {};
+      
+      return {
+        totalTickets: parseInt(result.totalTickets) || 0,
+        openTickets: parseInt(result.openTickets) || 0,
+        closedTickets: parseInt(result.closedTickets) || 0,
+        todayTickets: parseInt(result.todayTickets) || 0,
+        totalMessages: parseInt(msgResult.totalMessages) || 0,
+        avgResponseTime: msgResult.avgResponseTime ? 
+          this.formatTime(parseFloat(msgResult.avgResponseTime)) : 'N/A',
+        avgResolutionTime: resResult.avgResolutionTime ? 
+          `${Math.round(parseFloat(resResult.avgResolutionTime))}h` : 'N/A',
+        satisfactionScore: satResult.satisfactionScore ? 
+          Math.round(parseFloat(satResult.satisfactionScore)) : 0,
+      };
+      
+    } catch (error) {
+      console.error('Error getting ticket stats:', error);
+      return this.getDefaultTicketStats();
+    }
+  }
+  
+  private getDefaultTicketStats() {
+    return {
+      totalTickets: 0,
+      openTickets: 0,
+      closedTickets: 0,
+      todayTickets: 0,
+      totalMessages: 0,
+      avgResponseTime: 'N/A',
+      avgResolutionTime: 'N/A',
+      satisfactionScore: 0,
+    };
+  }
+  
+  private formatTime(seconds: number): string {
+    if (seconds < 60) return `${Math.round(seconds)}s`;
+    if (seconds < 3600) return `${Math.round(seconds / 60)}m`;
+    return `${Math.round(seconds / 3600)}h`;
+  }
+
   // Public method to send panel
   async sendPanel(botId: string, panelId: string): Promise<{ success: boolean; message?: string }> {
     const data = await this.getTicketData(botId);
