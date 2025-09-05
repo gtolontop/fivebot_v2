@@ -281,11 +281,8 @@ export class TicketService {
         return this.getDefaultTicketStats();
       }
       
-      // For now, return default stats since we don't have guild tracking
-      // In a real implementation, you would get this from bot metrics or real-time data
-      return this.getDefaultTicketStats();
-      
-      const placeholders = guildIds.map(() => '?').join(', ');
+      // Get ticket statistics directly without guild filtering
+      // Since tickets table has guild_id, we can query directly
       
       // Get ticket statistics
       const stats = await this.prisma.$queryRawUnsafe<any[]>(`
