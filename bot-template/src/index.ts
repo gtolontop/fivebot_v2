@@ -1,21 +1,249 @@
-// Export all ticket-related services and utilities
-export * from './services/ticket.service';
-export * from './services/ticketValidation.service';
-export * from './services/ticketStateManager.service';
-export * from './services/ticketContainer.service';
-export * from './services/ticketAssignment.service';
-export * from './services/ticketNotification.service';
-export * from './services/ticketPanel.service';
+import { Client, GatewayIntentBits, Partials } from 'discord.js';
+import { PrismaClient } from '@prisma/client';
+import dotenv from 'dotenv';
+import { ready } from './events/ready';
+import { interactionCreate } from './events/interactionCreate';
+import { guildMemberAdd } from './events/guildMemberAdd';
+import messageCreateHandler from './events/messageCreate';
+import { MetricsService } from './services/metrics.service';
+import { CommandService } from './services/command.service';
+import { ConfigService } from './services/config.service';
+import { WelcomeService } from './services/welcome.service';
+import { TicketInteractionHandler } from './handlers/ticketInteraction.handler';
+import { TicketService } from './services/ticket.service';
+import { TicketStateManager } from './services/ticketStateManager.service';
 
-// Export handlers
-export * from './handlers/ticketCreation.handler';
-export * from './handlers/ticketControls.handler';
-export * from './handlers/ticketInteraction.handler';
+dotenv.config();
 
-// Export utilities
-export * from './utils/ticketConfigHelpers';
-export * from './utils/ticketErrorMessages';
+interface BotConfig {
+  welcomeEnabled: boolean;
+  welcomeChannelId?: string;
+  welcomeEmbedJson?: string;
+  welcomeLogoUrl?: string;
+  moderationEnabled: boolean;
+  autoRoleEnabled: boolean;
+  autoRoleId?: string;
+  loggingChannelId?: string;
+  customCommands?: any;
+  ticketData?: any;
+}
 
-// Export commands
-export * as ticketCommand from './commands/ticket';
-export * as ticketValidateCommand from './commands/ticketValidate';
+class ChildBot {
+  private client: Client;
+  private prisma: PrismaClient;
+  private config: BotConfig;
+  private botId: string;
+  private metricsService?: MetricsService;
+  private commandService?: CommandService;
+  private configService?: ConfigService;
+  private welcomeService?: WelcomeService;
+  private ticketHandler?: TicketInteractionHandler;
+  private ticketService?: TicketService;
+  private ticketStateManager?: TicketStateManager;
+
+  constructor() {
+    this.client = new Client({
+      intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildModeration,
+        GatewayIntentBits.GuildMessageReactions,
+        GatewayIntentBits.GuildVoiceStates,
+      ],
+      partials: [
+        Partials.Channel,
+        Partials.Message,
+        Partials.User,
+        Partials.GuildMember,
+        Partials.Reaction,
+        Partials.ThreadMember,
+      ],
+    });
+
+    this.prisma = new PrismaClient({
+      log: [],
+      errorFormat: 'minimal',
+    });
+
+    this.botId = process.env.BOT_ID!;
+    this.config = this.loadConfig();
+    
+    this.configService = new ConfigService(this.prisma, this.botId);
+    this.welcomeService = new WelcomeService(this.client, this.prisma, this.botId);
+
+    this.setupEventListeners();
+  }
+
+  private loadConfig(): BotConfig {
+    try {
+      const configString = process.env.CONFIG || '{}';
+      const config = JSON.parse(configString);
+      
+      // Parse ticketData if it's a string
+      let ticketData = {};
+      if (config.ticketData) {
+        if (typeof config.ticketData === 'string') {
+          try {
+            ticketData = JSON.parse(config.ticketData);
+          } catch (e) {
+            console.error('Failed to parse ticketData:', e);
+          }
+        } else {
+          ticketData = config.ticketData;
+        }
+      }
+      
+      const finalConfig = {
+        welcomeEnabled: config.welcomeEnabled || false,
+        welcomeChannelId: config.welcomeChannelId,
+        welcomeEmbedJson: config.welcomeEmbedJson,
+        welcomeLogoUrl: config.welcomeLogoUrl,
+        moderationEnabled: config.moderationEnabled || false,
+        autoRoleEnabled: config.autoRoleEnabled || false,
+        autoRoleId: config.autoRoleId,
+        loggingChannelId: config.loggingChannelId,
+        customCommands: config.customCommands,
+        ticketData: ticketData,
+      };
+      
+      return finalConfig;
+    } catch (error) {
+      console.error('Error loading config:', error);
+      return {
+        welcomeEnabled: false,
+        moderationEnabled: false,
+        autoRoleEnabled: false,
+      };
+    }
+  }
+
+  private setupEventListeners() {
+    // Core events
+    this.client.once('ready', () => {
+      ready(this.client, this.prisma, this.botId);
+      // Initialize metrics service after bot is ready
+      this.metricsService = new MetricsService(this.client, this.prisma, this.botId);
+      console.log('📊 Metrics tracking initialized');
+      
+      // Initialize command service
+      this.commandService = new CommandService(this.client, this.prisma, this.botId);
+      
+      // Initialize ticket system only if enabled
+      const ticketEnabled = (this.config as any).ticketData?.ticketEnabled || false;
+      
+      if (ticketEnabled) {
+        this.ticketHandler = new TicketInteractionHandler(this.client);
+        const services = this.ticketHandler.getServices();
+        this.ticketService = services.ticketService;
+        this.ticketStateManager = services.stateManager;
+        // Store on client for command access
+        (this.client as any).ticketHandler = this.ticketHandler;
+        
+        // Set ticket panel service in command service
+        if (this.commandService && this.ticketHandler) {
+          this.commandService.setTicketPanelService(this.ticketHandler.getServices().panelService);
+        }
+        
+        console.log('🎫 Ticket system initialized');
+      }
+      
+      // Start command service
+      if (this.commandService) {
+        this.commandService.start();
+        console.log('📡 Command service started');
+      }
+    });
+    
+    this.client.on('guildMemberAdd', (member) => 
+      guildMemberAdd(member, this.welcomeService, this.config)
+    );
+    
+    this.client.on('interactionCreate', (interaction) => 
+      interactionCreate(interaction, this.prisma, this.configService, this.ticketHandler || undefined)
+    );
+    
+    // Message create event for ticket tracking
+    this.client.on('messageCreate', async (message) => {
+      if (this.ticketService && this.ticketStateManager) {
+        await messageCreateHandler.execute(message, this.ticketService, this.ticketStateManager);
+      }
+    });
+    
+    // Error handling
+    this.client.on('error', (error) => {
+      console.error('Discord client error:', error);
+    });
+    
+    this.client.on('warn', (warn) => {
+      console.warn('Discord client warning:', warn);
+    });
+    
+    process.on('unhandledRejection', (error) => {
+      console.error('Unhandled promise rejection:', error);
+    });
+    
+    process.on('SIGINT', async () => {
+      console.log('Received SIGINT, shutting down gracefully...');
+      await this.shutdown();
+    });
+    
+    process.on('SIGTERM', async () => {
+      console.log('Received SIGTERM, shutting down gracefully...');
+      await this.shutdown();
+    });
+  }
+
+  private async shutdown() {
+    try {
+      // Update bot status to offline
+      await this.prisma.bot.update({
+        where: { id: this.botId },
+        data: { status: 'OFFLINE' }
+      });
+      
+      // Disconnect from Discord
+      this.client.destroy();
+      
+      // Close database connection
+      await this.prisma.$disconnect();
+      
+      console.log('Shutdown complete');
+      process.exit(0);
+    } catch (error) {
+      console.error('Error during shutdown:', error);
+      process.exit(1);
+    }
+  }
+
+  public async start() {
+    try {
+      console.log('Initializing bot...');
+      console.log('Validating token...');
+      
+      // Connect to database
+      await this.prisma.$connect();
+      console.log('Database connected');
+      
+      // Update bot status
+      await this.prisma.bot.update({
+        where: { id: this.botId },
+        data: { status: 'STARTING' }
+      });
+      console.log('✅ Bot status updated to STARTING');
+      
+      // Login to Discord
+      await this.client.login(process.env.BOT_TOKEN);
+      console.log(`🤖 Child bot started for bot ID: ${this.botId}`);
+      
+    } catch (error) {
+      console.error('Failed to start bot:', error);
+      process.exit(1);
+    }
+  }
+}
+
+// Start the bot
+const bot = new ChildBot();
+bot.start();
