@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
 import { ready } from './events/ready';
 import { interactionCreate } from './events/interactionCreate';
-import { messageCreate } from './events/messageCreate';
+// messageCreate will be handled differently since it needs ticket service
 import { guildMemberAdd } from './events/guildMemberAdd';
 import { MetricsService } from './services/metrics.service';
 
@@ -47,7 +47,7 @@ client.once('ready', async () => {
 });
 
 client.on('interactionCreate', (interaction) => interactionCreate(interaction, prisma, CONFIG));
-client.on('messageCreate', (message) => messageCreate(message, prisma, CONFIG));
+// messageCreate event is handled in index.ts with ticket service
 client.on('guildMemberAdd', (member) => guildMemberAdd(member, CONFIG));
 
 // Error handling
