@@ -75,27 +75,20 @@ class ChildBot {
   private loadConfig(): BotConfig {
     try {
       const configString = process.env.CONFIG || '{}';
-      console.log('[CONFIG] Raw CONFIG env:', configString.substring(0, 200) + '...');
       const config = JSON.parse(configString);
-      console.log('[CONFIG] Parsed config keys:', Object.keys(config));
       
       // Parse ticketData if it's a string
       let ticketData = {};
       if (config.ticketData) {
-        console.log('[CONFIG] ticketData type:', typeof config.ticketData);
-        console.log('[CONFIG] ticketData value:', config.ticketData);
         if (typeof config.ticketData === 'string') {
           try {
             ticketData = JSON.parse(config.ticketData);
-            console.log('[CONFIG] Parsed ticketData:', ticketData);
           } catch (e) {
             console.error('Failed to parse ticketData:', e);
           }
         } else {
           ticketData = config.ticketData;
         }
-      } else {
-        console.log('[CONFIG] No ticketData found in config');
       }
       
       const finalConfig = {
@@ -111,10 +104,6 @@ class ChildBot {
         ticketData: ticketData,
       };
       
-      console.log('[CONFIG] Final config with ticketData:', {
-        ...finalConfig,
-        ticketData: ticketData
-      });
       
       return finalConfig;
     } catch (error) {
