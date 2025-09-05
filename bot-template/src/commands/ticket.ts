@@ -5,6 +5,8 @@ import {
   PermissionFlagsBits,
   ChannelType
 } from 'discord.js';
+import { TicketValidationService } from '../services/ticketValidation.service';
+import { getErrorMessage, formatError, formatWarning } from '../utils/ticketErrorMessages';
 
 export const data = new SlashCommandBuilder()
   .setName('ticket')
@@ -25,6 +27,20 @@ export const data = new SlashCommandBuilder()
           .setDescription('Category for ticket channels')
           .setRequired(false)
           .addChannelTypes(ChannelType.GuildCategory)
+      )
+  )
+  .addSubcommand(subcommand =>
+    subcommand
+      .setName('validate')
+      .setDescription('Validate the ticket system configuration')
+      .addStringOption(option =>
+        option
+          .setName('locale')
+          .setDescription('Language for validation messages')
+          .addChoices(
+            { name: 'English', value: 'en' },
+            { name: 'Français', value: 'fr' }
+          )
       )
   )
   .addSubcommand(subcommand =>
@@ -104,6 +120,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   switch (subcommand) {
     case 'setup':
       await handleSetup(interaction, ticketService);
+      break;
+    
+    case 'validate':
+      await handleValidate(interaction, ticketService);
       break;
     
     case 'panel':
@@ -188,6 +208,42 @@ async function handleSetup(
   }
 }
 
+async function handleValidate(
+  interaction: ChatInputCommandInteraction,
+  ticketService: any
+) {
+  await interaction.deferReply({ ephemeral: true });
+
+  const validationService = new TicketValidationService(interaction.client, ticketService);
+  const locale = interaction.options.getString('locale') as 'en' | 'fr' || 'en';
+
+  try {
+    const config = await ticketService.getConfig(interaction.guildId!);
+    const validation = await validationService.validateConfiguration(config, interaction.guildId!);
+
+    const message = validationService.formatValidationMessage(validation, locale);
+    
+    const embed = new EmbedBuilder()
+      .setColor(validation.isValid ? (validation.warnings.length > 0 ? 0xFFFF00 : 0x00FF00) : 0xFF0000)
+      .setTitle(
+        validation.isValid 
+          ? (validation.warnings.length > 0 
+            ? (locale === 'en' ? '⚠️ Configuration Valid with Warnings' : '⚠️ Configuration Valide avec Avertissements')
+            : (locale === 'en' ? '✅ Configuration Valid' : '✅ Configuration Valide'))
+          : (locale === 'en' ? '❌ Configuration Invalid' : '❌ Configuration Invalide')
+      )
+      .setDescription(message)
+      .setTimestamp();
+
+    await interaction.editReply({ embeds: [embed] });
+  } catch (error) {
+    console.error('[Ticket Validate] Error:', error);
+    await interaction.editReply({
+      content: formatError(getErrorMessage('UNKNOWN_ERROR', locale))
+    });
+  }
+}
+
 async function handlePanel(
   interaction: ChatInputCommandInteraction,
   ticketService: any,
@@ -210,6 +266,18 @@ async function handlePanel(
     if (!config) {
       await interaction.editReply({
         content: '❌ Please set up the ticket system first using `/ticket setup`.'
+      });
+      return;
+    }
+
+    // Validate configuration before creating panel
+    const validationService = new TicketValidationService(interaction.client, ticketService);
+    const validation = await validationService.validateConfiguration(config, interaction.guildId);
+    
+    if (!validation.isValid) {
+      const message = validationService.formatValidationMessage(validation);
+      await interaction.editReply({
+        content: message
       });
       return;
     }
