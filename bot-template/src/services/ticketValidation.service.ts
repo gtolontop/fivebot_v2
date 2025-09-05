@@ -167,16 +167,22 @@ export class TicketValidationService {
     errors: ValidationError[],
     warnings: ValidationWarning[]
   ): Promise<void> {
-    if (config.containerType === ContainerType.THREAD) {
+    // If containerType is not set, determine it from the configuration
+    // If ticketThreads is true in ticketData, we use THREAD mode
+    const ticketData = (global as any).ticketData || {};
+    const useThreads = ticketData.ticketThreads || false;
+    const containerType = config.containerType || (useThreads ? ContainerType.THREAD : ContainerType.CHANNEL);
+    
+    if (containerType === ContainerType.THREAD || useThreads) {
       // Validate thread container channel
-      if (!config.threadContainerChannelId) {
+      if (!config.threadContainerChannelId && !ticketData.ticketCategoryId) {
         errors.push({
           field: 'threadContainerChannelId',
           message: 'Thread mode is enabled but no container channel is set. Please configure a channel where ticket threads will be created.',
           messageFr: 'Le mode fil est activé mais aucun canal conteneur n\'est défini. Veuillez configurer un canal où les fils de tickets seront créés.',
           severity: 'critical'
         });
-      } else {
+      } else if (config.threadContainerChannelId) {
         const validation = await this.validateChannel(config.threadContainerChannelId, guildId);
         if (!validation.isValid) {
           errors.push({
@@ -187,15 +193,16 @@ export class TicketValidationService {
           });
         }
       }
-    } else if (config.containerType === ContainerType.CHANNEL) {
-      // Validate support category for channels
-      if (!config.supportCategoryId) {
-        warnings.push({
+    } else {
+      // Channel mode - validate support category
+      if (!config.supportCategoryId && !ticketData.ticketCategoryId) {
+        errors.push({
           field: 'supportCategoryId',
-          message: 'Channel mode is enabled but no support category is set. Tickets will be created without a category.',
-          messageFr: 'Le mode canal est activé mais aucune catégorie de support n\'est définie. Les tickets seront créés sans catégorie.'
+          message: 'Channel mode is enabled but no support category is set. Please configure a category where ticket channels will be created.',
+          messageFr: 'Le mode canal est activé mais aucune catégorie de support n\'est définie. Veuillez configurer une catégorie où les canaux de tickets seront créés.',
+          severity: 'critical'
         });
-      } else {
+      } else if (config.supportCategoryId) {
         const validation = await this.validateCategory(config.supportCategoryId, guildId);
         if (!validation.isValid) {
           warnings.push({
