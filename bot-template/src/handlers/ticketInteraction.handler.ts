@@ -275,33 +275,36 @@ export class TicketInteractionHandler {
         }
       }
 
-      // Send DM notification to creator
-      try {
-        const creator = await interaction.client.users.fetch(ticket.creatorId);
-        await creator.send({
-          embeds: [{
-            color: 0xE74C3C,
-            title: '🔒 Ticket Closed',
-            description: `Your ticket #${ticket.ticketNumber} in ${interaction.guild?.name} has been closed.`,
-            fields: [
-              {
-                name: 'Closed By',
-                value: interaction.user.tag,
-                inline: true
-              },
-              {
-                name: 'Reason',
-                value: reason,
-                inline: true
+      // Send DM notification to creator if enabled
+      const botConfig = JSON.parse(process.env.CONFIG || '{}');
+      if (botConfig.ticketDMNotifications) {
+        try {
+          const creator = await interaction.client.users.fetch(ticket.creatorId);
+          await creator.send({
+            embeds: [{
+              color: 0xE74C3C,
+              title: '🔒 Ticket Closed',
+              description: `Your ticket #${ticket.ticketNumber} in ${interaction.guild?.name} has been closed.`,
+              fields: [
+                {
+                  name: 'Closed By',
+                  value: interaction.user.tag,
+                  inline: true
+                },
+                {
+                  name: 'Reason',
+                  value: reason,
+                  inline: true
+                }
+              ],
+              footer: {
+                text: 'If you need further assistance, please create a new ticket.'
               }
-            ],
-            footer: {
-              text: 'If you need further assistance, please create a new ticket.'
-            }
-          }]
-        });
-      } catch {
-        // User has DMs disabled
+            }]
+          });
+        } catch {
+          // User has DMs disabled
+        }
       }
 
     } catch (error) {
