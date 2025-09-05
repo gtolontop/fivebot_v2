@@ -230,6 +230,24 @@ export class BotWorker extends WorkerHost {
     
     const containerId = `fivebot-${botId}-${Date.now()}`;
     
+    // Parse ticketData if it's stored as a string
+    if (config && config.ticketData && typeof config.ticketData === 'string') {
+      try {
+        config.ticketData = JSON.parse(config.ticketData);
+        this.logger.log(`Parsed ticketData:`, config.ticketData);
+      } catch (e) {
+        this.logger.error('Failed to parse ticketData:', e);
+      }
+    }
+    
+    this.logger.log(`Passing config to bot container:`, {
+      ...config,
+      ticketData: config?.ticketData ? {
+        ticketEnabled: config.ticketData?.ticketEnabled || false,
+        hasData: true
+      } : 'not present'
+    });
+    
     // Create environment file for the bot
     const envPath = `/tmp/${containerId}.env`;
     const envContent = [
