@@ -14,16 +14,19 @@ import {
 import { TicketService, TicketConfigWithArrays } from '../services/ticket.service';
 import { TicketStateManager } from '../services/ticketStateManager.service';
 import { TicketPanelService } from '../services/ticketPanel.service';
+import { TicketValidationService } from '../services/ticketValidation.service';
 import { ContainerType, TicketPriority } from '@prisma/client';
 
 export class TicketCreationHandler {
   private ticketService: TicketService;
   private stateManager: TicketStateManager;
   private ticketPanelService: TicketPanelService | null = null;
+  private validationService: TicketValidationService;
 
   constructor(ticketService: TicketService, stateManager: TicketStateManager) {
     this.ticketService = ticketService;
     this.stateManager = stateManager;
+    this.validationService = new TicketValidationService(ticketService['client']);
   }
   
   setTicketPanelService(panelService: TicketPanelService) {
@@ -54,7 +57,32 @@ export class TicketCreationHandler {
     interaction: ButtonInteraction | StringSelectMenuInteraction,
     categoryId: string
   ): Promise<void> {
-    // Check if user can create ticket
+    // Get configuration first
+    const config = await this.ticketService.getConfig(interaction.guildId!);
+    
+    // Validate configuration before proceeding
+    const validation = await this.validationService.validateTicketCreation(
+      config!,
+      interaction.guildId!,
+      interaction.user.id,
+      categoryId
+    );
+
+    if (!validation.isValid) {
+      const message = this.validationService.formatValidationMessage(validation);
+      await interaction.reply({
+        content: message,
+        ephemeral: true
+      });
+      return;
+    }
+
+    // Show warnings if any
+    if (validation.warnings.length > 0) {
+      console.log(`[TicketCreationHandler] Configuration warnings:`, validation.warnings);
+    }
+
+    // Check if user can create ticket (legacy check)
     const canCreate = await this.stateManager.canCreateTicket(
       interaction.guildId!,
       interaction.user.id
