@@ -16,6 +16,7 @@ import { TicketStateManager } from '../services/ticketStateManager.service';
 import { TicketPanelService } from '../services/ticketPanel.service';
 import { TicketValidationService } from '../services/ticketValidation.service';
 import { ContainerType, TicketPriority } from '@prisma/client';
+import { getErrorMessage, formatError } from '../utils/ticketErrorMessages';
 
 export class TicketCreationHandler {
   private ticketService: TicketService;
@@ -26,7 +27,7 @@ export class TicketCreationHandler {
   constructor(ticketService: TicketService, stateManager: TicketStateManager) {
     this.ticketService = ticketService;
     this.stateManager = stateManager;
-    this.validationService = new TicketValidationService(ticketService['client']);
+    this.validationService = new TicketValidationService(ticketService['client'], ticketService);
   }
   
   setTicketPanelService(panelService: TicketPanelService) {
@@ -416,8 +417,22 @@ export class TicketCreationHandler {
 
     } catch (error) {
       console.error('[TicketCreationHandler] Error creating ticket:', error);
+      
+      let errorMessage = getErrorMessage('CREATION_FAILED');
+      
+      // Handle specific error types
+      if (error instanceof Error) {
+        if (error.message.includes('thread')) {
+          errorMessage = getErrorMessage('THREAD_CREATE_FAILED');
+        } else if (error.message.includes('channel')) {
+          errorMessage = getErrorMessage('CHANNEL_CREATE_FAILED');
+        } else if (error.message.includes('permission')) {
+          errorMessage = getErrorMessage('NO_PERMISSION');
+        }
+      }
+      
       await interaction.editReply({
-        content: '❌ An error occurred while creating your ticket. Please try again later.'
+        content: formatError(errorMessage)
       });
     }
   }
@@ -446,10 +461,16 @@ export class TicketCreationHandler {
     );
 
     if (config.containerType === ContainerType.THREAD) {
-      // Create thread
-      const parentChannel = interaction.channel;
+      // Validate thread container channel
+      if (!config.threadContainerChannelId) {
+        throw new Error('Thread container channel not configured');
+      }
+      
+      // Get the configured thread container channel
+      const parentChannel = await interaction.guild!.channels.fetch(config.threadContainerChannelId).catch(() => null);
+      
       if (!parentChannel || !parentChannel.isTextBased() || parentChannel.isThread()) {
-        throw new Error('Invalid parent channel for thread creation');
+        throw new Error('Invalid thread container channel');
       }
 
       if ('threads' in parentChannel) {
@@ -688,8 +709,22 @@ export class TicketCreationHandler {
 
     } catch (error) {
       console.error('[TicketCreationHandler] Error creating ticket directly:', error);
+      
+      let errorMessage = getErrorMessage('CREATION_FAILED');
+      
+      // Handle specific error types
+      if (error instanceof Error) {
+        if (error.message.includes('thread')) {
+          errorMessage = getErrorMessage('THREAD_CREATE_FAILED');
+        } else if (error.message.includes('channel')) {
+          errorMessage = getErrorMessage('CHANNEL_CREATE_FAILED');
+        } else if (error.message.includes('permission')) {
+          errorMessage = getErrorMessage('NO_PERMISSION');
+        }
+      }
+      
       await interaction.editReply({
-        content: '❌ An error occurred while creating your ticket. Please try again later.'
+        content: formatError(errorMessage)
       });
     }
   }
