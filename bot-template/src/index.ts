@@ -128,14 +128,9 @@ class ChildBot {
       this.commandService = new CommandService(this.client, this.prisma, this.botId);
       
       // Initialize ticket system only if enabled
-      console.log('[TICKET] Checking if ticket system should be enabled...');
-      console.log('[TICKET] this.config:', this.config);
-      console.log('[TICKET] this.config.ticketData:', (this.config as any).ticketData);
       const ticketEnabled = (this.config as any).ticketData?.ticketEnabled || false;
-      console.log('[TICKET] ticketEnabled value:', ticketEnabled);
       
       if (ticketEnabled) {
-        console.log('[TICKET] Initializing ticket system...');
         this.ticketHandler = new TicketInteractionHandler(this.client);
         const services = this.ticketHandler.getServices();
         this.ticketService = services.ticketService;
