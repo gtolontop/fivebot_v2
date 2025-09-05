@@ -144,8 +144,6 @@ class ChildBot {
         }
         
         console.log('🎫 Ticket system initialized');
-      } else {
-        console.log('[TICKET] Ticket system is disabled');
       }
       
       // Start command service
