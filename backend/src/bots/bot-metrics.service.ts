@@ -36,6 +36,42 @@ export class BotMetricsService {
     private encryptionService: EncryptionService,
   ) {}
 
+  private async getRealtimeBotMetrics(botId: string, date: Date): Promise<{
+    commandsUsed: number;
+    messagesProcessed: number;
+    avgResponseTime: number;
+    errorsCount: number;
+  } | null> {
+    try {
+      // Check if we have existing metrics for today
+      const existingMetric = await this.prisma.$queryRaw`
+        SELECT 
+          commands_used as commandsUsed,
+          messages_processed as messagesProcessed,
+          avg_response_time_ms as avgResponseTime,
+          errors_count as errorsCount
+        FROM bot_metrics 
+        WHERE bot_id = ${botId} 
+        AND date = ${date}
+        LIMIT 1
+      ` as any[];
+
+      if (existingMetric.length > 0) {
+        return {
+          commandsUsed: existingMetric[0].commandsUsed || 0,
+          messagesProcessed: existingMetric[0].messagesProcessed || 0,
+          avgResponseTime: existingMetric[0].avgResponseTime || 45,
+          errorsCount: existingMetric[0].errorsCount || 0,
+        };
+      }
+
+      return null;
+    } catch (error) {
+      console.log('Error fetching realtime metrics:', error);
+      return null;
+    }
+  }
+
   async recordDailyMetrics(botId: string): Promise<void> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -64,12 +100,14 @@ export class BotMetricsService {
         acc + (guild.memberCount || 0), 0
       );
 
-      // For now, we'll use realistic estimates for commands/messages
-      // Later these could come from actual bot usage tracking
-      const commandsUsed = Math.floor(Math.random() * 50) + (guildsCount * 2);
-      const messagesProcessed = Math.floor(Math.random() * 200) + (guildsCount * 10);
-      const avgResponseTime = 45 + Math.floor(Math.random() * 20); // 45-65ms
-      const errorsCount = Math.floor(Math.random() * 3); // 0-2 errors per day
+      // Get today's real-time metrics from the cache if available
+      const realtimeData = await this.getRealtimeBotMetrics(botId, today);
+      
+      // Use real metrics if available, otherwise use minimal defaults
+      const commandsUsed = realtimeData?.commandsUsed || 0;
+      const messagesProcessed = realtimeData?.messagesProcessed || 0;
+      const avgResponseTime = realtimeData?.avgResponseTime || 45;
+      const errorsCount = realtimeData?.errorsCount || 0;
 
       // Calculate uptime (seconds bot has been online today)
       const now = new Date();
