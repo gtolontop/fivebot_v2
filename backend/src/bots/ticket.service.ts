@@ -281,18 +281,9 @@ export class TicketService {
         return this.getDefaultTicketStats();
       }
       
-      // Get bot's guilds
-      const botGuilds = await this.prisma.$queryRaw<{guildId: string}[]>`
-        SELECT DISTINCT guild_id as "guildId"
-        FROM bot_guilds
-        WHERE bot_id = ${botId}
-      `;
-      
-      const guildIds = botGuilds.map(g => g.guildId);
-      
-      if (guildIds.length === 0) {
-        return this.getDefaultTicketStats();
-      }
+      // For now, return default stats since we don't have guild tracking
+      // In a real implementation, you would get this from bot metrics or real-time data
+      return this.getDefaultTicketStats();
       
       const placeholders = guildIds.map(() => '?').join(', ');
       
