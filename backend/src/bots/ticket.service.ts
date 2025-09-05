@@ -285,19 +285,18 @@ export class TicketService {
       // Since tickets table has guild_id, we can query directly
       
       // Get ticket statistics
-      const stats = await this.prisma.$queryRawUnsafe<any[]>(`
+      const stats = await this.prisma.$queryRaw<any[]>`
         SELECT 
           COUNT(*) as totalTickets,
           COUNT(CASE WHEN state = 'OPEN' OR state = 'IN_PROGRESS' THEN 1 END) as openTickets,
           COUNT(CASE WHEN state = 'CLOSED' THEN 1 END) as closedTickets,
           COUNT(CASE WHEN DATE(created_at) = CURDATE() THEN 1 END) as todayTickets
         FROM tickets
-        WHERE guild_id IN (${placeholders})
-          AND deleted_at IS NULL
-      `, ...guildIds);
+        WHERE deleted_at IS NULL
+      `;
       
       // Get message count and average response time
-      const messageStats = await this.prisma.$queryRawUnsafe<any[]>(`
+      const messageStats = await this.prisma.$queryRaw<any[]>`
         SELECT 
           COUNT(DISTINCT tm.id) as totalMessages,
           AVG(CASE 
@@ -306,33 +305,30 @@ export class TicketService {
           END) as avgResponseTime
         FROM tickets t
         LEFT JOIN ticket_messages tm ON t.id = tm.ticket_id
-        WHERE t.guild_id IN (${placeholders})
-          AND t.deleted_at IS NULL
-      `, ...guildIds);
+        WHERE t.deleted_at IS NULL
+      `;
       
       // Get average resolution time
-      const resolutionStats = await this.prisma.$queryRawUnsafe<any[]>(`
+      const resolutionStats = await this.prisma.$queryRaw<any[]>`
         SELECT 
           AVG(TIMESTAMPDIFF(HOUR, created_at, closed_at)) as avgResolutionTime
         FROM tickets
-        WHERE guild_id IN (${placeholders})
-          AND deleted_at IS NULL
+        WHERE deleted_at IS NULL
           AND state = 'CLOSED'
           AND closed_at IS NOT NULL
-      `, ...guildIds);
+      `;
       
       // Get satisfaction score (if feedback exists)
-      const satisfactionStats = await this.prisma.$queryRawUnsafe<any[]>(`
+      const satisfactionStats = await this.prisma.$queryRaw<any[]>`
         SELECT 
           AVG(CASE 
             WHEN feedback_rating IS NOT NULL 
             THEN feedback_rating * 20 
           END) as satisfactionScore
         FROM tickets
-        WHERE guild_id IN (${placeholders})
-          AND deleted_at IS NULL
+        WHERE deleted_at IS NULL
           AND feedback_rating IS NOT NULL
-      `, ...guildIds);
+      `;
       
       const result = stats[0] || {};
       const msgResult = messageStats[0] || {};
