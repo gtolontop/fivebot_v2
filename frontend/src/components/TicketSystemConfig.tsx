@@ -178,6 +178,25 @@ export default function TicketSystemConfig({
       const panelsResponse = await botsAPI.getTicketPanels(botId);
       setPanels(panelsResponse.data.panels || []);
       
+      // Fetch real ticket statistics from the API
+      try {
+        const statsResponse = await botsAPI.getTicketStats(botId);
+        const stats = statsResponse.data;
+        setTicketStats({
+          total: stats.totalTickets || 0,
+          open: stats.openTickets || 0,
+          closed: stats.closedTickets || 0,
+          avgResponseTime: stats.avgResponseTime || 'N/A',
+          totalMessages: stats.totalMessages || 0,
+          avgResolutionTime: stats.avgResolutionTime || 'N/A',
+          satisfactionRate: stats.satisfactionScore || 0,
+          todayTickets: stats.todayTickets || 0
+        });
+        return; // Exit early if we got real stats
+      } catch (statsError) {
+        console.log('Failed to fetch ticket stats, using fallback calculation');
+      }
+      
       // Calculate stats
       const today = new Date();
       today.setHours(0, 0, 0, 0);

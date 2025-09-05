@@ -128,6 +128,9 @@ export const botsAPI = {
   getTickets: (botId: string) => 
     api.get(`/bots/${botId}/tickets`),
   
+  getTicketStats: (botId: string) =>
+    api.get(`/bots/${botId}/tickets/stats`),
+  
   closeTicket: (botId: string, ticketId: string) => 
     api.post(`/bots/${botId}/tickets/${ticketId}/close`),
 
