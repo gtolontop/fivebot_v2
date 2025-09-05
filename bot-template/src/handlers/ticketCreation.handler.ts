@@ -687,26 +687,28 @@ export class TicketCreationHandler {
         }]
       });
 
-      // Send DM notification
-      try {
-        await interaction.user.send({
-          embeds: [{
-            color: 0x00FF00,
-            title: 'Ticket Created',
-            description: `Your ${categoryName} ticket #${ticket.ticketNumber} has been created in ${interaction.guild?.name}.`,
-            fields: [
-              {
-                name: 'Access Your Ticket',
-                value: `[Click here](https://discord.com/channels/${interaction.guildId}/${container.id})`
+      // Send DM notification if enabled in config
+      if (botConfig.ticketDMNotifications) {
+        try {
+          await interaction.user.send({
+            embeds: [{
+              color: 0x00FF00,
+              title: 'Ticket Created',
+              description: `Your ${categoryName} ticket #${ticket.ticketNumber} has been created in ${interaction.guild?.name}.`,
+              fields: [
+                {
+                  name: 'Access Your Ticket',
+                  value: `[Click here](https://discord.com/channels/${interaction.guildId}/${container.id})`
+                }
+              ],
+              footer: {
+                text: 'You will receive notifications about your ticket here.'
               }
-            ],
-            footer: {
-              text: 'You will receive notifications about your ticket here.'
-            }
-          }]
-        });
-      } catch {
-        // User has DMs disabled
+            }]
+          });
+        } catch {
+          // User has DMs disabled
+        }
       }
 
     } catch (error) {
