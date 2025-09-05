@@ -39,21 +39,10 @@ export class TicketPanelService {
     // Store categories in memory for later use
     if (categories && categories.length > 0) {
       this.panelCategories.set(guild.id, categories);
-      console.log(`[TicketPanelService] Stored ${categories.length} categories for guild ${guild.id}`);
-      categories.forEach((cat, index) => {
-        console.log(`[TicketPanelService] Category ${index} - ${cat.name}:`, {
-          id: cat.id,
-          useCustomModal: cat.useCustomModal,
-          useCustomModalType: typeof cat.useCustomModal,
-          modalTitle: cat.modalTitle,
-          modalFields: cat.modalFields?.length || 0
-        });
-      });
     }
     try {
       const channel = await guild.channels.fetch(channelId) as TextChannel;
       if (!channel || !channel.isTextBased()) {
-        console.error('[TicketPanelService] Invalid channel or not text-based');
         throw new Error('Invalid channel');
       }
 
