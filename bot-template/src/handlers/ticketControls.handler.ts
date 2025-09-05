@@ -988,25 +988,28 @@ export class TicketControlsHandler {
         }
       }
 
-      // Notify creator
-      try {
-        const creator = await interaction.client.users.fetch(ticket.creatorId);
-        await creator.send({
-          embeds: [{
-            color: 0xE74C3C,
-            title: '🔒 Ticket Closed',
-            description: `Your ticket #${ticket.ticketNumber} has been closed.`,
-            fields: [
-              { name: 'Closed By', value: interaction.user.tag, inline: true },
-              { name: 'Reason', value: reason, inline: true }
-            ],
-            footer: {
-              text: allowReopen ? 'You can reopen this ticket if needed.' : 'Please create a new ticket if you need further assistance.'
-            }
-          }]
-        });
-      } catch {
-        // User has DMs disabled
+      // Notify creator if DM notifications are enabled
+      const botConfig = JSON.parse(process.env.CONFIG || '{}');
+      if (botConfig.ticketDMNotifications) {
+        try {
+          const creator = await interaction.client.users.fetch(ticket.creatorId);
+          await creator.send({
+            embeds: [{
+              color: 0xE74C3C,
+              title: '🔒 Ticket Closed',
+              description: `Your ticket #${ticket.ticketNumber} has been closed.`,
+              fields: [
+                { name: 'Closed By', value: interaction.user.tag, inline: true },
+                { name: 'Reason', value: reason, inline: true }
+              ],
+              footer: {
+                text: allowReopen ? 'You can reopen this ticket if needed.' : 'Please create a new ticket if you need further assistance.'
+              }
+            }]
+          });
+        } catch {
+          // User has DMs disabled
+        }
       }
     } catch (error) {
       console.error('[TicketControlsHandler] Error closing ticket:', error);
