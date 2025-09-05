@@ -150,25 +150,28 @@ export class TicketStateManager {
       // Update activity state to RED
       await this.ticketService.updateActivityState(ticket.id, ActivityState.RED);
 
-      // Send DM to ticket creator
-      try {
-        const creator = await this.client.users.fetch(ticket.creatorId);
-        await creator.send({
-          embeds: [{
-            color: 0xFF6B6B,
-            title: '⚠️ Ticket Inactivity Warning',
-            description: `Your ticket #${ticket.ticketNumber} in ${guild.name} will be closed in ${hoursUntilClose} hours due to inactivity.`,
-            fields: [
-              {
-                name: 'Ticket',
-                value: `<#${ticket.threadId || ticket.channelId}>`,
-                inline: true
-              }
-            ]
-          }]
-        });
-      } catch (err) {
-        // User might have DMs disabled
+      // Send DM to ticket creator if notifications are enabled
+      const botConfig = JSON.parse(process.env.CONFIG || '{}');
+      if (botConfig.ticketDMNotifications) {
+        try {
+          const creator = await this.client.users.fetch(ticket.creatorId);
+          await creator.send({
+            embeds: [{
+              color: 0xFF6B6B,
+              title: '⚠️ Ticket Inactivity Warning',
+              description: `Your ticket #${ticket.ticketNumber} in ${guild.name} will be closed in ${hoursUntilClose} hours due to inactivity.`,
+              fields: [
+                {
+                  name: 'Ticket',
+                  value: `<#${ticket.threadId || ticket.channelId}>`,
+                  inline: true
+                }
+              ]
+            }]
+          });
+        } catch (err) {
+          // User might have DMs disabled
+        }
       }
 
       await this.ticketService.logAction(ticket.id, 'WARNING_SENT', 'SYSTEM', {
@@ -219,21 +222,24 @@ export class TicketStateManager {
       // Update ticket state
       await this.ticketService.closeTicket(ticket.id, 'SYSTEM', 'Auto-closed due to inactivity');
 
-      // Send DM to creator
-      try {
-        const creator = await this.client.users.fetch(ticket.creatorId);
-        await creator.send({
-          embeds: [{
-            color: 0xE74C3C,
-            title: '🔒 Ticket Closed',
-            description: `Your ticket #${ticket.ticketNumber} in ${guild.name} has been closed due to inactivity.`,
-            footer: {
-              text: 'If you need further assistance, please create a new ticket.'
-            }
-          }]
-        });
-      } catch (err) {
-        // User might have DMs disabled
+      // Send DM to creator if notifications are enabled
+      const botConfig = JSON.parse(process.env.CONFIG || '{}');
+      if (botConfig.ticketDMNotifications) {
+        try {
+          const creator = await this.client.users.fetch(ticket.creatorId);
+          await creator.send({
+            embeds: [{
+              color: 0xE74C3C,
+              title: '🔒 Ticket Closed',
+              description: `Your ticket #${ticket.ticketNumber} in ${guild.name} has been closed due to inactivity.`,
+              footer: {
+                text: 'If you need further assistance, please create a new ticket.'
+              }
+            }]
+          });
+        } catch (err) {
+          // User might have DMs disabled
+        }
       }
     } catch (error) {
       console.error(`[TicketStateManager] Error auto-closing ticket ${ticket.id}:`, error);
