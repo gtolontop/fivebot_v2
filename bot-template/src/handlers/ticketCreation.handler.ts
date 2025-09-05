@@ -279,6 +279,22 @@ export class TicketCreationHandler {
         throw new Error('Ticket system not configured');
       }
 
+      // Validate configuration again before creating ticket
+      const validation = await this.validationService.validateTicketCreation(
+        config,
+        interaction.guildId!,
+        interaction.user.id,
+        categoryId
+      );
+
+      if (!validation.isValid) {
+        const message = this.validationService.formatValidationMessage(validation);
+        await interaction.editReply({
+          content: message
+        });
+        return;
+      }
+
       // Create ticket container (thread or channel)
       const container = await this.createTicketContainer(
         interaction,
@@ -527,6 +543,22 @@ export class TicketCreationHandler {
       const config = await this.ticketService.getConfig(interaction.guildId!);
       if (!config) {
         throw new Error('Ticket system not configured');
+      }
+
+      // Validate configuration before creating ticket
+      const validation = await this.validationService.validateTicketCreation(
+        config,
+        interaction.guildId!,
+        interaction.user.id,
+        categoryId
+      );
+
+      if (!validation.isValid) {
+        const message = this.validationService.formatValidationMessage(validation);
+        await interaction.editReply({
+          content: message
+        });
+        return;
       }
 
       // Default values for direct creation
