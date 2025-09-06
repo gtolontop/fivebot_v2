@@ -1,4 +1,4 @@
-import { Client, ActivityType, TextChannel, ActionRowBuilder, ButtonBuilder, StringSelectMenuBuilder } from 'discord.js';
+import { Client, ActivityType, TextChannel, ActionRowBuilder, ButtonBuilder, StringSelectMenuBuilder, ButtonStyle } from 'discord.js';
 import { PrismaClient } from '@prisma/client';
 import { commands } from '../commands';
 
@@ -180,9 +180,9 @@ async function restoreTicketPanels(client: Client, prisma: PrismaClient) {
 
             for (const category of panel.config.categories) {
               const button = new ButtonBuilder()
-                .setCustomId(`ticket_create:${category.id}`)
+                .setCustomId(`ticket:create:${category.id}`)
                 .setLabel(category.name)
-                .setStyle(2); // Primary style
+                .setStyle(ButtonStyle.Secondary);
                 
               if (category.emoji) button.setEmoji(category.emoji);
               if (category.description && category.description.length <= 100) {
@@ -205,7 +205,7 @@ async function restoreTicketPanels(client: Client, prisma: PrismaClient) {
           
           if (panel.type === 'DROPDOWN' || panel.type === 'HYBRID') {
             const dropdown = new StringSelectMenuBuilder()
-              .setCustomId('ticket_category_select')
+              .setCustomId('ticket:category:select')
               .setPlaceholder('Select a category...')
               .addOptions(
                 panel.config.categories.map(category => ({
