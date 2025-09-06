@@ -146,9 +146,30 @@ async function restoreTicketPanels(client: Client, prisma: PrismaClient) {
         }
 
         // Try to fetch the existing message
-        const existingMessage = await channel.messages.fetch(panel.messageId).catch(() => null);
+        if (!panel.messageId) {
+          console.warn(`No message ID for panel ${panel.id}`);
+          failedCount++;
+          continue;
+        }
+
+        let existingMessage;
+        try {
+          existingMessage = await channel.messages.fetch(panel.messageId);
+          console.log(`Fetched message type: ${typeof existingMessage}, editable: ${existingMessage?.editable}`);
+        } catch (error) {
+          console.warn(`Message ${panel.messageId} not found for panel ${panel.id}`);
+          failedCount++;
+          continue;
+        }
         
-        if (existingMessage) {
+        // Verify it's a valid Discord message
+        if (!existingMessage || typeof existingMessage.edit !== 'function') {
+          console.warn(`Invalid message object for panel ${panel.id}`);
+          failedCount++;
+          continue;
+        }
+        
+        if (existingMessage.editable) {
           // Message exists, update its components to ensure they're interactive
           const components = [];
           
@@ -161,7 +182,7 @@ async function restoreTicketPanels(client: Client, prisma: PrismaClient) {
               const button = new ButtonBuilder()
                 .setCustomId(`ticket_create:${category.id}`)
                 .setLabel(category.name)
-                .setStyle(category.buttonStyle as any);
+                .setStyle(2); // Primary style
                 
               if (category.emoji) button.setEmoji(category.emoji);
               if (category.description && category.description.length <= 100) {
@@ -198,11 +219,16 @@ async function restoreTicketPanels(client: Client, prisma: PrismaClient) {
             components.push(new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(dropdown));
           }
 
-          await existingMessage.edit({ components });
-          restoredCount++;
-        } else {
-          // Message doesn't exist, mark panel as needing recreation
-          console.warn(`Message ${panel.messageId} not found for panel ${panel.id}`);
+          try {
+            await existingMessage.edit({ components });
+            restoredCount++;
+            console.log(`Restored panel ${panel.id} in channel ${channel.name}`);
+          } catch (error) {
+            console.error(`Failed to edit message for panel ${panel.id}:`, error.message);
+            failedCount++;
+          }
+        } else if (existingMessage && !existingMessage.editable) {
+          console.warn(`Message ${panel.messageId} is not editable for panel ${panel.id} (might not be from this bot)`);
           failedCount++;
         }
       } catch (error) {
