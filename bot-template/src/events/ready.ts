@@ -111,13 +111,16 @@ async function restoreTicketPanels(client: Client, prisma: PrismaClient) {
     
     // Get all active panels from database
     const panels = await prisma.ticketPanel.findMany({
-      where: { enabled: true },
+      where: { active: true },
       include: {
-        categories: {
-          where: { enabled: true },
-          orderBy: { order: 'asc' }
-        },
-        config: true
+        config: {
+          include: {
+            categories: {
+              where: { active: true },
+              orderBy: { order: 'asc' }
+            }
+          }
+        }
       }
     });
 
@@ -154,7 +157,7 @@ async function restoreTicketPanels(client: Client, prisma: PrismaClient) {
             let currentRow = new ActionRowBuilder<ButtonBuilder>();
             let buttonCount = 0;
 
-            for (const category of panel.categories) {
+            for (const category of panel.config.categories) {
               const button = new ButtonBuilder()
                 .setCustomId(`ticket_create:${category.id}`)
                 .setLabel(category.name)
@@ -182,9 +185,9 @@ async function restoreTicketPanels(client: Client, prisma: PrismaClient) {
           if (panel.type === 'DROPDOWN' || panel.type === 'HYBRID') {
             const dropdown = new StringSelectMenuBuilder()
               .setCustomId('ticket_category_select')
-              .setPlaceholder(panel.dropdownPlaceholder || 'Select a category...')
+              .setPlaceholder('Select a category...')
               .addOptions(
-                panel.categories.map(category => ({
+                panel.config.categories.map(category => ({
                   label: category.name,
                   description: category.description?.substring(0, 100),
                   value: category.id,
