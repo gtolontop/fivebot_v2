@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { BotsService } from './bots.service';
+import { EncryptionService } from '../common/encryption/encryption.service';
+import { DiscordService } from '../common/discord/discord.service';
 
 export interface TicketCategory {
   id: string;
@@ -46,7 +48,9 @@ export interface TicketData {
 export class TicketService {
   constructor(
     private prisma: PrismaService,
-    private botsService: BotsService
+    private botsService: BotsService,
+    private encryptionService: EncryptionService,
+    private discordService: DiscordService
   ) {}
 
   private async getTicketData(botId: string): Promise<TicketData> {
@@ -200,16 +204,18 @@ export class TicketService {
         return [];
       }
       
-      // Get tickets from the tickets table - filtered by bot's guilds
-      const botGuilds = await this.prisma.$queryRaw<{guildId: string}[]>`
-        SELECT DISTINCT guild_id as "guildId"
-        FROM bot_guilds
-        WHERE bot_id = ${botId}
-      `;
-      
-      const guildIds = botGuilds.map(g => g.guildId);
-      
-      if (guildIds.length === 0) {
+      // Get guild IDs associated with this bot from Discord API
+      let guildIds: string[] = [];
+      try {
+        const decryptedToken = this.encryptionService.decrypt(bot.tokenEncrypted);
+        const guilds = await this.discordService.getBotGuilds(decryptedToken);
+        guildIds = guilds.map(guild => guild.id);
+        
+        if (guildIds.length === 0) {
+          return [];
+        }
+      } catch (error) {
+        console.error('Error fetching bot guilds:', error);
         return [];
       }
       
@@ -281,11 +287,35 @@ export class TicketService {
         return this.getDefaultTicketStats();
       }
       
-      // Get ticket statistics directly without guild filtering
-      // Since tickets table has guild_id, we can query directly
+      // Get bot to access Discord API
+      const bot = await this.prisma.bot.findUnique({
+        where: { id: botId }
+      });
       
-      // Get ticket statistics
-      const stats = await this.prisma.$queryRaw<any[]>`
+      if (!bot) {
+        return this.getDefaultTicketStats();
+      }
+      
+      // Get guild IDs associated with this bot from Discord API
+      let guildIds: string[] = [];
+      try {
+        const decryptedToken = this.encryptionService.decrypt(bot.tokenEncrypted);
+        const guilds = await this.discordService.getBotGuilds(decryptedToken);
+        guildIds = guilds.map(guild => guild.id);
+        
+        if (guildIds.length === 0) {
+          return this.getDefaultTicketStats();
+        }
+      } catch (error) {
+        console.error('Error fetching bot guilds:', error);
+        return this.getDefaultTicketStats();
+      }
+      
+      // Create placeholders for SQL IN clause
+      const placeholders = guildIds.map((_, index) => `$${index + 1}`).join(', ');
+      
+      // Get ticket statistics filtered by guild_id
+      const stats = await this.prisma.$queryRawUnsafe<any[]>(`
         SELECT 
           COUNT(*) as totalTickets,
           COUNT(CASE WHEN state = 'OPEN' OR state = 'IN_PROGRESS' THEN 1 END) as openTickets,
@@ -293,10 +323,11 @@ export class TicketService {
           COUNT(CASE WHEN DATE(created_at) = CURDATE() THEN 1 END) as todayTickets
         FROM tickets
         WHERE deleted_at IS NULL
-      `;
+          AND guild_id IN (${placeholders})
+      `, ...guildIds);
       
       // Get message count and average response time
-      const messageStats = await this.prisma.$queryRaw<any[]>`
+      const messageStats = await this.prisma.$queryRawUnsafe<any[]>(`
         SELECT 
           COUNT(DISTINCT tm.id) as totalMessages,
           AVG(CASE 
@@ -306,20 +337,22 @@ export class TicketService {
         FROM tickets t
         LEFT JOIN ticket_messages tm ON t.id = tm.ticket_id
         WHERE t.deleted_at IS NULL
-      `;
+          AND t.guild_id IN (${placeholders})
+      `, ...guildIds);
       
       // Get average resolution time
-      const resolutionStats = await this.prisma.$queryRaw<any[]>`
+      const resolutionStats = await this.prisma.$queryRawUnsafe<any[]>(`
         SELECT 
           AVG(TIMESTAMPDIFF(HOUR, created_at, closed_at)) as avgResolutionTime
         FROM tickets
         WHERE deleted_at IS NULL
           AND state = 'CLOSED'
           AND closed_at IS NOT NULL
-      `;
+          AND guild_id IN (${placeholders})
+      `, ...guildIds);
       
       // Get satisfaction score (if feedback exists)
-      const satisfactionStats = await this.prisma.$queryRaw<any[]>`
+      const satisfactionStats = await this.prisma.$queryRawUnsafe<any[]>(`
         SELECT 
           AVG(CASE 
             WHEN feedback_rating IS NOT NULL 
@@ -328,7 +361,8 @@ export class TicketService {
         FROM tickets
         WHERE deleted_at IS NULL
           AND feedback_rating IS NOT NULL
-      `;
+          AND guild_id IN (${placeholders})
+      `, ...guildIds);
       
       const result = stats[0] || {};
       const msgResult = messageStats[0] || {};

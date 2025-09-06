@@ -304,7 +304,7 @@ model TicketConfig {
   guildId               String              @unique @map("guild_id")
   enabled               Boolean             @default(true)
   assignmentModel       AssignmentModel     @default(COLLABORATIVE)
-  containerType         ContainerType       @default(THREAD)
+  containerType         ContainerType       @default(CHANNEL)
   namingPattern         String              @default("ticket-{counter}") @map("naming_pattern")
   startingNumber        Int                 @default(1) @map("starting_number")
   staffRoles            Json                @default("[]") @map("staff_roles")
