@@ -129,6 +129,8 @@ async function restoreTicketPanels(client: Client, prisma: PrismaClient) {
 
     for (const panel of panels) {
       try {
+        console.log(`Processing panel ${panel.id}, categories: ${panel.config.categories.length}`);
+        
         // Find the guild
         const guild = client.guilds.cache.get(panel.guildId);
         if (!guild) {
@@ -181,6 +183,12 @@ async function restoreTicketPanels(client: Client, prisma: PrismaClient) {
             const buttonRows = [];
             let currentRow = new ActionRowBuilder<ButtonBuilder>();
             let buttonCount = 0;
+
+            console.log(`Creating buttons for ${panel.config.categories.length} categories`);
+            
+            if (panel.config.categories.length === 0) {
+              console.warn(`No categories found for panel ${panel.id}`);
+            }
 
             for (const category of panel.config.categories) {
               const button = new ButtonBuilder()
