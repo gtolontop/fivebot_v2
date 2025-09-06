@@ -171,22 +171,13 @@ export class TicketValidationService {
     const containerType = config.containerType || ContainerType.CHANNEL;
     
     if (containerType === ContainerType.THREAD) {
-      // Validate thread container channel
-      if (!config.threadContainerChannelId) {
+      // For thread mode, we need a support category where the hub channel will be created
+      if (!config.supportCategoryId) {
         errors.push({
-          field: 'threadContainerChannelId',
-          message: 'Thread mode is enabled but no container channel is set. Please configure a channel where ticket threads will be created.',
-          messageFr: 'Le mode fil est activé mais aucun canal conteneur n\'est défini. Veuillez configurer un canal où les fils de tickets seront créés.',
+          field: 'supportCategoryId',
+          message: 'Thread mode is enabled but no support category is set. Please configure a category where the ticket hub channel will be created.',
+          messageFr: 'Le mode fil est activé mais aucune catégorie de support n\'est définie. Veuillez configurer une catégorie où le canal hub sera créé.',
           severity: 'critical'
-        });
-      } else {
-        const validation = await this.validateChannel(config.threadContainerChannelId, guildId);
-        if (!validation.isValid) {
-          errors.push({
-            field: 'threadContainerChannelId',
-            message: `The configured thread container channel is invalid: ${validation.error}. Please select a valid text channel.`,
-            messageFr: `Le canal conteneur de fils configuré est invalide: ${validation.error}. Veuillez sélectionner un canal texte valide.`,
-            severity: 'critical'
           });
         }
       }

@@ -54,7 +54,7 @@ export class TicketPanelService {
             guildId: guild.id,
             enabled: true,
             assignmentModel: 'COLLABORATIVE',
-            containerType: 'THREAD',
+            containerType: 'CHANNEL',
             namingPattern: 'ticket-{counter}',
             startingNumber: 1,
             staffRoles: [],

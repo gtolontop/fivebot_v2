@@ -463,27 +463,94 @@ export class TicketCreationHandler {
     );
 
     if (config.containerType === ContainerType.THREAD) {
-      // Validate thread container channel
-      if (!config.threadContainerChannelId) {
-        throw new Error('Thread container channel not configured');
-      }
+      // Find or create hub channel for threads
+      let hubChannel: TextChannel;
       
-      // Get the configured thread container channel
-      const parentChannel = await interaction.guild!.channels.fetch(config.threadContainerChannelId).catch(() => null);
-      
-      if (!parentChannel || !parentChannel.isTextBased() || parentChannel.isThread()) {
-        throw new Error('Invalid thread container channel');
+      if (config.supportCategoryId) {
+        const category = await interaction.guild!.channels.fetch(config.supportCategoryId) as CategoryChannel;
+        
+        // Look for existing hub channel
+        hubChannel = category.children.cache.find(
+          ch => ch.type === ChannelType.GuildText && ch.name === 'ticket-hub'
+        ) as TextChannel;
+
+        if (!hubChannel) {
+          // Create hub channel
+          hubChannel = await interaction.guild!.channels.create({
+            name: 'ticket-hub',
+            type: ChannelType.GuildText,
+            parent: category,
+            permissionOverwrites: [
+              {
+                id: interaction.guild!.id,
+                deny: [PermissionsBitField.Flags.SendMessages],
+                allow: [PermissionsBitField.Flags.ViewChannel]
+              },
+              ...config.staffRoles.map(roleId => ({
+                id: roleId,
+                allow: [
+                  PermissionsBitField.Flags.ViewChannel,
+                  PermissionsBitField.Flags.SendMessages,
+                  PermissionsBitField.Flags.ManageThreads
+                ]
+              }))
+            ]
+          });
+
+          // Send info message
+          await hubChannel.send({
+            embeds: [{
+              color: 0x2F3136,
+              title: '🎫 Ticket Hub',
+              description: 'All support tickets are created as threads in this channel.',
+              fields: [
+                {
+                  name: 'For Users',
+                  value: 'Your ticket thread will appear below when created.'
+                },
+                {
+                  name: 'For Staff',
+                  value: 'All active ticket threads are visible here.'
+                }
+              ]
+            }]
+          });
+        }
+      } else {
+        // No category specified, use first text channel
+        hubChannel = interaction.guild!.channels.cache
+          .filter(ch => ch.type === ChannelType.GuildText)
+          .first() as TextChannel;
       }
 
-      if ('threads' in parentChannel) {
-        return await parentChannel.threads.create({
-          name: channelName,
-          autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,
-          reason: `Ticket created by ${interaction.user.tag}`
-        });
-      } else {
-        throw new Error('Channel does not support threads');
+      if (!hubChannel) {
+        throw new Error('No suitable hub channel found');
       }
+
+      // Create thread
+      const thread = await hubChannel.threads.create({
+        name: channelName,
+        autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,
+        type: ChannelType.PrivateThread,
+        reason: `Ticket created by ${interaction.user.tag}`,
+        invitable: false
+      });
+
+      // Add creator to thread
+      await thread.members.add(member.id);
+
+      // Add staff roles
+      for (const roleId of config.staffRoles) {
+        const role = interaction.guild!.roles.cache.get(roleId);
+        if (role) {
+          const staffMembers = role.members;
+          for (const [, staffMember] of staffMembers) {
+            await thread.members.add(staffMember.id).catch(() => {});
+          }
+        }
+      }
+
+      return thread;
     } else {
       // Create channel
       const category = config.supportCategoryId

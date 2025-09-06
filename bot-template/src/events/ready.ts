@@ -1,4 +1,4 @@
-import { Client, ActivityType } from 'discord.js';
+import { Client, ActivityType, TextChannel, ActionRowBuilder, ButtonBuilder, StringSelectMenuBuilder } from 'discord.js';
 import { PrismaClient } from '@prisma/client';
 import { commands } from '../commands';
 
@@ -52,6 +52,9 @@ export async function ready(client: Client, prisma: PrismaClient, botId: string)
 
     console.log('Bot ready');
     
+    // Restore ticket panels
+    await restoreTicketPanels(client, prisma);
+    
   } catch (error) {
     console.error('❌ Failed to update bot status:', error);
     
@@ -99,5 +102,114 @@ async function deployCommands(client: Client) {
     console.log('Slash commands registered');
   } catch (error) {
     console.error('❌ Error deploying commands:', error);
+  }
+}
+
+async function restoreTicketPanels(client: Client, prisma: PrismaClient) {
+  try {
+    console.log('Restoring ticket panels...');
+    
+    // Get all active panels from database
+    const panels = await prisma.ticketPanel.findMany({
+      where: { enabled: true },
+      include: {
+        categories: {
+          where: { enabled: true },
+          orderBy: { order: 'asc' }
+        },
+        config: true
+      }
+    });
+
+    let restoredCount = 0;
+    let failedCount = 0;
+
+    for (const panel of panels) {
+      try {
+        // Find the guild
+        const guild = client.guilds.cache.get(panel.guildId);
+        if (!guild) {
+          console.warn(`Guild ${panel.guildId} not found for panel ${panel.id}`);
+          failedCount++;
+          continue;
+        }
+
+        // Find the channel
+        const channel = guild.channels.cache.get(panel.channelId) as TextChannel;
+        if (!channel) {
+          console.warn(`Channel ${panel.channelId} not found for panel ${panel.id}`);
+          failedCount++;
+          continue;
+        }
+
+        // Try to fetch the existing message
+        const existingMessage = await channel.messages.fetch(panel.messageId).catch(() => null);
+        
+        if (existingMessage) {
+          // Message exists, update its components to ensure they're interactive
+          const components = [];
+          
+          if (panel.type === 'BUTTON' || panel.type === 'HYBRID') {
+            const buttonRows = [];
+            let currentRow = new ActionRowBuilder<ButtonBuilder>();
+            let buttonCount = 0;
+
+            for (const category of panel.categories) {
+              const button = new ButtonBuilder()
+                .setCustomId(`ticket_create:${category.id}`)
+                .setLabel(category.name)
+                .setStyle(category.buttonStyle as any);
+                
+              if (category.emoji) button.setEmoji(category.emoji);
+              if (category.description && category.description.length <= 100) {
+                button.setLabel(`${category.name} - ${category.description}`);
+              }
+              
+              currentRow.addComponents(button);
+              buttonCount++;
+              
+              if (buttonCount === 5) {
+                buttonRows.push(currentRow);
+                currentRow = new ActionRowBuilder<ButtonBuilder>();
+                buttonCount = 0;
+              }
+            }
+            
+            if (buttonCount > 0) buttonRows.push(currentRow);
+            components.push(...buttonRows);
+          }
+          
+          if (panel.type === 'DROPDOWN' || panel.type === 'HYBRID') {
+            const dropdown = new StringSelectMenuBuilder()
+              .setCustomId('ticket_category_select')
+              .setPlaceholder(panel.dropdownPlaceholder || 'Select a category...')
+              .addOptions(
+                panel.categories.map(category => ({
+                  label: category.name,
+                  description: category.description?.substring(0, 100),
+                  value: category.id,
+                  emoji: category.emoji || undefined
+                }))
+              );
+              
+            components.push(new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(dropdown));
+          }
+
+          await existingMessage.edit({ components });
+          restoredCount++;
+        } else {
+          // Message doesn't exist, mark panel as needing recreation
+          console.warn(`Message ${panel.messageId} not found for panel ${panel.id}`);
+          failedCount++;
+        }
+      } catch (error) {
+        console.error(`Failed to restore panel ${panel.id}:`, error);
+        failedCount++;
+      }
+    }
+
+    console.log(`Ticket panels restored: ${restoredCount} successful, ${failedCount} failed`);
+  } catch (error) {
+    console.error('Failed to restore ticket panels:', error);
   }
 }
