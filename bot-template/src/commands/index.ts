@@ -2,6 +2,7 @@ import { SlashCommandBuilder } from 'discord.js';
 import * as statsCommand from './stats';
 import * as ticketCommand from './ticket';
 import * as ticketExampleCommand from './ticketExample';
+import * as ticketDebugCommand from './ticketDebug';
 
 // Default bot commands
 const defaultCommands = [
@@ -49,6 +50,7 @@ const defaultCommands = [
   statsCommand.data,
   ticketCommand.data,
   ticketExampleCommand.data,
+  ticketDebugCommand.data,
 ];
 
 // Function to build commands dynamically including custom commands
