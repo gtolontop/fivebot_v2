@@ -178,8 +178,7 @@ export class TicketValidationService {
           message: 'Thread mode is enabled but no support category is set. Please configure a category where the ticket hub channel will be created.',
           messageFr: 'Le mode fil est activé mais aucune catégorie de support n\'est définie. Veuillez configurer une catégorie où le canal hub sera créé.',
           severity: 'critical'
-          });
-        }
+        });
       }
     } else {
       // Channel mode - validate support category
