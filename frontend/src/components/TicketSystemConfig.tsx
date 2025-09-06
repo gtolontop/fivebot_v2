@@ -95,7 +95,10 @@ export default function TicketSystemConfig({
     totalMessages: 0,
     avgResolutionTime: 'N/A',
     satisfactionRate: 0,
-    todayTickets: 0
+    todayTickets: 0,
+    peakHours: '2PM - 6PM',
+    topCategory: { name: 'General', percentage: 45 },
+    staffPerformance: 92
   });
   const [categories, setCategories] = useState<TicketCategory[]>([]);
   const [panels, setPanels] = useState<TicketPanel[]>([]);
@@ -170,6 +173,50 @@ export default function TicketSystemConfig({
       const tickets = ticketsResponse.data.tickets || [];
       setActiveTickets(tickets);
       
+      // Calculate peak hours
+      const hourlyTickets: { [hour: number]: number } = {};
+      tickets.forEach((ticket: any) => {
+        const hour = new Date(ticket.createdAt).getHours();
+        hourlyTickets[hour] = (hourlyTickets[hour] || 0) + 1;
+      });
+      
+      let peakHour = 14;
+      let maxTickets = 0;
+      Object.entries(hourlyTickets).forEach(([hour, count]) => {
+        if (count > maxTickets) {
+          maxTickets = count;
+          peakHour = parseInt(hour);
+        }
+      });
+      
+      const formatHour = (h: number) => {
+        const period = h >= 12 ? 'PM' : 'AM';
+        const hour12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+        return `${hour12}${period}`;
+      };
+      
+      const peakHoursStr = `${formatHour(peakHour)} - ${formatHour((peakHour + 4) % 24)}`;
+      
+      // Calculate category statistics
+      const categoryCount: { [category: string]: number } = {};
+      tickets.forEach((ticket: any) => {
+        const category = ticket.category || 'General';
+        categoryCount[category] = (categoryCount[category] || 0) + 1;
+      });
+      
+      let topCategoryName = 'General';
+      let topCategoryCount = 0;
+      Object.entries(categoryCount).forEach(([category, count]) => {
+        if (count > topCategoryCount) {
+          topCategoryCount = count;
+          topCategoryName = category;
+        }
+      });
+      
+      const topCategoryPercentage = tickets.length > 0 
+        ? Math.round((topCategoryCount / tickets.length) * 100)
+        : 0;
+      
       // Fetch categories
       const categoriesResponse = await botsAPI.getTicketCategories(botId);
       setCategories(categoriesResponse.data.categories || []);
@@ -182,6 +229,23 @@ export default function TicketSystemConfig({
       try {
         const statsResponse = await botsAPI.getTicketStats(botId);
         const stats = statsResponse.data;
+        // Calculate staff performance (tickets resolved within average time)
+        const closedTickets = tickets.filter((t: any) => 
+          t.state === 'CLOSED' || t.state === 'RESOLVED'
+        );
+        const avgResolutionHours = stats.avgResolutionTime && stats.avgResolutionTime !== 'N/A' 
+          ? parseInt(stats.avgResolutionTime) 
+          : 24;
+        const ticketsResolvedInTime = closedTickets.filter((t: any) => {
+          if (!t.closedAt) return false;
+          const resolutionTime = (new Date(t.closedAt).getTime() - new Date(t.createdAt).getTime()) / 3600000;
+          return resolutionTime <= avgResolutionHours;
+        });
+        
+        const staffPerformance = closedTickets.length > 0
+          ? Math.round((ticketsResolvedInTime.length / closedTickets.length) * 100)
+          : 100;
+
         setTicketStats({
           total: stats.totalTickets || 0,
           open: stats.openTickets || 0,
@@ -190,7 +254,10 @@ export default function TicketSystemConfig({
           totalMessages: stats.totalMessages || 0,
           avgResolutionTime: stats.avgResolutionTime || 'N/A',
           satisfactionRate: stats.satisfactionScore || 0,
-          todayTickets: stats.todayTickets || 0
+          todayTickets: stats.todayTickets || 0,
+          peakHours: peakHoursStr || '2PM - 6PM',
+          topCategory: { name: topCategoryName || 'General', percentage: topCategoryPercentage || 45 },
+          staffPerformance: staffPerformance || 92
         });
         return; // Exit early if we got real stats
       } catch (statsError) {
@@ -234,6 +301,18 @@ export default function TicketSystemConfig({
         ? Math.round(closedWithSatisfaction.reduce((sum: number, t: any) => sum + (t.satisfaction || 0), 0) / closedWithSatisfaction.length)
         : 0;
       
+      // Calculate staff performance for fallback
+      const avgResolutionHours = avgResolutionTime > 0 ? avgResolutionTime : 24;
+      const ticketsResolvedInTime = closedTickets.filter((t: any) => {
+        if (!t.closedAt) return false;
+        const resolutionTime = (new Date(t.closedAt).getTime() - new Date(t.createdAt).getTime()) / 3600000;
+        return resolutionTime <= avgResolutionHours;
+      });
+      
+      const staffPerformance = closedTickets.length > 0
+        ? Math.round((ticketsResolvedInTime.length / closedTickets.length) * 100)
+        : 100;
+      
       setTicketStats({
         total: tickets.length,
         open: openTickets.length,
@@ -242,7 +321,10 @@ export default function TicketSystemConfig({
         totalMessages,
         avgResolutionTime: avgResolutionTime > 0 ? `${avgResolutionTime}h` : 'N/A',
         satisfactionRate,
-        todayTickets: todayTickets.length
+        todayTickets: todayTickets.length,
+        peakHours: peakHoursStr,
+        topCategory: { name: topCategoryName, percentage: topCategoryPercentage },
+        staffPerformance
       });
     } catch (error) {
       console.error('Error fetching ticket data:', error);
@@ -1286,19 +1368,19 @@ export default function TicketSystemConfig({
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="bg-gray-50 rounded-lg p-4">
                       <h4 className="text-sm font-medium text-gray-700 mb-2">Peak Hours</h4>
-                      <p className="text-2xl font-bold text-gray-900">2PM - 6PM</p>
+                      <p className="text-2xl font-bold text-gray-900">{ticketStats.peakHours}</p>
                       <p className="text-xs text-gray-500">Most tickets created</p>
                     </div>
                     
                     <div className="bg-gray-50 rounded-lg p-4">
                       <h4 className="text-sm font-medium text-gray-700 mb-2">Top Category</h4>
-                      <p className="text-2xl font-bold text-gray-900">General</p>
-                      <p className="text-xs text-gray-500">45% of all tickets</p>
+                      <p className="text-2xl font-bold text-gray-900">{ticketStats.topCategory.name}</p>
+                      <p className="text-xs text-gray-500">{ticketStats.topCategory.percentage}% of all tickets</p>
                     </div>
                     
                     <div className="bg-gray-50 rounded-lg p-4">
                       <h4 className="text-sm font-medium text-gray-700 mb-2">Staff Performance</h4>
-                      <p className="text-2xl font-bold text-gray-900">92%</p>
+                      <p className="text-2xl font-bold text-gray-900">{ticketStats.staffPerformance}%</p>
                       <p className="text-xs text-gray-500">Tickets resolved in time</p>
                     </div>
                   </div>
