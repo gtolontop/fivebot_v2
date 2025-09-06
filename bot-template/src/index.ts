@@ -6,6 +6,7 @@ import { interactionCreate } from './events/interactionCreate';
 import { guildMemberAdd } from './events/guildMemberAdd';
 import messageCreateHandler from './events/messageCreate';
 import { MetricsService } from './services/metrics.service';
+import { initializeTicketConfigSync } from './utils/syncTicketConfig';
 import { CommandService } from './services/command.service';
 import { ConfigService } from './services/config.service';
 import { WelcomeService } from './services/welcome.service';
@@ -121,7 +122,7 @@ class ChildBot {
 
   private setupEventListeners() {
     // Core events
-    this.client.once('ready', () => {
+    this.client.once('ready', async () => {
       ready(this.client, this.prisma, this.botId);
       // Initialize metrics service after bot is ready
       this.metricsService = new MetricsService(this.client, this.prisma, this.botId);
@@ -134,6 +135,10 @@ class ChildBot {
       const ticketEnabled = (this.config as any).ticketData?.ticketEnabled || false;
       
       if (ticketEnabled) {
+        // Sync ticket configuration from dashboard first
+        const guildIds = this.client.guilds.cache.map(guild => guild.id);
+        await initializeTicketConfigSync(guildIds, this.botId);
+        
         this.ticketHandler = new TicketInteractionHandler(this.client);
         const services = this.ticketHandler.getServices();
         this.ticketService = services.ticketService;
