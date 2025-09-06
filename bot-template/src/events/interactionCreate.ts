@@ -46,6 +46,13 @@ async function handleBuiltInCommands(
     await statsCommand.execute(interaction);
     return;
   }
+  
+  // Handle ticketdebug command without owner check
+  if (commandName === 'ticketdebug') {
+    const ticketDebugCommand = await import('../commands/ticketDebug');
+    await ticketDebugCommand.default.execute(interaction);
+    return;
+  }
 
   // Only allow bot owner to use configuration commands
   const bot = await configService.getBot();

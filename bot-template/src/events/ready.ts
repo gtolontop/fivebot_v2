@@ -127,9 +127,20 @@ async function restoreTicketPanels(client: Client, prisma: PrismaClient) {
     let restoredCount = 0;
     let failedCount = 0;
 
+    console.log(`Found ${panels.length} panels to restore`);
+    
     for (const panel of panels) {
       try {
-        console.log(`Processing panel ${panel.id}, categories: ${panel.config.categories.length}`);
+        console.log(`Processing panel ${panel.id}:`);
+        console.log(`  - Config ID: ${panel.configId}`);
+        console.log(`  - Type: ${panel.type}`);
+        console.log(`  - Categories: ${panel.config?.categories?.length || 0}`);
+        
+        if (!panel.config) {
+          console.error(`No config found for panel ${panel.id}`);
+          failedCount++;
+          continue;
+        }
         
         // Find the guild
         const guild = client.guilds.cache.get(panel.guildId);
