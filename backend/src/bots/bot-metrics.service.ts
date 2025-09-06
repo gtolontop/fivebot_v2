@@ -188,10 +188,19 @@ export class BotMetricsService {
       if (bots.length > 0 && metricsTableExists) {
         try {
           const placeholders = bots.map(() => '?').join(',');
-          const query = `SELECT * FROM bot_metrics WHERE bot_id IN (${placeholders}) AND date = ?`;
+          // Use a more robust query that handles invalid dates
+          const query = `SELECT * FROM bot_metrics 
+                         WHERE bot_id IN (${placeholders}) 
+                         AND date = ? 
+                         AND date IS NOT NULL 
+                         AND date != '0000-00-00'
+                         AND YEAR(date) > 1000
+                         AND updated_at IS NOT NULL
+                         AND updated_at != '0000-00-00 00:00:00'
+                         AND YEAR(updated_at) > 1000`;
           todayMetrics = await this.prisma.$queryRawUnsafe(query, ...bots.map(bot => bot.id), today) as any[];
         } catch (error) {
-          console.log('Failed to query bot_metrics, using fallback data');
+          console.log('Failed to query bot_metrics, using fallback data:', error.message);
           todayMetrics = [];
         }
       }
@@ -307,10 +316,20 @@ export class BotMetricsService {
     if (bots.length > 0 && metricsTableExists) {
       try {
         const placeholders = bots.map(() => '?').join(',');
-        const query = `SELECT * FROM bot_metrics WHERE bot_id IN (${placeholders}) AND date >= ? ORDER BY date ASC`;
+        // Use a more robust query that handles invalid dates
+        const query = `SELECT * FROM bot_metrics 
+                       WHERE bot_id IN (${placeholders}) 
+                       AND date >= ? 
+                       AND date IS NOT NULL 
+                       AND date != '0000-00-00' 
+                       AND YEAR(date) > 1000 
+                       AND updated_at IS NOT NULL 
+                       AND updated_at != '0000-00-00 00:00:00'
+                       AND YEAR(updated_at) > 1000
+                       ORDER BY date ASC`;
         monthlyMetrics = await this.prisma.$queryRawUnsafe(query, ...bots.map(bot => bot.id), thirtyDaysAgo) as any[];
       } catch (error) {
-        console.log('Failed to query monthly bot_metrics, using fallback');
+        console.log('Failed to query monthly bot_metrics, using fallback:', error.message);
         monthlyMetrics = [];
       }
     }
@@ -392,11 +411,26 @@ export class BotMetricsService {
     startDate.setDate(startDate.getDate() - days);
     startDate.setHours(0, 0, 0, 0);
 
-    const metrics = await this.prisma.$queryRawUnsafe(
-      'SELECT * FROM bot_metrics WHERE bot_id = ? AND date >= ? ORDER BY date ASC',
-      botId,
-      startDate
-    ) as any[];
+    let metrics: any[] = [];
+    try {
+      metrics = await this.prisma.$queryRawUnsafe(
+        `SELECT * FROM bot_metrics 
+         WHERE bot_id = ? 
+         AND date >= ? 
+         AND date IS NOT NULL 
+         AND date != '0000-00-00'
+         AND YEAR(date) > 1000
+         AND updated_at IS NOT NULL
+         AND updated_at != '0000-00-00 00:00:00'
+         AND YEAR(updated_at) > 1000
+         ORDER BY date ASC`,
+        botId,
+        startDate
+      ) as any[];
+    } catch (error) {
+      console.log('Failed to query bot metrics for individual bot:', error.message);
+      metrics = [];
+    }
 
     return metrics.map(metric => ({
       date: metric.date,
