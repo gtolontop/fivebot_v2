@@ -3,12 +3,11 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-export default {
-  data: new SlashCommandBuilder()
-    .setName('ticketdebug')
-    .setDescription('Debug ticket system configuration'),
-    
-  async execute(interaction: CommandInteraction) {
+export const data = new SlashCommandBuilder()
+  .setName('ticketdebug')
+  .setDescription('Debug ticket system configuration');
+
+export async function execute(interaction: CommandInteraction) {
     await interaction.deferReply({ ephemeral: true });
     
     try {
@@ -95,5 +94,4 @@ export default {
       console.error('Error in ticketdebug command:', error);
       await interaction.editReply('An error occurred while debugging the ticket system.');
     }
-  }
-};
+}
