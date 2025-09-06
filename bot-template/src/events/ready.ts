@@ -147,7 +147,8 @@ async function restoreTicketPanels(client: Client, prisma: PrismaClient) {
 
         // Try to fetch the existing message
         if (!panel.messageId) {
-          console.warn(`No message ID for panel ${panel.id}`);
+          console.warn(`No message ID for panel ${panel.id}, deleting from database...`);
+          await prisma.ticketPanel.delete({ where: { id: panel.id } });
           failedCount++;
           continue;
         }
@@ -157,14 +158,17 @@ async function restoreTicketPanels(client: Client, prisma: PrismaClient) {
           existingMessage = await channel.messages.fetch(panel.messageId);
           console.log(`Fetched message type: ${typeof existingMessage}, editable: ${existingMessage?.editable}`);
         } catch (error) {
-          console.warn(`Message ${panel.messageId} not found for panel ${panel.id}`);
+          console.warn(`Message ${panel.messageId} not found for panel ${panel.id}, deleting from database...`);
+          // Delete panel from database since the message no longer exists
+          await prisma.ticketPanel.delete({ where: { id: panel.id } });
           failedCount++;
           continue;
         }
         
         // Verify it's a valid Discord message
         if (!existingMessage || typeof existingMessage.edit !== 'function') {
-          console.warn(`Invalid message object for panel ${panel.id}`);
+          console.warn(`Invalid message object for panel ${panel.id}, deleting from database...`);
+          await prisma.ticketPanel.delete({ where: { id: panel.id } });
           failedCount++;
           continue;
         }
@@ -228,7 +232,8 @@ async function restoreTicketPanels(client: Client, prisma: PrismaClient) {
             failedCount++;
           }
         } else if (existingMessage && !existingMessage.editable) {
-          console.warn(`Message ${panel.messageId} is not editable for panel ${panel.id} (might not be from this bot)`);
+          console.warn(`Message ${panel.messageId} is not editable for panel ${panel.id} (might not be from this bot), deleting from database...`);
+          await prisma.ticketPanel.delete({ where: { id: panel.id } });
           failedCount++;
         }
       } catch (error) {
@@ -237,7 +242,7 @@ async function restoreTicketPanels(client: Client, prisma: PrismaClient) {
       }
     }
 
-    console.log(`Ticket panels restored: ${restoredCount} successful, ${failedCount} failed`);
+    console.log(`Ticket panels: ${restoredCount} restored, ${failedCount} deleted (no longer valid)`);
   } catch (error) {
     console.error('Failed to restore ticket panels:', error);
   }
