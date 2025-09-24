@@ -9,21 +9,8 @@ export async function ready(client: Client, prisma: PrismaClient, botId: string,
   console.log(`Connected to ${client.guilds.cache.size} servers`);
   console.log(`Serving ${client.users.cache.size} users`);
   
-  // Get config from env to build commands dynamically
-  const config = process.env.CONFIG ? JSON.parse(process.env.CONFIG) : {};
-  let embedV2Commands = {};
-  if (config.embedV2Commands) {
-    try {
-      embedV2Commands = typeof config.embedV2Commands === 'string' 
-        ? JSON.parse(config.embedV2Commands) 
-        : config.embedV2Commands;
-    } catch (e) {
-      console.error('Failed to parse embedV2Commands:', e);
-    }
-  }
-  
-  // Deploy slash commands with V2 commands
-  await deployCommands(client, embedV2Commands);
+  // Deploy slash commands
+  await deployCommands(client);
   
   // Set bot activity
   client.user.setActivity('Ready to serve!', { type: ActivityType.Playing });
@@ -102,7 +89,7 @@ export async function ready(client: Client, prisma: PrismaClient, botId: string,
   }, 5 * 60 * 1000); // Every 5 minutes
 }
 
-async function deployCommands(client: Client, embedV2Commands: Record<string, any> = {}) {
+async function deployCommands(client: Client) {
   try {
     const { REST, Routes } = require('discord.js');
     const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
