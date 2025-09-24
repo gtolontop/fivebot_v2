@@ -64,6 +64,8 @@ interface UpdateBotConfigDto {
   autoAssignStaff?: boolean;
   autoTagUrgent?: boolean;
   autoEscalate?: boolean;
+  statusRotation?: string;
+  embedV2Commands?: string;
 }
 
 @Controller('bots')
