@@ -110,7 +110,7 @@ export class BotRealtimeMetricsService {
             created_at, updated_at
           ) VALUES (
             ${uuid}, ${botId}, ${today}, ${summary.commandCount}, ${summary.messageCount},
-            ${guildsCount}, ${usersCount}, 3600, ${summary.avgResponseTime || 45}, ${summary.errorCount},
+            ${guildsCount || 0}, ${usersCount || 0}, 3600, ${summary.avgResponseTime || 45}, ${summary.errorCount},
             NOW(), NOW()
           )
         `;
