@@ -69,11 +69,41 @@ export class ConfigService {
         });
       }
 
+      // Parse JSON fields if they are strings
+      const parsedConfig = { ...config };
+      
+      if (parsedConfig.embedV2Commands && typeof parsedConfig.embedV2Commands === 'string') {
+        try {
+          parsedConfig.embedV2Commands = JSON.parse(parsedConfig.embedV2Commands);
+        } catch (e) {
+          console.error('Failed to parse embedV2Commands:', e);
+          parsedConfig.embedV2Commands = null;
+        }
+      }
+      
+      if (parsedConfig.statusRotation && typeof parsedConfig.statusRotation === 'string') {
+        try {
+          parsedConfig.statusRotation = JSON.parse(parsedConfig.statusRotation);
+        } catch (e) {
+          console.error('Failed to parse statusRotation:', e);
+          parsedConfig.statusRotation = null;
+        }
+      }
+      
+      if (parsedConfig.ticketData && typeof parsedConfig.ticketData === 'string') {
+        try {
+          parsedConfig.ticketData = JSON.parse(parsedConfig.ticketData);
+        } catch (e) {
+          console.error('Failed to parse ticketData:', e);
+          parsedConfig.ticketData = null;
+        }
+      }
+      
       // Update cache
-      this.cachedConfig = config;
+      this.cachedConfig = parsedConfig as any;
       this.lastConfigUpdate = now;
 
-      return config;
+      return this.cachedConfig;
     } catch (error) {
       console.error('Error fetching config:', error);
       
