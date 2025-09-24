@@ -745,7 +745,7 @@ export default function TicketSystemConfig({
                             <div className="flex items-center space-x-2 mb-1">
                               <span className="text-2xl">{category.emoji || '🎫'}</span>
                               <h4 className="font-medium text-gray-900">{category.name}</h4>
-                              {category.priority > 0 && (
+                              {category.priority && category.priority > 0 && (
                                 <span className="px-2 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-800">
                                   Priority {category.priority}
                                 </span>
@@ -802,16 +802,7 @@ export default function TicketSystemConfig({
                                   useCustomModal: category.useCustomModal || false,
                                   modalTitle: category.modalTitle || '',
                                   modalDescription: category.modalDescription || '',
-                                  modalFields: category.modalFields || [{
-                                    id: '1',
-                                    label: 'Issue Description',
-                                    type: 'TEXTAREA' as const,
-                                    placeholder: 'Please describe your issue in detail',
-                                    required: true,
-                                    rows: 4,
-                                    minLength: 10,
-                                    maxLength: 1000
-                                  }]
+                                  modalFields: category.modalFields || []
                                 });
                                 setShowCategoryModal(true);
                               }}
