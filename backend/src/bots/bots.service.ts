@@ -343,6 +343,9 @@ export class BotsService {
         // Handle JSON fields that need to be stringified
         if ((key === 'welcomeEmbedJson' || key === 'customCommands') && value && typeof value === 'object') {
           configData[key] = JSON.stringify(value);
+        } else if ((key === 'statusRotation' || key === 'embedV2Commands') && value) {
+          // These fields are already stringified from frontend
+          configData[key] = value;
         } else {
           configData[key] = value;
         }
