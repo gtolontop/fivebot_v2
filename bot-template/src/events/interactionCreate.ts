@@ -10,6 +10,8 @@ export async function interactionCreate(
   configService: ConfigService,
   ticketHandler?: TicketInteractionHandler
 ) {
+  console.log('[INTERACTION] Received interaction:', interaction.type, 'isCommand:', interaction.isChatInputCommand());
+  
   // Handle ticket interactions (buttons, select menus, modals)
   if (!interaction.isChatInputCommand()) {
     if (ticketHandler && (interaction.isButton() || interaction.isStringSelectMenu() || interaction.isModalSubmit())) {
