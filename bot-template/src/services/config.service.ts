@@ -70,29 +70,29 @@ export class ConfigService {
       }
 
       // Parse JSON fields if they are strings
-      const parsedConfig = { ...config };
+      const parsedConfig = { ...config } as any;
       
-      if (parsedConfig.embedV2Commands && typeof parsedConfig.embedV2Commands === 'string') {
+      if ((parsedConfig as any).embedV2Commands && typeof (parsedConfig as any).embedV2Commands === 'string') {
         try {
-          parsedConfig.embedV2Commands = JSON.parse(parsedConfig.embedV2Commands);
+          parsedConfig.embedV2Commands = JSON.parse((parsedConfig as any).embedV2Commands);
         } catch (e) {
           console.error('Failed to parse embedV2Commands:', e);
           parsedConfig.embedV2Commands = null;
         }
       }
       
-      if (parsedConfig.statusRotation && typeof parsedConfig.statusRotation === 'string') {
+      if ((parsedConfig as any).statusRotation && typeof (parsedConfig as any).statusRotation === 'string') {
         try {
-          parsedConfig.statusRotation = JSON.parse(parsedConfig.statusRotation);
+          parsedConfig.statusRotation = JSON.parse((parsedConfig as any).statusRotation);
         } catch (e) {
           console.error('Failed to parse statusRotation:', e);
           parsedConfig.statusRotation = null;
         }
       }
       
-      if (parsedConfig.ticketData && typeof parsedConfig.ticketData === 'string') {
+      if ((parsedConfig as any).ticketData && typeof (parsedConfig as any).ticketData === 'string') {
         try {
-          parsedConfig.ticketData = JSON.parse(parsedConfig.ticketData);
+          parsedConfig.ticketData = JSON.parse((parsedConfig as any).ticketData);
         } catch (e) {
           console.error('Failed to parse ticketData:', e);
           parsedConfig.ticketData = null;
@@ -103,7 +103,7 @@ export class ConfigService {
       this.cachedConfig = parsedConfig as any;
       this.lastConfigUpdate = now;
 
-      return this.cachedConfig;
+      return this.cachedConfig!;
     } catch (error) {
       console.error('Error fetching config:', error);
       
