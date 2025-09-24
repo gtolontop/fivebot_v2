@@ -1,6 +1,6 @@
 import { Client, ActivityType, TextChannel, ActionRowBuilder, ButtonBuilder, StringSelectMenuBuilder, ButtonStyle } from 'discord.js';
 import { PrismaClient } from '@prisma/client';
-import { commands } from '../commands';
+import { buildCommands } from '../commands';
 
 export async function ready(client: Client, prisma: PrismaClient, botId: string, ticketEnabled: boolean = false) {
   if (!client.user) return;
@@ -9,8 +9,21 @@ export async function ready(client: Client, prisma: PrismaClient, botId: string,
   console.log(`Connected to ${client.guilds.cache.size} servers`);
   console.log(`Serving ${client.users.cache.size} users`);
   
-  // Deploy slash commands
-  await deployCommands(client);
+  // Get config from env to build commands dynamically
+  const config = process.env.CONFIG ? JSON.parse(process.env.CONFIG) : {};
+  let embedV2Commands = {};
+  if (config.embedV2Commands) {
+    try {
+      embedV2Commands = typeof config.embedV2Commands === 'string' 
+        ? JSON.parse(config.embedV2Commands) 
+        : config.embedV2Commands;
+    } catch (e) {
+      console.error('Failed to parse embedV2Commands:', e);
+    }
+  }
+  
+  // Deploy slash commands with V2 commands
+  await deployCommands(client, embedV2Commands);
   
   // Set bot activity
   client.user.setActivity('Ready to serve!', { type: ActivityType.Playing });
