@@ -91,7 +91,7 @@ const ticketCommands = ticketEnabled ? [
 ] : [];
 
 // Default bot commands
-const defaultCommands = [...baseCommands, ...ticketCommands];
+const defaultCommands = [...baseCommands, ...v2Commands, ...ticketCommands];
 
 // Function to build commands dynamically including custom commands
 export function buildCommands(customCommands: Record<string, any> = {}) {
