@@ -239,6 +239,8 @@ export default function BotConfigPage() {
         // Use the value from ticketData if it exists, otherwise check configData, then use default
         setConfig({
           ...configData,
+          statusRotation: statusRotation,
+          embedV2Commands: embedV2Commands,
           ticketEnabled: typedTicketData.ticketEnabled ?? configData.ticketEnabled ?? false,
           ticketCategoryId: typedTicketData.ticketCategoryId ?? configData.ticketCategoryId ?? '',
           ticketStaffRoleId: typedTicketData.ticketStaffRoleId ?? configData.ticketStaffRoleId ?? '',
