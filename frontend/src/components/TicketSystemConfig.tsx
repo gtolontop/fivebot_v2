@@ -1761,7 +1761,7 @@ export default function TicketSystemConfig({
                           };
                           setCategoryForm(prev => ({
                             ...prev,
-                            modalFields: [...(prev.modalFields || []), newField]
+                            modalFields: [...(prev.modalFields || []), newField] as any
                           }));
                         }}
                         className="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
@@ -1892,7 +1892,7 @@ export default function TicketSystemConfig({
                                 </div>
                               )}
 
-                              {(field.type === 'TEXT' || field.type === 'TEXTAREA') && (
+                              {((field as any).type === 'TEXT' || (field as any).type === 'TEXTAREA') && (
                                 <>
                                   <div className="flex items-center space-x-2">
                                     <label className="text-xs text-gray-700">Min:</label>
