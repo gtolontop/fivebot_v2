@@ -488,7 +488,7 @@ export class TicketCreationHandler {
                 deny: [PermissionsBitField.Flags.SendMessages],
                 allow: [PermissionsBitField.Flags.ViewChannel]
               },
-              ...config.staffRoles.map(roleId => ({
+              ...config.staffRoles.map((roleId: string) => ({
                 id: roleId,
                 allow: [
                   PermissionsBitField.Flags.ViewChannel,
@@ -539,7 +539,7 @@ export class TicketCreationHandler {
       });
 
       // Add creator to thread
-      await thread.members.add(member.id);
+      await thread.members.add(interaction.user.id);
 
       // Add staff roles
       for (const roleId of config.staffRoles) {
@@ -757,7 +757,7 @@ export class TicketCreationHandler {
       });
 
       // Send DM notification if enabled in config
-      if (botConfig.ticketDMNotifications) {
+      if (config.dmNotifications) {
         try {
           await interaction.user.send({
             embeds: [{

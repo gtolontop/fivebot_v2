@@ -20,6 +20,10 @@ export interface TicketConfigWithArrays extends Omit<TicketConfig, 'staffRoles' 
     showReopen?: boolean;
     showDelete?: boolean;
   };
+  inactivityTimeout?: number;
+  transcriptChannelId?: string;
+  dmNotifications?: boolean;
+  maxActiveTickets?: number;
 }
 
 export function parseTicketConfig(config: TicketConfig & { categories?: TicketCategory[], panels?: TicketPanel[] }): TicketConfigWithArrays {
@@ -32,23 +36,23 @@ export function parseTicketConfig(config: TicketConfig & { categories?: TicketCa
   };
   
   // Parse JSON fields if they're strings
-  if (typeof config.ticketButtons === 'string') {
+  if ('ticketButtons' in config && typeof config.ticketButtons === 'string') {
     try {
       parsed.ticketButtons = JSON.parse(config.ticketButtons);
     } catch {
       parsed.ticketButtons = {};
     }
-  } else {
+  } else if ('ticketButtons' in config) {
     parsed.ticketButtons = config.ticketButtons || {};
   }
   
-  if (typeof config.closeOptions === 'string') {
+  if ('closeOptions' in config && typeof config.closeOptions === 'string') {
     try {
       parsed.closeOptions = JSON.parse(config.closeOptions);
     } catch {
       parsed.closeOptions = {};
     }
-  } else {
+  } else if ('closeOptions' in config) {
     parsed.closeOptions = config.closeOptions || {};
   }
   

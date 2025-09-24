@@ -781,6 +781,13 @@ export class TicketControlsHandler {
     const reason = interaction.fields.getTextInputValue('close_reason') || 'No reason provided';
     const userState = await this.stateManager.getUserState(interaction.user.id, 'closing_ticket') as any;
     
+    if (!interaction.channelId) {
+      await interaction.editReply({
+        content: '❌ This interaction is not in a channel.'
+      });
+      return;
+    }
+
     const ticket = await this.ticketService.getTicketByChannel(interaction.channelId);
     if (!ticket) {
       await interaction.editReply({
