@@ -28,6 +28,8 @@ interface BotConfig {
   loggingChannelId?: string;
   customCommands?: any;
   ticketData?: any;
+  statusRotation?: any;
+  embedV2Commands?: any;
 }
 
 class ChildBot {
@@ -107,6 +109,34 @@ class ChildBot {
         }
       }
       
+      // Parse statusRotation if it's a string
+      let statusRotation = {};
+      if (config.statusRotation) {
+        if (typeof config.statusRotation === 'string') {
+          try {
+            statusRotation = JSON.parse(config.statusRotation);
+          } catch (e) {
+            console.error('Failed to parse statusRotation:', e);
+          }
+        } else {
+          statusRotation = config.statusRotation;
+        }
+      }
+
+      // Parse embedV2Commands if it's a string  
+      let embedV2Commands = {};
+      if (config.embedV2Commands) {
+        if (typeof config.embedV2Commands === 'string') {
+          try {
+            embedV2Commands = JSON.parse(config.embedV2Commands);
+          } catch (e) {
+            console.error('Failed to parse embedV2Commands:', e);
+          }
+        } else {
+          embedV2Commands = config.embedV2Commands;
+        }
+      }
+      
       const finalConfig = {
         welcomeEnabled: config.welcomeEnabled || false,
         welcomeChannelId: config.welcomeChannelId,
@@ -118,6 +148,8 @@ class ChildBot {
         loggingChannelId: config.loggingChannelId,
         customCommands: config.customCommands,
         ticketData: ticketData,
+        statusRotation: statusRotation,
+        embedV2Commands: embedV2Commands,
       };
       
       return finalConfig;
