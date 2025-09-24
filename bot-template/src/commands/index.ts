@@ -15,17 +15,7 @@ import * as announcementCommand from './announcement';
 const config = process.env.CONFIG ? JSON.parse(process.env.CONFIG) : {};
 const ticketEnabled = config.ticketData?.ticketEnabled || false;
 
-// Parse V2 commands config
-let embedV2Commands: Record<string, any> = {};
-if (config.embedV2Commands) {
-  try {
-    embedV2Commands = typeof config.embedV2Commands === 'string' 
-      ? JSON.parse(config.embedV2Commands) 
-      : config.embedV2Commands;
-  } catch (e) {
-    console.error('Failed to parse embedV2Commands in commands index:', e);
-  }
-}
+// V2 commands will be handled dynamically in buildCommands function
 
 // Base commands (always available)
 const baseCommands = [
@@ -94,8 +84,25 @@ const ticketCommands = ticketEnabled ? [
 const defaultCommands = [...baseCommands, ...v2Commands, ...ticketCommands];
 
 // Function to build commands dynamically including custom commands
-export function buildCommands(customCommands: Record<string, any> = {}) {
-  const commands = [...defaultCommands];
+export function buildCommands(customCommands: Record<string, any> = {}, v2CommandsConfig: Record<string, any> = {}) {
+  // Start with base commands
+  const commands = [...baseCommands];
+  
+  // Add V2 commands based on config
+  if (v2CommandsConfig['rules']?.enabled) commands.push(rulesCommand.data);
+  if (v2CommandsConfig['pricing']?.enabled) commands.push(pricingCommand.data);
+  if (v2CommandsConfig['embed-builder']?.enabled) commands.push(embedBuilderCommand.data);
+  if (v2CommandsConfig['server-info']?.enabled) commands.push(serverInfoCommand.data);
+  if (v2CommandsConfig['user-profile']?.enabled) commands.push(userProfileCommand.data);
+  if (v2CommandsConfig['team']?.enabled) commands.push(teamCommand.data);
+  if (v2CommandsConfig['announcement']?.enabled) commands.push(announcementCommand.data);
+  
+  // Add ticket commands if enabled
+  if (ticketEnabled) {
+    commands.push(ticketCommand.data);
+    commands.push(ticketExampleCommand.data);
+    commands.push(ticketDebugCommand.data);
+  }
   
   // Add custom commands
   Object.entries(customCommands).forEach(([commandName, commandData]) => {
