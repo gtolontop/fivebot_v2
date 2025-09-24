@@ -34,7 +34,9 @@
       "Bash(move check-ticket-config.js backendcheck-ticket-config.js)",
       "Bash(dir prisma)",
       "Bash(ls)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(dir backend)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",
