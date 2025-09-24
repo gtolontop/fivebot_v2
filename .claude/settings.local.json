@@ -37,7 +37,8 @@
       "Bash(ls:*)",
       "Bash(dir backend)",
       "Bash(dir:*)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(timeout:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",
