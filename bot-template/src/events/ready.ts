@@ -102,16 +102,23 @@ export async function ready(client: Client, prisma: PrismaClient, botId: string,
   }, 5 * 60 * 1000); // Every 5 minutes
 }
 
-async function deployCommands(client: Client) {
+async function deployCommands(client: Client, embedV2Commands: Record<string, any> = {}) {
   try {
     const { REST, Routes } = require('discord.js');
     const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
 
     console.log('Registering slash commands...');
-
+    
+    // Get custom commands from config
+    const config = process.env.CONFIG ? JSON.parse(process.env.CONFIG) : {};
+    const customCommands = config.customCommands || {};
+    
+    // Build commands dynamically with V2 commands
+    const allCommands = buildCommands(customCommands);
+    
     await rest.put(
       Routes.applicationCommands(client.user?.id),
-      { body: commands },
+      { body: allCommands },
     );
 
     console.log('Slash commands registered');
