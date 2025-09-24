@@ -3,6 +3,8 @@ import * as statsCommand from './stats';
 import * as ticketCommand from './ticket';
 import * as ticketExampleCommand from './ticketExample';
 import * as ticketDebugCommand from './ticketDebug';
+import * as rulesCommand from './rules';
+import * as pricingCommand from './pricing';
 
 // Get ticket enabled status from environment config
 const config = process.env.CONFIG ? JSON.parse(process.env.CONFIG) : {};
