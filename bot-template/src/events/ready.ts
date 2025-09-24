@@ -2,7 +2,7 @@ import { Client, ActivityType, TextChannel, ActionRowBuilder, ButtonBuilder, Str
 import { PrismaClient } from '@prisma/client';
 import { commands } from '../commands';
 
-export async function ready(client: Client, prisma: PrismaClient, botId: string) {
+export async function ready(client: Client, prisma: PrismaClient, botId: string, ticketEnabled: boolean = false) {
   if (!client.user) return;
   
   console.log(`Bot logged in as ${client.user.tag}`);
@@ -52,8 +52,10 @@ export async function ready(client: Client, prisma: PrismaClient, botId: string)
 
     console.log('Bot ready');
     
-    // Restore ticket panels
-    await restoreTicketPanels(client, prisma);
+    // Restore ticket panels ONLY if ticket system is enabled
+    if (ticketEnabled) {
+      await restoreTicketPanels(client, prisma);
+    }
     
   } catch (error) {
     console.error('❌ Failed to update bot status:', error);
