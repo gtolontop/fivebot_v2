@@ -15,6 +15,18 @@ import * as announcementCommand from './announcement';
 const config = process.env.CONFIG ? JSON.parse(process.env.CONFIG) : {};
 const ticketEnabled = config.ticketData?.ticketEnabled || false;
 
+// Parse V2 commands config
+let embedV2Commands: Record<string, any> = {};
+if (config.embedV2Commands) {
+  try {
+    embedV2Commands = typeof config.embedV2Commands === 'string' 
+      ? JSON.parse(config.embedV2Commands) 
+      : config.embedV2Commands;
+  } catch (e) {
+    console.error('Failed to parse embedV2Commands in commands index:', e);
+  }
+}
+
 // Base commands (always available)
 const baseCommands = [
   new SlashCommandBuilder()
@@ -59,14 +71,17 @@ const baseCommands = [
     .setDescription('Show bot help'),
     
   statsCommand.data,
-  rulesCommand.data,
-  pricingCommand.data,
-  embedBuilderCommand.data,
-  serverInfoCommand.data,
-  userProfileCommand.data,
-  teamCommand.data,
-  announcementCommand.data,
 ];
+
+// V2 Embed commands (conditionally added based on config)
+const v2Commands = [];
+if (embedV2Commands['rules']?.enabled) v2Commands.push(rulesCommand.data);
+if (embedV2Commands['pricing']?.enabled) v2Commands.push(pricingCommand.data);
+if (embedV2Commands['embed-builder']?.enabled) v2Commands.push(embedBuilderCommand.data);
+if (embedV2Commands['server-info']?.enabled) v2Commands.push(serverInfoCommand.data);
+if (embedV2Commands['user-profile']?.enabled) v2Commands.push(userProfileCommand.data);
+if (embedV2Commands['team']?.enabled) v2Commands.push(teamCommand.data);
+if (embedV2Commands['announcement']?.enabled) v2Commands.push(announcementCommand.data);
 
 // Ticket commands (only if ticket system is enabled)
 const ticketCommands = ticketEnabled ? [
