@@ -102,6 +102,11 @@ export class ConfigService {
       // Update cache
       this.cachedConfig = parsedConfig as any;
       this.lastConfigUpdate = now;
+      
+      // Debug log for V2 commands
+      if (parsedConfig.embedV2Commands) {
+        console.log('[CONFIG DEBUG] embedV2Commands loaded:', Object.keys(parsedConfig.embedV2Commands));
+      }
 
       return this.cachedConfig!;
     } catch (error) {
