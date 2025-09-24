@@ -120,10 +120,24 @@ async function deployCommands(client: Client) {
     console.log(`Registering ${allCommands.length} commands...`);
     console.log('Commands to register:', allCommands.map(cmd => cmd.name));
     
+    // Deploy globally
     await rest.put(
       Routes.applicationCommands(client.user?.id),
       { body: allCommands },
     );
+    
+    // Also deploy to each guild for immediate availability
+    for (const guild of client.guilds.cache.values()) {
+      try {
+        await rest.put(
+          Routes.applicationGuildCommands(client.user?.id, guild.id),
+          { body: allCommands },
+        );
+        console.log(`Commands deployed to guild: ${guild.name} (${guild.id})`);
+      } catch (error) {
+        console.error(`Failed to deploy commands to guild ${guild.name}:`, error);
+      }
+    }
 
     console.log('Slash commands registered');
   } catch (error) {
