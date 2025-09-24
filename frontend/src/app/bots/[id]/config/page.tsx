@@ -309,7 +309,14 @@ export default function BotConfigPage() {
   const saveConfig = async () => {
     setSaving(true);
     try {
-      await botsAPI.updateConfig(botId, config);
+      // Prepare config data with stringified fields
+      const configToSave = {
+        ...config,
+        statusRotation: config.statusRotation ? JSON.stringify(config.statusRotation) : null,
+        embedV2Commands: config.embedV2Commands ? JSON.stringify(config.embedV2Commands) : null,
+      };
+      
+      await botsAPI.updateConfig(botId, configToSave);
       toast.success('Configuration saved successfully');
       
       // If bot was online, it will restart automatically
