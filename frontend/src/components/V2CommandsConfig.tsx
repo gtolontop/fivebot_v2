@@ -367,7 +367,7 @@ export default function V2CommandsConfig({ config, updateConfig }: Props) {
         {/* Custom Command Builder */}
         <div className="mt-6 border-t pt-6">
           <button
-            onClick={() => toast.info('Custom V2 command builder coming soon!')}
+            onClick={() => toast('Custom V2 command builder coming soon!', { icon: 'ℹ️' })}
             className="w-full py-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:text-gray-900 hover:border-gray-400 transition-colors"
           >
             <PlusIcon className="w-6 h-6 mx-auto mb-2" />

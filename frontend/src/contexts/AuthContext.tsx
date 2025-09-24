@@ -19,7 +19,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (token: string) => Promise<void>;
+  login: (token: string) => Promise<User>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }

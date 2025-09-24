@@ -204,35 +204,38 @@ export default function BotConfigPage() {
           }
         }
         
+        // Type the ticketData properly
+        const typedTicketData = ticketData as any;
+        
         // Merge ticketData fields into config
         // Use the value from ticketData if it exists, otherwise check configData, then use default
         setConfig({
           ...configData,
-          ticketEnabled: ticketData.ticketEnabled ?? configData.ticketEnabled ?? false,
-          ticketCategoryId: ticketData.ticketCategoryId ?? configData.ticketCategoryId ?? '',
-          ticketStaffRoleId: ticketData.ticketStaffRoleId ?? configData.ticketStaffRoleId ?? '',
-          ticketTranscriptChannelId: ticketData.ticketTranscriptChannelId ?? configData.ticketTranscriptChannelId ?? '',
-          ticketNamingFormat: ticketData.ticketNamingFormat ?? configData.ticketNamingFormat ?? 'number',
-          maxTicketsPerUser: ticketData.maxTicketsPerUser ?? configData.maxTicketsPerUser ?? 3,
-          autoCloseHours: ticketData.autoCloseHours ?? configData.autoCloseHours ?? 72,
-          inactivityWarningHours: ticketData.inactivityWarningHours ?? configData.inactivityWarningHours ?? 24,
-          ticketThreads: ticketData.ticketThreads ?? configData.ticketThreads ?? false,
-          ticketMentionStaff: ticketData.ticketMentionStaff ?? configData.ticketMentionStaff ?? false,
-          ticketDMNotifications: ticketData.ticketDMNotifications ?? configData.ticketDMNotifications ?? false,
-          ticketRequireReason: ticketData.ticketRequireReason ?? configData.ticketRequireReason ?? false,
-          autoSaveTranscripts: ticketData.autoSaveTranscripts ?? configData.autoSaveTranscripts ?? false,
-          sendTranscriptToUser: ticketData.sendTranscriptToUser ?? configData.sendTranscriptToUser ?? false,
-          includeAttachments: ticketData.includeAttachments ?? configData.includeAttachments ?? false,
-          autoWelcomeEnabled: ticketData.autoWelcomeEnabled ?? configData.autoWelcomeEnabled ?? false,
-          autoWelcomeMessage: ticketData.autoWelcomeMessage ?? configData.autoWelcomeMessage ?? '',
-          inactivityWarningEnabled: ticketData.inactivityWarningEnabled ?? configData.inactivityWarningEnabled ?? false,
-          inactivityWarningMessage: ticketData.inactivityWarningMessage ?? configData.inactivityWarningMessage ?? '',
-          autoAssignStaff: ticketData.autoAssignStaff ?? configData.autoAssignStaff ?? false,
-          autoTagUrgent: ticketData.autoTagUrgent ?? configData.autoTagUrgent ?? false,
-          autoEscalate: ticketData.autoEscalate ?? configData.autoEscalate ?? false,
+          ticketEnabled: typedTicketData.ticketEnabled ?? configData.ticketEnabled ?? false,
+          ticketCategoryId: typedTicketData.ticketCategoryId ?? configData.ticketCategoryId ?? '',
+          ticketStaffRoleId: typedTicketData.ticketStaffRoleId ?? configData.ticketStaffRoleId ?? '',
+          ticketTranscriptChannelId: typedTicketData.ticketTranscriptChannelId ?? configData.ticketTranscriptChannelId ?? '',
+          ticketNamingFormat: typedTicketData.ticketNamingFormat ?? configData.ticketNamingFormat ?? 'number',
+          maxTicketsPerUser: typedTicketData.maxTicketsPerUser ?? configData.maxTicketsPerUser ?? 3,
+          autoCloseHours: typedTicketData.autoCloseHours ?? configData.autoCloseHours ?? 72,
+          inactivityWarningHours: typedTicketData.inactivityWarningHours ?? configData.inactivityWarningHours ?? 24,
+          ticketThreads: typedTicketData.ticketThreads ?? configData.ticketThreads ?? false,
+          ticketMentionStaff: typedTicketData.ticketMentionStaff ?? configData.ticketMentionStaff ?? false,
+          ticketDMNotifications: typedTicketData.ticketDMNotifications ?? configData.ticketDMNotifications ?? false,
+          ticketRequireReason: typedTicketData.ticketRequireReason ?? configData.ticketRequireReason ?? false,
+          autoSaveTranscripts: typedTicketData.autoSaveTranscripts ?? configData.autoSaveTranscripts ?? false,
+          sendTranscriptToUser: typedTicketData.sendTranscriptToUser ?? configData.sendTranscriptToUser ?? false,
+          includeAttachments: typedTicketData.includeAttachments ?? configData.includeAttachments ?? false,
+          autoWelcomeEnabled: typedTicketData.autoWelcomeEnabled ?? configData.autoWelcomeEnabled ?? false,
+          autoWelcomeMessage: typedTicketData.autoWelcomeMessage ?? configData.autoWelcomeMessage ?? '',
+          inactivityWarningEnabled: typedTicketData.inactivityWarningEnabled ?? configData.inactivityWarningEnabled ?? false,
+          inactivityWarningMessage: typedTicketData.inactivityWarningMessage ?? configData.inactivityWarningMessage ?? '',
+          autoAssignStaff: typedTicketData.autoAssignStaff ?? configData.autoAssignStaff ?? false,
+          autoTagUrgent: typedTicketData.autoTagUrgent ?? configData.autoTagUrgent ?? false,
+          autoEscalate: typedTicketData.autoEscalate ?? configData.autoEscalate ?? false,
         });
         
-        console.log('Loaded config with ticketEnabled:', ticketData.ticketEnabled ?? configData.ticketEnabled ?? false);
+        console.log('Loaded config with ticketEnabled:', typedTicketData.ticketEnabled ?? configData.ticketEnabled ?? false);
       }
     } catch (error) {
       console.error('Error loading bot:', error);
@@ -312,7 +315,7 @@ export default function BotConfigPage() {
       // If bot was online, it will restart automatically
       if (bot?.status === 'ONLINE') {
         setBot(prev => prev ? { ...prev, status: 'RESTARTING' } : null);
-        toast.info('Bot is restarting to apply new configuration...');
+        toast('Bot is restarting to apply new configuration...', { icon: 'ℹ️' });
       }
       
       // Refresh bot status after a delay
