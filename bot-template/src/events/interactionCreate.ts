@@ -229,6 +229,27 @@ async function handleCustomCommand(
   const config = await configService.getConfig();
   const { commandName } = interaction;
   
+  // Check V2 Embed commands first
+  const embedV2Commands = (config as any).embedV2Commands || {};
+  if (embedV2Commands[commandName] && embedV2Commands[commandName].enabled) {
+    try {
+      // Dynamically import and execute the V2 command
+      const commandModule = await import(`../commands/${commandName}`);
+      if (commandModule.execute) {
+        await commandModule.execute(interaction);
+        return;
+      }
+    } catch (error) {
+      console.error(`Failed to execute V2 command ${commandName}:`, error);
+      await interaction.reply({ 
+        content: '❌ This V2 command is enabled but not properly configured.', 
+        ephemeral: true 
+      });
+      return;
+    }
+  }
+  
+  // Check regular custom commands
   if (!config.customCommands) {
     await interaction.reply({
       content: '❌ Command not recognized.',
