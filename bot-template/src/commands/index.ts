@@ -63,30 +63,13 @@ const baseCommands = [
   statsCommand.data,
 ];
 
-// V2 Embed commands (conditionally added based on config)
-const v2Commands = [];
-if (embedV2Commands['rules']?.enabled) v2Commands.push(rulesCommand.data);
-if (embedV2Commands['pricing']?.enabled) v2Commands.push(pricingCommand.data);
-if (embedV2Commands['embed-builder']?.enabled) v2Commands.push(embedBuilderCommand.data);
-if (embedV2Commands['server-info']?.enabled) v2Commands.push(serverInfoCommand.data);
-if (embedV2Commands['user-profile']?.enabled) v2Commands.push(userProfileCommand.data);
-if (embedV2Commands['team']?.enabled) v2Commands.push(teamCommand.data);
-if (embedV2Commands['announcement']?.enabled) v2Commands.push(announcementCommand.data);
-
-// Ticket commands (only if ticket system is enabled)
-const ticketCommands = ticketEnabled ? [
-  ticketCommand.data,
-  ticketExampleCommand.data,
-  ticketDebugCommand.data,
-] : [];
-
-// Default bot commands
-const defaultCommands = [...baseCommands, ...v2Commands, ...ticketCommands];
+// Default bot commands (without V2 commands which are handled dynamically)
+const defaultCommands = [...baseCommands];
 
 // Function to build commands dynamically including custom commands
 export function buildCommands(customCommands: Record<string, any> = {}, v2CommandsConfig: Record<string, any> = {}) {
   // Start with base commands
-  const commands = [...baseCommands];
+  const commands: any[] = [...baseCommands];
   
   // Add V2 commands based on config
   if (v2CommandsConfig['rules']?.enabled) commands.push(rulesCommand.data);
@@ -98,7 +81,9 @@ export function buildCommands(customCommands: Record<string, any> = {}, v2Comman
   if (v2CommandsConfig['announcement']?.enabled) commands.push(announcementCommand.data);
   
   // Add ticket commands if enabled
-  if (ticketEnabled) {
+  const parsedConfig = process.env.CONFIG ? JSON.parse(process.env.CONFIG) : {};
+  const ticketEnabledNow = parsedConfig.ticketData?.ticketEnabled || false;
+  if (ticketEnabledNow) {
     commands.push(ticketCommand.data);
     commands.push(ticketExampleCommand.data);
     commands.push(ticketDebugCommand.data);
@@ -115,7 +100,7 @@ export function buildCommands(customCommands: Record<string, any> = {}, v2Comman
     }
   });
   
-  return commands.map(command => command.toJSON());
+  return commands.map(command => 'toJSON' in command ? command.toJSON() : command);
 }
 
 // Export default commands for backwards compatibility
