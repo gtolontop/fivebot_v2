@@ -1932,7 +1932,7 @@ export default function TicketSystemConfig({
                               )}
                             </div>
 
-                            {field.type === 'SELECT' && (
+                            {(field as any).type === 'SELECT' && (
                               <div className="md:col-span-2">
                                 <label className="block text-xs font-medium text-gray-700 mb-1">
                                   Options (one per line)
