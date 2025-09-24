@@ -1938,7 +1938,7 @@ export default function TicketSystemConfig({
                                   Options (one per line)
                                 </label>
                                 <textarea
-                                  value={field.options?.map(o => o.label).join('\n') || ''}
+                                  value={(field as any).options?.map((o: any) => o.label).join('\n') || ''}
                                   onChange={(e) => {
                                     const options = e.target.value.split('\n').filter(line => line.trim()).map(line => ({
                                       label: line.trim(),
