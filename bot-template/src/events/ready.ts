@@ -112,7 +112,7 @@ async function deployCommands(client: Client) {
       }
     }
     
-    console.log('V2 Commands config:', parsedEmbedV2Commands);
+    console.log('V2 Commands config:', JSON.stringify(parsedEmbedV2Commands, null, 2));
     
     // Build commands dynamically with V2 commands
     const allCommands = buildCommands(customCommands, parsedEmbedV2Commands);
