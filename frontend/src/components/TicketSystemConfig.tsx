@@ -802,7 +802,7 @@ export default function TicketSystemConfig({
                                   useCustomModal: category.useCustomModal || false,
                                   modalTitle: category.modalTitle || '',
                                   modalDescription: category.modalDescription || '',
-                                  modalFields: category.modalFields || []
+                                  modalFields: (category.modalFields || []) as any
                                 });
                                 setShowCategoryModal(true);
                               }}
