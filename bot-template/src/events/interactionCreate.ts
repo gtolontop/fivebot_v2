@@ -93,44 +93,7 @@ async function handleBuiltInCommands(
     return;
   }
   
-  // Handle V2 commands without owner check
-  const v2CommandNames = ['rules', 'pricing', 'embed-builder', 'server-info', 'user-profile', 'team', 'announcement'];
-  if (v2CommandNames.includes(commandName)) {
-    console.log(`Processing V2 command: ${commandName}`);
-    
-    // Check if this V2 command is enabled
-    const config = await configService.getConfig();
-    const embedV2Commands = (config as any).embedV2Commands || {};
-    
-    console.log(`V2 Commands config in handler:`, embedV2Commands);
-    console.log(`Is ${commandName} enabled?`, embedV2Commands[commandName]?.enabled);
-    
-    if (embedV2Commands[commandName]?.enabled) {
-      try {
-        console.log(`Loading command module: ${commandName}`);
-        const commandModule = await import(`../commands/${commandName}`);
-        if (commandModule.execute) {
-          await commandModule.execute(interaction);
-          console.log(`Command /${commandName} completed successfully`);
-          return;
-        }
-      } catch (error) {
-        console.error(`Failed to execute V2 command ${commandName}:`, error);
-        await interaction.reply({ 
-          content: '❌ This command encountered an error.', 
-          ephemeral: true 
-        });
-        return;
-      }
-    } else {
-      console.log(`Command ${commandName} is not enabled in config`);
-      await interaction.reply({ 
-        content: '❌ This command is not enabled.', 
-        ephemeral: true 
-      });
-      return;
-    }
-  }
+  // V2 commands are now handled in the main interactionCreate function
 
   // Only allow bot owner to use configuration commands
   const bot = await configService.getBot();
