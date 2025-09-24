@@ -422,12 +422,27 @@ export default function BotConfigPage() {
   const updateConfig = async (updates: Partial<BotConfig>) => {
     setConfig(prev => ({ ...prev, ...updates }));
     
-    // Auto-save for important toggles
+    // Auto-save for important toggles and V2 features
     if ('ticketEnabled' in updates || 'welcomeEnabled' in updates || 
-        'moderationEnabled' in updates || 'autoRoleEnabled' in updates) {
+        'moderationEnabled' in updates || 'autoRoleEnabled' in updates ||
+        'statusRotation' in updates || 'embedV2Commands' in updates) {
       try {
-        await botsAPI.updateConfig(botId, { ...config, ...updates });
+        // Prepare data with proper serialization
+        const dataToSave = { ...config, ...updates };
+        if ('statusRotation' in updates && updates.statusRotation) {
+          dataToSave.statusRotation = JSON.stringify(updates.statusRotation);
+        }
+        if ('embedV2Commands' in updates && updates.embedV2Commands) {
+          dataToSave.embedV2Commands = JSON.stringify(updates.embedV2Commands);
+        }
+        
+        await botsAPI.updateConfig(botId, dataToSave);
         toast.success('Settings updated');
+        
+        // If bot was online and these are major changes, notify about restart
+        if (bot?.status === 'ONLINE' && ('statusRotation' in updates || 'embedV2Commands' in updates)) {
+          toast('Bot will restart to apply changes', { icon: '🔄' });
+        }
       } catch (error: any) {
         toast.error('Failed to save settings');
         // Revert the change
