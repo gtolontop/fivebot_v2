@@ -51,7 +51,7 @@ export default function QuickActionsCard({
       label: botStatus === 'OFFLINE' ? 'Start Bot' : 'Stop Bot',
       icon: botStatus === 'OFFLINE' ? '▶️' : '⏹️',
       action: botStatus === 'OFFLINE' ? onStart : onStop,
-      variant: botStatus === 'OFFLINE' ? 'success' : 'danger' as const,
+      variant: (botStatus === 'OFFLINE' ? 'success' : 'danger') as 'success' | 'danger',
       disabled: actionLoading === 'start' || actionLoading === 'stop',
       loading: actionLoading === 'start' || actionLoading === 'stop',
     },

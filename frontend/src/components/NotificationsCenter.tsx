@@ -91,7 +91,7 @@ export default function NotificationsCenter({
           actions: randomType.type === 'warning' ? [
             {
               label: 'View Details',
-              action: () => toast.info('Opening detailed view...'),
+              action: () => toast('Opening detailed view...', { icon: 'ℹ️' }),
             },
             {
               label: 'Optimize',
