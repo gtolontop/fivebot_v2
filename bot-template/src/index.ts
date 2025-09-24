@@ -43,6 +43,15 @@ class ChildBot {
   private ticketStateManager?: TicketStateManager;
 
   constructor() {
+    // Force immediate console output
+    const originalLog = console.log;
+    console.log = (...args: any[]) => {
+      originalLog.apply(console, args);
+      if (process.stdout.isTTY) {
+        process.stdout.write('\x1b[0m'); // Reset color
+      }
+    };
+
     this.client = new Client({
       intents: [
         GatewayIntentBits.Guilds,

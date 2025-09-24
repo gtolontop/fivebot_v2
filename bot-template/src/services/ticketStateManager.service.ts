@@ -58,9 +58,13 @@ export class TicketStateManager {
   // Process all active tickets for state changes
   private async processTicketStates(): Promise<void> {
     try {
-      // Get all active tickets that might need state updates
+      // Get list of guilds this bot is in
+      const botGuildIds = Array.from(this.client.guilds.cache.keys());
+      
+      // Get all active tickets that might need state updates - only for guilds this bot is in
       const tickets = await this.ticketService.prismaClient.ticket.findMany({
         where: {
+          guildId: { in: botGuildIds }, // Only process tickets from guilds this bot is in
           state: {
             notIn: [TicketState.CLOSED, TicketState.RESOLVED]
           },
