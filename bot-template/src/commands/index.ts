@@ -5,6 +5,11 @@ import * as ticketExampleCommand from './ticketExample';
 import * as ticketDebugCommand from './ticketDebug';
 import * as rulesCommand from './rules';
 import * as pricingCommand from './pricing';
+import * as embedBuilderCommand from './embed-builder';
+import * as serverInfoCommand from './server-info';
+import * as userProfileCommand from './user-profile';
+import * as teamCommand from './team';
+import * as announcementCommand from './announcement';
 
 // Get ticket enabled status from environment config
 const config = process.env.CONFIG ? JSON.parse(process.env.CONFIG) : {};
@@ -54,6 +59,13 @@ const baseCommands = [
     .setDescription('Show bot help'),
     
   statsCommand.data,
+  rulesCommand.data,
+  pricingCommand.data,
+  embedBuilderCommand.data,
+  serverInfoCommand.data,
+  userProfileCommand.data,
+  teamCommand.data,
+  announcementCommand.data,
 ];
 
 // Ticket commands (only if ticket system is enabled)
