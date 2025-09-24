@@ -50,7 +50,7 @@ async function handleBuiltInCommands(
   // Handle ticketdebug command without owner check
   if (commandName === 'ticketdebug') {
     const ticketDebugCommand = await import('../commands/ticketDebug');
-    await ticketDebugCommand.default.execute(interaction);
+    await ticketDebugCommand.execute(interaction);
     return;
   }
 
