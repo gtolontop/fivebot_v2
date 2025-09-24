@@ -8,6 +8,8 @@ import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
 import SearchableDropdown from '@/components/SearchableDropdown';
 import TicketSystemConfig from '@/components/TicketSystemConfig';
+import StatusRotationConfig from '@/components/StatusRotationConfig';
+import V2CommandsConfig from '@/components/V2CommandsConfig';
 import { 
   ChartBarIcon, 
   Cog6ToothIcon, 
@@ -1554,6 +1556,26 @@ export default function BotConfigPage() {
                         </div>
                       </div>
                     )}
+                  </div>
+                )}
+
+                {/* Status Tab */}
+                {activeTab === 'status' && (
+                  <div className="p-6">
+                    <StatusRotationConfig 
+                      config={config}
+                      updateConfig={updateConfig}
+                    />
+                  </div>
+                )}
+
+                {/* V2 Commands Tab */}
+                {activeTab === 'v2commands' && (
+                  <div className="p-6">
+                    <V2CommandsConfig 
+                      config={config}
+                      updateConfig={updateConfig}
+                    />
                   </div>
                 )}
 

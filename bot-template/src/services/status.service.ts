@@ -56,10 +56,21 @@ export class StatusService {
       }
     ];
 
+    // Parse statusRotation if it exists
+    let statusRotation = envConfig.statusRotation || {};
+    if (typeof statusRotation === 'string') {
+      try {
+        statusRotation = JSON.parse(statusRotation);
+      } catch (e) {
+        console.error('Failed to parse statusRotation:', e);
+        statusRotation = {};
+      }
+    }
+
     return {
-      enabled: envConfig.statusRotation?.enabled ?? true,
-      rotationInterval: envConfig.statusRotation?.interval ?? 60, // 60 seconds default
-      statuses: envConfig.statusRotation?.statuses || defaultStatuses
+      enabled: statusRotation.enabled ?? false, // Disabled by default until configured
+      rotationInterval: statusRotation.interval ?? 60, // 60 seconds default
+      statuses: statusRotation.statuses || defaultStatuses
     };
   }
 
