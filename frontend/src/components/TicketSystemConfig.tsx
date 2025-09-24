@@ -857,8 +857,12 @@ export default function TicketSystemConfig({
                         title: '🎫 Support Tickets',
                         description: 'Click the button below to create a support ticket.',
                         color: '#5865F2',
-                        type: 'BUTTON',
-                        selectedCategories: []
+                        type: 'BUTTON' as 'BUTTON' | 'DROPDOWN' | 'HYBRID' | 'REACTION',
+                        selectedCategories: [],
+                        buttonStyle: 'PRIMARY' as 'PRIMARY' | 'SECONDARY' | 'SUCCESS' | 'DANGER',
+                        emoji: '🎫',
+                        requireReason: true,
+                        cooldown: 0
                       });
                       setShowPanelModal(true);
                     }}
@@ -913,7 +917,11 @@ export default function TicketSystemConfig({
                                     description: panel.description,
                                     color: panel.color,
                                     type: panel.type,
-                                    selectedCategories: panel.categories
+                                    selectedCategories: panel.categories,
+                                    buttonStyle: (panel as any).buttonStyle || 'PRIMARY' as 'PRIMARY' | 'SECONDARY' | 'SUCCESS' | 'DANGER',
+                                    emoji: (panel as any).emoji || '🎫',
+                                    requireReason: (panel as any).requireReason || true,
+                                    cooldown: (panel as any).cooldown || 0
                                   });
                                   setShowPanelModal(true);
                                 }}
