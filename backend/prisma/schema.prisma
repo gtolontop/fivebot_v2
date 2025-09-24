@@ -63,6 +63,7 @@ model BotConfig {
   loggingChannelId    String?  @map("logging_channel_id")
   customCommands      String?  @map("custom_commands") @db.LongText
   ticketData          String?  @map("ticket_data") @db.LongText
+  statusRotation      String?  @map("status_rotation") @db.LongText
   createdAt           DateTime @default(now()) @map("created_at")
   updatedAt           DateTime @updatedAt @map("updated_at")
   bot                 Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)

@@ -13,6 +13,7 @@ import { WelcomeService } from './services/welcome.service';
 import { TicketInteractionHandler } from './handlers/ticketInteraction.handler';
 import { TicketService } from './services/ticket.service';
 import { TicketStateManager } from './services/ticketStateManager.service';
+import { StatusService } from './services/status.service';
 
 dotenv.config();
 
@@ -41,6 +42,7 @@ class ChildBot {
   private ticketHandler?: TicketInteractionHandler;
   private ticketService?: TicketService;
   private ticketStateManager?: TicketStateManager;
+  private statusService?: StatusService;
 
   constructor() {
     // Force immediate console output
@@ -168,6 +170,10 @@ class ChildBot {
         this.commandService.start();
         console.log('📡 Command service started');
       }
+      
+      // Start status rotation service
+      this.statusService = new StatusService(this.client);
+      this.statusService.start();
     });
     
     this.client.on('guildMemberAdd', (member) => 
