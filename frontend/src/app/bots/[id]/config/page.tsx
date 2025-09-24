@@ -78,6 +78,23 @@ interface BotConfig {
   autoTagUrgent?: boolean;
   autoEscalate?: boolean;
   ticketData?: any;
+  statusRotation?: {
+    enabled: boolean;
+    interval: number;
+    statuses: Array<{
+      text: string;
+      type: 'playing' | 'streaming' | 'listening' | 'watching' | 'competing';
+      url?: string;
+      status?: 'online' | 'idle' | 'dnd' | 'invisible';
+    }>;
+  };
+  embedV2Commands?: Record<string, {
+    name: string;
+    description: string;
+    enabled: boolean;
+    useEmbedV2: boolean;
+    embedV2Data?: any[];
+  }>;
 }
 
 interface DiscordGuild {
@@ -542,6 +559,8 @@ export default function BotConfigPage() {
     { id: 'roles', name: 'Auto-Roles', icon: UserGroupIcon, description: 'Automatic role assignment' },
     { id: 'tickets', name: 'Tickets', icon: TicketIcon, description: 'Support ticket system' },
     { id: 'commands', name: 'Commands', icon: ChatBubbleLeftRightIcon, description: 'Custom commands' },
+    { id: 'status', name: 'Status', icon: ChartBarIcon, description: 'Bot status rotation' },
+    { id: 'v2commands', name: 'V2 Embeds', icon: DocumentTextIcon, description: 'Advanced V2 embed commands' },
     { id: 'advanced', name: 'Advanced', icon: WrenchScrewdriverIcon, description: 'Advanced settings' },
   ];
 
