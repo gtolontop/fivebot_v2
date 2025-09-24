@@ -138,7 +138,7 @@ export default function AnalyticsDashboard({ botId, botStatus, guilds }: Analyti
         summary: {
           totalUsers: analyticsData?.dailyUsers.reduce((a, b) => a + b, 0) || 0,
           topCommand: analyticsData?.weeklyCommands[0]?.command || 'N/A',
-          avgLatency: analyticsData?.commandLatency.reduce((a, b) => a + b, 0) / (analyticsData?.commandLatency.length || 1) || 0,
+          avgLatency: analyticsData ? analyticsData.commandLatency.reduce((a, b) => a + b, 0) / analyticsData.commandLatency.length : 0,
         }
       };
 
