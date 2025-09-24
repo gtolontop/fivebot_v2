@@ -55,7 +55,7 @@ export default function BotPlayground({ botId, botStatus, guilds }: PlaygroundPr
   }, [debugLogs]);
 
   const executeCommand = async () => {
-    if (!commandInput.trim() || !botStatus === 'ONLINE') return;
+    if (!commandInput.trim() || botStatus !== 'ONLINE') return;
 
     setIsExecuting(true);
     const startTime = Date.now();
