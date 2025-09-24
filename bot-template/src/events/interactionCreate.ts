@@ -35,6 +35,39 @@ export async function interactionCreate(
   const v2Commands = ['rules', 'pricing', 'embed-builder', 'server-info', 'user-profile', 'team', 'announcement'];
   if (v2Commands.includes(command)) {
     console.log(`[DEBUG] Detected V2 command: ${command}`);
+    
+    // Handle V2 commands directly here
+    const config = await configService.getConfig();
+    const embedV2Commands = (config as any).embedV2Commands || {};
+    
+    console.log(`[DEBUG] V2 Commands config:`, embedV2Commands);
+    console.log(`[DEBUG] Is ${command} enabled?`, embedV2Commands[command]?.enabled);
+    
+    if (embedV2Commands[command]?.enabled) {
+      try {
+        console.log(`[DEBUG] Loading command module: ${command}`);
+        const commandModule = await import(`../commands/${command}`);
+        if (commandModule.execute) {
+          await commandModule.execute(interaction);
+          console.log(`[DEBUG] Command /${command} completed successfully`);
+          return;
+        }
+      } catch (error) {
+        console.error(`[DEBUG] Failed to execute V2 command ${command}:`, error);
+        await interaction.reply({ 
+          content: '❌ This command encountered an error.', 
+          ephemeral: true 
+        });
+        return;
+      }
+    } else {
+      console.log(`[DEBUG] Command ${command} is not enabled in config`);
+      await interaction.reply({ 
+        content: '❌ This command is not enabled.', 
+        ephemeral: true 
+      });
+      return;
+    }
   }
 
   // Handle built-in configuration commands
