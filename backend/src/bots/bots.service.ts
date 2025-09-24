@@ -335,9 +335,15 @@ export class BotsService {
         : existingConfig.ticketData)
       : {};
 
+    // Fields that should not be included in update
+    const excludeFields = ['id', 'botId', 'createdAt', 'updatedAt', 'bot'];
+    
     // Separate ticket fields from other config fields
     for (const [key, value] of Object.entries(data)) {
-      if (ticketFields.includes(key)) {
+      if (excludeFields.includes(key)) {
+        // Skip fields that shouldn't be updated
+        continue;
+      } else if (ticketFields.includes(key)) {
         ticketData[key] = value;
       } else {
         // Handle JSON fields that need to be stringified
