@@ -81,7 +81,7 @@ class ChildBot {
     this.config = this.loadConfig();
     
     this.configService = new ConfigService(this.prisma, this.botId);
-    this.welcomeService = new WelcomeService(this.client, this.prisma, this.botId);
+    this.welcomeService = new WelcomeService(this.client, this.config);
 
     this.setupEventListeners();
   }

@@ -21,7 +21,7 @@ export const ticketValidate: Command = {
           { name: 'English', value: 'en' },
           { name: 'Français', value: 'fr' }
         )
-    ),
+    ) as SlashCommandBuilder,
   
   async execute(interaction: ChatInputCommandInteraction): Promise<void> {
     await interaction.deferReply({ ephemeral: true });
@@ -115,7 +115,7 @@ export const ticketValidate: Command = {
 
         summaryFields.push({
           name: locale === 'en' ? 'Inactivity Timeout' : 'Délai d\'Inactivité',
-          value: config.inactivityTimeout > 0 
+          value: config.inactivityTimeout && config.inactivityTimeout > 0 
             ? `${config.inactivityTimeout} ${locale === 'en' ? 'hours' : 'heures'}`
             : locale === 'en' ? '❌ Disabled' : '❌ Désactivé',
           inline: true

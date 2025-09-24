@@ -267,23 +267,24 @@ export class TicketValidationService {
       }
 
       // Validate custom modal fields
-      if (category.useCustomModal && category.modalFields) {
-        const fields = category.modalFields as any[];
-        if (fields.length === 0) {
-          warnings.push({
-            field: `category.${category.id}.modalFields`,
-            message: `Category "${category.name}" has custom modal enabled but no fields configured.`,
-            messageFr: `La catégorie "${category.name}" a le modal personnalisé activé mais aucun champ configuré.`
-          });
-        } else if (fields.length > 5) {
-          errors.push({
-            field: `category.${category.id}.modalFields`,
-            message: `Category "${category.name}" has too many modal fields (${fields.length}). Maximum allowed is 5.`,
-            messageFr: `La catégorie "${category.name}" a trop de champs modaux (${fields.length}). Le maximum autorisé est 5.`,
-            severity: 'error'
-          });
-        }
-      }
+      // TODO: Add support for custom modal fields in the schema
+      // if (category.useCustomModal && category.modalFields) {
+      //   const fields = category.modalFields as any[];
+      //   if (fields.length === 0) {
+      //     warnings.push({
+      //       field: `category.${category.id}.modalFields`,
+      //       message: `Category "${category.name}" has custom modal enabled but no fields configured.`,
+      //       messageFr: `La catégorie "${category.name}" a le modal personnalisé activé mais aucun champ configuré.`
+      //     });
+      //   } else if (fields.length > 5) {
+      //     errors.push({
+      //       field: `category.${category.id}.modalFields`,
+      //       message: `Category "${category.name}" has too many modal fields (${fields.length}). Maximum allowed is 5.`,
+      //       messageFr: `La catégorie "${category.name}" a trop de champs modaux (${fields.length}). Le maximum autorisé est 5.`,
+      //       severity: 'error'
+      //     });
+      //   }
+      // }
     }
   }
 
@@ -323,7 +324,7 @@ export class TicketValidationService {
     warnings: ValidationWarning[]
   ): void {
     // Validate inactivity timeout
-    if (config.inactivityTimeout <= 0) {
+    if (!config.inactivityTimeout || config.inactivityTimeout <= 0) {
       warnings.push({
         field: 'inactivityTimeout',
         message: 'Inactivity timeout is not set. Tickets will never be automatically closed due to inactivity.',
@@ -341,7 +342,7 @@ export class TicketValidationService {
     }
 
     // Validate ticket limits
-    if (config.maxActiveTickets > 0 && config.maxActiveTickets <= 10) {
+    if (config.maxActiveTickets && config.maxActiveTickets > 0 && config.maxActiveTickets <= 10) {
       warnings.push({
         field: 'maxActiveTickets',
         message: `Maximum active tickets is set to ${config.maxActiveTickets}, which might be too low for busy servers.`,

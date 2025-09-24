@@ -43,7 +43,7 @@ client.once('ready', async () => {
   
   // Initialize services after client is ready
   metricsService = new MetricsService(client, prisma, BOT_ID);
-  welcomeService = new WelcomeService(client, prisma, BOT_ID);
+  welcomeService = new WelcomeService(client, CONFIG);
   console.log(`[Bot ${BOT_ID}] Services initialized`);
   
   await ready(client, prisma, BOT_ID);
