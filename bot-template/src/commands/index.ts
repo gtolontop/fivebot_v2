@@ -4,8 +4,12 @@ import * as ticketCommand from './ticket';
 import * as ticketExampleCommand from './ticketExample';
 import * as ticketDebugCommand from './ticketDebug';
 
-// Default bot commands
-const defaultCommands = [
+// Get ticket enabled status from environment config
+const config = process.env.CONFIG ? JSON.parse(process.env.CONFIG) : {};
+const ticketEnabled = config.ticketData?.ticketEnabled || false;
+
+// Base commands (always available)
+const baseCommands = [
   new SlashCommandBuilder()
     .setName('set-welcome')
     .setDescription('Configure welcome messages')
@@ -48,10 +52,17 @@ const defaultCommands = [
     .setDescription('Show bot help'),
     
   statsCommand.data,
+];
+
+// Ticket commands (only if ticket system is enabled)
+const ticketCommands = ticketEnabled ? [
   ticketCommand.data,
   ticketExampleCommand.data,
   ticketDebugCommand.data,
-];
+] : [];
+
+// Default bot commands
+const defaultCommands = [...baseCommands, ...ticketCommands];
 
 // Function to build commands dynamically including custom commands
 export function buildCommands(customCommands: Record<string, any> = {}) {
