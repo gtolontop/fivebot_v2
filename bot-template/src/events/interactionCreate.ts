@@ -30,6 +30,12 @@ export async function interactionCreate(
     : `Command /${command} executed by ${user.username}#${user.discriminator}${guild ? ` in ${guild.name}` : ''}`;
   
   console.log(logMessage);
+  
+  // Debug log for V2 commands
+  const v2Commands = ['rules', 'pricing', 'embed-builder', 'server-info', 'user-profile', 'team', 'announcement'];
+  if (v2Commands.includes(command)) {
+    console.log(`[DEBUG] Detected V2 command: ${command}`);
+  }
 
   // Handle built-in configuration commands
   await handleBuiltInCommands(interaction, configService);
