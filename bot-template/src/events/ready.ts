@@ -117,6 +117,9 @@ async function deployCommands(client: Client) {
     // Build commands dynamically with V2 commands
     const allCommands = buildCommands(customCommands, parsedEmbedV2Commands);
     
+    console.log(`Registering ${allCommands.length} commands...`);
+    console.log('Commands to register:', allCommands.map(cmd => cmd.name));
+    
     await rest.put(
       Routes.applicationCommands(client.user?.id),
       { body: allCommands },
