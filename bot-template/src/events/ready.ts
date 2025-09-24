@@ -114,22 +114,31 @@ async function restoreTicketPanels(client: Client, prisma: PrismaClient) {
     console.log(`Bot is in ${botGuildIds.length} guilds:`, botGuildIds);
     
     // Only get panels for guilds this bot is actually in
-    const panels = await prisma.ticketPanel.findMany({
-      where: { 
-        active: true,
-        guildId: { in: botGuildIds } // Only panels from guilds this bot is in
-      },
-      include: {
-        config: {
-          include: {
-            categories: {
-              where: { active: true },
-              orderBy: { order: 'asc' }
+    let panels = [];
+    try {
+      panels = await prisma.ticketPanel.findMany({
+        where: { 
+          active: true,
+          guildId: { in: botGuildIds } // Only panels from guilds this bot is in
+        },
+        include: {
+          config: {
+            include: {
+              categories: {
+                where: { active: true },
+                orderBy: { order: 'asc' }
+              }
             }
           }
         }
+      });
+    } catch (error: any) {
+      if (error.code === 'P2021' || error.message?.includes("doesn't exist") || error.message?.includes("Table")) {
+        console.log('Ticket system not initialized - no panels to restore');
+        return;
       }
-    });
+      throw error;
+    }
 
     let restoredCount = 0;
     let failedCount = 0;
