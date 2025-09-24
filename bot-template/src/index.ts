@@ -132,16 +132,16 @@ class ChildBot {
   private setupEventListeners() {
     // Core events
     this.client.once('ready', async () => {
-      await ready(this.client, this.prisma, this.botId);
+      // Check if ticket system is enabled BEFORE calling ready
+      const ticketEnabled = (this.config as any).ticketData?.ticketEnabled || false;
+      
+      await ready(this.client, this.prisma, this.botId, ticketEnabled);
       // Initialize metrics service after bot is ready
       this.metricsService = new MetricsService(this.client, this.prisma, this.botId);
       console.log('📊 Metrics tracking initialized');
       
       // Initialize command service
       this.commandService = new CommandService(this.client, this.prisma, this.botId);
-      
-      // Initialize ticket system only if enabled
-      const ticketEnabled = (this.config as any).ticketData?.ticketEnabled || false;
       
       if (ticketEnabled) {
         // Sync ticket configuration from dashboard first
