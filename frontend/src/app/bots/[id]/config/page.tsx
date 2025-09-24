@@ -428,7 +428,7 @@ export default function BotConfigPage() {
         'statusRotation' in updates || 'embedV2Commands' in updates) {
       try {
         // Prepare data with proper serialization
-        const dataToSave = { ...config, ...updates };
+        const dataToSave: any = { ...config, ...updates };
         if ('statusRotation' in updates && updates.statusRotation) {
           dataToSave.statusRotation = JSON.stringify(updates.statusRotation);
         }
