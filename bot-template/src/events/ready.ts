@@ -263,7 +263,7 @@ async function restoreTicketPanels(client: Client, prisma: PrismaClient) {
             restoredCount++;
             console.log(`Restored panel ${panel.id} in channel ${channel.name}`);
           } catch (error) {
-            console.error(`Failed to edit message for panel ${panel.id}:`, error.message);
+            console.error(`Failed to edit message for panel ${panel.id}:`, (error as Error).message);
             failedCount++;
           }
         } else if (existingMessage && !existingMessage.editable) {

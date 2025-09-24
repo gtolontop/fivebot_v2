@@ -9,7 +9,8 @@ import {
   TextInputStyle,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
-  ComponentType
+  ComponentType,
+  ModalSubmitInteraction
 } from 'discord.js';
 import { TicketService, TicketConfigWithArrays } from '../services/ticket.service';
 import { TicketContainerService } from '../services/ticketContainer.service';

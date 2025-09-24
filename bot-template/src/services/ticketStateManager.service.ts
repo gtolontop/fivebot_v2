@@ -391,4 +391,32 @@ export class TicketStateManager {
       console.error('[TicketStateManager] Error cleaning up deleted tickets:', error);
     }
   }
+
+  // Get user state for handling modal data
+  async getUserState(userId: string, key: string): Promise<any> {
+    // Simple in-memory storage for user states
+    const stateKey = `${userId}:${key}`;
+    return (this as any)._userStates?.get(stateKey);
+  }
+
+  // Set user state for handling modal data
+  async setUserState(userId: string, key: string, value: any): Promise<void> {
+    // Initialize user states map if it doesn't exist
+    if (!(this as any)._userStates) {
+      (this as any)._userStates = new Map();
+    }
+    const stateKey = `${userId}:${key}`;
+    (this as any)._userStates.set(stateKey, value);
+    
+    // Auto-cleanup after 10 minutes
+    setTimeout(() => {
+      (this as any)._userStates?.delete(stateKey);
+    }, 10 * 60 * 1000);
+  }
+
+  // Delete user state
+  async deleteUserState(userId: string, key: string): Promise<void> {
+    const stateKey = `${userId}:${key}`;
+    (this as any)._userStates?.delete(stateKey);
+  }
 }
