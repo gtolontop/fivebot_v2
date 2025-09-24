@@ -302,10 +302,12 @@ export class MetricsService {
         await this.prisma.$executeRaw`
           INSERT INTO bot_metrics (
             id, bot_id, date, commands_used, messages_processed, 
-            guilds_count, users_count, uptime_seconds, avg_response_time_ms, errors_count
+            guilds_count, users_count, uptime_seconds, avg_response_time_ms, errors_count,
+            created_at, updated_at
           ) VALUES (
             ${uuid}, ${this.botId}, ${today}, ${summary.commandCount}, ${summary.messageCount},
-            ${currentGuilds}, ${currentUsers}, ${uptimeSeconds}, ${summary.avgResponseTime || 45}, ${summary.errorCount}
+            ${currentGuilds}, ${currentUsers}, ${uptimeSeconds}, ${summary.avgResponseTime || 45}, ${summary.errorCount},
+            NOW(), NOW()
           )
         `;
       }
