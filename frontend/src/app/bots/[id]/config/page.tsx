@@ -204,6 +204,34 @@ export default function BotConfigPage() {
           }
         }
         
+        // Parse statusRotation if it's a string
+        let statusRotation = null;
+        if (configData.statusRotation) {
+          if (typeof configData.statusRotation === 'string') {
+            try {
+              statusRotation = JSON.parse(configData.statusRotation);
+            } catch (e) {
+              console.error('Failed to parse statusRotation:', e);
+            }
+          } else {
+            statusRotation = configData.statusRotation;
+          }
+        }
+        
+        // Parse embedV2Commands if it's a string
+        let embedV2Commands = null;
+        if (configData.embedV2Commands) {
+          if (typeof configData.embedV2Commands === 'string') {
+            try {
+              embedV2Commands = JSON.parse(configData.embedV2Commands);
+            } catch (e) {
+              console.error('Failed to parse embedV2Commands:', e);
+            }
+          } else {
+            embedV2Commands = configData.embedV2Commands;
+          }
+        }
+        
         // Type the ticketData properly
         const typedTicketData = ticketData as any;
         
