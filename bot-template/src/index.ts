@@ -132,7 +132,7 @@ class ChildBot {
   private setupEventListeners() {
     // Core events
     this.client.once('ready', async () => {
-      ready(this.client, this.prisma, this.botId);
+      await ready(this.client, this.prisma, this.botId);
       // Initialize metrics service after bot is ready
       this.metricsService = new MetricsService(this.client, this.prisma, this.botId);
       console.log('📊 Metrics tracking initialized');
@@ -171,11 +171,11 @@ class ChildBot {
     });
     
     this.client.on('guildMemberAdd', (member) => 
-      guildMemberAdd(member, this.welcomeService, this.config)
+      guildMemberAdd(member, this.welcomeService!, this.config)
     );
     
     this.client.on('interactionCreate', (interaction) => 
-      interactionCreate(interaction, this.prisma, this.configService, this.ticketHandler || undefined)
+      interactionCreate(interaction, this.prisma, this.configService!, this.ticketHandler || undefined)
     );
     
     // Message create event for ticket tracking

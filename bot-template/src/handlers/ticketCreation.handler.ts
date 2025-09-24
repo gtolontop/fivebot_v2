@@ -9,7 +9,9 @@ import {
   EmbedBuilder,
   ThreadAutoArchiveDuration,
   ChannelType,
-  PermissionsBitField
+  PermissionsBitField,
+  TextChannel,
+  CategoryChannel
 } from 'discord.js';
 import { TicketService, TicketConfigWithArrays } from '../services/ticket.service';
 import { TicketStateManager } from '../services/ticketStateManager.service';

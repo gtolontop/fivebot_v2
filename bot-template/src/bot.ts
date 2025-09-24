@@ -6,6 +6,7 @@ import { interactionCreate } from './events/interactionCreate';
 // messageCreate will be handled differently since it needs ticket service
 import { guildMemberAdd } from './events/guildMemberAdd';
 import { MetricsService } from './services/metrics.service';
+import { WelcomeService } from './services/welcome.service';
 
 dotenv.config();
 
@@ -32,23 +33,25 @@ const prisma = new PrismaClient({
   log: ['error'],
 });
 
-// Initialize metrics service
+// Initialize services
 let metricsService: MetricsService;
+let welcomeService: WelcomeService;
 
 // Register events
 client.once('ready', async () => {
   console.log(`[Bot ${BOT_ID}] Initializing...`);
   
-  // Initialize metrics service after client is ready
+  // Initialize services after client is ready
   metricsService = new MetricsService(client, prisma, BOT_ID);
-  console.log(`[Bot ${BOT_ID}] Metrics service initialized`);
+  welcomeService = new WelcomeService(client, prisma, BOT_ID);
+  console.log(`[Bot ${BOT_ID}] Services initialized`);
   
   await ready(client, prisma, BOT_ID);
 });
 
 client.on('interactionCreate', (interaction) => interactionCreate(interaction, prisma, CONFIG));
 // messageCreate event is handled in index.ts with ticket service
-client.on('guildMemberAdd', (member) => guildMemberAdd(member, CONFIG));
+client.on('guildMemberAdd', (member) => guildMemberAdd(member, welcomeService, CONFIG));
 
 // Error handling
 client.on('error', (error) => {
@@ -104,4 +107,4 @@ async function start() {
 
 start();
 
-export { client, prisma, metricsService };
+export { client, prisma, metricsService, welcomeService };
