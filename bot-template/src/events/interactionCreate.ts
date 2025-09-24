@@ -53,6 +53,37 @@ async function handleBuiltInCommands(
     await ticketDebugCommand.execute(interaction);
     return;
   }
+  
+  // Handle V2 commands without owner check
+  const v2CommandNames = ['rules', 'pricing', 'embed-builder', 'server-info', 'user-profile', 'team', 'announcement'];
+  if (v2CommandNames.includes(commandName)) {
+    // Check if this V2 command is enabled
+    const config = await configService.getConfig();
+    const embedV2Commands = (config as any).embedV2Commands || {};
+    
+    if (embedV2Commands[commandName]?.enabled) {
+      try {
+        const commandModule = await import(`../commands/${commandName}`);
+        if (commandModule.execute) {
+          await commandModule.execute(interaction);
+          return;
+        }
+      } catch (error) {
+        console.error(`Failed to execute V2 command ${commandName}:`, error);
+        await interaction.reply({ 
+          content: '❌ This command encountered an error.', 
+          ephemeral: true 
+        });
+        return;
+      }
+    } else {
+      await interaction.reply({ 
+        content: '❌ This command is not enabled.', 
+        ephemeral: true 
+      });
+      return;
+    }
+  }
 
   // Only allow bot owner to use configuration commands
   const bot = await configService.getBot();
