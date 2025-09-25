@@ -80,6 +80,17 @@ export function buildCommands(customCommands: Record<string, any> = {}, v2Comman
   if (v2CommandsConfig['team']?.enabled) commands.push(teamCommand.data);
   if (v2CommandsConfig['announcement']?.enabled) commands.push(announcementCommand.data);
   
+  // Add dynamic V2 embeds (custom embeds created by users)
+  const presetCommands = ['rules', 'pricing', 'server-info', 'user-profile', 'team', 'announcement', 'embed-builder'];
+  Object.entries(v2CommandsConfig).forEach(([name, data]: [string, any]) => {
+    if (!presetCommands.includes(name) && data.enabled) {
+      const command = new SlashCommandBuilder()
+        .setName(name)
+        .setDescription(data.description || `Display ${name} embed`);
+      commands.push(command);
+    }
+  });
+  
   // Add ticket commands if enabled
   const parsedConfig = process.env.CONFIG ? JSON.parse(process.env.CONFIG) : {};
   const ticketEnabledNow = parsedConfig.ticketData?.ticketEnabled || false;
