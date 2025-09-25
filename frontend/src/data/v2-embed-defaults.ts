@@ -1,5 +1,6 @@
 export const V2_EMBED_DEFAULTS = {
   rules: [
+    // Container 1 - Welcome
     {
       id: 1,
       type: 17,
@@ -10,9 +11,9 @@ export const V2_EMBED_DEFAULTS = {
           items: [
             {
               media: {
-                url: "https://cdn.discordapp.com/attachments/1234567890/banner1.png",
+                url: "https://example.com/welcome-banner.png",
               },
-              description: "Welcome banner",
+              description: "Welcome illustration",
               spoiler: false,
             },
           ],
@@ -21,15 +22,473 @@ export const V2_EMBED_DEFAULTS = {
         {
           id: 4,
           type: 10,
-          content: `>>> **Welcome** to our amazing community server!
+          content: `>>> **Our server** is your community platform for the *entire* community.
 
-Here you can:
-- **Share** your ideas and projects  
-- **Connect** with other members  
-- **Learn** new things every day
+Create a **100% personalized experience** for yourself, share your content, collaborate with others, or showcase your projects.
+
+- **Share** your creations and ideas  
+- **Connect** with like-minded people  
+- **Benefit** from a helping hand in a *friendly, collaborative atmosphere*
 
 Whether you're a **beginner** or an **expert**,  
-everyone is welcome here!`,
+**our server** is here to **showcase your talents**  
+and **connect** the community in a single space.`,
+        },
+        { id: 5, type: 14, divider: true, spacing: 1 },
+        {
+          id: 6,
+          type: 1,
+          components: [
+            {
+              id: 7,
+              type: 2,
+              style: 5,
+              url: "https://discord.gg/invite",
+              label: "🧷 Invite Friends",
+            },
+            {
+              id: 8,
+              type: 2,
+              style: 5,
+              url: "https://example.com",
+              label: "🧷 Website",
+            },
+          ],
+        },
+        { id: 9, type: 14, divider: true, spacing: 1 },
+      ],
+    },
+    // Container 2 - Rules
+    {
+      id: 20,
+      type: 17,
+      components: [
+        {
+          id: 21,
+          type: 12,
+          items: [
+            {
+              media: {
+                url: "https://example.com/rules-banner.png",
+              },
+              description: "Rules banner",
+              spoiler: false,
+            },
+          ],
+        },
+        { id: 22, type: 10, content: "# __Server Rules__" },
+        {
+          id: 23,
+          type: 10,
+          content: "`1. Be Respectful`\n-# **Treat others with courtesy and consideration.**",
+        },
+        {
+          id: 24,
+          type: 10,
+          content: "`2. No Spam or Flooding`\n-# **Avoid repeated or irrelevant messages.**",
+        },
+        {
+          id: 25,
+          type: 10,
+          content: "`3. Stay On-Topic`\n-# **Keep discussions relevant to the channel.**",
+        },
+        {
+          id: 26,
+          type: 10,
+          content: "`4. No NSFW or Illegal Content`\n-# **Strictly prohibited, report if spotted.**",
+        },
+        {
+          id: 27,
+          type: 10,
+          content: "`5. No Self-Promotion`\n-# **Ask permission before promoting content.**",
+        },
+        {
+          id: 28,
+          type: 10,
+          content: "`6. Protect Privacy`\n-# **Do not share personal information.**",
+        },
+        {
+          id: 29,
+          type: 10,
+          content: "`7. No Cheating or Exploits`\n-# **Keep interactions fair and honest.**",
+        },
+        {
+          id: 30,
+          type: 10,
+          content: "`8. Listen to Staff`\n-# **Follow directions from moderators and admins.**",
+        },
+        { id: 31, type: 14, divider: true, spacing: 1 },
+      ],
+    },
+    // Container 3 - Useful Links
+    {
+      id: 40,
+      type: 17,
+      components: [
+        {
+          id: 41,
+          type: 12,
+          items: [
+            {
+              media: {
+                url: "https://example.com/links-banner.png",
+              },
+              description: "Links Banner",
+              spoiler: false,
+            },
+          ],
+        },
+        { id: 42, type: 10, content: "# __Useful Links__" },
+        {
+          id: 43,
+          type: 10,
+          content: "**Visit our website** for features and updates.\nhttps://example.com",
+        },
+        {
+          id: 44,
+          type: 10,
+          content: "**Check out our resources** for helpful information.\nhttps://example.com/resources",
+        },
+        {
+          id: 45,
+          type: 10,
+          content: "**Join our community** and get involved.\nhttps://example.com/community",
+        },
+        { id: 46, type: 14, divider: true, spacing: 1 },
+        {
+          id: 47,
+          type: 1,
+          components: [
+            {
+              id: 48,
+              type: 2,
+              style: 5,
+              url: "https://example.com",
+              label: "🧷 Website",
+            },
+            {
+              id: 49,
+              type: 2,
+              style: 5,
+              url: "https://example.com/docs",
+              label: "🧷 Documentation",
+            },
+            {
+              id: 50,
+              type: 2,
+              style: 5,
+              url: "https://example.com/support",
+              label: "🧷 Support",
+            },
+          ],
+        },
+        { id: 51, type: 14, divider: true, spacing: 1 },
+      ],
+    },
+  ],
+  pricing: [
+    // Container 1 - Header
+    {
+      id: 1,
+      type: 17,
+      components: [
+        {
+          id: 2,
+          type: 12,
+          items: [
+            {
+              media: {
+                url: "https://example.com/pricing-header.png",
+              },
+              description: "Pricing illustration",
+              spoiler: false,
+            },
+          ],
+        },
+        { id: 3, type: 10, content: "# __Pricing Plans__" },
+        {
+          id: 4,
+          type: 10,
+          content: `> Discover our platform's pricing tiers:
+> 
+> **Free** *(Default)* – Essential features at no cost
+> **Premium** *(Most Popular)* – Unlock advanced tools 
+> **Business** *(For teams)* – Full suite with custom integrations
+> 
+> We also offer bespoke services:
+> • Custom features
+> • Tailored solutions on demand
+## Choose the plan that fits your needs
+
+### __Built by the community, for the community__`,
+        },
+        { id: 5, type: 14, divider: true, spacing: 1 },
+        {
+          id: 6,
+          type: 1,
+          components: [
+            {
+              id: 7,
+              type: 2,
+              style: 5,
+              url: "https://example.com/support",
+              label: "🧷 Support",
+            },
+            {
+              id: 8,
+              type: 2,
+              style: 5,
+              url: "https://example.com/contact",
+              label: "🧷 Contact Us",
+            },
+          ],
+        },
+        { id: 9, type: 14, divider: true, spacing: 1 },
+      ],
+    },
+    // Container 2 - Free Plan
+    {
+      id: 10,
+      type: 17,
+      components: [
+        {
+          id: 11,
+          type: 12,
+          items: [
+            {
+              media: {
+                url: "https://example.com/free-plan.png",
+              },
+              description: "Free Plan Banner",
+              spoiler: false,
+            },
+          ],
+        },
+        { id: 13, type: 10, content: "# __Free Plan__" },
+        {
+          id: 14,
+          type: 10,
+          content: `\`- Basic Features\`
+-# **Access to essential functionalities**
+\`- 5 Projects\`
+-# **Create up to 5 projects**
+\`- Community Support\`
+-# **Get help from our community**
+\`- Basic Customization\`
+-# **Customize your experience**
+\`- Public Profile\`
+-# **Share your public profile**
+\`- Standard Storage\`
+-# **5GB of storage space**`,
+        },
+        { id: 26, type: 14, divider: true, spacing: 1 },
+      ],
+    },
+    // Container 3 - Premium Plan
+    {
+      id: 27,
+      type: 17,
+      components: [
+        {
+          id: 28,
+          type: 12,
+          items: [
+            {
+              media: {
+                url: "https://example.com/premium-plan.png",
+              },
+              description: "Premium Plan Banner",
+              spoiler: false,
+            },
+          ],
+        },
+        { id: 29, type: 10, content: "# __Premium Plan__" },
+        {
+          id: 30,
+          type: 10,
+          content: `\`All in Free Plan\`
+-# **Includes all Free Plan features**
+\`- Unlimited Projects\`
+-# **Create unlimited projects**
+\`- Priority Support\`
+-# **Get help faster with priority queue**
+\`- Advanced Analytics\`
+-# **Detailed insights and statistics**
+\`- Custom Domain\`
+-# **Use your own domain name**
+\`- Premium Badge\`
+-# **Exclusive premium badge**
+\`- API Access\`
+-# **Full API access for integrations**
+\`- 50GB Storage\`
+-# **Expanded storage capacity**`,
+        },
+        { id: 43, type: 14, divider: true, spacing: 1 },
+      ],
+    },
+    // Container 4 - Business Plan
+    {
+      id: 44,
+      type: 17,
+      components: [
+        {
+          id: 45,
+          type: 12,
+          items: [
+            {
+              media: {
+                url: "https://example.com/business-plan.png",
+              },
+              description: "Business Plan Banner",
+              spoiler: false,
+            },
+          ],
+        },
+        { id: 46, type: 10, content: "# __Business Plan__" },
+        {
+          id: 47,
+          type: 10,
+          content: `\`- All Premium Features\`
+-# **Everything from Free and Premium**
+\`- Team Collaboration\`
+-# **Work together with your team**
+\`- White Label\`
+-# **Remove our branding**
+\`- Dedicated Support\`
+-# **Your own account manager**
+\`- SLA Guarantee\`
+-# **99.9% uptime guarantee**
+\`- Custom Integrations\`
+-# **Tailored integrations for your needs**
+\`- Unlimited Storage\`
+-# **No storage limits**
+\`- Advanced Security\`
+-# **Enterprise-grade security features**`,
+        },
+        { id: 60, type: 14, divider: true, spacing: 1 },
+      ],
+    },
+    // Container 5 - CTA
+    {
+      id: 90,
+      type: 17,
+      components: [
+        {
+          id: 91,
+          type: 12,
+          items: [
+            {
+              media: {
+                url: "https://example.com/cta-banner.png",
+              },
+              description: "Call to Action Banner",
+              spoiler: false,
+            },
+          ],
+        },
+        { id: 92, type: 10, content: "# __Start Your Journey Today__" },
+        {
+          id: 93,
+          type: 10,
+          content: `> **Get started today** and unlock your potential!
+> 
+> Questions? Contact our support team or ask in our community channels
+## Thank you for being part of our community!`,
+        },
+        { id: 94, type: 14, divider: true, spacing: 1 },
+        {
+          id: 95,
+          type: 1,
+          components: [
+            {
+              id: 96,
+              type: 2,
+              style: 5,
+              url: "https://example.com",
+              label: "🧷 Website",
+            },
+            {
+              id: 97,
+              type: 2,
+              style: 5,
+              url: "https://example.com/pricing",
+              label: "🧷 View Pricing",
+            },
+            {
+              id: 98,
+              type: 2,
+              style: 5,
+              url: "https://example.com/signup",
+              label: "🧷 Get Started",
+            },
+          ],
+        },
+        { id: 99, type: 14, divider: true, spacing: 1 },
+      ],
+    },
+  ],
+  'server-info': [
+    {
+      id: 1,
+      type: 17,
+      components: [
+        {
+          id: 2,
+          type: 12,
+          items: [
+            {
+              media: {
+                url: "https://example.com/server-banner.png",
+              },
+              description: "Server Info Banner",
+              spoiler: false,
+            },
+          ],
+        },
+        { id: 3, type: 10, content: "# __Server Information__" },
+        {
+          id: 4,
+          type: 10,
+          content: `\`Server Name\`
+-# **{server.name}**
+\`Server ID\`
+-# **{server.id}**
+\`Owner\`
+-# **{server.owner}**
+\`Created\`
+-# **{server.createdAt}**
+\`Members\`
+-# **{server.memberCount} total members**
+\`Boosts\`
+-# **{server.premiumSubscriptionCount} boosts (Level {server.premiumTier})**`,
+        },
+        { id: 5, type: 14, divider: true, spacing: 1 },
+      ],
+    },
+  ],
+  'embed-builder': [
+    {
+      id: 1,
+      type: 17,
+      components: [
+        {
+          id: 2,
+          type: 12,
+          items: [
+            {
+              media: {
+                url: "https://example.com/builder-banner.png",
+              },
+              description: "Embed Builder",
+              spoiler: false,
+            },
+          ],
+        },
+        { id: 3, type: 10, content: "# __V2 Embed Builder__" },
+        {
+          id: 4,
+          type: 10,
+          content: "Use the buttons below to create and manage your V2 embeds!",
         },
         { id: 5, type: 14, divider: true, spacing: 1 },
         {
@@ -40,136 +499,33 @@ everyone is welcome here!`,
               id: 7,
               type: 2,
               style: 1,
-              label: "Invite Friends",
-              emoji: { id: null, name: "✉️" },
-              custom_id: "invite_button",
+              label: "Create New",
+              emoji: { id: null, name: "➕" },
+              custom_id: "embed_create",
             },
             {
               id: 8,
               type: 2,
-              style: 5,
-              label: "Website",
-              emoji: { id: null, name: "🌐" },
-              url: "https://yourwebsite.com",
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: 9,
-      type: 17,
-      components: [
-        {
-          id: 10,
-          type: 12,
-          items: [
-            {
-              media: {
-                url: "https://cdn.discordapp.com/attachments/1234567890/rules_banner.png",
-              },
-              description: "Rules banner",
-              spoiler: false,
-            },
-          ],
-        },
-        { id: 11, type: 10, content: "# 📜 __Server Rules__", style: 4 },
-        { id: 12, type: 14, divider: true },
-        {
-          id: 13,
-          type: 10,
-          content: `**1. Be respectful** 🤝  
-Treat all members with kindness and respect. No harassment, discrimination, or hate speech.
-
-**2. No spam** 🚫  
-Avoid repetitive messages, excessive emojis, or unnecessary pings.
-
-**3. Stay on topic** 💭  
-Keep conversations relevant to the channel you're in.
-
-**4. No NSFW content** 🔞  
-Keep all content appropriate for all ages.
-
-**5. Follow Discord ToS** 📋  
-Abide by Discord's Terms of Service at all times.
-
-**6. Listen to staff** 👮  
-Follow instructions from moderators and administrators.`,
-        },
-        { id: 14, type: 14, divider: true, spacing: 2 },
-        {
-          id: 15,
-          type: 10,
-          content: "**Breaking these rules may result in warnings, mutes, or bans.**",
-          style: 1,
-        },
-      ],
-    },
-    {
-      id: 16,
-      type: 17,
-      components: [
-        {
-          id: 17,
-          type: 12,
-          items: [
-            {
-              media: {
-                url: "https://cdn.discordapp.com/attachments/1234567890/links_banner.png",
-              },
-              description: "Links banner",
-              spoiler: false,
-            },
-          ],
-        },
-        { id: 18, type: 10, content: "## 🔗 __Useful Links__", style: 2 },
-        {
-          id: 19,
-          type: 10,
-          content: `**Important Channels:**
-- <#123456789> - General chat
-- <#123456790> - Announcements
-- <#123456791> - Support
-
-**Resources:**
-- [FAQ](https://yourwebsite.com/faq) - Frequently asked questions
-- [Guide](https://yourwebsite.com/guide) - Getting started guide`,
-        },
-        { id: 20, type: 14, divider: true },
-        {
-          id: 21,
-          type: 1,
-          components: [
-            {
-              id: 22,
-              type: 2,
               style: 2,
-              label: "Rules",
-              emoji: { id: null, name: "📜" },
-              custom_id: "rules_button",
+              label: "Gallery",
+              emoji: { id: null, name: "🖼️" },
+              custom_id: "embed_gallery",
             },
             {
-              id: 23,
+              id: 9,
               type: 2,
               style: 3,
-              label: "Support",
-              emoji: { id: null, name: "🎫" },
-              custom_id: "support_button",
-            },
-            {
-              id: 24,
-              type: 2,
-              style: 4,
-              label: "Report",
-              emoji: { id: null, name: "🚨" },
-              custom_id: "report_button",
+              label: "Preview",
+              emoji: { id: null, name: "👁️" },
+              custom_id: "embed_preview",
             },
           ],
         },
+        { id: 10, type: 14, divider: true, spacing: 1 },
       ],
     },
   ],
-  pricing: [
+  'user-profile': [
     {
       id: 1,
       type: 17,
@@ -180,222 +536,29 @@ Follow instructions from moderators and administrators.`,
           items: [
             {
               media: {
-                url: "https://cdn.discordapp.com/attachments/1234567890/pricing_banner.png",
+                url: "https://example.com/profile-banner.png",
               },
-              description: "Pricing Plans",
+              description: "User Profile",
               spoiler: false,
             },
           ],
         },
-        { id: 3, type: 10, content: "# 💎 __Pricing Plans__", style: 3 },
-        { id: 4, type: 10, content: "Choose the perfect plan for your needs!", style: 1 },
-        { id: 5, type: 14, divider: true },
-      ],
-    },
-    {
-      id: 6,
-      type: 17,
-      components: [
-        { id: 7, type: 10, content: "## 🆓 Free Plan", style: 2 },
-        {
-          id: 8,
-          type: 10,
-          content: `**$0** / month
-
-✅ Basic features
-✅ Community support
-✅ 5 projects
-❌ Priority support
-❌ Advanced features`,
-        },
-        {
-          id: 9,
-          type: 1,
-          components: [
-            {
-              id: 10,
-              type: 2,
-              style: 2,
-              label: "Current Plan",
-              emoji: { id: null, name: "✓" },
-              disabled: true,
-              custom_id: "free_plan",
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: 11,
-      type: 17,
-      components: [
-        { id: 12, type: 10, content: "## ⭐ Premium Plan", style: 2 },
-        {
-          id: 13,
-          type: 10,
-          content: `**$9.99** / month
-
-✅ All Free features
-✅ Priority support
-✅ Unlimited projects
-✅ Advanced analytics
-✅ Custom branding`,
-        },
-        {
-          id: 14,
-          type: 1,
-          components: [
-            {
-              id: 15,
-              type: 2,
-              style: 3,
-              label: "Upgrade",
-              emoji: { id: null, name: "🚀" },
-              custom_id: "premium_plan",
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: 16,
-      type: 17,
-      components: [
-        { id: 17, type: 10, content: "## 👑 Enterprise Plan", style: 2 },
-        {
-          id: 18,
-          type: 10,
-          content: `**$49.99** / month
-
-✅ All Premium features
-✅ Dedicated support
-✅ SLA guarantee
-✅ Custom integrations
-✅ White label options`,
-        },
-        {
-          id: 19,
-          type: 1,
-          components: [
-            {
-              id: 20,
-              type: 2,
-              style: 1,
-              label: "Contact Sales",
-              emoji: { id: null, name: "📞" },
-              custom_id: "enterprise_plan",
-            },
-          ],
-        },
-      ],
-    },
-  ],
-  'server-info': [
-    {
-      id: 1,
-      type: 17,
-      components: [
-        { id: 2, type: 10, content: "# 📊 __Server Information__", style: 3 },
-        { id: 3, type: 14, divider: true },
+        { id: 3, type: 10, content: "# __User Profile__" },
         {
           id: 4,
           type: 10,
-          content: `**Server Name:** {server.name}
-**Server ID:** {server.id}
-**Owner:** {server.owner}
-**Created:** {server.createdAt}`,
+          content: `\`Username\`
+-# **{user.username}**
+\`User ID\`
+-# **{user.id}**
+\`Account Created\`
+-# **{user.createdAt}**
+\`Joined Server\`
+-# **{user.joinedAt}**
+\`Roles\`
+-# **{user.roles}**`,
         },
-      ],
-    },
-    {
-      id: 5,
-      type: 17,
-      components: [
-        { id: 6, type: 10, content: "## 👥 Members", style: 2 },
-        {
-          id: 7,
-          type: 10,
-          content: `**Total Members:** {server.memberCount}
-**Online:** {server.onlineCount}
-**Offline:** {server.offlineCount}`,
-        },
-      ],
-    },
-    {
-      id: 8,
-      type: 17,
-      components: [
-        { id: 9, type: 10, content: "## 💬 Channels", style: 2 },
-        {
-          id: 10,
-          type: 10,
-          content: `**Text Channels:** {server.textChannels}
-**Voice Channels:** {server.voiceChannels}
-**Categories:** {server.categories}`,
-        },
-      ],
-    },
-  ],
-  'embed-builder': [
-    {
-      id: 1,
-      type: 17,
-      components: [
-        { id: 2, type: 10, content: "# 🛠️ __V2 Embed Builder__", style: 3 },
-        { id: 3, type: 14, divider: true },
-        {
-          id: 4,
-          type: 10,
-          content: "Use the buttons below to create and manage your V2 embeds!",
-        },
-        {
-          id: 5,
-          type: 1,
-          components: [
-            {
-              id: 6,
-              type: 2,
-              style: 1,
-              label: "Create New",
-              emoji: { id: null, name: "➕" },
-              custom_id: "embed_create",
-            },
-            {
-              id: 7,
-              type: 2,
-              style: 2,
-              label: "Gallery",
-              emoji: { id: null, name: "🖼️" },
-              custom_id: "embed_gallery",
-            },
-            {
-              id: 8,
-              type: 2,
-              style: 3,
-              label: "Preview",
-              emoji: { id: null, name: "👁️" },
-              custom_id: "embed_preview",
-            },
-          ],
-        },
-      ],
-    },
-  ],
-  'user-profile': [
-    {
-      id: 1,
-      type: 17,
-      components: [
-        { id: 2, type: 10, content: "# 👤 __User Profile__", style: 3 },
-        { id: 3, type: 14, divider: true },
-        {
-          id: 4,
-          type: 10,
-          content: `**Username:** {user.username}
-**ID:** {user.id}
-**Joined Discord:** {user.createdAt}
-**Joined Server:** {user.joinedAt}`,
-        },
+        { id: 5, type: 14, divider: true, spacing: 1 },
       ],
     },
   ],
@@ -404,35 +567,59 @@ Follow instructions from moderators and administrators.`,
       id: 1,
       type: 17,
       components: [
-        { id: 2, type: 10, content: "# 👥 __Our Team__", style: 3 },
-        { id: 3, type: 14, divider: true },
-        { id: 4, type: 10, content: "Meet the amazing people behind our community!", style: 1 },
+        {
+          id: 2,
+          type: 12,
+          items: [
+            {
+              media: {
+                url: "https://example.com/team-banner.png",
+              },
+              description: "Team Banner",
+              spoiler: false,
+            },
+          ],
+        },
+        { id: 3, type: 10, content: "# __Our Team__" },
+        {
+          id: 4,
+          type: 10,
+          content: "Meet the amazing people behind our community!",
+        },
+        { id: 5, type: 14, divider: true, spacing: 1 },
       ],
     },
     {
-      id: 5,
+      id: 6,
       type: 17,
       components: [
-        { id: 6, type: 10, content: "## 👑 Owner", style: 2 },
-        { id: 7, type: 10, content: "**John Doe** - Founder & Lead Developer" },
-        { id: 8, type: 14, divider: true },
+        { id: 7, type: 10, content: "## __Leadership__" },
+        {
+          id: 8,
+          type: 10,
+          content: `\`👑 Owner\`
+-# **@owner** - Founder & Lead
+\`⚡ Co-Owner\`
+-# **@coowner** - Co-Founder & Manager`,
+        },
+        { id: 9, type: 14, divider: true, spacing: 1 },
       ],
     },
     {
-      id: 9,
+      id: 10,
       type: 17,
       components: [
-        { id: 10, type: 10, content: "## 🛡️ Administrators", style: 2 },
-        { id: 11, type: 10, content: "**Jane Smith** - Community Manager\n**Bob Johnson** - Technical Administrator" },
-        { id: 12, type: 14, divider: true },
-      ],
-    },
-    {
-      id: 13,
-      type: 17,
-      components: [
-        { id: 14, type: 10, content: "## 👮 Moderators", style: 2 },
-        { id: 15, type: 10, content: "**Alice Brown** - Senior Moderator\n**Charlie Davis** - Moderator\n**Eve Wilson** - Moderator" },
+        { id: 11, type: 10, content: "## __Staff Team__" },
+        {
+          id: 12,
+          type: 10,
+          content: `\`🛡️ Admin\`
+-# **@admin1** - Server Administrator
+\`👮 Moderators\`
+-# **@mod1** - Community Moderator
+-# **@mod2** - Community Moderator`,
+        },
+        { id: 13, type: 14, divider: true, spacing: 1 },
       ],
     },
   ],
@@ -441,18 +628,30 @@ Follow instructions from moderators and administrators.`,
       id: 1,
       type: 17,
       components: [
-        { id: 2, type: 10, content: "# 📢 __Important Announcement__", style: 3 },
-        { id: 3, type: 14, divider: true },
+        {
+          id: 2,
+          type: 12,
+          items: [
+            {
+              media: {
+                url: "https://example.com/announcement-banner.png",
+              },
+              description: "Announcement",
+              spoiler: false,
+            },
+          ],
+        },
+        { id: 3, type: 10, content: "# __Important Announcement__" },
         {
           id: 4,
           type: 10,
-          content: "Your announcement content goes here...",
+          content: "> Your announcement content goes here...\n> \n> Make sure to include all important details!",
         },
-        { id: 5, type: 14, divider: true },
+        { id: 5, type: 14, divider: true, spacing: 1 },
         {
           id: 6,
           type: 10,
-          content: "Posted by @Admin • {timestamp}",
+          content: "Posted by **@Admin** • Today at {timestamp}",
           style: 1,
         },
       ],
