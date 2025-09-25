@@ -370,6 +370,19 @@ export default function BotDetailPage() {
                     </div>
                   )}
                 </div>
+                {!autoScroll && (
+                  <button
+                    onClick={() => {
+                      setAutoScroll(true);
+                      if (consoleRef.current) {
+                        consoleRef.current.scrollTop = consoleRef.current.scrollHeight;
+                      }
+                    }}
+                    className="px-3 py-1 text-xs font-medium text-yellow-700 bg-yellow-100 rounded-md hover:bg-yellow-200 transition-colors"
+                  >
+                    Auto-scroll paused • Click to resume
+                  </button>
+                )}
               </div>
 
               <div 
