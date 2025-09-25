@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
-import { DocumentTextIcon, PlusIcon, TrashIcon, EyeIcon, PencilIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { DocumentTextIcon, PlusIcon, TrashIcon, EyeIcon, PencilIcon, CheckIcon, XMarkIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
+import dynamic from 'next/dynamic';
+
+const V2EmbedBuilder = dynamic(() => import('./dashboard/bot-config/V2EmbedBuilder'), { ssr: false });
 
 interface V2Command {
   name: string;
@@ -73,6 +76,8 @@ export default function V2CommandsConfig({ config, updateConfig }: Props) {
   const [selectedCommand, setSelectedCommand] = useState<string | null>(null);
   const [editingCommand, setEditingCommand] = useState<string | null>(null);
   const [commandEdit, setCommandEdit] = useState<Partial<V2Command>>({});
+  const [builderOpen, setBuilderOpen] = useState(false);
+  const [builderCommand, setBuilderCommand] = useState<string | null>(null);
   
   const commands = config.embedV2Commands || {};
 
@@ -147,6 +152,30 @@ export default function V2CommandsConfig({ config, updateConfig }: Props) {
     
     updateCommands(updated);
     toast.success(`${commandName} command removed`);
+  };
+
+  const openEmbedBuilder = (commandName: string) => {
+    setBuilderCommand(commandName);
+    setBuilderOpen(true);
+  };
+
+  const saveEmbedData = (embedData: any[]) => {
+    if (!builderCommand) return;
+
+    const command = commands[builderCommand] || PRESET_COMMANDS[builderCommand as keyof typeof PRESET_COMMANDS];
+    if (!command) return;
+
+    const updated = {
+      ...commands,
+      [builderCommand]: {
+        ...command,
+        embedV2Data: embedData,
+        enabled: true
+      }
+    };
+    
+    updateCommands(updated);
+    toast.success(`${builderCommand} embed updated successfully`);
   };
 
   const allCommands = { ...PRESET_COMMANDS };
