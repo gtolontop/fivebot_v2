@@ -1,255 +1,276 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction, PermissionFlagsBits } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
+import { PrismaClient } from '@prisma/client';
+import { ConfigService } from '../services/config.service';
 
+const prisma = new PrismaClient();
 const COMP_V2_FLAG = 1 << 15;
 
 export const data = new SlashCommandBuilder()
   .setName('announcement')
-  .setDescription('Create beautiful announcements with V2 embeds')
-  .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages)
-  .addStringOption(option =>
-    option.setName('type')
-      .setDescription('Type of announcement')
-      .setRequired(true)
-      .addChoices(
-        { name: '📢 General Update', value: 'update' },
-        { name: '🎉 Event', value: 'event' },
-        { name: '⚠️ Important', value: 'important' },
-        { name: '🔧 Maintenance', value: 'maintenance' },
-        { name: '🎊 Celebration', value: 'celebration' }
-      )
-  )
-  .addStringOption(option =>
-    option.setName('title')
-      .setDescription('Announcement title')
-      .setRequired(true)
-  )
-  .addStringOption(option =>
-    option.setName('message')
-      .setDescription('Main announcement message')
-      .setRequired(true)
-  )
-  .addChannelOption(option =>
-    option.setName('channel')
-      .setDescription('Channel to send the announcement')
-      .setRequired(false)
-  );
+  .setDescription('Create announcement templates with beautiful embeds');
+
+// Default embed data - fivelink.lol style
+const DEFAULT_EMBED_DATA = [
+  // Container 1 - Header
+  {
+    id: 1,
+    type: 17,
+    components: [
+      {
+        id: 2,
+        type: 12,
+        items: [
+          {
+            media: {
+              url: "http://83.150.218.36:3030/uploads/1750255125893-announcement.png",
+            },
+            description: "Announcement banner",
+            spoiler: false,
+          },
+        ],
+      },
+      { id: 3, type: 10, content: "# __Announcement Templates__" },
+      {
+        id: 4,
+        type: 10,
+        content: `> Choose from our pre-designed announcement templates to share
+> important updates with your community in style.
+> 
+> Each template is crafted to maximize engagement and clarity.`,
+      },
+      { id: 5, type: 14, divider: true, spacing: 1 },
+      {
+        id: 6,
+        type: 1,
+        components: [
+          {
+            id: 7,
+            type: 2,
+            style: 5,
+            url: "https://example.com/announcements",
+            label: "🧷 View All",
+          },
+          {
+            id: 8,
+            type: 2,
+            style: 5,
+            url: "https://example.com/subscribe",
+            label: "🧷 Subscribe",
+          },
+        ],
+      },
+      { id: 9, type: 14, divider: true, spacing: 1 },
+    ],
+  },
+  // Container 2 - Update Template
+  {
+    id: 10,
+    type: 17,
+    components: [
+      {
+        id: 11,
+        type: 12,
+        items: [
+          {
+            media: {
+              url: "http://83.150.218.36:3030/uploads/1750255258471-update.png",
+            },
+            description: "Update template",
+            spoiler: false,
+          },
+        ],
+      },
+      { id: 12, type: 10, content: "# __📢 General Update Template__" },
+      {
+        id: 13,
+        type: 10,
+        content: `\`- What's New\`
+-# **Share new features, improvements, or changes**
+\`- Bug Fixes\`
+-# **List resolved issues and improvements**
+\`- Coming Soon\`
+-# **Preview upcoming features**
+
+> Perfect for regular updates to keep your community informed
+> about the latest developments.`,
+      },
+      { id: 14, type: 14, divider: true, spacing: 1 },
+    ],
+  },
+  // Container 3 - Event Template
+  {
+    id: 20,
+    type: 17,
+    components: [
+      {
+        id: 21,
+        type: 12,
+        items: [
+          {
+            media: {
+              url: "http://83.150.218.36:3030/uploads/1750255370148-event.png",
+            },
+            description: "Event template",
+            spoiler: false,
+          },
+        ],
+      },
+      { id: 22, type: 10, content: "# __🎉 Event Template__" },
+      {
+        id: 23,
+        type: 10,
+        content: `\`- Event Details\`
+-# **Date, time, location, and description**
+\`- Registration\`
+-# **RSVP buttons and attendance tracking**
+\`- Reminders\`
+-# **Automated reminder system**
+\`- Prizes & Rewards\`
+-# **Highlight special incentives**
+
+> Ideal for community events, game nights, tournaments,
+> and special occasions.`,
+      },
+      { id: 24, type: 14, divider: true, spacing: 1 },
+    ],
+  },
+  // Container 4 - Important Notice Template
+  {
+    id: 30,
+    type: 17,
+    components: [
+      {
+        id: 31,
+        type: 12,
+        items: [
+          {
+            media: {
+              url: "http://83.150.218.36:3030/uploads/1750255487829-important.png",
+            },
+            description: "Important notice",
+            spoiler: false,
+          },
+        ],
+      },
+      { id: 32, type: 10, content: "# __⚠️ Important Notice Template__" },
+      {
+        id: 33,
+        type: 10,
+        content: `\`- Critical Updates\`
+-# **Rule changes, policy updates, or urgent matters**
+\`- Action Required\`
+-# **Clear call-to-action for community members**
+\`- Acknowledgment\`
+-# **Confirmation buttons for important messages**
+\`- Support Contact\`
+-# **Direct links to help channels**
+
+> Use for critical announcements that require immediate
+> attention from your community.`,
+      },
+      { id: 34, type: 14, divider: true, spacing: 1 },
+    ],
+  },
+  // Container 5 - How to Use
+  {
+    id: 40,
+    type: 17,
+    components: [
+      {
+        id: 41,
+        type: 12,
+        items: [
+          {
+            media: {
+              url: "http://83.150.218.36:3030/uploads/1750255612043-howtouse.png",
+            },
+            description: "How to use",
+            spoiler: false,
+          },
+        ],
+      },
+      { id: 42, type: 10, content: "# __How to Create Announcements__" },
+      {
+        id: 43,
+        type: 10,
+        content: `## Quick Start Guide
+\`1. Choose Template\`
+-# **Select the appropriate template for your message**
+\`2. Customize Content\`
+-# **Edit text, images, and buttons to match your needs**
+\`3. Preview\`
+-# **Review your announcement before sending**
+\`4. Schedule or Send\`
+-# **Post immediately or schedule for later**
+
+## Pro Tips
+\`- Use @everyone wisely\`
+-# **Only for truly important announcements**
+\`- Add visual elements\`
+-# **Images and emojis increase engagement**
+\`- Keep it concise\`
+-# **Clear and focused messages work best**
+\`- Include CTAs\`
+-# **Buttons and links drive action**`,
+      },
+      { id: 44, type: 14, divider: true, spacing: 1 },
+      {
+        id: 45,
+        type: 1,
+        components: [
+          {
+            id: 46,
+            type: 2,
+            style: 3,
+            label: "Create Announcement",
+            custom_id: "announcement:create",
+          },
+          {
+            id: 47,
+            type: 2,
+            style: 5,
+            url: "https://example.com/announcement-guide",
+            label: "🧷 Full Guide",
+          },
+        ],
+      },
+      { id: 48, type: 14, divider: true, spacing: 1 },
+    ],
+  },
+];
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-  const type = interaction.options.getString('type', true);
-  const title = interaction.options.getString('title', true);
-  const message = interaction.options.getString('message', true);
-  const channel = interaction.options.getChannel('channel') || interaction.channel;
+  try {
+    // Get bot ID from environment or client
+    const botId = process.env.BOT_ID || interaction.client.user?.id;
+    if (!botId) {
+      await interaction.reply({ content: '❌ Bot configuration error', ephemeral: true });
+      return;
+    }
 
-  const configs = {
-    update: {
-      color: '#5865F2',
-      emoji: '📢',
-      banner: 'https://i.imgur.com/4M34hi2.png',
-    },
-    event: {
-      color: '#57F287',
-      emoji: '🎉',
-      banner: 'https://i.imgur.com/AfFp7pu.png',
-    },
-    important: {
-      color: '#ED4245',
-      emoji: '⚠️',
-      banner: 'https://i.imgur.com/t9YnjoE.png',
-    },
-    maintenance: {
-      color: '#FEE75C',
-      emoji: '🔧',
-      banner: 'https://i.imgur.com/4M34hi2.png',
-    },
-    celebration: {
-      color: '#EB459E',
-      emoji: '🎊',
-      banner: 'https://i.imgur.com/AfFp7pu.png',
-    },
-  };
+    // Create config service
+    const configService = new ConfigService(prisma, botId);
+    const config = await configService.getConfig();
+    
+    // Get custom embed data or use default
+    let embedData = DEFAULT_EMBED_DATA;
+    if ((config as any).embedV2Commands) {
+      const v2Commands = (config as any).embedV2Commands;
+      if (v2Commands.announcement?.embedV2Data && v2Commands.announcement.embedV2Data.length > 0) {
+        embedData = v2Commands.announcement.embedV2Data;
+      }
+    }
 
-  const config = configs[type as keyof typeof configs];
-  const timestamp = new Date().toISOString();
-
-  const componentsV2 = [
-    // Main Announcement
-    {
-      id: 1,
-      type: 17,
-      components: [
-        {
-          id: 2,
-          type: 12,
-          items: [
-            {
-              media: {
-                url: config.banner,
-              },
-              description: "Announcement banner",
-              spoiler: false,
-            },
-          ],
-        },
-        { 
-          id: 3, 
-          type: 10, 
-          content: `# ${config.emoji} __${title}__` 
-        },
-        {
-          id: 4,
-          type: 10,
-          content: `>>> ${message}`,
-        },
-        { id: 5, type: 14, divider: true, spacing: 1 },
-        {
-          id: 6,
-          type: 10,
-          content: `
-📅 **Posted:** <t:${Math.floor(Date.now() / 1000)}:F>
-👤 **Author:** ${interaction.user}
-📌 **Type:** ${type.charAt(0).toUpperCase() + type.slice(1)}
-          `,
-        },
-      ],
-    },
-
-    // Special sections based on type
-    ...(type === 'event' ? [{
-      id: 20,
-      type: 17,
-      components: [
-        { 
-          id: 21, 
-          type: 10, 
-          content: "## 📍 **Event Details**" 
-        },
-        {
-          id: 22,
-          type: 10,
-          content: `
-**When:** TBD
-**Where:** TBD
-**Duration:** TBD
-
-*More details coming soon!*
-          `,
-        },
-        {
-          id: 23,
-          type: 1,
-          components: [
-            {
-              type: 2,
-              style: 3,
-              label: "RSVP",
-              emoji: "✅",
-              custom_id: "event:rsvp",
-            },
-            {
-              type: 2,
-              style: 2,
-              label: "Set Reminder",
-              emoji: "🔔",
-              custom_id: "event:remind",
-            },
-          ],
-        },
-      ],
-    }] : []),
-
-    ...(type === 'maintenance' ? [{
-      id: 30,
-      type: 17,
-      components: [
-        { 
-          id: 31, 
-          type: 10, 
-          content: "## 🔧 **Maintenance Info**" 
-        },
-        {
-          id: 32,
-          type: 10,
-          content: `
-\`\`\`diff
-- Services may be temporarily unavailable
-- Expected downtime: ~30 minutes
-+ We'll notify when everything is back online
-\`\`\`
-          `,
-        },
-        {
-          id: 33,
-          type: 1,
-          components: [
-            {
-              type: 2,
-              style: 5,
-              label: "Status Page",
-              url: "https://status.example.com",
-              emoji: "📊",
-            },
-          ],
-        },
-      ],
-    }] : []),
-
-    // Reactions/Engagement
-    {
-      id: 100,
-      type: 17,
-      components: [
-        { id: 101, type: 14, divider: true, spacing: 1 },
-        {
-          id: 102,
-          type: 10,
-          content: "*React below to acknowledge you've read this announcement!*",
-        },
-        {
-          id: 103,
-          type: 1,
-          components: [
-            {
-              type: 2,
-              style: 2,
-              label: "0",
-              emoji: "👍",
-              custom_id: "announce:like",
-            },
-            {
-              type: 2,
-              style: 2,
-              label: "0",
-              emoji: "❤️",
-              custom_id: "announce:heart",
-            },
-            {
-              type: 2,
-              style: 2,
-              label: "0",
-              emoji: "🎉",
-              custom_id: "announce:party",
-            },
-            ...(type === 'important' ? [{
-              type: 2,
-              style: 4,
-              label: "Acknowledged",
-              emoji: "✅",
-              custom_id: "announce:ack",
-            }] : []),
-          ],
-        },
-      ],
-    },
-  ];
-
-  // Send to specified channel
-  if (channel && 'send' in channel && channel.id !== interaction.channelId) {
-    await (channel as any).send({ flags: COMP_V2_FLAG, components: componentsV2 });
+    // Send the V2 embed
+    await interaction.reply({
+      flags: COMP_V2_FLAG,
+      components: embedData
+    });
+  } catch (error) {
+    console.error('Error in announcement command:', error);
     await interaction.reply({ 
-      content: `✅ Announcement sent to ${channel}!`, 
+      content: '❌ An error occurred while displaying announcements', 
       ephemeral: true 
     });
-  } else {
-    await interaction.reply({ flags: COMP_V2_FLAG, components: componentsV2 });
   }
 }
