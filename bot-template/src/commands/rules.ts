@@ -221,27 +221,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     // Send the V2 embed
     await interaction.reply({
       flags: COMP_V2_FLAG,
-      poll: {
-        layout_type: 6,
-        question: {
-          text: "Rules"
-        },
-        duration: 8760,
-        allow_multiselect: false,
-        answers: [
-          {
-            answer_id: 1,
-            poll_media: {
-              text: "Server Rules",
-              emoji: {
-                id: null,
-                name: "📜"
-              }
-            }
-          }
-        ],
-        components_v2: embedData
-      }
+      components: embedData
     });
   } catch (error) {
     console.error('Error in rules command:', error);
