@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { DocumentTextIcon, PlusIcon, TrashIcon, EyeIcon, PencilIcon, CheckIcon, XMarkIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import dynamic from 'next/dynamic';
+import { V2_EMBED_DEFAULTS } from '../data/v2-embed-defaults';
 
 const V2EmbedBuilder = dynamic(() => import('./dashboard/bot-config/V2EmbedBuilder'), { ssr: false });
 
@@ -78,6 +79,9 @@ export default function V2CommandsConfig({ config, updateConfig }: Props) {
   const [commandEdit, setCommandEdit] = useState<Partial<V2Command>>({});
   const [builderOpen, setBuilderOpen] = useState(false);
   const [builderCommand, setBuilderCommand] = useState<string | null>(null);
+  const [showNewCommandDialog, setShowNewCommandDialog] = useState(false);
+  const [newCommandName, setNewCommandName] = useState('');
+  const [newCommandDescription, setNewCommandDescription] = useState('');
   
   const commands = config.embedV2Commands || {};
 
@@ -176,6 +180,43 @@ export default function V2CommandsConfig({ config, updateConfig }: Props) {
     
     updateCommands(updated);
     toast.success(`${builderCommand} embed updated successfully`);
+  };
+
+  const getEmbedDataForCommand = (commandName: string) => {
+    // First check if custom data exists
+    const command = commands[commandName] || PRESET_COMMANDS[commandName as keyof typeof PRESET_COMMANDS];
+    if (command?.embedV2Data && command.embedV2Data.length > 0) {
+      return command.embedV2Data;
+    }
+    
+    // Otherwise return defaults
+    return V2_EMBED_DEFAULTS[commandName as keyof typeof V2_EMBED_DEFAULTS] || [];
+  };
+
+  const createNewCommand = () => {
+    if (!newCommandName || !newCommandDescription) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+
+    const commandId = newCommandName.toLowerCase().replace(/\s+/g, '-');
+    
+    const updated = {
+      ...commands,
+      [commandId]: {
+        name: commandId,
+        description: newCommandDescription,
+        enabled: false,
+        useEmbedV2: true,
+        embedV2Data: []
+      }
+    };
+    
+    updateCommands(updated);
+    setShowNewCommandDialog(false);
+    setNewCommandName('');
+    setNewCommandDescription('');
+    toast.success('New command created! Enable it to use.');
   };
 
   const allCommands = { ...PRESET_COMMANDS };
@@ -405,7 +446,7 @@ export default function V2CommandsConfig({ config, updateConfig }: Props) {
         {/* Custom Command Builder */}
         <div className="mt-6 border-t pt-6">
           <button
-            onClick={() => toast('Custom V2 command builder coming soon!', { icon: 'ℹ️' })}
+            onClick={() => setShowNewCommandDialog(true)}
             className="w-full py-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:text-gray-900 hover:border-gray-400 transition-colors"
           >
             <PlusIcon className="w-6 h-6 mx-auto mb-2" />
@@ -419,13 +460,72 @@ export default function V2CommandsConfig({ config, updateConfig }: Props) {
       {builderOpen && builderCommand && (
         <V2EmbedBuilder
           commandName={builderCommand}
-          embedData={(commands[builderCommand] || PRESET_COMMANDS[builderCommand as keyof typeof PRESET_COMMANDS])?.embedV2Data || []}
+          embedData={getEmbedDataForCommand(builderCommand)}
           onSave={saveEmbedData}
           onClose={() => {
             setBuilderOpen(false);
             setBuilderCommand(null);
           }}
         />
+      )}
+
+      {/* New Command Dialog */}
+      {showNewCommandDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold mb-4">Create New V2 Command</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Command Name
+                </label>
+                <input
+                  type="text"
+                  value={newCommandName}
+                  onChange={(e) => setNewCommandName(e.target.value)}
+                  placeholder="e.g., welcome-message"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Will be converted to lowercase and spaces replaced with dashes
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description
+                </label>
+                <input
+                  type="text"
+                  value={newCommandDescription}
+                  onChange={(e) => setNewCommandDescription(e.target.value)}
+                  placeholder="e.g., Display a welcome message with V2 embed"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                onClick={() => {
+                  setShowNewCommandDialog(false);
+                  setNewCommandName('');
+                  setNewCommandDescription('');
+                }}
+                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={createNewCommand}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+              >
+                Create Command
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
