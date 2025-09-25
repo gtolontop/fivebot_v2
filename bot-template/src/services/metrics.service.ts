@@ -309,6 +309,15 @@ export class MetricsService {
             ${currentGuilds}, ${currentUsers}, ${uptimeSeconds}, ${summary.avgResponseTime || 45}, ${summary.errorCount},
             NOW(), NOW()
           )
+          ON DUPLICATE KEY UPDATE
+            commands_used = commands_used + ${summary.commandCount},
+            messages_processed = messages_processed + ${summary.messageCount},
+            guilds_count = ${currentGuilds},
+            users_count = ${currentUsers},
+            uptime_seconds = ${uptimeSeconds},
+            avg_response_time_ms = ${summary.avgResponseTime || 45},
+            errors_count = errors_count + ${summary.errorCount},
+            updated_at = NOW()
         `;
       }
     } catch (error) {
