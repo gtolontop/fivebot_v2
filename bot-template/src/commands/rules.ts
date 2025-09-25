@@ -1,36 +1,39 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
+import { PrismaClient } from '@prisma/client';
+import { ConfigService } from '../services/config.service';
 
+const prisma = new PrismaClient();
 const COMP_V2_FLAG = 1 << 15;
 
 export const data = new SlashCommandBuilder()
   .setName('rules')
   .setDescription('Display server rules with beautiful embed');
 
-export async function execute(interaction: ChatInputCommandInteraction) {
-  const componentsV2 = [
-    // Container 1 - Welcome
-    {
-      id: 1,
-      type: 17,
-      components: [
-        {
-          id: 2,
-          type: 12,
-          items: [
-            {
-              media: {
-                url: "https://cdn.discordapp.com/attachments/1234567890/banner1.png",
-              },
-              description: "Welcome banner",
-              spoiler: false,
+// Default embed data if none is configured
+const DEFAULT_EMBED_DATA = [
+  // Container 1 - Welcome
+  {
+    id: 1,
+    type: 17,
+    components: [
+      {
+        id: 2,
+        type: 12,
+        items: [
+          {
+            media: {
+              url: "https://cdn.discordapp.com/attachments/1234567890/banner1.png",
             },
-          ],
-        },
-        { id: 3, type: 10, content: "# __Welcome to Our Server__" },
-        {
-          id: 4,
-          type: 10,
-          content: `
+            description: "Welcome banner",
+            spoiler: false,
+          },
+        ],
+      },
+      { id: 3, type: 10, content: "# __Welcome to Our Server__" },
+      {
+        id: 4,
+        type: 10,
+        content: `
 >>> **Welcome** to our amazing community server!
 
 Here you can:
@@ -40,152 +43,211 @@ Here you can:
 
 Whether you're a **beginner** or an **expert**,  
 everyone is welcome here!
-          `,
-        },
-        { id: 5, type: 14, divider: true, spacing: 1 },
-        {
-          id: 6,
-          type: 1,
-          components: [
-            {
-              id: 7,
-              type: 2,
-              style: 5,
-              url: "https://discord.gg/yourserver",
-              label: "📌 Invite Link",
+        `,
+      },
+      { id: 5, type: 14, divider: true, spacing: 1 },
+      {
+        id: 6,
+        type: 1,
+        components: [
+          {
+            id: 7,
+            type: 2,
+            style: 1,
+            label: "Invite Friends",
+            emoji: {
+              id: null,
+              name: "✉️"
             },
-            {
-              id: 8,
-              type: 2,
-              style: 5,
-              url: "https://yourwebsite.com",
-              label: "🌐 Website",
+            custom_id: "invite_button",
+          },
+          {
+            id: 8,
+            type: 2,
+            style: 5,
+            label: "Website",
+            emoji: {
+              id: null,
+              name: "🌐"
             },
-          ],
-        },
-        { id: 9, type: 14, divider: true, spacing: 1 },
-      ],
-    },
+            url: "https://yourwebsite.com",
+          },
+        ],
+      },
+    ],
+  },
+  // Container 2 - Rules
+  {
+    id: 9,
+    type: 17,
+    components: [
+      {
+        id: 10,
+        type: 12,
+        items: [
+          {
+            media: {
+              url: "https://cdn.discordapp.com/attachments/1234567890/rules_banner.png",
+            },
+            description: "Rules banner",
+            spoiler: false,
+          },
+        ],
+      },
+      { id: 11, type: 10, content: "# 📜 __Server Rules__", style: 4 },
+      { id: 12, type: 14, divider: true },
+      {
+        id: 13,
+        type: 10,
+        content: `
+**1. Be respectful** 🤝  
+Treat all members with kindness and respect. No harassment, discrimination, or hate speech.
 
-    // Container 2 - Rules
-    {
-      id: 20,
-      type: 17,
-      components: [
-        {
-          id: 21,
-          type: 12,
-          items: [
-            {
-              media: {
-                url: "https://cdn.discordapp.com/attachments/1234567890/rules.png",
-              },
-              description: "Rules banner",
-              spoiler: false,
-            },
-          ],
-        },
-        { id: 22, type: 10, content: "# __Server Rules__" },
-        {
-          id: 23,
-          type: 10,
-          content: "`1. Be Respectful`\n-# **Treat everyone with kindness and respect.**",
-        },
-        {
-          id: 24,
-          type: 10,
-          content: "`2. No Spam`\n-# **Avoid flooding channels with repeated messages.**",
-        },
-        {
-          id: 25,
-          type: 10,
-          content: "`3. Stay On-Topic`\n-# **Keep conversations relevant to the channel.**",
-        },
-        {
-          id: 26,
-          type: 10,
-          content: "`4. No NSFW Content`\n-# **Keep content appropriate for all ages.**",
-        },
-        {
-          id: 27,
-          type: 10,
-          content: "`5. No Self-Promotion`\n-# **Ask permission before promoting.**",
-        },
-        {
-          id: 28,
-          type: 10,
-          content: "`6. Listen to Staff`\n-# **Follow moderator instructions.**",
-        },
-        { id: 31, type: 14, divider: true, spacing: 1 },
-      ],
-    },
+**2. No spam** 🚫  
+Avoid repetitive messages, excessive emojis, or unnecessary pings.
 
-    // Container 3 - Useful Links
-    {
-      id: 40,
-      type: 17,
-      components: [
-        {
-          id: 41,
-          type: 12,
-          items: [
-            {
-              media: {
-                url: "https://cdn.discordapp.com/attachments/1234567890/links.png",
-              },
-              description: "Links Banner",
-              spoiler: false,
-            },
-          ],
-        },
-        { id: 42, type: 10, content: "# __Useful Links__" },
-        {
-          id: 43,
-          type: 10,
-          content: "**Support Channel** - Get help from our team\n<#1234567890123456789>",
-        },
-        {
-          id: 44,
-          type: 10,
-          content: "**Announcements** - Stay updated\n<#1234567890123456789>",
-        },
-        {
-          id: 45,
-          type: 10,
-          content: "**FAQ** - Frequently asked questions\n<#1234567890123456789>",
-        },
-        { id: 46, type: 14, divider: true, spacing: 1 },
-        {
-          id: 47,
-          type: 1,
-          components: [
-            {
-              id: 48,
-              type: 2,
-              style: 5,
-              url: "https://discord.gg/yourserver",
-              label: "🔗 Support Server",
-            },
-            {
-              id: 49,
-              type: 2,
-              style: 5,
-              url: "https://docs.yourserver.com",
-              label: "📖 Documentation",
-            },
-            {
-              id: 50,
-              type: 2,
-              style: 5,
-              url: "https://status.yourserver.com",
-              label: "📊 Status Page",
-            },
-          ],
-        },
-        { id: 51, type: 14, divider: true, spacing: 1 },
-      ],
-    },
-  ];
+**3. Stay on topic** 💭  
+Keep conversations relevant to the channel you're in.
 
-  await interaction.reply({ flags: COMP_V2_FLAG, components: componentsV2 });
+**4. No NSFW content** 🔞  
+Keep all content appropriate for all ages.
+
+**5. Follow Discord ToS** 📋  
+Abide by Discord's Terms of Service at all times.
+
+**6. Listen to staff** 👮  
+Follow instructions from moderators and administrators.
+        `,
+      },
+      { id: 14, type: 14, divider: true, spacing: 2 },
+      {
+        id: 15,
+        type: 10,
+        content: "**Breaking these rules may result in warnings, mutes, or bans.**",
+        style: 1,
+      },
+    ],
+  },
+  // Container 3 - Useful Links
+  {
+    id: 16,
+    type: 17,
+    components: [
+      {
+        id: 17,
+        type: 12,
+        items: [
+          {
+            media: {
+              url: "https://cdn.discordapp.com/attachments/1234567890/links_banner.png",
+            },
+            description: "Links banner",
+            spoiler: false,
+          },
+        ],
+      },
+      { id: 18, type: 10, content: "## 🔗 __Useful Links__", style: 2 },
+      {
+        id: 19,
+        type: 10,
+        content: `
+**Important Channels:**
+- <#123456789> - General chat
+- <#123456790> - Announcements
+- <#123456791> - Support
+
+**Resources:**
+- [FAQ](https://yourwebsite.com/faq) - Frequently asked questions
+- [Guide](https://yourwebsite.com/guide) - Getting started guide
+        `,
+      },
+      { id: 20, type: 14, divider: true },
+      {
+        id: 21,
+        type: 1,
+        components: [
+          {
+            id: 22,
+            type: 2,
+            style: 2,
+            label: "Rules",
+            emoji: { id: null, name: "📜" },
+            custom_id: "rules_button",
+          },
+          {
+            id: 23,
+            type: 2,
+            style: 3,
+            label: "Support",
+            emoji: { id: null, name: "🎫" },
+            custom_id: "support_button",
+          },
+          {
+            id: 24,
+            type: 2,
+            style: 4,
+            label: "Report",
+            emoji: { id: null, name: "🚨" },
+            custom_id: "report_button",
+          },
+        ],
+      },
+    ],
+  },
+];
+
+export async function execute(interaction: ChatInputCommandInteraction) {
+  try {
+    // Get bot ID from environment or client
+    const botId = process.env.BOT_ID || interaction.client.user?.id;
+    if (!botId) {
+      await interaction.reply({ content: '❌ Bot configuration error', ephemeral: true });
+      return;
+    }
+
+    // Create config service
+    const configService = new ConfigService(prisma, botId);
+    const config = await configService.getConfig();
+    
+    // Get custom embed data or use default
+    let embedData = DEFAULT_EMBED_DATA;
+    if ((config as any).embedV2Commands) {
+      const v2Commands = (config as any).embedV2Commands;
+      if (v2Commands.rules?.embedV2Data && v2Commands.rules.embedV2Data.length > 0) {
+        embedData = v2Commands.rules.embedV2Data;
+      }
+    }
+
+    // Send the V2 embed
+    await interaction.reply({
+      flags: COMP_V2_FLAG,
+      poll: {
+        layout_type: 6,
+        question: {
+          text: "Rules"
+        },
+        duration: 8760,
+        allow_multiselect: false,
+        answers: [
+          {
+            answer_id: 1,
+            poll_media: {
+              text: "Server Rules",
+              emoji: {
+                id: null,
+                name: "📜"
+              }
+            }
+          }
+        ],
+        components_v2: embedData
+      }
+    });
+  } catch (error) {
+    console.error('Error in rules command:', error);
+    await interaction.reply({ 
+      content: '❌ An error occurred while displaying the rules', 
+      ephemeral: true 
+    });
+  }
 }
