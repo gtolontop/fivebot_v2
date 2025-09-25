@@ -121,10 +121,16 @@ export default function BotDetailPage() {
     }
   }, [bot?.status, botId]);
 
-  // Auto-scroll console
+  // Auto-scroll console only when user is already at bottom
   useEffect(() => {
     if (consoleRef.current && activeTab === 'console') {
-      consoleRef.current.scrollTop = consoleRef.current.scrollHeight;
+      const element = consoleRef.current;
+      const isScrolledToBottom = element.scrollHeight - element.clientHeight <= element.scrollTop + 10;
+      
+      // Only auto-scroll if user was already at the bottom
+      if (isScrolledToBottom) {
+        element.scrollTop = element.scrollHeight;
+      }
     }
   }, [logs, activeTab]);
 
