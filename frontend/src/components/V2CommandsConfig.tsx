@@ -206,7 +206,7 @@ export default function V2CommandsConfig({ config, updateConfig }: Props) {
       [commandId]: {
         name: commandId,
         description: newCommandDescription,
-        enabled: false,
+        enabled: true, // Auto-enable
         useEmbedV2: true,
         embedV2Data: []
       }
@@ -216,7 +216,12 @@ export default function V2CommandsConfig({ config, updateConfig }: Props) {
     setShowNewCommandDialog(false);
     setNewCommandName('');
     setNewCommandDescription('');
-    toast.success('New command created! Enable it to use.');
+    toast.success(`✅ Created and enabled /${commandId}`);
+    
+    // Open the embed builder immediately
+    setTimeout(() => {
+      openEmbedBuilder(commandId);
+    }, 100);
   };
 
   const allCommands = { ...PRESET_COMMANDS };
@@ -443,15 +448,15 @@ export default function V2CommandsConfig({ config, updateConfig }: Props) {
           })}
         </div>
 
-        {/* Custom Command Builder */}
+        {/* Custom Embed Builder */}
         <div className="mt-6 border-t pt-6">
           <button
             onClick={() => setShowNewCommandDialog(true)}
             className="w-full py-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:text-gray-900 hover:border-gray-400 transition-colors"
           >
             <PlusIcon className="w-6 h-6 mx-auto mb-2" />
-            <p className="font-medium">Create Custom V2 Command</p>
-            <p className="text-sm">Build your own V2 embed commands with the visual builder</p>
+            <p className="font-medium">Create Custom V2 Embed</p>
+            <p className="text-sm">Build your own V2 embeds with the visual builder</p>
           </button>
         </div>
       </div>
@@ -469,16 +474,16 @@ export default function V2CommandsConfig({ config, updateConfig }: Props) {
         />
       )}
 
-      {/* New Command Dialog */}
+      {/* New Embed Dialog */}
       {showNewCommandDialog && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold mb-4">Create New V2 Command</h3>
+            <h3 className="text-xl font-bold mb-4">Create New V2 Embed</h3>
             
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Command Name
+                  Embed Name / Command
                 </label>
                 <input
                   type="text"
@@ -488,7 +493,7 @@ export default function V2CommandsConfig({ config, updateConfig }: Props) {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Will be converted to lowercase and spaces replaced with dashes
+                  This will create a /command to display your embed
                 </p>
               </div>
 
@@ -521,7 +526,7 @@ export default function V2CommandsConfig({ config, updateConfig }: Props) {
                 onClick={createNewCommand}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
               >
-                Create Command
+                Create Embed
               </button>
             </div>
           </div>
