@@ -414,6 +414,19 @@ export default function V2CommandsConfig({ config, updateConfig }: Props) {
           </button>
         </div>
       </div>
+
+      {/* V2 Embed Builder Dialog */}
+      {builderOpen && builderCommand && (
+        <V2EmbedBuilder
+          commandName={builderCommand}
+          embedData={(commands[builderCommand] || PRESET_COMMANDS[builderCommand as keyof typeof PRESET_COMMANDS])?.embedV2Data || []}
+          onSave={saveEmbedData}
+          onClose={() => {
+            setBuilderOpen(false);
+            setBuilderCommand(null);
+          }}
+        />
+      )}
     </div>
   );
 }
