@@ -33,9 +33,15 @@ export async function interactionCreate(
   
   console.log(logMessage);
   
-  // Debug log for V2 commands
-  const v2Commands = ['rules', 'pricing', 'embed-builder', 'server-info', 'user-profile', 'team', 'announcement'];
-  if (v2Commands.includes(command)) {
+  // Get V2 config to check all V2 commands
+  const config = await configService.getConfig();
+  const embedV2Commands = (config as any).embedV2Commands || {};
+  
+  // Check if it's a V2 command (preset or dynamic)
+  const v2PresetCommands = ['rules', 'pricing', 'embed-builder', 'server-info', 'user-profile', 'team', 'announcement'];
+  const isV2Command = v2PresetCommands.includes(command) || (embedV2Commands[command] && embedV2Commands[command].useEmbedV2);
+  
+  if (isV2Command) {
     console.log(`[DEBUG] Detected V2 command: ${command}`);
     
     // Handle V2 commands directly here
