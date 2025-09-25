@@ -66,6 +66,9 @@ model BotConfig {
   autoRoleId          String? @map("auto_role_id")
   loggingChannelId    String? @map("logging_channel_id")
   customCommands      Json?   @map("custom_commands")
+  ticketData          String? @map("ticket_data") @db.LongText
+  statusRotation      String? @map("status_rotation") @db.LongText
+  embedV2Commands     String? @map("embed_v2_commands") @db.LongText
   createdAt           DateTime @default(now()) @map("created_at")
   updatedAt           DateTime @updatedAt @map("updated_at")
 
