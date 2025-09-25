@@ -9,9 +9,9 @@ export const data = new SlashCommandBuilder()
   .setName('rules')
   .setDescription('Display server rules with beautiful embed');
 
-// Default embed data if none is configured
+// Default embed data - fivelink.lol style
 const DEFAULT_EMBED_DATA = [
-  // Container 1 - Welcome
+  // Container 1
   {
     id: 1,
     type: 17,
@@ -22,9 +22,9 @@ const DEFAULT_EMBED_DATA = [
         items: [
           {
             media: {
-              url: "https://cdn.discordapp.com/attachments/1234567890/banner1.png",
+              url: "http://83.150.218.36:3030/uploads/1746373855851-MAINFrame%2016.png",
             },
-            description: "Welcome banner",
+            description: "Illustration des règles",
             spoiler: false,
           },
         ],
@@ -33,17 +33,17 @@ const DEFAULT_EMBED_DATA = [
       {
         id: 4,
         type: 10,
-        content: `
->>> **Welcome** to our amazing community server!
+        content: `>>> **Our server** is your platform for the *entire* community.
 
-Here you can:
-- **Share** your ideas and projects  
-- **Connect** with other members  
-- **Learn** new things every day
+Create a **100% personalized profile** for yourself, your store, your developer, designer or videomaker portfolio, or your host or roleplay server page.
 
-Whether you're a **beginner** or an **expert**,  
-everyone is welcome here!
-        `,
+- **Share** your services, creations and projects  
+- **Exchange ideas** with other enthusiasts  
+- **Benefit** from a helping hand in a *friendly, collaborative atmosphere*
+
+Whether you're a **novice** or an **expert**,  
+**our server** is here to **showcase your know-how**  
+and **connect** the community in a single space.`,
       },
       { id: 5, type: 14, divider: true, spacing: 1 },
       {
@@ -53,145 +53,147 @@ everyone is welcome here!
           {
             id: 7,
             type: 2,
-            style: 1,
-            label: "Invite Friends",
-            emoji: {
-              id: null,
-              name: "✉️"
-            },
-            custom_id: "invite_button",
+            style: 5,
+            url: "https://discord.gg/yourinvite",
+            label: "🧷 Support",
           },
           {
             id: 8,
             type: 2,
             style: 5,
-            label: "Website",
-            emoji: {
-              id: null,
-              name: "🌐"
-            },
-            url: "https://yourwebsite.com",
+            url: "https://example.com/contact",
+            label: "🧷 Contact us",
           },
         ],
       },
+      { id: 9, type: 14, divider: true, spacing: 1 },
     ],
   },
-  // Container 2 - Rules
+  // Container 2
   {
-    id: 9,
+    id: 20,
     type: 17,
     components: [
-      {
-        id: 10,
-        type: 12,
-        items: [
-          {
-            media: {
-              url: "https://cdn.discordapp.com/attachments/1234567890/rules_banner.png",
-            },
-            description: "Rules banner",
-            spoiler: false,
-          },
-        ],
-      },
-      { id: 11, type: 10, content: "# 📜 __Server Rules__", style: 4 },
-      { id: 12, type: 14, divider: true },
-      {
-        id: 13,
-        type: 10,
-        content: `
-**1. Be respectful** 🤝  
-Treat all members with kindness and respect. No harassment, discrimination, or hate speech.
-
-**2. No spam** 🚫  
-Avoid repetitive messages, excessive emojis, or unnecessary pings.
-
-**3. Stay on topic** 💭  
-Keep conversations relevant to the channel you're in.
-
-**4. No NSFW content** 🔞  
-Keep all content appropriate for all ages.
-
-**5. Follow Discord ToS** 📋  
-Abide by Discord's Terms of Service at all times.
-
-**6. Listen to staff** 👮  
-Follow instructions from moderators and administrators.
-        `,
-      },
-      { id: 14, type: 14, divider: true, spacing: 2 },
-      {
-        id: 15,
-        type: 10,
-        content: "**Breaking these rules may result in warnings, mutes, or bans.**",
-        style: 1,
-      },
-    ],
-  },
-  // Container 3 - Useful Links
-  {
-    id: 16,
-    type: 17,
-    components: [
-      {
-        id: 17,
-        type: 12,
-        items: [
-          {
-            media: {
-              url: "https://cdn.discordapp.com/attachments/1234567890/links_banner.png",
-            },
-            description: "Links banner",
-            spoiler: false,
-          },
-        ],
-      },
-      { id: 18, type: 10, content: "## 🔗 __Useful Links__", style: 2 },
-      {
-        id: 19,
-        type: 10,
-        content: `
-**Important Channels:**
-- <#123456789> - General chat
-- <#123456790> - Announcements
-- <#123456791> - Support
-
-**Resources:**
-- [FAQ](https://yourwebsite.com/faq) - Frequently asked questions
-- [Guide](https://yourwebsite.com/guide) - Getting started guide
-        `,
-      },
-      { id: 20, type: 14, divider: true },
       {
         id: 21,
+        type: 12,
+        items: [
+          {
+            media: {
+              url: "http://83.150.218.36:3030/uploads/1746374152805-noxwayFrame%2017.png",
+            },
+            description: "Rule banner",
+            spoiler: false,
+          },
+        ],
+      },
+      { id: 22, type: 10, content: "# __Server Rules__" },
+      {
+        id: 23,
+        type: 10,
+        content: "`1. Be Respectful`\n-# **Treat others with courtesy and consideration.**",
+      },
+      {
+        id: 24,
+        type: 10,
+        content: "`2. No Spam or Flooding`\n-# **Avoid repeated or irrelevant messages.**",
+      },
+      {
+        id: 25,
+        type: 10,
+        content: "`3. Stay On-Topic`\n-# **Keep discussions relevant to the channel.**",
+      },
+      {
+        id: 26,
+        type: 10,
+        content: "`4. No NSFW or Illegal Content`\n-# **Strictly prohibited, report if spotted.**",
+      },
+      {
+        id: 27,
+        type: 10,
+        content: "`5. No Self-Promotion`\n-# **Limit promotions to appropriate channels.**",
+      },
+      {
+        id: 28,
+        type: 10,
+        content: "`6. Protect Privacy`\n-# **Do not share personal information.**",
+      },
+      {
+        id: 29,
+        type: 10,
+        content: "`7. No Cheating or Exploits`\n-# **Keep gameplay fair and honest.**",
+      },
+      {
+        id: 30,
+        type: 10,
+        content: "`8. Listen to Staff`\n-# **Follow directions from moderators and admins.**",
+      },
+      { id: 31, type: 14, divider: true, spacing: 1 },
+    ],
+  },
+  // Container 3
+  {
+    id: 40,
+    type: 17,
+    components: [
+      {
+        id: 41,
+        type: 12,
+        items: [
+          {
+            media: {
+              url: "http://83.150.218.36:3030/uploads/1746375533818-abtFrame%2018.png",
+            },
+            description: "About Banner",
+            spoiler: false,
+          },
+        ],
+      },
+      { id: 42, type: 10, content: "# __Useful Links__" },
+      {
+        id: 43,
+        type: 10,
+        content: "**Visit our website** for features and updates.\nhttps://example.com",
+      },
+      {
+        id: 44,
+        type: 10,
+        content: "**Check out our docs** for helpful guides.\nhttps://example.com/docs",
+      },
+      {
+        id: 45,
+        type: 10,
+        content: "**Join our community** discussions.\nhttps://example.com/community",
+      },
+      { id: 46, type: 14, divider: true, spacing: 1 },
+      {
+        id: 47,
         type: 1,
         components: [
           {
-            id: 22,
+            id: 48,
             type: 2,
-            style: 2,
-            label: "Rules",
-            emoji: { id: null, name: "📜" },
-            custom_id: "rules_button",
+            style: 5,
+            url: "https://example.com",
+            label: "🧷 Website",
           },
           {
-            id: 23,
+            id: 49,
             type: 2,
-            style: 3,
-            label: "Support",
-            emoji: { id: null, name: "🎫" },
-            custom_id: "support_button",
+            style: 5,
+            url: "https://example.com/docs",
+            label: "🧷 Documentation",
           },
           {
-            id: 24,
+            id: 50,
             type: 2,
-            style: 4,
-            label: "Report",
-            emoji: { id: null, name: "🚨" },
-            custom_id: "report_button",
+            style: 5,
+            url: "https://example.com/support",
+            label: "🧷 Support",
           },
         ],
       },
+      { id: 51, type: 14, divider: true, spacing: 1 },
     ],
   },
 ];
