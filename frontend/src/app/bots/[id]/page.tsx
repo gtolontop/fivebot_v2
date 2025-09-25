@@ -122,18 +122,22 @@ export default function BotDetailPage() {
     }
   }, [bot?.status, botId]);
 
-  // Auto-scroll console only when user is already at bottom
+  // Auto-scroll console only when enabled and user is at bottom
   useEffect(() => {
-    if (consoleRef.current && activeTab === 'console') {
+    if (consoleRef.current && activeTab === 'console' && autoScroll) {
       const element = consoleRef.current;
-      const isScrolledToBottom = element.scrollHeight - element.clientHeight <= element.scrollTop + 10;
-      
-      // Only auto-scroll if user was already at the bottom
-      if (isScrolledToBottom) {
-        element.scrollTop = element.scrollHeight;
-      }
+      element.scrollTop = element.scrollHeight;
     }
-  }, [logs, activeTab]);
+  }, [logs, activeTab, autoScroll]);
+
+  // Handle scroll events to detect if user scrolled up
+  const handleConsoleScroll = () => {
+    if (consoleRef.current) {
+      const element = consoleRef.current;
+      const isAtBottom = element.scrollHeight - element.clientHeight <= element.scrollTop + 10;
+      setAutoScroll(isAtBottom);
+    }
+  };
 
   // Simulation des stats temps réel
   useEffect(() => {
@@ -370,6 +374,7 @@ export default function BotDetailPage() {
 
               <div 
                 ref={consoleRef}
+                onScroll={handleConsoleScroll}
                 className="bg-gray-900 text-gray-100 p-4 rounded-lg h-[600px] overflow-y-auto font-mono text-sm"
                 style={{ scrollbarGutter: 'stable' }}
               >
