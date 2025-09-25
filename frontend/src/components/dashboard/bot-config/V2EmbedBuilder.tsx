@@ -426,61 +426,184 @@ export default function V2EmbedBuilder({ commandName, embedData, onSave, onClose
   };
 
   const renderPreview = () => {
+    // Discord-style preview with V2 embed appearance
     return (
-      <div className="max-w-2xl mx-auto">
-        {containers.map((container, idx) => (
-          <div key={container.id} className="mb-4 bg-[#2f3136] text-white rounded-lg p-4">
-            {container.components.map((component: any) => {
-              switch (component.type) {
-                case V2_COMPONENT_TYPES.TEXT:
-                  const fontSize = component.style === 3 ? 'text-2xl' : component.style === 2 ? 'text-xl' : component.style === 1 ? 'text-sm' : 'text-base';
-                  const fontWeight = component.style === 4 || component.style === 20 ? 'font-bold' : 'font-normal';
-                  const fontStyle = component.style === 16 || component.style === 20 ? 'italic' : '';
-                  return (
-                    <p
-                      key={component.id}
-                      className={`mb-2 ${fontSize} ${fontWeight} ${fontStyle}`}
-                      dangerouslySetInnerHTML={{ __html: component.content?.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '' }}
-                    />
-                  );
-                case V2_COMPONENT_TYPES.MEDIA_GALLERY:
-                  return (
-                    <div key={component.id} className="mb-4">
-                      {component.items?.map((item: any, i: number) => (
-                        <img
-                          key={i}
-                          src={item.media?.url || item.url || 'https://via.placeholder.com/600x200'}
-                          alt={item.description}
-                          className="w-full rounded-lg mb-2"
-                        />
-                      ))}
-                    </div>
-                  );
-                case V2_COMPONENT_TYPES.DIVIDER:
-                  return <hr key={component.id} className="my-4 border-[#40444b]" />;
-                case V2_COMPONENT_TYPES.ACTION_ROW:
-                  return (
-                    <div key={component.id} className="flex gap-2 mt-4">
-                      {component.components?.map((button: any) => {
-                        const btnStyle = BUTTON_STYLES.find(s => s.value === button.style);
-                        return (
-                          <button
-                            key={button.id}
-                            className={`px-4 py-2 rounded ${btnStyle?.color || 'bg-blue-500'} text-white font-medium`}
-                          >
-                            {button.emoji?.name && <span className="mr-1">{button.emoji.name}</span>}
-                            {button.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  );
-                default:
-                  return null;
-              }
-            })}
+      <div className="max-w-[600px] mx-auto">
+        <div className="bg-[#313338] rounded-lg overflow-hidden shadow-2xl">
+          {/* Discord Poll-style header for V2 embeds */}
+          <div className="bg-[#2b2d31] px-4 py-3 border-b border-[#1e1f22]">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-[#5865f2] rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <div className="text-white font-medium">Embed Preview</div>
+                <div className="text-[#949ba4] text-sm">Discord V2 Embed</div>
+              </div>
+            </div>
           </div>
-        ))}
+
+          {/* Containers */}
+          <div className="bg-[#2b2d31]">
+            {containers.map((container, containerIdx) => (
+              <div key={container.id} className={`${containerIdx > 0 ? 'border-t border-[#1e1f22]' : ''}`}>
+                <div className="p-4">
+                  {container.components.map((component: any, componentIdx: number) => {
+                    switch (component.type) {
+                      case V2_COMPONENT_TYPES.TEXT:
+                        let textClass = 'text-[#dbdee1]';
+                        let textSize = 'text-base';
+                        let textWeight = '';
+                        
+                        // Handle different text styles
+                        if (component.style === 1) textSize = 'text-sm';
+                        else if (component.style === 2) textSize = 'text-lg';
+                        else if (component.style === 3) textSize = 'text-2xl font-bold';
+                        else if (component.style === 4) textWeight = 'font-bold';
+                        else if (component.style === 16) textClass += ' italic';
+                        else if (component.style === 20) textClass += ' font-bold italic';
+
+                        // Parse markdown-style formatting
+                        let content = component.content || '';
+                        
+                        // Handle headers
+                        if (content.startsWith('# ')) {
+                          content = content.substring(2);
+                          textSize = 'text-2xl font-bold';
+                        } else if (content.startsWith('## ')) {
+                          content = content.substring(3);
+                          textSize = 'text-xl font-semibold';
+                        } else if (content.startsWith('### ')) {
+                          content = content.substring(4);
+                          textSize = 'text-lg font-semibold';
+                        }
+
+                        // Handle quotes
+                        const isQuote = content.startsWith('>>>');
+                        if (isQuote) {
+                          content = content.substring(3).trim();
+                        }
+
+                        // Convert markdown bold to HTML
+                        content = content.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>');
+                        
+                        // Convert line breaks
+                        content = content.replace(/\n/g, '<br/>');
+
+                        return (
+                          <div
+                            key={component.id}
+                            className={`${componentIdx > 0 && !isQuote ? 'mt-2' : ''} ${isQuote ? 'pl-3 border-l-4 border-[#4e5058] mt-2' : ''}`}
+                          >
+                            <div
+                              className={`${textClass} ${textSize} ${textWeight} whitespace-pre-wrap break-words`}
+                              dangerouslySetInnerHTML={{ __html: content }}
+                            />
+                          </div>
+                        );
+
+                      case V2_COMPONENT_TYPES.MEDIA_GALLERY:
+                        return (
+                          <div key={component.id} className={`${componentIdx > 0 ? 'mt-3' : ''} -mx-4`}>
+                            {component.items?.map((item: any, i: number) => (
+                              <div key={i} className="relative">
+                                <img
+                                  src={item.media?.url || item.url || 'https://via.placeholder.com/600x300/5865f2/ffffff?text=Image+Placeholder'}
+                                  alt={item.description || ''}
+                                  className="w-full"
+                                  onError={(e: any) => {
+                                    e.target.src = 'https://via.placeholder.com/600x300/5865f2/ffffff?text=Image+Failed+to+Load';
+                                  }}
+                                />
+                                {item.description && (
+                                  <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-sm p-2">
+                                    {item.description}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        );
+
+                      case V2_COMPONENT_TYPES.DIVIDER:
+                        return (
+                          <div
+                            key={component.id}
+                            className={`border-t border-[#3f4147] ${
+                              component.spacing === 2 ? 'my-4' : component.spacing === 1 ? 'my-2' : 'my-3'
+                            }`}
+                          />
+                        );
+
+                      case V2_COMPONENT_TYPES.ACTION_ROW:
+                        return (
+                          <div key={component.id} className="flex flex-wrap gap-2 mt-3">
+                            {component.components?.map((button: any) => {
+                              let btnClass = 'px-4 py-2 rounded font-medium text-sm transition-all ';
+                              let isDisabled = button.disabled;
+                              
+                              switch (button.style) {
+                                case 1: // Primary
+                                  btnClass += isDisabled ? 'bg-[#404249] text-[#96989d]' : 'bg-[#5865f2] hover:bg-[#4752c4] text-white';
+                                  break;
+                                case 2: // Secondary
+                                  btnClass += isDisabled ? 'bg-[#2b2d31] text-[#96989d]' : 'bg-[#4e5058] hover:bg-[#6d6f78] text-white';
+                                  break;
+                                case 3: // Success
+                                  btnClass += isDisabled ? 'bg-[#1e3a29] text-[#96989d]' : 'bg-[#248046] hover:bg-[#1a6334] text-white';
+                                  break;
+                                case 4: // Danger
+                                  btnClass += isDisabled ? 'bg-[#4d2d2f] text-[#96989d]' : 'bg-[#da373c] hover:bg-[#a12828] text-white';
+                                  break;
+                                case 5: // Link
+                                  btnClass = 'px-4 py-2 rounded font-medium text-sm text-[#00a8fc] hover:underline';
+                                  break;
+                              }
+
+                              if (isDisabled) {
+                                btnClass += ' cursor-not-allowed opacity-60';
+                              }
+
+                              return (
+                                <button
+                                  key={button.id}
+                                  className={btnClass}
+                                  disabled={isDisabled}
+                                >
+                                  <span className="flex items-center gap-1.5">
+                                    {button.emoji?.name && (
+                                      <span className="text-base">{button.emoji.name}</span>
+                                    )}
+                                    {button.label}
+                                    {button.style === 5 && (
+                                      <svg className="w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
+                                        <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
+                                      </svg>
+                                    )}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        );
+
+                      default:
+                        return null;
+                    }
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Footer timestamp */}
+          <div className="bg-[#2b2d31] px-4 pb-3 text-[#949ba4] text-xs">
+            Today at {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+          </div>
+        </div>
       </div>
     );
   };
@@ -530,7 +653,7 @@ export default function V2EmbedBuilder({ commandName, embedData, onSave, onClose
         {/* Content */}
         <div className="flex-1 overflow-hidden">
           {previewMode ? (
-            <div className="h-full overflow-y-auto p-6 bg-gray-100">
+            <div className="h-full overflow-y-auto p-6 bg-[#36393f]">
               {renderPreview()}
             </div>
           ) : (
