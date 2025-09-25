@@ -467,6 +467,8 @@ export default function V2EmbedBuilder({ commandName, embedData, onSave, onClose
 
                         // Parse markdown-style formatting
                         let content = component.content || '';
+                        let isSubtext = false;
+                        let hasInlineCode = false;
                         
                         // Handle headers
                         if (content.startsWith('# ')) {
@@ -481,16 +483,52 @@ export default function V2EmbedBuilder({ commandName, embedData, onSave, onClose
                         }
 
                         // Handle quotes
-                        const isQuote = content.startsWith('>>>');
-                        if (isQuote) {
+                        const isQuote = content.startsWith('>>>') || content.startsWith('>');
+                        if (content.startsWith('>>>')) {
                           content = content.substring(3).trim();
+                        } else if (content.startsWith('> ')) {
+                          content = content.substring(2);
                         }
 
-                        // Convert markdown bold to HTML
-                        content = content.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>');
+                        // Split by lines to handle -# subtext
+                        let lines = content.split('\n');
+                        let processedLines: string[] = [];
                         
-                        // Convert line breaks
-                        content = content.replace(/\n/g, '<br/>');
+                        for (let i = 0; i < lines.length; i++) {
+                          let line = lines[i];
+                          
+                          // Check if next line is a subtext
+                          if (i + 1 < lines.length && lines[i + 1].startsWith('-# ')) {
+                            // Process main line with backticks
+                            if (line.startsWith('`') && line.endsWith('`') && line.length > 2) {
+                              line = `<span class="bg-[#1e1f22] px-1.5 py-0.5 rounded text-[#e3e5e8] font-mono text-sm">${line.slice(1, -1)}</span>`;
+                              hasInlineCode = true;
+                            }
+                            processedLines.push(line);
+                            
+                            // Process subtext
+                            let subtext = lines[i + 1].substring(3);
+                            subtext = subtext.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                            processedLines.push(`<div class="text-xs text-[#949ba4] mt-0.5">${subtext}</div>`);
+                            i++; // Skip next line since we processed it
+                          } else {
+                            // Regular line processing
+                            // Handle inline code
+                            line = line.replace(/`([^`]+)`/g, '<span class="bg-[#1e1f22] px-1.5 py-0.5 rounded text-[#e3e5e8] font-mono text-sm">$1</span>');
+                            // Handle bold
+                            line = line.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>');
+                            // Handle italic
+                            line = line.replace(/\*(.*?)\*/g, '<em>$1</em>');
+                            
+                            if (line.startsWith('-# ')) {
+                              line = `<div class="text-xs text-[#949ba4] mt-0.5">${line.substring(3)}</div>`;
+                            }
+                            
+                            processedLines.push(line);
+                          }
+                        }
+                        
+                        content = processedLines.join('<br/>');
 
                         return (
                           <div
