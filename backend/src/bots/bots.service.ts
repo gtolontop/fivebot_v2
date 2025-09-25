@@ -350,8 +350,8 @@ export class BotsService {
         if ((key === 'welcomeEmbedJson' || key === 'customCommands') && value && typeof value === 'object') {
           configData[key] = JSON.stringify(value);
         } else if ((key === 'statusRotation' || key === 'embedV2Commands') && value) {
-          // These fields are already stringified from frontend
-          configData[key] = value;
+          // Stringify if it's an object, otherwise use as-is
+          configData[key] = typeof value === 'object' ? JSON.stringify(value) : value;
         } else {
           configData[key] = value;
         }
