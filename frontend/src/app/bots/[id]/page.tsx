@@ -69,6 +69,7 @@ export default function BotDetailPage() {
   });
   const consoleRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<'console' | 'performance' | 'settings'>('console');
+  const [autoScroll, setAutoScroll] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) {
