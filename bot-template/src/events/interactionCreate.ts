@@ -43,21 +43,40 @@ export async function interactionCreate(
   
   if (isV2Command) {
     console.log(`[DEBUG] Detected V2 command: ${command}`);
-    
-    // Handle V2 commands directly here
-    const config = await configService.getConfig();
-    const embedV2Commands = (config as any).embedV2Commands || {};
-    
     console.log(`[DEBUG] V2 Commands config:`, embedV2Commands);
     console.log(`[DEBUG] Is ${command} enabled?`, embedV2Commands[command]?.enabled);
     
     if (embedV2Commands[command]?.enabled) {
       try {
-        console.log(`[DEBUG] Loading command module: ${command}`);
-        const commandModule = await import(`../commands/${command}`);
-        if (commandModule.execute) {
-          await commandModule.execute(interaction);
-          console.log(`[DEBUG] Command /${command} completed successfully`);
+        // For preset commands, load from modules
+        if (v2PresetCommands.includes(command)) {
+          console.log(`[DEBUG] Loading preset command module: ${command}`);
+          const commandModule = await import(`../commands/${command}`);
+          if (commandModule.execute) {
+            await commandModule.execute(interaction);
+            console.log(`[DEBUG] Command /${command} completed successfully`);
+            return;
+          }
+        } else {
+          // For dynamic commands, use the embed data
+          console.log(`[DEBUG] Executing dynamic embed: ${command}`);
+          const embedData = embedV2Commands[command].embedV2Data || [];
+          
+          if (embedData.length === 0) {
+            await interaction.reply({ 
+              content: '❌ This embed has no content yet. Please configure it first.', 
+              ephemeral: true 
+            });
+            return;
+          }
+
+          // Send the V2 embed
+          const COMP_V2_FLAG = 1 << 15;
+          await interaction.reply({
+            flags: COMP_V2_FLAG,
+            components: embedData
+          });
+          console.log(`[DEBUG] Dynamic embed /${command} sent successfully`);
           return;
         }
       } catch (error) {
