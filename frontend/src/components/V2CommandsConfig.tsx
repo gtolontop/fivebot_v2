@@ -273,13 +273,22 @@ export default function V2CommandsConfig({ config, updateConfig }: Props) {
                           <EyeIcon className="w-4 h-4" />
                         </button>
                         {isEnabled && (
-                          <button
-                            onClick={() => startEditing(key)}
-                            className="p-1 text-gray-400 hover:text-gray-600"
-                            title="Edit"
-                          >
-                            <PencilIcon className="w-4 h-4" />
-                          </button>
+                          <>
+                            <button
+                              onClick={() => openEmbedBuilder(key)}
+                              className="p-1 text-indigo-400 hover:text-indigo-600"
+                              title="Customize Embed"
+                            >
+                              <Cog6ToothIcon className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => startEditing(key)}
+                              className="p-1 text-gray-400 hover:text-gray-600"
+                              title="Edit Description"
+                            >
+                              <PencilIcon className="w-4 h-4" />
+                            </button>
+                          </>
                         )}
                         {isEnabled && !Object.keys(PRESET_COMMANDS).includes(key) && (
                           <button
