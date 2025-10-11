@@ -111,6 +111,8 @@ export const botsAPI = {
     api.post('/bots', data),
   updateConfig: (id: string, config: any) =>
     api.patch(`/bots/${id}/config`, config),
+  updateToken: (id: string, token: string) =>
+    api.patch(`/bots/${id}/token`, { token }),
   start: (id: string, options?: { force?: boolean }) => api.post(`/bots/${id}/start`, options),
   stop: (id: string) => api.post(`/bots/${id}/stop`),
   forceStop: (id: string) => api.post(`/bots/${id}/force-stop`),
