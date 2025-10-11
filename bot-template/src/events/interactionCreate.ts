@@ -2,7 +2,6 @@ import { BaseInteraction, ChatInputCommandInteraction, EmbedBuilder } from 'disc
 import { PrismaClient } from '@prisma/client';
 import { ConfigService } from '../services/config.service';
 import { TicketInteractionHandler } from '../handlers/ticketInteraction.handler';
-import * as statsCommand from '../commands/stats';
 
 export async function interactionCreate(
   interaction: BaseInteraction,
@@ -282,29 +281,26 @@ async function handleCustomCommand(
 }
 
 async function handleHelp(interaction: ChatInputCommandInteraction) {
+  const panelUrl = process.env.PANEL_URL || 'https://panel.fivebot.com';
+
   const embed = new EmbedBuilder()
     .setColor(0x5865F2)
     .setTitle('🤖 Aide - FiveBot v2')
-    .setDescription('Voici la liste des commandes disponibles :')
+    .setDescription('Pour configurer ce bot, veuillez utiliser le panel de gestion.')
     .addFields(
       {
-        name: '⚙️ Configuration',
-        value: '`/set-welcome` - Configure le message de bienvenue\n`/bot-status` - Affiche le statut du bot\n`/reload-config` - Recharge la configuration',
+        name: '🌐 Panel de Configuration',
+        value: `[Accéder au Panel](${panelUrl})\n\nToutes les configurations doivent être effectuées via le panel web.`,
         inline: false
       },
       {
-        name: '📊 Statistiques',
-        value: '`/stats` - Affiche les statistiques du bot',
+        name: '📋 Fonctionnalités disponibles',
+        value: '• Configuration des messages de bienvenue\n• Gestion des embeds personnalisés\n• Système de tickets\n• Commandes personnalisées\n• Et bien plus...',
         inline: false
       },
       {
-        name: '❓ Aide',
-        value: '`/help` - Affiche cette aide',
-        inline: false
-      },
-      {
-        name: '📋 Informations',
-        value: 'Seul le propriétaire du bot peut utiliser les commandes de configuration.',
+        name: '💡 Astuce',
+        value: 'Connectez-vous au panel avec votre compte Discord pour gérer vos bots.',
         inline: false
       }
     )
