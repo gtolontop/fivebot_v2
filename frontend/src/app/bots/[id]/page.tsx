@@ -140,24 +140,38 @@ export default function BotDetailPage() {
     }
   };
 
-  // Simulation des stats temps réel
+  // Calcul de l'uptime réel basé sur startedAt
+  const calculateRealUptime = () => {
+    if (!bot?.startedAt || bot.status !== 'ONLINE') return 0;
+    const startTime = new Date(bot.startedAt).getTime();
+    const currentTime = Date.now();
+    return Math.floor((currentTime - startTime) / 1000); // uptime en secondes
+  };
+
+  // Simulation des stats temps réel avec uptime réel
   useEffect(() => {
-    if (!bot || bot.status !== 'ONLINE') return;
+    if (!bot || bot.status !== 'ONLINE') {
+      setRealTimeStats(prev => ({ ...prev, uptime: 0 }));
+      return;
+    }
+
+    // Initialiser l'uptime réel
+    setRealTimeStats(prev => ({ ...prev, uptime: calculateRealUptime() }));
 
     const statsInterval = setInterval(() => {
       setRealTimeStats(prev => ({
         cpuUsage: Math.max(0, Math.min(100, prev.cpuUsage + (Math.random() - 0.5) * 10)),
         memoryUsage: Math.max(0, Math.min(100, prev.memoryUsage + (Math.random() - 0.5) * 5)),
-        uptime: prev.uptime + 1,
+        uptime: calculateRealUptime(), // Calculer l'uptime réel à chaque tick
         eventCount: prev.eventCount + Math.floor(Math.random() * 3),
         messageCount: prev.messageCount + Math.floor(Math.random() * 5),
         commandCount: prev.commandCount + (Math.random() < 0.3 ? 1 : 0),
         responseTime: Math.max(10, Math.min(500, prev.responseTime + (Math.random() - 0.5) * 20))
       }));
-    }, 2000);
+    }, 1000); // Update every second for real-time uptime
 
     return () => clearInterval(statsInterval);
-  }, [bot?.status]);
+  }, [bot?.status, bot?.startedAt]);
 
   // Auto-refresh du statut
   useEffect(() => {
