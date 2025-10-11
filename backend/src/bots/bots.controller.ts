@@ -111,6 +111,16 @@ export class BotsController {
     return this.botsService.updateConfig(id, req.user.id, updateConfigDto);
   }
 
+  @Patch(':id/token')
+  @UseGuards(AuthGuard('jwt'))
+  async updateToken(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Body() body: { token: string },
+  ) {
+    return this.botsService.updateToken(id, req.user.id, body.token);
+  }
+
   @Post(':id/start')
   @UseGuards(AuthGuard('jwt'))
   async start(@Param('id') id: string, @Req() req: any, @Body() body?: { force?: boolean }) {
