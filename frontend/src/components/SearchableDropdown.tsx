@@ -7,6 +7,7 @@ interface Option {
   name: string;
   guildName?: string;
   isRole?: boolean;
+  canAssign?: boolean;
 }
 
 interface SearchableDropdownProps {
