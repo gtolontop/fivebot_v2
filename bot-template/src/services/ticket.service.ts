@@ -1,11 +1,12 @@
 import {
   Ticket,
   TicketConfig,
-  TicketMessage
+  TicketMessage,
+  TicketParticipant,
+  TicketLog
 } from '@prisma/client';
 
-// Types that don't exist as separate models in Prisma
-// (they're stored as JSON in TicketConfig)
+// Additional type definitions
 type TicketState = 'OPEN' | 'IN_PROGRESS' | 'CLOSED' | 'ARCHIVED';
 type ActivityState = 'ACTIVE' | 'INACTIVE' | 'WARNING';
 type ContainerType = 'CHANNEL' | 'THREAD';
