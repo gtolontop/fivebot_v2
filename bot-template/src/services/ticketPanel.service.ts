@@ -11,7 +11,7 @@ import {
   Guild,
   InteractionReplyOptions
 } from 'discord.js';
-import { TicketPanel, TicketCategory, PanelType } from '@prisma/client';
+// Note: TicketPanel and TicketCategory are stored as JSON in TicketConfig, not as separate models
 import { prisma } from '../lib/database';
 import { TicketService } from './ticket.service';
 
@@ -49,28 +49,13 @@ export class TicketPanelService {
       let config = await this.ticketService.getConfig(guild.id);
       if (!config) {
         // Create a default configuration for the guild
-        const newConfig = await prisma.ticketConfig.create({
-          data: {
-            guildId: guild.id,
-            enabled: true,
-            assignmentModel: 'COLLABORATIVE',
-            containerType: 'CHANNEL',
-            namingPattern: 'ticket-{counter}',
-            startingNumber: 1,
-            staffRoles: [],
-            autoCloseHours: 48,
-            warningHours: 24,
-            maxTicketsPerUser: 3,
-            cooldownMinutes: 5,
-            allowedFileTypes: [],
-            maxFileSize: 8388608
-          }
+        config = await this.ticketService.createConfig(guild.id, {
+          botId: process.env.BOT_ID || '',
+          namingFormat: 'ticket-{counter}',
+          maxTickets: 3,
+          categories: [],
+          panels: []
         });
-        
-        config = await this.ticketService.getConfig(guild.id);
-        if (!config) {
-          throw new Error('Failed to create ticket configuration');
-        }
       }
 
       // Build embed
@@ -85,18 +70,24 @@ export class TicketPanelService {
         components
       });
 
-      // Save panel to database with message ID
-      await prisma.ticketPanel.create({
-        data: {
-          guildId: guild.id,
-          configId: config.id,
-          channelId,
-          messageId: message.id,
-          type,
-          embedData,
-          components: this.serializeComponents(components),
-          active: true
-        }
+      // Create panel data object
+      const panelData = {
+        id: embedData.id,
+        guildId: guild.id,
+        channelId,
+        messageId: message.id,
+        type,
+        embedData,
+        active: true
+      };
+
+      // Get existing panels and add the new one
+      const existingPanels = config.panels || [];
+      const updatedPanels = [...existingPanels, panelData];
+
+      // Update config with new panel
+      await this.ticketService.updateConfig(guild.id, {
+        panels: updatedPanels
       });
 
       return message;
