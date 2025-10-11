@@ -352,6 +352,9 @@ export class BotsService {
         } else if ((key === 'statusRotation' || key === 'embedV2Commands') && value) {
           // Stringify if it's an object, otherwise use as-is
           configData[key] = typeof value === 'object' ? JSON.stringify(value) : value;
+        } else if (key === 'autoRoleIds' && Array.isArray(value)) {
+          // Handle autoRoleIds array - stringify for storage
+          configData[key] = JSON.stringify(value);
         } else {
           configData[key] = value;
         }
