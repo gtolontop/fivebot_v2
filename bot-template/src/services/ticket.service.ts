@@ -73,19 +73,17 @@ export class TicketService {
   // Configuration Management
   async getConfig(guildId: string): Promise<TicketConfigWithArrays | null> {
     const config = await prisma.ticketConfig.findUnique({
-      where: { guildId },
-      include: {
-        categories: {
-          where: { active: true },
-          orderBy: { order: 'asc' }
-        },
-        panels: {
-          where: { active: true }
-        }
-      }
+      where: { guildId }
     });
-    
-    return config ? parseTicketConfig(config) : null;
+
+    if (!config) return null;
+
+    // Parse JSON fields
+    return {
+      ...config,
+      categories: config.categories ? JSON.parse(config.categories) : [],
+      panels: config.panels ? JSON.parse(config.panels) : []
+    };
   }
 
   async createConfig(guildId: string, data?: Partial<TicketConfigWithArrays>): Promise<TicketConfigWithArrays> {
