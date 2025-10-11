@@ -17,17 +17,14 @@ export async function syncTicketConfigFromDashboard(guildId: string, botId: stri
       await prisma.ticketConfig.create({
         data: {
           guildId,
-          enabled: true,
-          containerType: 'CHANNEL', // Default to CHANNEL mode
-          staffRoles: [],
-          namingPattern: 'ticket-{counter}',
-          startingNumber: 1,
-          autoCloseHours: 48,
-          warningHours: 24,
-          maxTicketsPerUser: 3,
-          cooldownMinutes: 5,
-          allowedFileTypes: [],
-          maxFileSize: 8388608
+          botId,
+          categoryId: null,
+          staffRoleId: null,
+          transcriptChannelId: null,
+          namingFormat: 'ticket-{counter}',
+          maxTickets: 3,
+          categories: null,
+          panels: null
         }
       });
       console.log(`Created default ticket config for guild ${guildId}`);
