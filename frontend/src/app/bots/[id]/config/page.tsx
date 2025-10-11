@@ -1344,7 +1344,7 @@ export default function BotConfigPage() {
                             <div>
                               <h4 className="font-medium text-green-900 mb-1">Auto-Role Active</h4>
                               <p className="text-sm text-green-800">
-                                New members will automatically receive the selected role when they join any server where your bot is present.
+                                New members will automatically receive the selected roles when they join any server where your bot is present.
                               </p>
                             </div>
                           </div>
