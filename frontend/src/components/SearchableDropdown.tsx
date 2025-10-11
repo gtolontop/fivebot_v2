@@ -119,28 +119,41 @@ export default function SearchableDropdown({
                 >
                   None selected
                 </button>
-                {filteredOptions.map((option) => (
-                  <button
-                    key={option.id}
-                    type="button"
-                    onClick={() => handleSelect(option.id)}
-                    className={`w-full px-4 py-2 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none text-sm ${
-                      option.id === value ? 'bg-discord-50 text-discord-700' : 'text-gray-900'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span>{option.isRole ? '@' : '#'}{option.name}</span>
-                      {option.guildName && (
-                        <span className="text-xs text-gray-500">
-                          {option.guildName}
+                {filteredOptions.map((option) => {
+                  const isDisabled = option.isRole && option.canAssign === false;
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => !isDisabled && handleSelect(option.id)}
+                      disabled={isDisabled}
+                      className={`w-full px-4 py-2 text-left focus:outline-none text-sm ${
+                        isDisabled
+                          ? 'bg-gray-100 cursor-not-allowed opacity-60'
+                          : option.id === value
+                          ? 'bg-discord-50 text-discord-700'
+                          : 'text-gray-900 hover:bg-gray-50 focus:bg-gray-50'
+                      }`}
+                      title={isDisabled ? 'Bot cannot assign this role - role is higher than bot\'s highest role or is managed' : ''}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className={isDisabled ? 'text-gray-400' : ''}>
+                          {option.isRole ? '@' : '#'}{option.name}
+                          {isDisabled && ' 🔒'}
                         </span>
-                      )}
-                    </div>
-                    <div className="text-xs text-gray-400 mt-1">
-                      ID: {option.id}
-                    </div>
-                  </button>
-                ))}
+                        {option.guildName && (
+                          <span className="text-xs text-gray-500">
+                            {option.guildName}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-400 mt-1">
+                        ID: {option.id}
+                        {isDisabled && <span className="text-orange-500 ml-2">⚠️ No permission</span>}
+                      </div>
+                    </button>
+                  );
+                })}
               </>
             ) : (
               <div className="px-4 py-3 text-gray-500 text-sm text-center">
