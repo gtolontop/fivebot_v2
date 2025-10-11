@@ -190,6 +190,7 @@ export interface UpdateBotConfigForm {
   moderationEnabled?: boolean;
   autoRoleEnabled?: boolean;
   autoRoleId?: string;
+  autoRoleIds?: string[];
   loggingChannelId?: string;
 }
 
