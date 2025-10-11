@@ -1705,7 +1705,7 @@ export default function BotConfigPage() {
                             </div>
                             <p className="text-sm text-gray-600">Check bot activity and error logs</p>
                           </button>
-                          
+
                           <button
                             onClick={() => router.push(`/bots/${botId}`)}
                             className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors"
@@ -1716,6 +1716,48 @@ export default function BotConfigPage() {
                             </div>
                             <p className="text-sm text-gray-600">View bot information and invite links</p>
                           </button>
+                        </div>
+                      </div>
+
+                      {/* Danger Zone */}
+                      <div>
+                        <h3 className="text-lg font-semibold text-red-900 mb-4">Danger Zone</h3>
+                        <div className="border border-red-200 rounded-lg overflow-hidden">
+                          <div className="p-4 bg-red-50">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h4 className="font-medium text-red-900 mb-1">Suspend Bot</h4>
+                                <p className="text-sm text-red-700">
+                                  Temporarily disable this bot. You can reactivate it later.
+                                </p>
+                              </div>
+                              <button
+                                onClick={handleSuspendBot}
+                                disabled={saving}
+                                className="ml-4 px-4 py-2 border border-orange-300 text-sm font-medium rounded-md text-orange-700 bg-white hover:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                              >
+                                Suspend Bot
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="p-4 bg-red-50 border-t border-red-200">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h4 className="font-medium text-red-900 mb-1">Delete Bot</h4>
+                                <p className="text-sm text-red-700">
+                                  Permanently delete this bot and all its data. This action cannot be undone.
+                                </p>
+                              </div>
+                              <button
+                                onClick={handleDeleteBot}
+                                disabled={saving}
+                                className="ml-4 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                              >
+                                Delete Bot
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </div>
 
