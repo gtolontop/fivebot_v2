@@ -1193,7 +1193,7 @@ export default function BotConfigPage() {
                           <SearchableDropdown
                             options={textChannels}
                             value={config.loggingChannelId || ''}
-                            onChange={(value) => updateConfig({ loggingChannelId: value })}
+                            onChange={(value) => updateConfig({ loggingChannelId: value as string })}
                             placeholder="Select a logging channel"
                             emptyMessage="No text channels available"
                           />
