@@ -5,6 +5,7 @@ import path from 'path';
 import fs from 'fs';
 
 // Import commands
+import { help } from './commands/help';
 
 // Import events
 import { ready } from './events/ready';
@@ -29,7 +30,7 @@ const prisma = new PrismaClient({
 client.commands = new Collection();
 
 // Register commands
-const commands: any[] = [];
+const commands = [help];
 commands.forEach(command => {
   client.commands.set(command.data.name, command);
 });
