@@ -107,13 +107,14 @@ export const authAPI = {
 export const botsAPI = {
   getAll: () => api.get('/bots'),
   getById: (id: string) => api.get(`/bots/${id}`),
-  create: (data: { name: string; token: string; prefix?: string }) => 
+  create: (data: { name: string; token: string; prefix?: string }) =>
     api.post('/bots', data),
-  updateConfig: (id: string, config: any) => 
+  updateConfig: (id: string, config: any) =>
     api.patch(`/bots/${id}/config`, config),
   start: (id: string, options?: { force?: boolean }) => api.post(`/bots/${id}/start`, options),
   stop: (id: string) => api.post(`/bots/${id}/stop`),
   forceStop: (id: string) => api.post(`/bots/${id}/force-stop`),
+  suspend: (id: string) => api.post(`/bots/${id}/suspend`),
   delete: (id: string) => api.delete(`/bots/${id}`),
   getInviteLink: (id: string) => api.post(`/bots/${id}/invite-link`),
   getStatus: (id: string) => api.get(`/bots/${id}/status`),
