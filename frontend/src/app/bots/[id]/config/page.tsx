@@ -131,6 +131,7 @@ export default function BotConfigPage() {
   const [botLoading, setBotLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
+  const [newToken, setNewToken] = useState('');
   const [guildsLoading, setGuildsLoading] = useState(false);
   const statusCheckInterval = useRef<NodeJS.Timeout | null>(null);
   
@@ -1756,6 +1757,40 @@ export default function BotConfigPage() {
                             </div>
                             <p className="text-sm text-gray-600">View bot information and invite links</p>
                           </button>
+                        </div>
+                      </div>
+
+                      {/* Bot Token Update */}
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Bot Token</h3>
+                        <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h4 className="font-medium text-gray-900 mb-1">Update Bot Token</h4>
+                              <p className="text-sm text-gray-600 mb-4">
+                                Update your Discord bot token. The token will be validated before saving.
+                              </p>
+                              <div className="space-y-2">
+                                <input
+                                  type="password"
+                                  placeholder="Enter new bot token..."
+                                  value={newToken}
+                                  onChange={(e) => setNewToken(e.target.value)}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                                <p className="text-xs text-gray-500">
+                                  ⚠️ The bot will automatically restart after the token is updated
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              onClick={handleUpdateToken}
+                              disabled={saving || !newToken.trim()}
+                              className="ml-4 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                              {saving ? 'Updating...' : 'Update Token'}
+                            </button>
+                          </div>
                         </div>
                       </div>
 
