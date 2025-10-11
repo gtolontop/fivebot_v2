@@ -1354,7 +1354,8 @@ export default function BotConfigPage() {
                           <h4 className="font-medium text-blue-900 mb-2">Tips for Auto-Role Setup</h4>
                           <ul className="text-sm text-blue-800 space-y-1">
                             <li>• Make sure the bot has "Manage Roles" permission</li>
-                            <li>• The bot's role must be higher than the role you want to assign</li>
+                            <li>• The bot's role must be higher than the roles you want to assign</li>
+                            <li>• You can select multiple roles to assign to new members</li>
                             <li>• Consider using a basic "Member" or "Verified" role</li>
                             <li>• Test the feature with a new account first</li>
                           </ul>
