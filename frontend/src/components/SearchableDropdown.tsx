@@ -15,6 +15,7 @@ interface SearchableDropdownProps {
   onChange: (value: string) => void;
   placeholder?: string;
   emptyMessage?: string;
+  searchPlaceholder?: string;
 }
 
 export default function SearchableDropdown({
@@ -22,7 +23,8 @@ export default function SearchableDropdown({
   value,
   onChange,
   placeholder = "Select an option",
-  emptyMessage = "No options available"
+  emptyMessage = "No options available",
+  searchPlaceholder
 }: SearchableDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
