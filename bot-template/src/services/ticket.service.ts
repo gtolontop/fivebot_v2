@@ -1,18 +1,17 @@
-import { 
-  Ticket, 
-  TicketConfig, 
-  TicketMessage, 
-  TicketParticipant, 
-  TicketLog,
-  TicketState,
-  ActivityState,
-  ContainerType,
-  TicketPriority,
-  ParticipantRole,
-  AssignmentModel,
-  TicketCategory as PrismaTicketCategory,
-  TicketPanel as PrismaTicketPanel
+import {
+  Ticket,
+  TicketConfig,
+  TicketMessage
 } from '@prisma/client';
+
+// Types that don't exist as separate models in Prisma
+// (they're stored as JSON in TicketConfig)
+type TicketState = 'OPEN' | 'IN_PROGRESS' | 'CLOSED' | 'ARCHIVED';
+type ActivityState = 'ACTIVE' | 'INACTIVE' | 'WARNING';
+type ContainerType = 'CHANNEL' | 'THREAD';
+type TicketPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+type ParticipantRole = 'CREATOR' | 'STAFF' | 'OBSERVER';
+type AssignmentModel = 'COLLABORATIVE' | 'ASSIGNED';
 import { prisma } from '../lib/database';
 import { Client, Guild, GuildMember, TextChannel, ThreadChannel, User } from 'discord.js';
 import { parseTicketConfig, TicketConfigWithArrays } from '../utils/ticketConfigHelpers';
