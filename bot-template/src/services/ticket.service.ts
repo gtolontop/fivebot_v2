@@ -88,22 +88,44 @@ export class TicketService {
 
   async createConfig(guildId: string, data?: Partial<TicketConfigWithArrays>): Promise<TicketConfigWithArrays> {
     const { categories, panels, ...configData } = data || {};
+
     const config = await prisma.ticketConfig.create({
       data: {
         guildId,
-        ...configData
+        ...configData,
+        categories: categories ? JSON.stringify(categories) : null,
+        panels: panels ? JSON.stringify(panels) : null
       }
     });
-    return parseTicketConfig(config);
+
+    return {
+      ...config,
+      categories: categories || [],
+      panels: panels || []
+    };
   }
 
   async updateConfig(guildId: string, data: Partial<TicketConfigWithArrays>): Promise<TicketConfigWithArrays> {
     const { categories, panels, ...configData } = data;
+
+    const updateData: any = { ...configData };
+    if (categories !== undefined) {
+      updateData.categories = JSON.stringify(categories);
+    }
+    if (panels !== undefined) {
+      updateData.panels = JSON.stringify(panels);
+    }
+
     const config = await prisma.ticketConfig.update({
       where: { guildId },
-      data: configData
+      data: updateData
     });
-    return parseTicketConfig(config);
+
+    return {
+      ...config,
+      categories: config.categories ? JSON.parse(config.categories) : [],
+      panels: config.panels ? JSON.parse(config.panels) : []
+    };
   }
 
   // Ticket CRUD Operations
