@@ -135,15 +135,30 @@ export default function SearchableDropdown({
           <div className="max-h-60 overflow-y-auto">
             {filteredOptions.length > 0 ? (
               <>
-                <button
-                  type="button"
-                  onClick={() => handleSelect('')}
-                  className="w-full px-4 py-2 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none text-gray-500 text-sm"
-                >
-                  None selected
-                </button>
+                {!multiple && (
+                  <button
+                    type="button"
+                    onClick={() => handleSelect('')}
+                    className="w-full px-4 py-2 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none text-gray-500 text-sm"
+                  >
+                    None selected
+                  </button>
+                )}
+                {multiple && selectedValues && selectedValues.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleClearAll}
+                    className="w-full px-4 py-2 text-left hover:bg-red-50 focus:bg-red-50 focus:outline-none text-red-600 text-sm border-b border-gray-200"
+                  >
+                    Clear all ({selectedValues.length} selected)
+                  </button>
+                )}
                 {filteredOptions.map((option) => {
                   const isDisabled = option.isRole && option.canAssign === false;
+                  const isSelected = multiple
+                    ? selectedValues?.includes(option.id)
+                    : option.id === value;
+
                   return (
                     <button
                       key={option.id}
@@ -153,24 +168,35 @@ export default function SearchableDropdown({
                       className={`w-full px-4 py-2 text-left focus:outline-none text-sm ${
                         isDisabled
                           ? 'bg-gray-100 cursor-not-allowed opacity-60'
-                          : option.id === value
+                          : isSelected
                           ? 'bg-discord-50 text-discord-700'
                           : 'text-gray-900 hover:bg-gray-50 focus:bg-gray-50'
                       }`}
                       title={isDisabled ? 'Bot cannot assign this role - role is higher than bot\'s highest role or is managed' : ''}
                     >
                       <div className="flex items-center justify-between">
-                        <span className={isDisabled ? 'text-gray-400' : ''}>
-                          {option.isRole ? '@' : '#'}{option.name}
-                          {isDisabled && ' 🔒'}
-                        </span>
+                        <div className="flex items-center space-x-2">
+                          {multiple && (
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => {}}
+                              disabled={isDisabled}
+                              className="rounded border-gray-300 text-discord-600 focus:ring-discord-500 disabled:opacity-50"
+                            />
+                          )}
+                          <span className={isDisabled ? 'text-gray-400' : ''}>
+                            {option.isRole ? '@' : '#'}{option.name}
+                            {isDisabled && ' 🔒'}
+                          </span>
+                        </div>
                         {option.guildName && (
                           <span className="text-xs text-gray-500">
                             {option.guildName}
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-gray-400 mt-1">
+                      <div className={`text-xs text-gray-400 mt-1 ${multiple ? 'ml-6' : ''}`}>
                         ID: {option.id}
                         {isDisabled && <span className="text-orange-500 ml-2">⚠️ No permission</span>}
                       </div>
