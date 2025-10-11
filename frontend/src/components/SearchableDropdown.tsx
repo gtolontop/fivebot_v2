@@ -95,16 +95,21 @@ export default function SearchableDropdown({
         onClick={handleToggle}
         className="input-field w-full text-left flex items-center justify-between"
       >
-        <span className={selectedOption ? 'text-gray-900' : 'text-gray-500'}>
-          {selectedOption 
-            ? `${selectedOption.isRole ? '@' : '#'}${selectedOption.name}${selectedOption.guildName ? ` (${selectedOption.guildName})` : ''}`
-            : placeholder
-          }
+        <span className={multiple && selectedValues && selectedValues.length > 0 || selectedOption ? 'text-gray-900' : 'text-gray-500'}>
+          {multiple ? (
+            selectedValues && selectedValues.length > 0 ? (
+              `${selectedValues.length} role${selectedValues.length > 1 ? 's' : ''} selected`
+            ) : placeholder
+          ) : (
+            selectedOption
+              ? `${selectedOption.isRole ? '@' : '#'}${selectedOption.name}${selectedOption.guildName ? ` (${selectedOption.guildName})` : ''}`
+              : placeholder
+          )}
         </span>
-        <svg 
+        <svg
           className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-          fill="none" 
-          stroke="currentColor" 
+          fill="none"
+          stroke="currentColor"
           viewBox="0 0 24 24"
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
