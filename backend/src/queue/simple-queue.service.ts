@@ -238,11 +238,28 @@ export class SimpleQueueService implements IQueueService {
       botProcess.stderr?.on('data', async (data) => {
         const output = data.toString();
         console.error(`[Bot ${botId} ERROR] ${output.trim()}`);
-        
+
         // Split output by lines and send each line to live console
         const lines = output.split('\n').filter(line => line.trim());
         for (const line of lines) {
           try {
+            // Detect authentication errors
+            const isAuthError =
+              line.includes('Authentication failed') ||
+              line.includes('invalid token') ||
+              line.includes('token may be invalid or expired') ||
+              line.includes('Discord authentication failed');
+
+            if (isAuthError) {
+              // Add a clear, user-friendly error message
+              await this.botLogsService.addLog(
+                botId,
+                LogLevel.ERROR,
+                '❌ INVALID TOKEN: Your Discord bot token is invalid or expired. Please update it in the bot settings.',
+                'System'
+              );
+            }
+
             await this.botLogsService.addLog(
               botId,
               LogLevel.ERROR,
