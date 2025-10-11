@@ -172,6 +172,13 @@ export class BotsController {
     return this.botsService.stop(id, req.user.id);
   }
 
+  @Post(':id/suspend')
+  @UseGuards(AuthGuard('jwt'))
+  async suspend(@Param('id') id: string, @Req() req: any) {
+    await this.botsService.suspend(id, req.user.id);
+    return { message: 'Bot suspended successfully' };
+  }
+
   @Delete(':id')
   @UseGuards(AuthGuard('jwt'))
   async delete(@Param('id') id: string, @Req() req: any) {
