@@ -20,47 +20,8 @@ const ticketEnabled = config.ticketData?.ticketEnabled || false;
 // Base commands (always available)
 const baseCommands = [
   new SlashCommandBuilder()
-    .setName('set-welcome')
-    .setDescription('Configure welcome messages')
-    .addBooleanOption(option =>
-      option.setName('enabled')
-        .setDescription('Enable or disable welcome messages')
-        .setRequired(true)
-    )
-    .addChannelOption(option =>
-      option.setName('channel')
-        .setDescription('Channel to send welcome messages')
-        .setRequired(false)
-    )
-    .addStringOption(option =>
-      option.setName('title')
-        .setDescription('Welcome message title')
-        .setRequired(false)
-    )
-    .addStringOption(option =>
-      option.setName('description')
-        .setDescription('Welcome message description (use {user} to mention)')
-        .setRequired(false)
-    )
-    .addStringOption(option =>
-      option.setName('color')
-        .setDescription('Embed color (hex format: #5865F2)')
-        .setRequired(false)
-    ),
-
-  new SlashCommandBuilder()
-    .setName('bot-status')
-    .setDescription('Show bot status and configuration'),
-
-  new SlashCommandBuilder()
-    .setName('reload-config')
-    .setDescription('Reload bot configuration from database'),
-
-  new SlashCommandBuilder()
     .setName('help')
-    .setDescription('Show bot help'),
-    
-  statsCommand.data,
+    .setDescription('Show bot help and panel link'),
 ];
 
 // Default bot commands (without V2 commands which are handled dynamically)
