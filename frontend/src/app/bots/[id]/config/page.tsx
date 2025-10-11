@@ -119,6 +119,7 @@ interface DiscordRole {
   id: string;
   name: string;
   color: number;
+  canAssign?: boolean;
 }
 
 
