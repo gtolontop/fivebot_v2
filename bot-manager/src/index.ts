@@ -5,10 +5,6 @@ import path from 'path';
 import fs from 'fs';
 
 // Import commands
-import { createBot } from './commands/createbot';
-import { listBots } from './commands/listbots';
-import { botInfo } from './commands/botinfo';
-import { creditCheck } from './commands/creditcheck';
 
 // Import events
 import { ready } from './events/ready';
