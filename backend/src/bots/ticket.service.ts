@@ -219,10 +219,10 @@ export class TicketService {
         return [];
       }
       
-      const placeholders = guildIds.map((_, index) => `$${index + 1}`).join(', ');
-      
+      const placeholders = guildIds.map(() => '?').join(', ');
+
       const tickets = await this.prisma.$queryRawUnsafe<any[]>(`
-        SELECT 
+        SELECT
           t.id,
           t.guild_id as "guildId",
           t.ticket_number as "number",
@@ -312,11 +312,11 @@ export class TicketService {
       }
       
       // Create placeholders for SQL IN clause
-      const placeholders = guildIds.map((_, index) => `$${index + 1}`).join(', ');
-      
+      const placeholders = guildIds.map(() => '?').join(', ');
+
       // Get ticket statistics filtered by guild_id
       const stats = await this.prisma.$queryRawUnsafe<any[]>(`
-        SELECT 
+        SELECT
           COUNT(*) as totalTickets,
           COUNT(CASE WHEN state = 'OPEN' OR state = 'IN_PROGRESS' THEN 1 END) as openTickets,
           COUNT(CASE WHEN state = 'CLOSED' THEN 1 END) as closedTickets,
@@ -325,13 +325,13 @@ export class TicketService {
         WHERE deleted_at IS NULL
           AND guild_id IN (${placeholders})
       `, ...guildIds);
-      
+
       // Get message count and average response time
       const messageStats = await this.prisma.$queryRawUnsafe<any[]>(`
-        SELECT 
+        SELECT
           COUNT(DISTINCT tm.id) as totalMessages,
-          AVG(CASE 
-            WHEN tm.is_staff = 1 AND tm.message_number > 1 
+          AVG(CASE
+            WHEN tm.is_staff = 1 AND tm.message_number > 1
             THEN TIMESTAMPDIFF(SECOND, t.created_at, tm.created_at)
           END) as avgResponseTime
         FROM tickets t
@@ -339,10 +339,10 @@ export class TicketService {
         WHERE t.deleted_at IS NULL
           AND t.guild_id IN (${placeholders})
       `, ...guildIds);
-      
+
       // Get average resolution time
       const resolutionStats = await this.prisma.$queryRawUnsafe<any[]>(`
-        SELECT 
+        SELECT
           AVG(TIMESTAMPDIFF(HOUR, created_at, closed_at)) as avgResolutionTime
         FROM tickets
         WHERE deleted_at IS NULL
