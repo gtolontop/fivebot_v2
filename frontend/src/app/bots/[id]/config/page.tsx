@@ -1313,8 +1313,7 @@ export default function BotConfigPage() {
                             </label>
                             <button
                               onClick={() => {
-                                setGuildsLoading(true);
-                                loadGuildsData();
+                                fetchDiscordGuilds();
                               }}
                               disabled={guildsLoading}
                               className="text-xs text-indigo-600 hover:text-indigo-700 disabled:text-gray-400 flex items-center gap-1"
