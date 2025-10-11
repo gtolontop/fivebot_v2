@@ -64,6 +64,7 @@ model BotConfig {
   moderationEnabled   Boolean @default(false) @map("moderation_enabled")
   autoRoleEnabled     Boolean @default(false) @map("auto_role_enabled")
   autoRoleId          String? @map("auto_role_id")
+  autoRoleIds         String? @map("auto_role_ids") @db.LongText
   loggingChannelId    String? @map("logging_channel_id")
   customCommands      Json?   @map("custom_commands")
   ticketData          String? @map("ticket_data") @db.LongText
