@@ -283,3 +283,22 @@ model TicketMessage {
   @@index([ticketId])
   @@map("ticket_messages")
 }
+
+model TicketConfig {
+  id                    String   @id @default(uuid())
+  guildId               String   @unique @map("guild_id")
+  botId                 String   @map("bot_id")
+  categoryId            String?  @map("category_id")
+  staffRoleId           String?  @map("staff_role_id")
+  transcriptChannelId   String?  @map("transcript_channel_id")
+  namingFormat          String?  @map("naming_format")
+  maxTickets            Int      @default(3) @map("max_tickets")
+  categories            String?  @db.LongText
+  panels                String?  @db.LongText
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@index([botId])
+  @@index([guildId])
+  @@map("ticket_configs")
+}
