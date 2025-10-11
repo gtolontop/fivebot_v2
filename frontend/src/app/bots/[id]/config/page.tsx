@@ -339,33 +339,6 @@ export default function BotConfigPage() {
     }
   };
 
-  const saveConfig = async () => {
-    setSaving(true);
-    try {
-      // Prepare config data with stringified fields
-      const configToSave = {
-        ...config,
-        statusRotation: config.statusRotation ? JSON.stringify(config.statusRotation) : null,
-        embedV2Commands: config.embedV2Commands ? JSON.stringify(config.embedV2Commands) : null,
-      };
-      
-      await botsAPI.updateConfig(botId, configToSave);
-      toast.success('Configuration saved successfully');
-      
-      // If bot was online, it will restart automatically
-      if (bot?.status === 'ONLINE') {
-        setBot(prev => prev ? { ...prev, status: 'RESTARTING' } : null);
-        toast('Bot is restarting to apply new configuration...', { icon: 'ℹ️' });
-      }
-      
-      // Refresh bot status after a delay
-      setTimeout(fetchBot, 3000);
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Error saving configuration');
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const startBot = async () => {
     try {
@@ -475,10 +448,24 @@ export default function BotConfigPage() {
   };
 
   const updateWelcomeEmbed = (updates: Partial<BotConfig['welcomeEmbedJson']>) => {
-    setConfig(prev => ({
-      ...prev,
-      welcomeEmbedJson: { ...prev.welcomeEmbedJson, ...updates }
-    }));
+    setConfig(prev => {
+      const newConfig = {
+        ...prev,
+        welcomeEmbedJson: { ...prev.welcomeEmbedJson, ...updates }
+      };
+
+      // Clear existing timeout
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+
+      // Set new timeout for auto-save (1 second debounce)
+      saveTimeoutRef.current = setTimeout(() => {
+        autoSaveConfig(newConfig);
+      }, 1000);
+
+      return newConfig;
+    });
   };
 
   const exportConfig = () => {
