@@ -243,23 +243,42 @@ export class SimpleQueueService implements IQueueService {
         const lines = output.split('\n').filter(line => line.trim());
         for (const line of lines) {
           try {
-            // Detect authentication errors
-            const isAuthError =
-              line.includes('Authentication failed') ||
-              line.includes('invalid token') ||
-              line.includes('token may be invalid or expired') ||
-              line.includes('Discord authentication failed');
+            let userFriendlyMessage = null;
 
-            if (isAuthError) {
-              // Add a clear, user-friendly error message
+            // Detect various Discord errors and provide user-friendly messages
+            if (line.includes('Authentication failed') ||
+                line.includes('invalid token') ||
+                line.includes('token may be invalid or expired') ||
+                line.includes('Discord authentication failed')) {
+              userFriendlyMessage = '❌ INVALID TOKEN: Your Discord bot token is invalid or expired. Please update it in the Advanced Settings.';
+            }
+            else if (line.includes('Used disallowed intents') ||
+                     line.includes('disallowed intent')) {
+              userFriendlyMessage = '❌ MISSING INTENTS: Your bot is missing required Discord intents. Go to Discord Developer Portal → Your App → Bot → Enable "Privileged Gateway Intents" (Server Members, Presence, Message Content).';
+            }
+            else if (line.includes('Missing Access') ||
+                     line.includes('Missing Permissions')) {
+              userFriendlyMessage = '❌ MISSING PERMISSIONS: Your bot token does not have the required permissions. Check your bot settings on Discord Developer Portal.';
+            }
+            else if (line.includes('Rate limited') ||
+                     line.includes('429')) {
+              userFriendlyMessage = '⚠️ RATE LIMITED: Discord is rate limiting your bot. This usually resolves automatically. Please wait a few minutes.';
+            }
+            else if (line.includes('Invalid Session')) {
+              userFriendlyMessage = '⚠️ INVALID SESSION: Discord session expired. The bot will automatically try to reconnect.';
+            }
+
+            // Add user-friendly message if we detected a known error
+            if (userFriendlyMessage) {
               await this.botLogsService.addLog(
                 botId,
                 LogLevel.ERROR,
-                '❌ INVALID TOKEN: Your Discord bot token is invalid or expired. Please update it in the bot settings.',
+                userFriendlyMessage,
                 'System'
               );
             }
 
+            // Always log the original error too
             await this.botLogsService.addLog(
               botId,
               LogLevel.ERROR,
