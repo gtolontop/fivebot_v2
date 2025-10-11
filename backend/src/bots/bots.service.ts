@@ -391,6 +391,84 @@ export class BotsService {
     return config;
   }
 
+  async updateToken(botId: string, ownerId: string, newToken: string): Promise<Bot> {
+    // Verify ownership
+    const bot = await this.findOne(botId, ownerId);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    // Validate the new token with Discord API
+    console.log('Validating new bot token with Discord...');
+    const tokenValidation = await this.discordService.validateBotToken(newToken);
+
+    if (!tokenValidation.isValid) {
+      console.log('New token validation failed:', tokenValidation.error);
+      throw new BadRequestException(tokenValidation.error || 'Invalid bot token');
+    }
+
+    console.log('New token validated successfully');
+
+    // Stop the bot if it's running
+    const wasRunning = bot.status === BotStatus.ONLINE;
+    if (wasRunning) {
+      console.log(`Stopping bot ${botId} before token update...`);
+      await this.queueService.addJob('stop-bot', { botId });
+
+      // Wait a bit for the bot to stop
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+
+    // Encrypt the new token
+    const encryptedToken = this.encryptionService.encrypt(newToken);
+
+    // Update the bot with the new token
+    const updatedBot = await this.prisma.bot.update({
+      where: { id: botId },
+      data: {
+        tokenEncrypted: encryptedToken,
+        clientId: tokenValidation.application?.id || bot.clientId,
+      },
+    });
+
+    // Log the action
+    await this.prisma.auditLog.create({
+      data: {
+        userId: ownerId,
+        botId,
+        action: 'BOT_TOKEN_UPDATED',
+        resource: 'bot',
+        metadata: JSON.stringify({
+          wasRunning,
+          newClientId: tokenValidation.application?.id
+        }),
+      },
+    });
+
+    await this.botLogsService.addLog(
+      botId,
+      LogLevel.INFO,
+      '🔑 Bot token updated successfully',
+      'System'
+    );
+
+    // Restart the bot if it was running
+    if (wasRunning) {
+      console.log(`Restarting bot ${botId} with new token...`);
+      await this.botLogsService.addLog(
+        botId,
+        LogLevel.INFO,
+        '🔄 Restarting bot with new token...',
+        'System'
+      );
+
+      // Start the bot with the new token
+      await this.queueService.addJob('start-bot', { botId });
+    }
+
+    return updatedBot;
+  }
+
   async start(botId: string, ownerId: string): Promise<Bot> {
     let bot = await this.findOne(botId, ownerId);
     if (!bot) {
