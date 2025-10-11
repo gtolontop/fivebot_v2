@@ -41,14 +41,15 @@
       "Bash(timeout:*)",
       "Bash(set BOT_ID=5ad66b0d-b8e6-4f81-92e3-b32a518a8764)",
       "Bash(cmd:*)",
-      "Bash(start:*)"
+      "Bash(start:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
+    "ask": [],
     "defaultMode": "acceptEdits",
     "additionalDirectories": [
       "C:\\mnt\\c\\Users\\teamr\\Desktop\\fivebot",
       "C:\\c\\Users\\teamr\\Desktop\\fivebot"
-    ],
-    "ask": []
+    ]
   }
 }
