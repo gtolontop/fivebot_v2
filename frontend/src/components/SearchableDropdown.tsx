@@ -99,7 +99,7 @@ export default function SearchableDropdown({
           <div className="p-2 border-b border-gray-200">
             <input
               type="text"
-              placeholder="Search channels by name or ID..."
+              placeholder={searchPlaceholder || (options.some(o => o.isRole) ? "Search roles by name or ID..." : "Search channels by name or ID...")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-discord-500 focus:border-transparent text-sm"
