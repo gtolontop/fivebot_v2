@@ -273,24 +273,49 @@ class ChildBot {
     try {
       console.log('Initializing bot...');
       console.log('Validating token...');
-      
+
+      // Validate BOT_TOKEN exists
+      const token = process.env.BOT_TOKEN;
+      if (!token) {
+        throw new Error('BOT_TOKEN environment variable is not set');
+      }
+
+      // Basic token format validation (Discord tokens should start with certain prefixes)
+      if (token.length < 50) {
+        throw new Error('Invalid token format: token too short');
+      }
+
+      console.log(`Token length: ${token.length} characters`);
+
       // Connect to database
       await this.prisma.$connect();
       console.log('Database connected');
-      
+
       // Update bot status
       await this.prisma.bot.update({
         where: { id: this.botId },
         data: { status: 'STARTING' }
       });
       console.log('✅ Bot status updated to STARTING');
-      
+
       // Login to Discord
-      await this.client.login(process.env.BOT_TOKEN);
+      console.log('Attempting to login to Discord...');
+      await this.client.login(token);
       console.log(`🤖 Child bot started for bot ID: ${this.botId}`);
-      
+
     } catch (error) {
       console.error('Failed to start bot:', error);
+
+      // Provide more specific error messages
+      if (error instanceof Error) {
+        if (error.message.includes('An invalid token was provided')) {
+          console.error('❌ The Discord bot token is invalid or has been reset');
+          console.error('Please update the bot token in the dashboard');
+        } else if (error.message.includes('Authentication failed')) {
+          console.error('❌ Discord authentication failed - token may be invalid or expired');
+        }
+      }
+
       process.exit(1);
     }
   }
