@@ -12,11 +12,12 @@ interface Option {
 
 interface SearchableDropdownProps {
   options: Option[];
-  value: string;
-  onChange: (value: string) => void;
+  value: string | string[];
+  onChange: (value: string | string[]) => void;
   placeholder?: string;
   emptyMessage?: string;
   searchPlaceholder?: string;
+  multiple?: boolean;
 }
 
 export default function SearchableDropdown({
@@ -25,14 +26,16 @@ export default function SearchableDropdown({
   onChange,
   placeholder = "Select an option",
   emptyMessage = "No options available",
-  searchPlaceholder
+  searchPlaceholder,
+  multiple = false
 }: SearchableDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Find selected option
-  const selectedOption = options.find(option => option.id === value);
+  // Handle both single and multiple selection
+  const selectedValues = multiple ? (Array.isArray(value) ? value : []) : null;
+  const selectedOption = !multiple ? options.find(option => option.id === value) : null;
 
   // Filter options based on search term
   const filteredOptions = options.filter(option =>
@@ -57,9 +60,24 @@ export default function SearchableDropdown({
   }, []);
 
   const handleSelect = (optionId: string) => {
-    onChange(optionId);
-    setIsOpen(false);
-    setSearchTerm('');
+    if (multiple) {
+      // Multi-select: toggle selection
+      const currentValues = Array.isArray(value) ? value : [];
+      const newValues = currentValues.includes(optionId)
+        ? currentValues.filter(id => id !== optionId)
+        : [...currentValues, optionId];
+      onChange(newValues);
+      // Don't close dropdown in multi-select mode
+    } else {
+      // Single select: close dropdown
+      onChange(optionId);
+      setIsOpen(false);
+      setSearchTerm('');
+    }
+  };
+
+  const handleClearAll = () => {
+    onChange(multiple ? [] : '');
   };
 
   const handleToggle = () => {
