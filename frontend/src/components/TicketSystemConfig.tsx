@@ -1638,7 +1638,7 @@ export default function TicketSystemConfig({
                     <SearchableDropdown
                       options={allRoles.map(role => ({ ...role, isRole: true }))}
                       value={categoryForm.roleId}
-                      onChange={(value) => setCategoryForm(prev => ({ ...prev, roleId: value }))}
+                      onChange={(value) => setCategoryForm(prev => ({ ...prev, roleId: value as string }))}
                       placeholder="Select a role to auto-assign"
                       emptyMessage="No roles available"
                     />
