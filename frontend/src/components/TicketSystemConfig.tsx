@@ -652,7 +652,7 @@ export default function TicketSystemConfig({
                   <SearchableDropdown
                     options={allRoles.map(role => ({ ...role, isRole: true }))}
                     value={config.ticketStaffRoleId || ''}
-                    onChange={(value) => updateConfig({ ticketStaffRoleId: value })}
+                    onChange={(value) => updateConfig({ ticketStaffRoleId: value as string })}
                     placeholder="Select a staff role"
                     emptyMessage="No roles available"
                   />
@@ -668,7 +668,7 @@ export default function TicketSystemConfig({
                   <SearchableDropdown
                     options={textChannels}
                     value={config.ticketTranscriptChannelId || ''}
-                    onChange={(value) => updateConfig({ ticketTranscriptChannelId: value })}
+                    onChange={(value) => updateConfig({ ticketTranscriptChannelId: value as string })}
                     placeholder="Select a channel for ticket transcripts"
                     emptyMessage="No text channels available"
                   />
