@@ -148,11 +148,11 @@ export class TicketPanelService {
     const rows: ActionRowBuilder<ButtonBuilder | StringSelectMenuBuilder>[] = [];
 
     switch (type) {
-      case PanelType.BUTTON:
+      case 'BUTTON':
         rows.push(...this.buildButtonComponents(categories));
         break;
 
-      case PanelType.DROPDOWN:
+      case 'DROPDOWN':
         // If too many categories, split into multiple dropdowns or use buttons
         if (categories.length > 20) {
           // Switch to button layout for many categories
@@ -162,7 +162,7 @@ export class TicketPanelService {
         }
         break;
 
-      case PanelType.HYBRID:
+      case 'HYBRID':
         // Add main create button
         const mainRow = new ActionRowBuilder<ButtonBuilder>()
           .addComponents(
