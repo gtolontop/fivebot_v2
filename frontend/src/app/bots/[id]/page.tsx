@@ -34,6 +34,7 @@ interface Bot {
   status: string;
   isActive: boolean;
   createdAt: string;
+  startedAt?: string;
   clientId?: string;
   prefix: string;
   config?: {
