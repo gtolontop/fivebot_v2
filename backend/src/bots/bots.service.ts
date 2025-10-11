@@ -510,6 +510,45 @@ export class BotsService {
     return this.findOne(botId, ownerId);
   }
 
+  async suspend(botId: string, ownerId: string): Promise<Bot> {
+    const bot = await this.findOne(botId, ownerId);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    // Stop bot if running
+    if (bot.status === BotStatus.ONLINE || bot.status === BotStatus.STARTING) {
+      await this.queueService.addJob('stop-bot', { botId });
+    }
+
+    // Update bot to suspended status
+    await this.updateStatus(botId, BotStatus.OFFLINE);
+
+    // Mark as inactive (suspended)
+    const suspendedBot = await this.prisma.bot.update({
+      where: { id: botId },
+      data: {
+        isActive: false,
+        status: BotStatus.OFFLINE
+      },
+      include: {
+        config: true,
+      }
+    });
+
+    // Log the suspension
+    await this.prisma.auditLog.create({
+      data: {
+        userId: ownerId,
+        botId,
+        action: 'BOT_SUSPENDED',
+        resource: 'bot',
+      },
+    });
+
+    return suspendedBot;
+  }
+
   async delete(botId: string, ownerId: string): Promise<void> {
     const bot = await this.findOne(botId, ownerId);
     if (!bot) {
