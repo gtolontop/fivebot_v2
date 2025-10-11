@@ -106,19 +106,19 @@ async function handleBuiltInCommands(
 ) {
   const { commandName } = interaction;
 
-  // Handle stats command without owner check
-  if (commandName === 'stats') {
-    await statsCommand.execute(interaction);
+  // Handle help command without owner check
+  if (commandName === 'help') {
+    await handleHelp(interaction);
     return;
   }
-  
+
   // Handle ticketdebug command without owner check
   if (commandName === 'ticketdebug') {
     const ticketDebugCommand = await import('../commands/ticketDebug');
     await ticketDebugCommand.execute(interaction);
     return;
   }
-  
+
   // V2 commands are now handled in the main interactionCreate function
 
   // Only allow bot owner to use configuration commands
