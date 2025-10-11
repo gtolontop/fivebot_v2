@@ -1324,10 +1324,11 @@ export default function BotConfigPage() {
                           </div>
                           <SearchableDropdown
                             options={allRoles.map(role => ({ ...role, isRole: true }))}
-                            value={config.autoRoleId || ''}
-                            onChange={(value) => updateConfig({ autoRoleId: value })}
-                            placeholder="Select a role to assign automatically"
+                            value={config.autoRoleIds || []}
+                            onChange={(value) => updateConfig({ autoRoleIds: value as string[] })}
+                            placeholder="Select roles to assign automatically"
                             emptyMessage="No roles available"
+                            multiple={true}
                           />
                           {allRoles.some(r => r.canAssign === false) && (
                             <p className="text-xs text-orange-600 mt-2">
