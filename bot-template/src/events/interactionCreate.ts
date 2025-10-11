@@ -281,34 +281,34 @@ async function handleCustomCommand(
 }
 
 async function handleHelp(interaction: ChatInputCommandInteraction) {
-  const panelUrl = process.env.PANEL_URL || 'https://panel.fivebot.com';
+  const commands = interaction.client.application?.commands.cache;
+
+  // Build command list
+  let commandList = '';
+  if (commands && commands.size > 0) {
+    commands.forEach(cmd => {
+      commandList += `\`/${cmd.name}\` - ${cmd.description || 'No description'}\n`;
+    });
+  } else {
+    commandList = '*No commands available at the moment.*';
+  }
 
   const embed = new EmbedBuilder()
     .setColor(0x5865F2)
-    .setTitle('🤖 Help - FiveBot v2')
-    .setDescription('To configure this bot, please use the management panel.')
+    .setTitle('📋 Bot Commands')
+    .setDescription('Here are all the available commands:')
     .addFields(
       {
-        name: '🌐 Configuration Panel',
-        value: `[Access Panel](${panelUrl})\n\nAll configurations must be done through the web panel.`,
-        inline: false
-      },
-      {
-        name: '📋 Available Features',
-        value: '• Welcome messages configuration\n• Custom embeds management\n• Ticket system\n• Custom commands\n• And much more...',
-        inline: false
-      },
-      {
-        name: '💡 Tip',
-        value: 'Log in to the panel with your Discord account to manage your bots.',
+        name: 'Available Commands',
+        value: commandList || '*No commands available*',
         inline: false
       }
     )
     .setFooter({
-      text: 'FiveBot v2 - Managed Discord Bot',
-      iconURL: interaction.client.user?.displayAvatarURL()
+      text: `Requested by ${interaction.user.tag}`,
+      iconURL: interaction.user.displayAvatarURL()
     })
     .setTimestamp();
 
-  await interaction.reply({ embeds: [embed], ephemeral: true });
+  await interaction.reply({ embeds: [embed], ephemeral: false });
 }
