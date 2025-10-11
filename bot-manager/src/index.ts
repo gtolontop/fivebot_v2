@@ -29,7 +29,7 @@ const prisma = new PrismaClient({
 client.commands = new Collection();
 
 // Register commands
-const commands = [createBot, listBots, botInfo, creditCheck];
+const commands: any[] = [];
 commands.forEach(command => {
   client.commands.set(command.data.name, command);
 });
