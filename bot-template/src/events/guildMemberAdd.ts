@@ -46,18 +46,25 @@ export async function guildMemberAdd(
     }
 
     // Auto-assign role if enabled
+    console.log(`[Auto-Role] Config check - Enabled: ${config.autoRoleEnabled}, Role ID: ${config.autoRoleId}`);
+
     if (config.autoRoleEnabled && config.autoRoleId) {
       try {
         const role = member.guild.roles.cache.get(config.autoRoleId);
+        console.log(`[Auto-Role] Role lookup result:`, role ? `Found: ${role.name}` : 'Not found in cache');
+
         if (role) {
           await member.roles.add(role);
-          console.log(`Auto-role assigned to ${member.user.tag}: ${role.name}`);
+          console.log(`✅ Auto-role assigned to ${member.user.tag}: ${role.name}`);
         } else {
-          console.warn(`⚠️ Auto-role not found: ${config.autoRoleId}`);
+          console.warn(`⚠️ Auto-role not found in cache: ${config.autoRoleId}`);
+          console.warn(`Available roles in cache: ${member.guild.roles.cache.map(r => `${r.name} (${r.id})`).join(', ')}`);
         }
       } catch (roleError) {
         console.error(`❌ Failed to assign auto-role:`, roleError);
       }
+    } else if (config.autoRoleEnabled && !config.autoRoleId) {
+      console.warn(`⚠️ Auto-role is enabled but no role ID is configured`);
     }
 
     // Log to designated channel if configured

@@ -347,6 +347,48 @@ export class DiscordService {
     }
 
     try {
+      // Get bot user info first to find bot's member
+      const botUser = await axios.get(`${this.baseURL}/users/@me`, {
+        headers: {
+          Authorization: `Bot ${botToken}`,
+        },
+        timeout: 15000,
+      });
+
+      const botId = botUser.data.id;
+
+      // Get bot's member info in the guild to find its highest role
+      let botHighestRolePosition = 0;
+      try {
+        const botMember = await axios.get(`${this.baseURL}/guilds/${guildId}/members/${botId}`, {
+          headers: {
+            Authorization: `Bot ${botToken}`,
+          },
+          timeout: 15000,
+        });
+
+        // Get all roles first to find positions
+        const rolesResponse = await axios.get(`${this.baseURL}/guilds/${guildId}/roles`, {
+          headers: {
+            Authorization: `Bot ${botToken}`,
+          },
+          timeout: 15000,
+        });
+
+        const allRoles = rolesResponse.data;
+        const botRoleIds = botMember.data.roles;
+
+        // Find the highest position among bot's roles
+        botHighestRolePosition = Math.max(
+          ...botRoleIds.map((roleId: string) => {
+            const role = allRoles.find((r: any) => r.id === roleId);
+            return role ? role.position : 0;
+          })
+        );
+      } catch (memberError) {
+        console.warn('Could not fetch bot member info, assuming no role management permissions');
+      }
+
       const roles = await this.retryWithBackoff(async () => {
         const response = await axios.get(`${this.baseURL}/guilds/${guildId}/roles`, {
           headers: {
@@ -363,6 +405,7 @@ export class DiscordService {
           permissions: role.permissions,
           managed: role.managed,
           mentionable: role.mentionable,
+          canAssign: role.position < botHighestRolePosition && !role.managed && role.name !== '@everyone',
         }));
       });
 
