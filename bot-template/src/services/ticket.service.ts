@@ -149,8 +149,8 @@ export class TicketService {
       where: { guildId: data.guildId },
       orderBy: { ticketNumber: 'desc' }
     });
-    
-    const ticketNumber = (lastTicket?.ticketNumber || config.startingNumber - 1) + 1;
+
+    const ticketNumber = (lastTicket?.ticketNumber || 0) + 1;
 
     // Create the ticket
     const ticket = await prisma.ticket.create({
