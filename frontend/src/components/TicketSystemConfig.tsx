@@ -2020,7 +2020,7 @@ export default function TicketSystemConfig({
                 <SearchableDropdown
                   options={textChannels}
                   value={panelForm.channelId}
-                  onChange={(value) => setPanelForm(prev => ({ ...prev, channelId: value }))}
+                  onChange={(value) => setPanelForm(prev => ({ ...prev, channelId: value as string }))}
                   placeholder="Select a channel for the panel"
                   emptyMessage="No text channels available"
                 />
