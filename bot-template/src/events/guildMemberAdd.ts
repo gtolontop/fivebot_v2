@@ -12,6 +12,7 @@ interface BotConfig {
   moderationEnabled: boolean;
   autoRoleEnabled: boolean;
   autoRoleId?: string;
+  autoRoleIds?: string;
   loggingChannelId?: string;
   customCommands?: any;
 }
