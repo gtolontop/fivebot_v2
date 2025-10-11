@@ -146,43 +146,31 @@ async function handleBuiltInCommands(
 
   try {
     switch (commandName) {
-      case 'set-welcome':
-        await handleSetWelcome(interaction, configService);
-        break;
-      
-      case 'bot-status':
-        await handleBotStatus(interaction, configService);
-        break;
-      
-      case 'reload-config':
-        await handleReloadConfig(interaction, configService);
-        break;
-      
       case 'help':
         await handleHelp(interaction);
         break;
-      
+
       case 'ticket':
         // Import dynamically to avoid circular dependency
         const ticketCommand = await import('../commands/ticket');
         await ticketCommand.execute(interaction);
         break;
-      
+
       case 'ticket-example':
         const ticketExampleCommand = await import('../commands/ticketExample');
         await ticketExampleCommand.execute(interaction);
         break;
-      
+
       default:
         // Handle custom commands if any
         await handleCustomCommand(interaction, configService);
     }
-    
+
     // Log successful command completion
     console.log(`Command /${commandName} completed successfully`);
   } catch (error) {
     console.error(`Command /${commandName} failed:`, error instanceof Error ? error.message : error);
-    
+
     const replyMethod = interaction.replied || interaction.deferred ? 'editReply' : 'reply';
     await interaction[replyMethod]({
       content: '❌ Une erreur s\'est produite lors de l\'exécution de cette commande.',
