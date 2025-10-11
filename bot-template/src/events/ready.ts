@@ -156,22 +156,9 @@ async function restoreTicketPanels(client: Client, prisma: PrismaClient) {
     // Only get panels for guilds this bot is actually in
     let panels = [];
     try {
-      panels = await prisma.ticketPanel.findMany({
-        where: { 
-          active: true,
-          guildId: { in: botGuildIds } // Only panels from guilds this bot is in
-        },
-        include: {
-          config: {
-            include: {
-              categories: {
-                where: { active: true },
-                orderBy: { order: 'asc' }
-              }
-            }
-          }
-        }
-      });
+      // TODO: Implement ticket panel restoration when TicketPanel model is added
+      console.log('Ticket panel restoration not yet implemented');
+      return;
     } catch (error: any) {
       if (error.code === 'P2021' || error.message?.includes("doesn't exist") || error.message?.includes("Table")) {
         console.log('Ticket system not initialized - no panels to restore');
