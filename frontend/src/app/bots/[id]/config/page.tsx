@@ -529,6 +529,41 @@ export default function BotConfigPage() {
     toast.success('Configuration reset');
   };
 
+  const handleUpdateToken = async () => {
+    if (!newToken.trim()) {
+      toast.error('Please enter a new token');
+      return;
+    }
+
+    if (!confirm('⚠️ Are you sure you want to update the bot token?\n\nThe bot will:\n• Validate the new token with Discord\n• Stop the bot if it\'s running\n• Update the token\n• Restart automatically\n\nThis may take a few seconds.')) {
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await botsAPI.updateToken(botId, newToken);
+      toast.success('Bot token updated successfully! The bot will restart now.');
+      setNewToken(''); // Clear the input
+
+      // Refresh bot data after a short delay to see the new status
+      setTimeout(() => {
+        fetchBot();
+      }, 2000);
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'Error updating bot token';
+      toast.error(errorMessage);
+
+      // Show more specific error if it's a validation error
+      if (errorMessage.includes('Invalid') || errorMessage.includes('token')) {
+        toast.error('Please check that your token is correct and hasn\'t been reset on Discord Developer Portal', {
+          duration: 5000
+        });
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleSuspendBot = async () => {
     if (!confirm('Are you sure you want to suspend this bot? The bot will be stopped and marked as inactive. You can reactivate it later.')) {
       return;
