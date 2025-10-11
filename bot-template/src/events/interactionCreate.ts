@@ -285,27 +285,27 @@ async function handleHelp(interaction: ChatInputCommandInteraction) {
 
   const embed = new EmbedBuilder()
     .setColor(0x5865F2)
-    .setTitle('🤖 Aide - FiveBot v2')
-    .setDescription('Pour configurer ce bot, veuillez utiliser le panel de gestion.')
+    .setTitle('🤖 Help - FiveBot v2')
+    .setDescription('To configure this bot, please use the management panel.')
     .addFields(
       {
-        name: '🌐 Panel de Configuration',
-        value: `[Accéder au Panel](${panelUrl})\n\nToutes les configurations doivent être effectuées via le panel web.`,
+        name: '🌐 Configuration Panel',
+        value: `[Access Panel](${panelUrl})\n\nAll configurations must be done through the web panel.`,
         inline: false
       },
       {
-        name: '📋 Fonctionnalités disponibles',
-        value: '• Configuration des messages de bienvenue\n• Gestion des embeds personnalisés\n• Système de tickets\n• Commandes personnalisées\n• Et bien plus...',
+        name: '📋 Available Features',
+        value: '• Welcome messages configuration\n• Custom embeds management\n• Ticket system\n• Custom commands\n• And much more...',
         inline: false
       },
       {
-        name: '💡 Astuce',
-        value: 'Connectez-vous au panel avec votre compte Discord pour gérer vos bots.',
+        name: '💡 Tip',
+        value: 'Log in to the panel with your Discord account to manage your bots.',
         inline: false
       }
     )
     .setFooter({
-      text: 'FiveBot v2 - Bot Discord géré',
+      text: 'FiveBot v2 - Managed Discord Bot',
       iconURL: interaction.client.user?.displayAvatarURL()
     })
     .setTimestamp();
