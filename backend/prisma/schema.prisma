@@ -270,12 +270,14 @@ model Ticket {
 }
 
 model TicketMessage {
-  id        String   @id @default(uuid())
-  ticketId  String   @map("ticket_id")
-  userId    String   @map("user_id")
-  content   String   @db.Text
-  createdAt DateTime @default(now()) @map("created_at")
-  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  id            String   @id @default(uuid())
+  ticketId      String   @map("ticket_id")
+  userId        String   @map("user_id")
+  content       String   @db.Text
+  isStaff       Boolean  @default(false) @map("is_staff")
+  messageNumber Int      @default(1) @map("message_number")
+  createdAt     DateTime @default(now()) @map("created_at")
+  ticket        Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 
   @@index([ticketId])
   @@map("ticket_messages")
