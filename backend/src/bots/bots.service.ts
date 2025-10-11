@@ -311,13 +311,12 @@ export class BotsService {
       throw new NotFoundException('Bot not found');
     }
 
-    // Extract ticket-related fields
-    const ticketFields = [
-      'ticketEnabled', 'ticketCategoryId', 'ticketStaffRoleId', 'ticketTranscriptChannelId',
+    // Extract ticket-related advanced fields (not stored as columns)
+    const ticketDataFields = [
       'ticketNamingFormat', 'maxTicketsPerUser', 'autoCloseHours', 'inactivityWarningHours',
       'ticketThreads', 'ticketMentionStaff', 'ticketDMNotifications', 'ticketRequireReason',
       'autoSaveTranscripts', 'sendTranscriptToUser', 'includeAttachments',
-      'autoWelcomeEnabled', 'autoWelcomeMessage', 'inactivityWarningEnabled', 
+      'autoWelcomeEnabled', 'autoWelcomeMessage', 'inactivityWarningEnabled',
       'inactivityWarningMessage', 'autoAssignStaff', 'autoTagUrgent', 'autoEscalate'
     ];
 
@@ -329,21 +328,22 @@ export class BotsService {
       where: { botId }
     });
 
-    const currentTicketData = existingConfig?.ticketData 
-      ? (typeof existingConfig.ticketData === 'string' 
-        ? JSON.parse(existingConfig.ticketData) 
+    const currentTicketData = existingConfig?.ticketData
+      ? (typeof existingConfig.ticketData === 'string'
+        ? JSON.parse(existingConfig.ticketData)
         : existingConfig.ticketData)
       : {};
 
     // Fields that should not be included in update
     const excludeFields = ['id', 'botId', 'createdAt', 'updatedAt', 'bot'];
-    
-    // Separate ticket fields from other config fields
+
+    // Separate ticket data fields from regular config fields
     for (const [key, value] of Object.entries(data)) {
       if (excludeFields.includes(key)) {
         // Skip fields that shouldn't be updated
         continue;
-      } else if (ticketFields.includes(key)) {
+      } else if (ticketDataFields.includes(key)) {
+        // Advanced ticket fields go into ticketData JSON
         ticketData[key] = value;
       } else {
         // Handle JSON fields that need to be stringified
@@ -356,12 +356,13 @@ export class BotsService {
           // Handle autoRoleIds array - stringify for storage
           configData[key] = JSON.stringify(value);
         } else {
+          // Regular config fields (including ticketEnabled, ticketCategoryId, etc.)
           configData[key] = value;
         }
       }
     }
 
-    // Merge with existing ticketData
+    // Merge with existing ticketData only for advanced fields
     if (Object.keys(ticketData).length > 0) {
       configData.ticketData = JSON.stringify({ ...currentTicketData, ...ticketData });
     }
