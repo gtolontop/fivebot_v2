@@ -1014,7 +1014,7 @@ export default function BotConfigPage() {
                           <SearchableDropdown
                             options={textChannels}
                             value={config.welcomeChannelId || ''}
-                            onChange={(value) => updateConfig({ welcomeChannelId: value })}
+                            onChange={(value) => updateConfig({ welcomeChannelId: value as string })}
                             placeholder="Select a welcome channel"
                             emptyMessage="No text channels available"
                           />
