@@ -258,6 +258,7 @@ model Ticket {
   activityState   String           @default("active") @map("activity_state")
   containerType   String           @default("channel") @map("container_type")
   lastActivity    DateTime         @default(now()) @map("last_activity")
+  feedbackRating  Int?             @map("feedback_rating")
   createdAt       DateTime         @default(now()) @map("created_at")
   closedAt        DateTime?        @map("closed_at")
   deletedAt       DateTime?        @map("deleted_at")
