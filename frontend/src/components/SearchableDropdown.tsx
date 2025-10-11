@@ -143,7 +143,10 @@ export default function SearchableDropdown({
               </>
             ) : (
               <div className="px-4 py-3 text-gray-500 text-sm text-center">
-                {searchTerm ? 'No channels found matching your search' : emptyMessage}
+                {searchTerm
+                  ? (options.some(o => o.isRole) ? 'No roles found matching your search' : 'No channels found matching your search')
+                  : emptyMessage
+                }
               </div>
             )}
           </div>
