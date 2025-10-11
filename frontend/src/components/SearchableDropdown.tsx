@@ -98,7 +98,12 @@ export default function SearchableDropdown({
         <span className={multiple && selectedValues && selectedValues.length > 0 || selectedOption ? 'text-gray-900' : 'text-gray-500'}>
           {multiple ? (
             selectedValues && selectedValues.length > 0 ? (
-              `${selectedValues.length} role${selectedValues.length > 1 ? 's' : ''} selected`
+              selectedValues
+                .map(id => {
+                  const option = options.find(opt => opt.id === id);
+                  return option ? `${option.isRole ? '@' : '#'}${option.name}` : id;
+                })
+                .join(', ')
             ) : placeholder
           ) : (
             selectedOption
