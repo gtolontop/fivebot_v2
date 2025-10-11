@@ -516,16 +516,56 @@ export default function BotConfigPage() {
     if (!confirm('Are you sure you want to reset the entire configuration? This action is irreversible.')) {
       return;
     }
-    
+
     const defaultConfig: BotConfig = {
       welcomeEnabled: false,
       moderationEnabled: false,
       autoRoleEnabled: false,
       customCommands: {},
     };
-    
+
     setConfig(defaultConfig);
     toast.success('Configuration reset');
+  };
+
+  const handleSuspendBot = async () => {
+    if (!confirm('Are you sure you want to suspend this bot? The bot will be stopped and marked as inactive. You can reactivate it later.')) {
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await botsAPI.suspend(botId);
+      toast.success('Bot suspended successfully');
+      router.push('/bots');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Error suspending bot');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteBot = async () => {
+    if (!confirm('⚠️ WARNING: Are you sure you want to permanently delete this bot?\n\nThis action will:\n• Stop the bot immediately\n• Delete all bot data\n• Remove all configurations\n• This CANNOT be undone\n\nType "DELETE" in the next prompt to confirm.')) {
+      return;
+    }
+
+    const confirmation = prompt('Please type "DELETE" to confirm permanent deletion:');
+    if (confirmation !== 'DELETE') {
+      toast.error('Deletion cancelled. You must type "DELETE" exactly.');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await botsAPI.delete(botId);
+      toast.success('Bot deleted successfully');
+      router.push('/bots');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Error deleting bot');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const addCommand = () => {
