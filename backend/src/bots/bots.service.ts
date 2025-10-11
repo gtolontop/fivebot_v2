@@ -502,6 +502,12 @@ export class BotsService {
 
     await this.updateStatus(botId, BotStatus.STOPPING);
 
+    // Clear startedAt timestamp when bot stops
+    await this.prisma.bot.update({
+      where: { id: botId },
+      data: { startedAt: null }
+    });
+
     await this.queueService.addJob('stop-bot', { botId });
 
     await this.prisma.auditLog.create({
