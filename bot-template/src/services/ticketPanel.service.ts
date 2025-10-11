@@ -15,6 +15,16 @@ import {
 import { prisma } from '../lib/database';
 import { TicketService } from './ticket.service';
 
+// Define types locally since they're not in Prisma schema
+type PanelType = 'BUTTON' | 'DROPDOWN' | 'HYBRID' | 'REACTION';
+
+interface TicketCategory {
+  id: string;
+  name: string;
+  emoji?: string;
+  description?: string;
+}
+
 export class TicketPanelService {
   private ticketService: TicketService;
   private panelCategories: Map<string, any[]> = new Map(); // Store categories by guild ID
