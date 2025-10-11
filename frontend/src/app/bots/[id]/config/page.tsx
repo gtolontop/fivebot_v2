@@ -1306,9 +1306,22 @@ export default function BotConfigPage() {
                     {config.autoRoleEnabled && (
                       <div className="space-y-6">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Role to assign automatically
-                          </label>
+                          <div className="flex items-center justify-between mb-2">
+                            <label className="block text-sm font-medium text-gray-700">
+                              Role to assign automatically
+                            </label>
+                            <button
+                              onClick={() => {
+                                setGuildsLoading(true);
+                                loadGuildsData();
+                              }}
+                              disabled={guildsLoading}
+                              className="text-xs text-indigo-600 hover:text-indigo-700 disabled:text-gray-400 flex items-center gap-1"
+                            >
+                              <ArrowPathIcon className={`w-4 h-4 ${guildsLoading ? 'animate-spin' : ''}`} />
+                              Refresh roles
+                            </button>
+                          </div>
                           <SearchableDropdown
                             options={allRoles.map(role => ({ ...role, isRole: true }))}
                             value={config.autoRoleId || ''}
@@ -1316,6 +1329,11 @@ export default function BotConfigPage() {
                             placeholder="Select a role to assign automatically"
                             emptyMessage="No roles available"
                           />
+                          {allRoles.some(r => r.canAssign === false) && (
+                            <p className="text-xs text-orange-600 mt-2">
+                              🔒 Some roles are locked because the bot doesn't have permission to assign them. Move the bot's role higher in the server settings.
+                            </p>
+                          )}
                         </div>
 
                         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
