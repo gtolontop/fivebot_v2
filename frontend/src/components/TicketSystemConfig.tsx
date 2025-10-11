@@ -629,14 +629,14 @@ export default function TicketSystemConfig({
                     Default Ticket Category
                   </label>
                   <SearchableDropdown
-                    options={guilds.flatMap(guild => 
+                    options={guilds.flatMap(guild =>
                       guild.channels.filter((channel: any) => channel.type === 4).map((channel: any) => ({
                         ...channel,
                         guildName: guild.name
                       }))
                     )}
                     value={config.ticketCategoryId || ''}
-                    onChange={(value) => updateConfig({ ticketCategoryId: value })}
+                    onChange={(value) => updateConfig({ ticketCategoryId: value as string })}
                     placeholder="Select a category for ticket channels"
                     emptyMessage="No categories available"
                   />
