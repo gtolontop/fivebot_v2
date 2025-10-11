@@ -242,3 +242,41 @@ model BotCommand {
   @@index([botId, status])
   @@map("bot_commands")
 }
+
+model Ticket {
+  id              String           @id @default(uuid())
+  guildId         String           @map("guild_id")
+  ticketNumber    Int              @map("ticket_number")
+  channelId       String?          @map("channel_id")
+  threadId        String?          @map("thread_id")
+  creatorId       String           @map("creator_id")
+  assignedStaffId String?          @map("assigned_staff_id")
+  type            String
+  category        String?
+  priority        String           @default("medium")
+  state           String           @default("open")
+  activityState   String           @default("active") @map("activity_state")
+  containerType   String           @default("channel") @map("container_type")
+  lastActivity    DateTime         @default(now()) @map("last_activity")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  closedAt        DateTime?        @map("closed_at")
+  deletedAt       DateTime?        @map("deleted_at")
+  messages        TicketMessage[]
+
+  @@index([guildId])
+  @@index([creatorId])
+  @@index([state])
+  @@map("tickets")
+}
+
+model TicketMessage {
+  id        String   @id @default(uuid())
+  ticketId  String   @map("ticket_id")
+  userId    String   @map("user_id")
+  content   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@map("ticket_messages")
+}
