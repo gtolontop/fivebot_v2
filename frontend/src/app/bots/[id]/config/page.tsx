@@ -234,7 +234,22 @@ export default function BotConfigPage() {
             embedV2Commands = configData.embedV2Commands;
           }
         }
-        
+
+        // Parse autoRoleIds if it's a string
+        let autoRoleIds = [];
+        if (configData.autoRoleIds) {
+          if (typeof configData.autoRoleIds === 'string') {
+            try {
+              autoRoleIds = JSON.parse(configData.autoRoleIds);
+            } catch (e) {
+              console.error('Failed to parse autoRoleIds:', e);
+              autoRoleIds = [];
+            }
+          } else {
+            autoRoleIds = configData.autoRoleIds;
+          }
+        }
+
         // Type the ticketData properly
         const typedTicketData = ticketData as any;
         
@@ -244,6 +259,7 @@ export default function BotConfigPage() {
           ...configData,
           statusRotation: statusRotation,
           embedV2Commands: embedV2Commands,
+          autoRoleIds: autoRoleIds,
           ticketEnabled: typedTicketData.ticketEnabled ?? configData.ticketEnabled ?? false,
           ticketCategoryId: typedTicketData.ticketCategoryId ?? configData.ticketCategoryId ?? '',
           ticketStaffRoleId: typedTicketData.ticketStaffRoleId ?? configData.ticketStaffRoleId ?? '',
