@@ -422,36 +422,56 @@ export default function BotConfigPage() {
     }
   };
 
-  const updateConfig = async (updates: Partial<BotConfig>) => {
-    setConfig(prev => ({ ...prev, ...updates }));
-    
-    // Auto-save for important toggles and V2 features
-    if ('ticketEnabled' in updates || 'welcomeEnabled' in updates || 
-        'moderationEnabled' in updates || 'autoRoleEnabled' in updates ||
-        'statusRotation' in updates || 'embedV2Commands' in updates) {
-      try {
-        // Prepare data with proper serialization
-        const dataToSave: any = { ...config, ...updates };
-        if ('statusRotation' in updates && updates.statusRotation) {
-          dataToSave.statusRotation = JSON.stringify(updates.statusRotation);
-        }
-        if ('embedV2Commands' in updates && updates.embedV2Commands) {
-          dataToSave.embedV2Commands = JSON.stringify(updates.embedV2Commands);
-        }
-        
-        await botsAPI.updateConfig(botId, dataToSave);
-        toast.success('Settings updated');
-        
-        // If bot was online and these are major changes, notify about restart
-        if (bot?.status === 'ONLINE' && ('statusRotation' in updates || 'embedV2Commands' in updates)) {
-          toast('Bot will restart to apply changes', { icon: '🔄' });
-        }
-      } catch (error: any) {
-        toast.error('Failed to save settings');
-        // Revert the change
-        setConfig(prev => ({ ...prev, ...config }));
+  // Debounce timer ref
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
+  // Auto-save function with debounce
+  const autoSaveConfig = useCallback(async (configData: any) => {
+    setIsSaving(true);
+    try {
+      // Prepare data with proper serialization
+      const dataToSave: any = { ...configData };
+      if (dataToSave.statusRotation && typeof dataToSave.statusRotation === 'object') {
+        dataToSave.statusRotation = JSON.stringify(dataToSave.statusRotation);
       }
+      if (dataToSave.embedV2Commands && typeof dataToSave.embedV2Commands === 'object') {
+        dataToSave.embedV2Commands = JSON.stringify(dataToSave.embedV2Commands);
+      }
+
+      await botsAPI.updateConfig(botId, dataToSave);
+      setLastSaved(new Date());
+
+      // If bot was online, notify about restart for major changes
+      if (bot?.status === 'ONLINE') {
+        toast('Settings saved - Bot will restart to apply changes', { icon: '✅' });
+      } else {
+        toast.success('Settings saved');
+      }
+    } catch (error: any) {
+      toast.error('Failed to save settings');
+    } finally {
+      setIsSaving(false);
     }
+  }, [botId, bot?.status]);
+
+  const updateConfig = (updates: Partial<BotConfig>) => {
+    setConfig(prev => {
+      const newConfig = { ...prev, ...updates };
+
+      // Clear existing timeout
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+
+      // Set new timeout for auto-save (1 second debounce)
+      saveTimeoutRef.current = setTimeout(() => {
+        autoSaveConfig(newConfig);
+      }, 1000);
+
+      return newConfig;
+    });
   };
 
   const updateWelcomeEmbed = (updates: Partial<BotConfig['welcomeEmbedJson']>) => {
