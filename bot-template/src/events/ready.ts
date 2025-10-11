@@ -42,11 +42,11 @@ export async function ready(client: Client, prisma: PrismaClient, botId: string,
         jobType: 'BOT_STARTUP',
         status: 'COMPLETED',
         message: `Bot successfully started and connected to Discord`,
-        metadata: {
+        metadata: JSON.stringify({
           guilds: client.guilds.cache.size,
           users: client.users.cache.size,
           uptime: process.uptime(),
-        },
+        }),
       },
     });
 
