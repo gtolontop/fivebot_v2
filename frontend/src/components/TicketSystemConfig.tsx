@@ -696,6 +696,53 @@ export default function TicketSystemConfig({
                     Ticket transcripts will be saved here when tickets are closed
                   </p>
                 </div>
+
+                {/* Ticket Commands */}
+                <div className="border-t border-gray-200 pt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Available Commands
+                  </label>
+                  <p className="text-xs text-gray-500 mb-3">
+                    Select which moderation commands staff can use in tickets
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {Object.entries({
+                      close: 'Close ticket and generate transcript',
+                      add: 'Add user to ticket',
+                      remove: 'Remove user from ticket',
+                      claim: 'Claim/assign ticket to yourself',
+                      unclaim: 'Release ticket assignment',
+                      lock: 'Lock ticket (prevent user from talking)',
+                      unlock: 'Unlock ticket',
+                      rename: 'Rename ticket channel',
+                      transfer: 'Transfer ticket to another staff',
+                      priority: 'Change ticket priority'
+                    }).map(([key, description]) => (
+                      <label key={key} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={ticketCommands[key as keyof typeof ticketCommands]}
+                          onChange={async (e) => {
+                            const newCommands = { ...ticketCommands, [key]: e.target.checked };
+                            setTicketCommands(newCommands);
+                            try {
+                              await botsAPI.updateTicketCommands(botId, newCommands);
+                              toast.success('Commands updated');
+                            } catch (error) {
+                              toast.error('Failed to update commands');
+                              setTicketCommands(ticketCommands); // Revert on error
+                            }
+                          }}
+                          className="mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <div className="flex-1">
+                          <div className="text-sm font-medium text-gray-900">/{key}</div>
+                          <div className="text-xs text-gray-500">{description}</div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
           </div>
