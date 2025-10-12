@@ -295,6 +295,18 @@ export class TicketPanelService {
       }
     }
 
+    // Ensure we have at least one option
+    if (options.length === 0) {
+      console.warn('[TicketPanelService] No valid categories found, adding default option');
+      options.push(
+        new StringSelectMenuOptionBuilder()
+          .setLabel('General Support')
+          .setValue('ticket:create:general')
+          .setDescription('Create a general support ticket')
+          .setEmoji('🎫')
+      );
+    }
+
     const selectMenu = new StringSelectMenuBuilder()
       .setCustomId('ticket:category:select')
       .setPlaceholder('Select a category...')
