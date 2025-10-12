@@ -63,7 +63,7 @@ export class CollaboratorsController {
     }));
   }
 
-  @Post('invite')
+  @Post(':botId/collaborators/invite')
   async inviteCollaborator(
     @Param('botId') botId: string,
     @Body() dto: InviteCollaboratorDto,
