@@ -42,7 +42,7 @@ export class TicketContainerService {
       };
 
       const containerName = this.ticketService.generateChannelName(
-        config.namingPattern,
+        config.namingPattern || 'ticket-{number}',
         nameVariables
       );
 
@@ -359,7 +359,7 @@ export class TicketContainerService {
       if (!config) return false;
 
       const newName = this.ticketService.generateChannelName(
-        config.namingPattern,
+        config.namingPattern || 'ticket-{number}',
         variables
       );
 
