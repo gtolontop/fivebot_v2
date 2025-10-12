@@ -227,6 +227,90 @@ export interface DashboardStats {
   usersJoinedToday: number;
 }
 
+// Collaboration types
+export interface BotCollaborator {
+  id: string;
+  botId: string;
+  userId: string;
+  invitedBy: string;
+  role: CollaboratorRole;
+  permissions?: CollaboratorPermissions;
+  status: CollaboratorStatus;
+  invitedAt: string;
+  acceptedAt?: string;
+  lastAccessAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  user?: {
+    id: string;
+    username: string;
+    discordId: string;
+    avatar?: string;
+  };
+  inviter?: {
+    id: string;
+    username: string;
+  };
+}
+
+export enum CollaboratorRole {
+  VIEWER = 'VIEWER',
+  MODERATOR = 'MODERATOR',
+  DEVELOPER = 'DEVELOPER',
+  ADMIN = 'ADMIN',
+}
+
+export enum CollaboratorStatus {
+  PENDING = 'PENDING',
+  ACTIVE = 'ACTIVE',
+  SUSPENDED = 'SUSPENDED',
+  REVOKED = 'REVOKED',
+}
+
+export interface CollaboratorPermissions {
+  // Dashboard & Monitoring
+  viewDashboard?: boolean;
+  viewLogs?: boolean;
+  viewAnalytics?: boolean;
+  viewMetrics?: boolean;
+
+  // Bot Control
+  startBot?: boolean;
+  stopBot?: boolean;
+  restartBot?: boolean;
+
+  // Configuration
+  editWelcome?: boolean;
+  editAutoRoles?: boolean;
+  editModeration?: boolean;
+  editLogging?: boolean;
+  editCustomCommands?: boolean;
+  editTicketSystem?: boolean;
+  editStatusRotation?: boolean;
+  editEmbedCommands?: boolean;
+
+  // Ticket System
+  viewTickets?: boolean;
+  manageTickets?: boolean;
+  closeTickets?: boolean;
+  deleteTickets?: boolean;
+  configureTickets?: boolean;
+
+  // Categories Access
+  allowedCategories?: string[]; // IDs des catégories accessibles
+
+  // Advanced
+  manageCollaborators?: boolean;
+  deleteBot?: boolean;
+}
+
+export interface InviteCollaboratorForm {
+  userDiscordId: string;
+  role: CollaboratorRole;
+  permissions?: Partial<CollaboratorPermissions>;
+  message?: string;
+}
+
 // Dashboard layout types
 export interface SidebarItem {
   name: string;
