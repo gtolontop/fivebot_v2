@@ -24,6 +24,51 @@ export default {
 
       // Build content with attachments
       let fullContent = message.content || '';
+
+      // Parse Discord mentions to readable format
+      if (fullContent) {
+        // Replace user mentions <@id> with @Username
+        const userMentions = fullContent.matchAll(/<@!?(\d+)>/g);
+        for (const match of userMentions) {
+          const userId = match[1];
+          try {
+            const user = await message.client.users.fetch(userId);
+            fullContent = fullContent.replace(match[0], `@${user.username}`);
+          } catch (error) {
+            // Keep original if user not found
+          }
+        }
+
+        // Replace role mentions <@&id> with @RoleName
+        const roleMentions = fullContent.matchAll(/<@&(\d+)>/g);
+        for (const match of roleMentions) {
+          const roleId = match[1];
+          try {
+            const role = message.guild?.roles.cache.get(roleId);
+            if (role) {
+              fullContent = fullContent.replace(match[0], `@${role.name}`);
+            }
+          } catch (error) {
+            // Keep original if role not found
+          }
+        }
+
+        // Replace channel mentions <#id> with #channel-name
+        const channelMentions = fullContent.matchAll(/<#(\d+)>/g);
+        for (const match of channelMentions) {
+          const channelId = match[1];
+          try {
+            const channel = message.guild?.channels.cache.get(channelId);
+            if (channel) {
+              fullContent = fullContent.replace(match[0], `#${channel.name}`);
+            }
+          } catch (error) {
+            // Keep original if channel not found
+          }
+        }
+      }
+
+      // Add attachments
       if (message.attachments.size > 0) {
         const attachmentUrls = Array.from(message.attachments.values())
           .map(att => att.url)
@@ -31,12 +76,31 @@ export default {
         fullContent = fullContent ? `${fullContent}\n${attachmentUrls}` : attachmentUrls;
       }
 
+      // Add embeds information
+      if (message.embeds.length > 0) {
+        const embedsInfo = message.embeds.map(embed => {
+          const parts = [];
+          if (embed.title) parts.push(`**${embed.title}**`);
+          if (embed.description) parts.push(embed.description);
+          if (embed.fields && embed.fields.length > 0) {
+            embed.fields.forEach(field => {
+              parts.push(`**${field.name}:** ${field.value}`);
+            });
+          }
+          if (embed.image?.url) parts.push(`[Image](${embed.image.url})`);
+          if (embed.thumbnail?.url) parts.push(`[Thumbnail](${embed.thumbnail.url})`);
+          return parts.join('\n');
+        }).join('\n\n---\n\n');
+
+        fullContent = fullContent ? `${fullContent}\n\n${embedsInfo}` : embedsInfo;
+      }
+
       // Track the message
       await ticketService.addMessage({
         ticketId: ticket.id,
         messageId: message.id,
         authorId: message.author.id,
-        content: fullContent.substring(0, 2000), // Increased limit for URLs
+        content: fullContent.substring(0, 4000), // Increased limit for embeds
         isStaff,
       });
 
