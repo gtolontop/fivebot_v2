@@ -267,58 +267,111 @@ export class TicketService {
 
     await this.logAction(ticketId, 'TICKET_CLOSED', closedBy, { reason });
 
-    // Generate and send transcript if transcript channel is configured
+    // Generate and send transcript based on configuration
     const config = await this.getConfig(ticket.guildId);
-    if (config?.transcriptChannelId) {
+    const client = (global as any).discordClient;
+
+    // Only generate transcript if autoSaveTranscripts or sendTranscriptToUser is enabled
+    if (client && (config?.autoSaveTranscripts || config?.sendTranscriptToUser)) {
       try {
-        const { Client } = await import('discord.js');
-        const client = (global as any).discordClient;
+        const messages = ticket.messages || [];
 
-        if (client) {
-          const transcriptChannel = await client.channels.fetch(config.transcriptChannelId);
-          if (transcriptChannel?.isTextBased()) {
-            const messages = ticket.messages || [];
+        // Build transcript text
+        let transcript = `Ticket #${ticket.ticketNumber} Transcript\n`;
+        transcript += `Creator: <@${ticket.creatorId}>\n`;
+        transcript += `Closed by: ${closedBy}\n`;
+        transcript += `Reason: ${reason || 'No reason provided'}\n`;
+        transcript += `Created: ${new Date(ticket.createdAt).toLocaleString()}\n`;
+        transcript += `Closed: ${new Date().toLocaleString()}\n\n`;
+        transcript += '='.repeat(50) + '\n\n';
 
-            let transcript = `Ticket #${ticket.ticketNumber} Transcript\n`;
-            transcript += `Creator: <@${ticket.creatorId}>\n`;
-            transcript += `Closed by: ${closedBy}\n`;
-            transcript += `Reason: ${reason || 'No reason provided'}\n`;
-            transcript += `Created: ${new Date(ticket.createdAt).toLocaleString()}\n`;
-            transcript += `Closed: ${new Date().toLocaleString()}\n\n`;
-            transcript += '='.repeat(50) + '\n\n';
+        for (const msg of messages.reverse()) {
+          const timestamp = new Date(msg.createdAt).toLocaleString();
+          transcript += `[${timestamp}] ${msg.authorId}: ${msg.content}\n`;
 
-            for (const msg of messages.reverse()) {
-              transcript += `[${new Date(msg.createdAt).toLocaleString()}] ${msg.authorId}: ${msg.content}\n`;
-              if (msg.attachments) {
-                transcript += `  [Attachments]\n`;
+          // Include attachments URLs if configured
+          if (config?.includeAttachments && msg.attachments) {
+            try {
+              const attachments = typeof msg.attachments === 'string'
+                ? JSON.parse(msg.attachments)
+                : msg.attachments;
+
+              if (Array.isArray(attachments) && attachments.length > 0) {
+                transcript += `  📎 Attachments:\n`;
+                attachments.forEach((att: any) => {
+                  transcript += `    - ${att.url || att}\n`;
+                });
               }
-              transcript += '\n';
+            } catch (e) {
+              transcript += `  📎 [Attachments]\n`;
             }
+          }
+          transcript += '\n';
+        }
 
-            const buffer = Buffer.from(transcript, 'utf-8');
+        const buffer = Buffer.from(transcript, 'utf-8');
 
-            await transcriptChannel.send({
-              embeds: [{
-                color: 0x5865f2,
-                title: `📋 Ticket #${ticket.ticketNumber} Closed`,
-                fields: [
-                  { name: 'Creator', value: `<@${ticket.creatorId}>`, inline: true },
-                  { name: 'Closed By', value: closedBy, inline: true },
-                  { name: 'Reason', value: reason || 'No reason provided', inline: false },
-                  { name: 'Messages', value: messages.length.toString(), inline: true },
-                  { name: 'Duration', value: `${Math.floor((Date.now() - new Date(ticket.createdAt).getTime()) / 60000)} minutes`, inline: true }
-                ],
-                timestamp: new Date().toISOString()
-              }],
-              files: [{
-                attachment: buffer,
-                name: `ticket-${ticket.ticketNumber}-transcript.txt`
-              }]
-            });
+        // Send to transcript channel if autoSaveTranscripts is enabled
+        if (config?.autoSaveTranscripts && config?.transcriptChannelId) {
+          try {
+            const transcriptChannel = await client.channels.fetch(config.transcriptChannelId);
+            if (transcriptChannel?.isTextBased()) {
+              await transcriptChannel.send({
+                embeds: [{
+                  color: 0x5865f2,
+                  title: `📋 Ticket #${ticket.ticketNumber} Closed`,
+                  fields: [
+                    { name: 'Creator', value: `<@${ticket.creatorId}>`, inline: true },
+                    { name: 'Closed By', value: closedBy, inline: true },
+                    { name: 'Reason', value: reason || 'No reason provided', inline: false },
+                    { name: 'Messages', value: messages.length.toString(), inline: true },
+                    { name: 'Duration', value: `${Math.floor((Date.now() - new Date(ticket.createdAt).getTime()) / 60000)} minutes`, inline: true }
+                  ],
+                  timestamp: new Date().toISOString()
+                }],
+                files: [{
+                  attachment: buffer,
+                  name: `ticket-${ticket.ticketNumber}-transcript.txt`
+                }]
+              });
+              console.log(`[TicketService] Transcript sent to channel for ticket #${ticket.ticketNumber}`);
+            }
+          } catch (channelError) {
+            console.error('[TicketService] Error sending transcript to channel:', channelError);
+          }
+        }
+
+        // Send to user via DM if sendTranscriptToUser is enabled
+        if (config?.sendTranscriptToUser) {
+          try {
+            const user = await client.users.fetch(ticket.creatorId);
+            if (user) {
+              await user.send({
+                embeds: [{
+                  color: 0x5865f2,
+                  title: `📋 Your Ticket #${ticket.ticketNumber} Has Been Closed`,
+                  description: `Your ticket has been closed. Here's a transcript of your conversation.`,
+                  fields: [
+                    { name: 'Closed By', value: closedBy, inline: true },
+                    { name: 'Reason', value: reason || 'No reason provided', inline: false },
+                    { name: 'Duration', value: `${Math.floor((Date.now() - new Date(ticket.createdAt).getTime()) / 60000)} minutes`, inline: true }
+                  ],
+                  timestamp: new Date().toISOString()
+                }],
+                files: [{
+                  attachment: buffer,
+                  name: `ticket-${ticket.ticketNumber}-transcript.txt`
+                }]
+              });
+              console.log(`[TicketService] Transcript sent to user ${ticket.creatorId} for ticket #${ticket.ticketNumber}`);
+            }
+          } catch (dmError) {
+            console.error('[TicketService] Error sending transcript to user DM:', dmError);
+            // Don't fail if user has DMs disabled
           }
         }
       } catch (transcriptError) {
-        console.error('[TicketService] Error sending transcript:', transcriptError);
+        console.error('[TicketService] Error generating transcript:', transcriptError);
       }
     }
 
