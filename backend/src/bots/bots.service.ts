@@ -741,8 +741,25 @@ export class BotsService {
             SET status = ${status}, updated_at = NOW()
             WHERE id = ${botId}
           `;
-          
+
           console.log(`✅ Successfully updated bot ${botId} status to ${status}`);
+
+          // Invalidate Discord cache when bot becomes ONLINE (fresh data available)
+          if (status === BotStatus.ONLINE) {
+            try {
+              const bot = await this.prisma.bot.findUnique({
+                where: { id: botId },
+                select: { tokenEncrypted: true }
+              });
+              if (bot) {
+                const decryptedToken = this.encryptionService.decrypt(bot.tokenEncrypted);
+                this.discordService.invalidateBotCache(decryptedToken);
+              }
+            } catch (error) {
+              console.error('Failed to invalidate cache (non-critical):', error);
+            }
+          }
+
           return; // Success, exit function
         } finally {
           // Reset to default timeout
