@@ -45,7 +45,11 @@ export default {
 
       // Update channel name if it includes activity state
       if (ticket.containerType === 'CHANNEL' || ticket.containerType === 'HYBRID') {
-        await updateChannelWithActivityState(message, ticket, stateManager);
+        // Get updated ticket with new activity state
+        const updatedTicket = await ticketService.getTicket(ticket.id);
+        if (updatedTicket) {
+          await updateChannelWithActivityState(message, updatedTicket, stateManager);
+        }
       }
 
       // Log activity
