@@ -208,7 +208,7 @@ export class TicketNotificationService {
       assignedTo: assignedTo.username,
       assignedBy: assignedBy.username,
       guildName: guild.name,
-      channelId: ticket.threadId || ticket.channelId
+      channelId: ticket.threadId || ticket.channelId || 'unknown'
     };
 
     // Notify assigned staff
