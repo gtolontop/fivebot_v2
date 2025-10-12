@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { XMarkIcon, PaperAirplaneIcon, UserIcon, PhotoIcon, PaperClipIcon } from '@heroicons/react/24/outline';
-import { botsAPI } from '@/utils/api';
+import { botsAPI, utilsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
 
 interface Message {
