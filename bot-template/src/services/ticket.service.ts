@@ -177,8 +177,8 @@ export class TicketService {
         containerType: data.containerType || config.containerType,
         channelId: data.channelId,
         threadId: data.threadId,
-        state: 'open',
-        activityState: 'active'
+        state: 'OPEN',
+        activityState: 'ACTIVE'
       }
     });
 
