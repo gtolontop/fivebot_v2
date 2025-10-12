@@ -119,7 +119,7 @@ model JobLog {
   jobType   String    @map("job_type")
   status    JobStatus
   message   String?   @db.Text
-  metadata  String?   @db.LongText
+  metadata  String?   @db.Text
   createdAt DateTime  @default(now()) @map("created_at")
   bot       Bot?      @relation(fields: [botId], references: [id])
 
