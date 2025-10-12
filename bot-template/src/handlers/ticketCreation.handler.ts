@@ -334,8 +334,8 @@ export class TicketCreationHandler {
         creatorId: interaction.user.id,
         type: categoryId === 'general' ? 'support' : 'categorized',
         category: categoryId !== 'general' ? categoryId : undefined,
-        priority,
-        containerType: config.containerType,
+        priority: priority as any,
+        containerType: config.containerType as any,
         channelId: container.isThread() ? container.parentId : container.id,
         threadId: container.isThread() ? container.id : undefined
       });
@@ -724,8 +724,8 @@ export class TicketCreationHandler {
         creatorId: interaction.user.id,
         type: categoryId === 'general' ? 'support' : 'categorized',
         category: categoryId !== 'general' ? categoryId : undefined,
-        priority,
-        containerType: config.containerType,
+        priority: priority as any,
+        containerType: config.containerType as any,
         channelId: container.isThread() ? container.parentId : container.id,
         threadId: container.isThread() ? container.id : undefined
       });
