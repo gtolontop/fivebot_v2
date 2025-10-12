@@ -281,16 +281,52 @@ export class TicketService {
   }
 
   async closeTicket(botId: string, ticketId: string): Promise<void> {
+    // Try to close ticket in database first
+    try {
+      const ticket = await this.prisma.$queryRaw`
+        SELECT * FROM tickets WHERE id = ${ticketId} LIMIT 1
+      ` as any[];
+
+      if (ticket && ticket.length > 0) {
+        // Update ticket in database
+        await this.prisma.$executeRaw`
+          UPDATE tickets
+          SET state = 'CLOSED', closed_at = NOW()
+          WHERE id = ${ticketId}
+        `;
+
+        // Send command to bot to close ticket in Discord
+        await this.botsService.sendCommandToBot(botId, {
+          action: 'CLOSE_TICKET',
+          data: {
+            ticketId: ticketId,
+            reason: 'Closed from dashboard'
+          }
+        });
+
+        return;
+      }
+    } catch (error) {
+      console.error('Error closing ticket in database:', error);
+    }
+
+    // Fallback to JSON storage
     const data = await this.getTicketData(botId);
     const ticketIndex = data.tickets.findIndex(t => t.id === ticketId);
-    
+
     if (ticketIndex !== -1) {
       data.tickets[ticketIndex].state = 'CLOSED';
       data.tickets[ticketIndex].closedAt = new Date().toISOString();
       await this.saveTicketData(botId, { tickets: data.tickets });
-      
-      // TODO: Close ticket channel in Discord
-      this.closeTicketInDiscord(botId, data.tickets[ticketIndex]);
+
+      // Send command to bot to close ticket in Discord
+      await this.botsService.sendCommandToBot(botId, {
+        action: 'CLOSE_TICKET',
+        data: {
+          ticketId: ticketId,
+          reason: 'Closed from dashboard'
+        }
+      });
     }
   }
 

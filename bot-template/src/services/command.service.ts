@@ -99,6 +99,10 @@ export class CommandService {
           await this.handleSendTicketMessage(command.data);
           break;
 
+        case 'CLOSE_TICKET':
+          await this.handleCloseTicket(command.data);
+          break;
+
         case 'RENAME_TICKET':
           await this.handleRenameTicket(command.data);
           break;
