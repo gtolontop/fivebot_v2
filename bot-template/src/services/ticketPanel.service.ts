@@ -19,7 +19,7 @@ import { TicketService } from './ticket.service';
 type PanelType = 'BUTTON' | 'DROPDOWN' | 'HYBRID' | 'REACTION';
 
 // Import TicketPanel from Prisma
-import { TicketPanel, TicketCategory } from '@prisma/client';
+import { TicketPanel, TicketCategory as PrismaTicketCategory } from '@prisma/client';
 
 interface TicketCategory {
   id: string;
