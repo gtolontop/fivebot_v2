@@ -2552,7 +2552,7 @@ export default function TicketSystemConfig({
                             .filter(cat => panelForm.selectedCategories.includes(cat.id))
                             .map(category => (
                               <option key={category.id}>
-                                {category.emoji} {category.name}
+                                {category.emoji && `${category.emoji} `}{category.name}
                               </option>
                             ))
                         )}
@@ -2571,7 +2571,7 @@ export default function TicketSystemConfig({
                               .filter(cat => panelForm.selectedCategories.includes(cat.id))
                               .map(category => (
                                 <option key={category.id}>
-                                  {category.emoji} {category.name}
+                                  {category.emoji && `${category.emoji} `}{category.name}
                                 </option>
                               ))
                             }
