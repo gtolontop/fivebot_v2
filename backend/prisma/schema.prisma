@@ -25,27 +25,28 @@ model User {
 }
 
 model Bot {
-  id             String       @id @default(uuid())
-  ownerId        String       @map("owner_id")
+  id             String             @id @default(uuid())
+  ownerId        String             @map("owner_id")
   name           String
-  tokenEncrypted String       @map("token_encrypted") @db.Text
-  clientId       String?      @map("client_id")
-  prefix         String       @default("!")
-  isActive       Boolean      @default(false) @map("is_active")
-  containerId    String?      @map("container_id")
-  instanceId     String?      @map("instance_id")
-  status         BotStatus    @default(OFFLINE)
-  startedAt      DateTime?    @map("started_at")
-  createdAt      DateTime     @default(now()) @map("created_at")
-  updatedAt      DateTime     @updatedAt @map("updated_at")
+  tokenEncrypted String             @map("token_encrypted") @db.Text
+  clientId       String?            @map("client_id")
+  prefix         String             @default("!")
+  isActive       Boolean            @default(false) @map("is_active")
+  containerId    String?            @map("container_id")
+  instanceId     String?            @map("instance_id")
+  status         BotStatus          @default(OFFLINE)
+  startedAt      DateTime?          @map("started_at")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
   auditLogs      AuditLog[]
   config         BotConfig?
   logs           BotLog[]
   metrics        BotMetrics[]
-  owner          User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  owner          User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   hosts          Host[]
   jobLogs        JobLog[]
   commands       BotCommand[]
+  collaborators  BotCollaborator[]
 
   @@index([ownerId], map: "bots_owner_id_fkey")
   @@map("bots")
@@ -260,6 +261,8 @@ model BotCollaborator {
   lastAccessAt  DateTime?            @map("last_access_at")
   createdAt     DateTime             @default(now()) @map("created_at")
   updatedAt     DateTime             @updatedAt @map("updated_at")
+  bot           Bot                  @relation(fields: [botId], references: [id], onDelete: Cascade)
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([botId, userId])
   @@index([userId])
