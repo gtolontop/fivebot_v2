@@ -284,7 +284,7 @@ export class CommandService {
     // For now just update the DB
     await this.prisma.ticket.update({
       where: { id: ticketId },
-      data: { claimedBy: this.client.user?.id || null }
+      data: { assignedStaffId: this.client.user?.id || null }
     });
   }
 
@@ -292,7 +292,7 @@ export class CommandService {
     const { ticketId } = data;
     await this.prisma.ticket.update({
       where: { id: ticketId },
-      data: { claimedBy: null }
+      data: { assignedStaffId: null }
     });
   }
 
@@ -301,17 +301,18 @@ export class CommandService {
     const ticket = await this.prisma.ticket.findUnique({ where: { id: ticketId } });
     if (!ticket) throw new Error('Ticket not found');
 
-    const channel = this.client.channels.cache.get(ticket.channelId || ticket.threadId);
+    const channelId = ticket.channelId || ticket.threadId;
+    if (!channelId) return;
+
+    const channel = this.client.channels.cache.get(channelId);
     if (channel && channel.isTextBased() && 'permissionOverwrites' in channel) {
-      await (channel as any).permissionOverwrites.edit(ticket.userId, {
+      await (channel as any).permissionOverwrites.edit(ticket.creatorId, {
         SendMessages: false
       });
     }
 
-    await this.prisma.ticket.update({
-      where: { id: ticketId },
-      data: { locked: true }
-    });
+    // Note: 'locked' field doesn't exist in schema, so we just update permissions
+    // If you need to track lock state, add a 'locked' field to the Ticket model
   }
 
   private async handleUnlockTicket(data: any) {
@@ -319,17 +320,18 @@ export class CommandService {
     const ticket = await this.prisma.ticket.findUnique({ where: { id: ticketId } });
     if (!ticket) throw new Error('Ticket not found');
 
-    const channel = this.client.channels.cache.get(ticket.channelId || ticket.threadId);
+    const channelId = ticket.channelId || ticket.threadId;
+    if (!channelId) return;
+
+    const channel = this.client.channels.cache.get(channelId);
     if (channel && channel.isTextBased() && 'permissionOverwrites' in channel) {
-      await (channel as any).permissionOverwrites.edit(ticket.userId, {
+      await (channel as any).permissionOverwrites.edit(ticket.creatorId, {
         SendMessages: true
       });
     }
 
-    await this.prisma.ticket.update({
-      where: { id: ticketId },
-      data: { locked: false }
-    });
+    // Note: 'locked' field doesn't exist in schema, so we just update permissions
+    // If you need to track lock state, add a 'locked' field to the Ticket model
   }
 
   private async handleCloseTicket(data: any) {
@@ -356,13 +358,16 @@ export class CommandService {
     const ticket = await this.prisma.ticket.findUnique({ where: { id: ticketId } });
     if (!ticket) throw new Error('Ticket not found');
 
-    const channel = this.client.channels.cache.get(ticket.channelId || ticket.threadId);
-    if (channel && channel.isTextBased() && 'permissionOverwrites' in channel) {
-      await (channel as any).permissionOverwrites.edit(userId, {
-        ViewChannel: true,
-        SendMessages: true,
-        ReadMessageHistory: true
-      });
+    const channelId = ticket.channelId || ticket.threadId;
+    if (channelId) {
+      const channel = this.client.channels.cache.get(channelId);
+      if (channel && channel.isTextBased() && 'permissionOverwrites' in channel) {
+        await (channel as any).permissionOverwrites.edit(userId, {
+          ViewChannel: true,
+          SendMessages: true,
+          ReadMessageHistory: true
+        });
+      }
     }
 
     await this.prisma.ticketParticipant.create({
@@ -379,9 +384,12 @@ export class CommandService {
     const ticket = await this.prisma.ticket.findUnique({ where: { id: ticketId } });
     if (!ticket) throw new Error('Ticket not found');
 
-    const channel = this.client.channels.cache.get(ticket.channelId || ticket.threadId);
-    if (channel && channel.isTextBased() && 'permissionOverwrites' in channel) {
-      await (channel as any).permissionOverwrites.delete(userId);
+    const channelId = ticket.channelId || ticket.threadId;
+    if (channelId) {
+      const channel = this.client.channels.cache.get(channelId);
+      if (channel && channel.isTextBased() && 'permissionOverwrites' in channel) {
+        await (channel as any).permissionOverwrites.delete(userId);
+      }
     }
 
     await this.prisma.ticketParticipant.deleteMany({
