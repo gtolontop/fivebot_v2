@@ -373,3 +373,67 @@ model TicketLog {
   @@index([ticketId])
   @@map("ticket_logs")
 }
+
+// Enums supplémentaires pour le système de tickets
+enum ContainerType {
+  CHANNEL
+  THREAD
+  HYBRID
+}
+
+enum TicketPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum AssignmentModel {
+  AUTO_ASSIGN
+  COLLABORATIVE
+  SOFT_CLAIM
+  STRICT_CLAIM
+  NO_ASSIGNMENT
+}
+
+enum TicketState {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+  RESOLVED
+  ARCHIVED
+}
+
+// Modèles supplémentaires pour le système de tickets avancé
+model TicketCategory {
+  id        String   @id @default(uuid())
+  guildId   String   @map("guild_id")
+  botId     String   @map("bot_id")
+  name      String
+  emoji     String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([guildId])
+  @@index([botId])
+  @@map("ticket_categories")
+}
+
+model TicketPanel {
+  id        String   @id @default(uuid())
+  guildId   String   @map("guild_id")
+  botId     String   @map("bot_id")
+  channelId String   @map("channel_id")
+  messageId String?  @map("message_id")
+  type      String
+  active    Boolean  @default(true)
+  config    Json?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([guildId])
+  @@index([botId])
+  @@index([channelId])
+  @@map("ticket_panels")
+}
