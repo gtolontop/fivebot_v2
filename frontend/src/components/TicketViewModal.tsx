@@ -34,6 +34,7 @@ export default function TicketViewModal({
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -46,10 +47,27 @@ export default function TicketViewModal({
     return () => clearInterval(interval);
   }, [botId, ticketId]);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom ONLY if user is at bottom or shouldAutoScroll is true
   useEffect(() => {
-    scrollToBottom();
+    if (shouldAutoScroll) {
+      scrollToBottom();
+    }
   }, [messages]);
+
+  // Detect when user scrolls manually
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const isAtBottom = scrollHeight - scrollTop - clientHeight < 100; // 100px threshold
+      setShouldAutoScroll(isAtBottom);
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const fetchMessages = async () => {
     try {
