@@ -665,24 +665,45 @@ export default function TicketViewModal({
 
         {/* Message Input */}
         <form onSubmit={handleSendMessage} className="px-6 py-4 border-t border-gray-200 bg-white rounded-b-lg">
-          {/* Attachment URL input */}
+          {/* Attachment preview */}
           {attachmentUrl && (
-            <div className="mb-3 flex items-center gap-2 px-3 py-2 bg-indigo-50 rounded-lg border border-indigo-200">
-              <PhotoIcon className="w-5 h-5 text-indigo-600 flex-shrink-0" />
-              <input
-                type="text"
-                value={attachmentUrl}
-                onChange={(e) => setAttachmentUrl(e.target.value)}
-                placeholder="Paste image/file URL..."
-                className="flex-1 bg-transparent text-sm text-gray-700 outline-none"
-              />
-              <button
-                type="button"
-                onClick={() => setAttachmentUrl('')}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <XMarkIcon className="w-4 h-4" />
-              </button>
+            <div className="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex items-start gap-3">
+                {/* Image preview */}
+                {/\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?|$)/i.test(attachmentUrl) ? (
+                  <img
+                    src={attachmentUrl}
+                    alt="Preview"
+                    className="w-20 h-20 object-cover rounded"
+                    onError={(e) => {
+                      // If image fails to load, show icon instead
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <div className="w-20 h-20 bg-gray-200 rounded flex items-center justify-center">
+                    <PhotoIcon className="w-8 h-8 text-gray-400" />
+                  </div>
+                )}
+                {/* URL and remove button */}
+                <div className="flex-1 min-w-0">
+                  <input
+                    type="text"
+                    value={attachmentUrl}
+                    onChange={(e) => setAttachmentUrl(e.target.value)}
+                    placeholder="Paste image/file URL..."
+                    className="w-full bg-transparent text-sm text-gray-700 outline-none mb-1 truncate"
+                  />
+                  <p className="text-xs text-gray-500">Attachment ready to send</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAttachmentUrl('')}
+                  className="text-gray-400 hover:text-gray-600 flex-shrink-0"
+                >
+                  <XMarkIcon className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           )}
           <div className="flex items-end space-x-2">
