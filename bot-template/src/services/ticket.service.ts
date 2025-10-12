@@ -187,7 +187,7 @@ export class TicketService {
       data: {
         ticketId: ticket.id,
         userId: data.creatorId,
-        role: ParticipantRole.CREATOR
+        role: 'CREATOR'
       }
     });
 
