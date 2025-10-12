@@ -10,8 +10,11 @@ export interface TicketCategory {
   description: string;
   emoji?: string;
   roleId?: string;
-  maxTickets?: number;
   active?: boolean;
+  priority?: number;
+  color?: string;
+  requiredRoles?: string[];
+  welcomeMessage?: string;
   useCustomModal?: boolean;
   modalTitle?: string;
   modalDescription?: string;

@@ -39,12 +39,8 @@ interface TicketCategory {
   description: string;
   emoji?: string;
   roleId?: string;
-  maxTickets?: number;
   priority?: number;
   color?: string;
-  autoClose?: boolean;
-  autoCloseHours?: number;
-  privateByDefault?: boolean;
   requiredRoles?: string[];
   welcomeMessage?: string;
   useCustomModal?: boolean;
