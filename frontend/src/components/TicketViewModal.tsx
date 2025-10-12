@@ -100,7 +100,8 @@ export default function TicketViewModal({
   };
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Use scrollIntoView with instant behavior to avoid jerky animation
+    messagesEndRef.current?.scrollIntoView({ behavior: 'instant', block: 'end' });
   };
 
   // Handle paste event for image upload
@@ -710,16 +711,17 @@ export default function TicketViewModal({
               ref={inputRef}
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
+              onPaste={handlePaste}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
                   handleSendMessage(e);
                 }
               }}
-              placeholder="Type your message... (Shift+Enter for new line)"
+              placeholder="Type your message... (Shift+Enter for new line, Ctrl+V to paste image)"
               className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none min-h-[44px] max-h-32"
               rows={1}
-              disabled={sending}
+              disabled={sending || uploading}
             />
             <button
               type="submit"
