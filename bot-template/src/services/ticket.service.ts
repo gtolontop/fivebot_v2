@@ -238,7 +238,7 @@ export class TicketService {
       where: {
         guildId,
         creatorId: userId,
-        state: { not: TicketState.CLOSED },
+        state: { not: 'CLOSED' },
         deletedAt: null
       }
     });
