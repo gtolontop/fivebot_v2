@@ -254,17 +254,19 @@ export default function BotConfigPage() {
         const typedTicketData = ticketData as any;
         
         // Merge ticketData fields into config
-        // Use the value from ticketData if it exists, otherwise check configData, then use default
+        // Basic ticket fields come from config columns, advanced fields from ticketData JSON
         setConfig({
           ...configData,
           statusRotation: statusRotation,
           embedV2Commands: embedV2Commands,
           autoRoleIds: autoRoleIds,
-          ticketEnabled: typedTicketData.ticketEnabled ?? configData.ticketEnabled ?? false,
-          ticketCategoryId: typedTicketData.ticketCategoryId ?? configData.ticketCategoryId ?? '',
-          ticketStaffRoleId: typedTicketData.ticketStaffRoleId ?? configData.ticketStaffRoleId ?? '',
-          ticketTranscriptChannelId: typedTicketData.ticketTranscriptChannelId ?? configData.ticketTranscriptChannelId ?? '',
-          ticketNamingFormat: typedTicketData.ticketNamingFormat ?? configData.ticketNamingFormat ?? 'number',
+          // These come from bot_configs columns directly
+          ticketEnabled: configData.ticketEnabled ?? false,
+          ticketCategoryId: configData.ticketCategoryId ?? '',
+          ticketStaffRoleId: configData.ticketStaffRoleId ?? '',
+          ticketTranscriptChannelId: configData.ticketTranscriptChannelId ?? '',
+          // These come from ticketData JSON (advanced settings)
+          ticketNamingFormat: typedTicketData.ticketNamingFormat ?? 'number',
           maxTicketsPerUser: typedTicketData.maxTicketsPerUser ?? configData.maxTicketsPerUser ?? 3,
           autoCloseHours: typedTicketData.autoCloseHours ?? configData.autoCloseHours ?? 72,
           inactivityWarningHours: typedTicketData.inactivityWarningHours ?? configData.inactivityWarningHours ?? 24,
