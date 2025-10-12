@@ -398,9 +398,18 @@ export default function TicketViewModal({
                 messages.forEach((message, index) => {
                   const prevMessage = index > 0 ? messages[index - 1] : null;
                   const timeDiff = prevMessage ? (new Date(message.createdAt).getTime() - new Date(prevMessage.createdAt).getTime()) : Infinity;
-                  const shouldGroup = prevMessage &&
+
+                  // Check if message contains media (images, videos, YouTube)
+                  const hasMedia = /https?:\/\/\S+?\.(jpg|jpeg|png|gif|webp|bmp|svg|mp4|webm|mov|avi|mkv)(\?\S*)?/gi.test(message.content) ||
+                                   /youtube\.com\/watch\?v=|youtu\.be\//gi.test(message.content);
+
+                  // Never group messages with media - they always show separately
+                  const shouldGroup = !hasMedia && prevMessage &&
                     prevMessage.userId === message.userId &&
-                    timeDiff < 120000; // 2 minutes - like Discord
+                    timeDiff < 120000 && // 2 minutes
+                    // Also check previous message doesn't have media
+                    !/https?:\/\/\S+?\.(jpg|jpeg|png|gif|webp|bmp|svg|mp4|webm|mov|avi|mkv)(\?\S*)?/gi.test(prevMessage.content) &&
+                    !/youtube\.com\/watch\?v=|youtu\.be\//gi.test(prevMessage.content);
 
                   if (shouldGroup) {
                     messageGroups[messageGroups.length - 1].messages.push(message);
