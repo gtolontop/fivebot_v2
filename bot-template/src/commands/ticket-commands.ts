@@ -3,10 +3,18 @@ import {
   ChatInputCommandInteraction,
   PermissionFlagsBits,
   GuildMember,
-  User
+  User,
+  TextChannel,
+  NewsChannel,
+  ThreadChannel
 } from 'discord.js';
 import { TicketService } from '../services/ticket.service';
 import { TicketStateManager } from '../services/ticketStateManager.service';
+
+// Helper pour vérifier si un channel peut envoyer des messages
+function isMessageableChannel(channel: any): channel is TextChannel | NewsChannel | ThreadChannel {
+  return channel && 'send' in channel && typeof channel.send === 'function';
+}
 
 export interface TicketCommand {
   data: SlashCommandBuilder;
