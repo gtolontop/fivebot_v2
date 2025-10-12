@@ -104,7 +104,7 @@ model Host {
   stoppedAt   DateTime?  @map("stopped_at")
   createdAt   DateTime   @default(now()) @map("created_at")
   updatedAt   DateTime   @updatedAt @map("updated_at")
-  bot         Bot        @relation(fields: [botId], references: [id], onDelete: Cascade)
+  bot         Bot        @relation(fields: [botId], references: [id], onDelete: Cascade, map: "host_bot_fkey")
 
   @@index([botId], map: "hosts_bot_id_fkey")
   @@map("hosts")
