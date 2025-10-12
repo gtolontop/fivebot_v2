@@ -167,7 +167,9 @@ class ChildBot {
     // Core events
     this.client.once('ready', async () => {
       // Check if ticket system is enabled BEFORE calling ready
-      const ticketEnabled = (this.config as any).ticketData?.ticketEnabled || false;
+      // ticketEnabled is now a direct column in bot_configs, not in ticketData JSON
+      const ticketEnabled = (this.config as any).ticketEnabled || false;
+      console.log(`🎫 Ticket system enabled: ${ticketEnabled}`);
       
       await ready(this.client, this.prisma, this.botId, ticketEnabled);
       // Initialize metrics service after bot is ready
