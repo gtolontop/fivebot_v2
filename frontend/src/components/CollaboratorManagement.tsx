@@ -475,56 +475,53 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
 
                 {/* Custom Permissions Editor */}
                 <div className="space-y-4">
-                  {(
-                  <div className="mt-4 space-y-4">
-                    {Object.entries(permissionGroups).map(([groupName, permissions]) => (
-                      <div key={groupName} className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                        <div className="flex items-center justify-between mb-3">
-                          <h5 className="font-semibold text-gray-900">{groupName}</h5>
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={() => selectAllInGroup(permissions)}
-                              className="text-xs px-3 py-1 bg-green-100 text-green-700 hover:bg-green-200 rounded-lg transition-colors"
-                            >
-                              All
-                            </button>
-                            <button
-                              onClick={() => deselectAllInGroup(permissions)}
-                              className="text-xs px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg transition-colors"
-                            >
-                              None
-                            </button>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          {permissions.map((perm) => (
-                            <button
-                              key={perm.key}
-                              onClick={() => togglePermission(perm.key)}
-                              className={`p-3 rounded-lg border-2 transition-all text-left ${
-                                inviteForm.permissions?.[perm.key]
-                                  ? 'border-green-500 bg-green-50'
-                                  : 'border-gray-200 bg-white hover:border-gray-300'
-                              }`}
-                            >
-                              <div className="flex items-start justify-between mb-1">
-                                <span className={`text-sm font-medium ${
-                                  inviteForm.permissions?.[perm.key] ? 'text-green-700' : 'text-gray-700'
-                                }`}>
-                                  {perm.label}
-                                </span>
-                                <CheckCircleIcon className={`h-5 w-5 flex-shrink-0 ${
-                                  inviteForm.permissions?.[perm.key] ? 'text-green-500' : 'text-gray-300'
-                                }`} />
-                              </div>
-                              <p className="text-xs text-gray-500">{perm.description}</p>
-                            </button>
-                          ))}
+                  {Object.entries(permissionGroups).map(([groupName, permissions]) => (
+                    <div key={groupName} className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                      <div className="flex items-center justify-between mb-3">
+                        <h5 className="font-semibold text-gray-900">{groupName}</h5>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => selectAllInGroup(permissions)}
+                            className="text-xs px-3 py-1 bg-green-100 text-green-700 hover:bg-green-200 rounded-lg transition-colors"
+                          >
+                            All
+                          </button>
+                          <button
+                            onClick={() => deselectAllInGroup(permissions)}
+                            className="text-xs px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg transition-colors"
+                          >
+                            None
+                          </button>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
+                      <div className="grid grid-cols-2 gap-3">
+                        {permissions.map((perm) => (
+                          <button
+                            key={perm.key}
+                            onClick={() => togglePermission(perm.key)}
+                            className={`p-3 rounded-lg border-2 transition-all text-left ${
+                              inviteForm.permissions?.[perm.key]
+                                ? 'border-green-500 bg-green-50'
+                                : 'border-gray-200 bg-white hover:border-gray-300'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between mb-1">
+                              <span className={`text-sm font-medium ${
+                                inviteForm.permissions?.[perm.key] ? 'text-green-700' : 'text-gray-700'
+                              }`}>
+                                {perm.label}
+                              </span>
+                              <CheckCircleIcon className={`h-5 w-5 flex-shrink-0 ${
+                                inviteForm.permissions?.[perm.key] ? 'text-green-500' : 'text-gray-300'
+                              }`} />
+                            </div>
+                            <p className="text-xs text-gray-500">{perm.description}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
