@@ -252,8 +252,27 @@ export default function TicketViewModal({
       let description = '';
       const fields: Array<{ name: string; value: string }> = [];
       let inDescription = false;
+      let embedStartIndex = -1;
+      let textBeforeEmbed = '';
 
+      // Find where the embed starts
       for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+
+        // First **Title** without : is the start of embed
+        if (line.startsWith('**') && line.endsWith('**') && !line.includes(':') && embedStartIndex === -1) {
+          embedStartIndex = i;
+          break;
+        }
+      }
+
+      // Extract text before embed (mentions, etc.)
+      if (embedStartIndex > 0) {
+        textBeforeEmbed = lines.slice(0, embedStartIndex).join('\n').trim();
+      }
+
+      // Parse embed
+      for (let i = embedStartIndex >= 0 ? embedStartIndex : 0; i < lines.length; i++) {
         const line = lines[i].trim();
 
         // Check for title (first **text**)
@@ -282,9 +301,14 @@ export default function TicketViewModal({
         }
       }
 
-      // Render as Discord-like embed
+      // Render text before embed + embed
       return (
-        <div className="my-2">
+        <div>
+          {textBeforeEmbed && (
+            <div className="mb-2">
+              {renderNormalContent(textBeforeEmbed, isStaffMessage)}
+            </div>
+          )}
           <div className={`border-l-4 rounded ${isStaffMessage ? 'border-indigo-500 bg-indigo-900/20' : 'border-blue-500 bg-gray-800'} p-3`}>
             {title && <div className="font-semibold text-white mb-2">{title}</div>}
             {description && <div className="text-gray-300 text-sm mb-2 whitespace-pre-wrap">{description}</div>}
@@ -302,6 +326,13 @@ export default function TicketViewModal({
         </div>
       );
     }
+
+    // Normal message rendering
+    return renderNormalContent(formatted, isStaffMessage);
+  };
+
+  // Helper function to render normal message content
+  const renderNormalContent = (formatted: string, isStaffMessage: boolean = false) => {
 
     // Extract all media types and embeds
     const media: Array<{ type: string; url: string; embed?: string }> = [];
