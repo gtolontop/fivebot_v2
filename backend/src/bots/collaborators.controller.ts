@@ -267,7 +267,7 @@ export class CollaboratorsController {
     return { success: true, message: 'Invitation declined' };
   }
 
-  @Get('my-invitations')
+  @Get('collaborators/my-invitations')
   async getMyInvitations(@Req() req: any) {
     const invitations = await this.prisma.botCollaborator.findMany({
       where: {
