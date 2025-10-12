@@ -422,11 +422,14 @@ export default function TicketViewModal({
           ) : (
             <>
               {(() => {
+                // Combine real messages with optimistic messages
+                const allMessages = [...messages, ...optimisticMessages];
+
                 // Group messages by user and time
                 const messageGroups: Array<{ messages: Message[], user: any, isStaff: boolean }> = [];
 
-                messages.forEach((message, index) => {
-                  const prevMessage = index > 0 ? messages[index - 1] : null;
+                allMessages.forEach((message, index) => {
+                  const prevMessage = index > 0 ? allMessages[index - 1] : null;
                   const timeDiff = prevMessage ? (new Date(message.createdAt).getTime() - new Date(prevMessage.createdAt).getTime()) : Infinity;
 
                   // Check if message contains media (images, videos, YouTube)
