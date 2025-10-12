@@ -42,7 +42,7 @@ model Bot {
   config         BotConfig?
   logs           BotLog[]
   metrics        BotMetrics[]
-  owner          User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  owner          User         @relation(fields: [ownerId], references: [id], onDelete: Cascade, map: "bot_owner_fkey")
   hosts          Host[]
   jobLogs        JobLog[]
   commands       BotCommand[]
@@ -86,7 +86,7 @@ model CreditsHistory {
   type      CreditType
   metadata  String?    @db.Text
   createdAt DateTime   @default(now()) @map("created_at")
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade, map: "credits_history_user_fkey")
 
   @@index([userId], map: "credits_history_user_id_fkey")
   @@map("credits_history")
