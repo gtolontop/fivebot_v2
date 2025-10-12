@@ -303,17 +303,52 @@ export default function TicketViewModal({
     return (
       <>
         <div className="break-words">{parseText(formatted)}</div>
-        {images.length > 0 && (
-          <div className="mt-2 space-y-2">
-            {images.map((img, idx) => (
-              <img
-                key={`img-${idx}`}
-                src={img}
-                alt="Attachment"
-                className="max-w-sm rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                onClick={() => window.open(img, '_blank')}
-              />
-            ))}
+        {media.length > 0 && (
+          <div className="mt-2 space-y-3">
+            {media.map((item, idx) => {
+              if (item.type === 'youtube') {
+                return (
+                  <iframe
+                    key={`yt-${idx}`}
+                    width="400"
+                    height="225"
+                    src={`https://www.youtube.com/embed/${item.embed}`}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="rounded-lg"
+                  />
+                );
+              }
+
+              if (item.type === 'video') {
+                return (
+                  <video
+                    key={`vid-${idx}`}
+                    controls
+                    className="max-w-md rounded-lg"
+                  >
+                    <source src={item.url} />
+                    Your browser doesn't support video playback.
+                  </video>
+                );
+              }
+
+              // Default: image
+              return (
+                <img
+                  key={`img-${idx}`}
+                  src={item.url}
+                  alt="Attachment"
+                  className="max-w-sm rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                  onClick={() => window.open(item.url, '_blank')}
+                  onError={(e) => {
+                    // If image fails to load, hide it
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              );
+            })}
           </div>
         )}
       </>
