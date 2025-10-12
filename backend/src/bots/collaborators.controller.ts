@@ -29,7 +29,7 @@ interface UpdateCollaboratorDto {
   status?: 'ACTIVE' | 'SUSPENDED' | 'REVOKED';
 }
 
-@Controller('bots/:botId/collaborators')
+@Controller('bots')
 @UseGuards(AuthGuard('jwt'))
 export class CollaboratorsController {
   constructor(
@@ -37,7 +37,7 @@ export class CollaboratorsController {
     private readonly prisma: PrismaService,
   ) {}
 
-  @Get()
+  @Get(':botId/collaborators')
   async getCollaborators(@Param('botId') botId: string, @Req() req: any) {
     // Vérifier que l'utilisateur a accès au bot
     await this.verifyBotAccess(botId, req.user.id);
