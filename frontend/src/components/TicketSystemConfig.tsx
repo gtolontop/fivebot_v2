@@ -1154,7 +1154,9 @@ export default function TicketSystemConfig({
                               }`}>
                                 {ticket.state}
                               </span>
-                              <h4 className="font-medium text-gray-900">Ticket #{ticket.number}</h4>
+                              <h4 className="font-medium text-gray-900">
+                                Ticket #{ticket.ticketNumber} {ticket.categoryName ? `- ${ticket.categoryName}` : ''}
+                              </h4>
                             </div>
                             <p className="text-sm text-gray-600 mb-2">
                               Created by {ticket.creatorName} • {new Date(ticket.createdAt).toLocaleString()}
