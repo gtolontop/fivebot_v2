@@ -503,9 +503,9 @@ export class TicketCreationHandler {
           }
           throw error;
         }
-        
+
         // Look for existing hub channel
-        hubChannel = category.children.cache.find(
+        hubChannel = categoryChannel.children.cache.find(
           ch => ch.type === ChannelType.GuildText && ch.name === 'ticket-hub'
         ) as TextChannel;
 
@@ -514,7 +514,7 @@ export class TicketCreationHandler {
           hubChannel = await interaction.guild!.channels.create({
             name: 'ticket-hub',
             type: ChannelType.GuildText,
-            parent: category,
+            parent: categoryChannel,
             permissionOverwrites: [
               {
                 id: interaction.guild!.id,
@@ -588,13 +588,13 @@ export class TicketCreationHandler {
       return thread;
     } else {
       // Create channel
-      let category = null;
-      if (config.supportCategoryId) {
+      let categoryChannel = null;
+      if (spawnCategoryId) {
         try {
-          category = await interaction.guild!.channels.fetch(config.supportCategoryId);
-          if (category && category.type !== 4) { // Not a category
-            console.error(`[TicketCreation] Channel ${config.supportCategoryId} is not a category`);
-            category = null;
+          categoryChannel = await interaction.guild!.channels.fetch(spawnCategoryId);
+          if (categoryChannel && categoryChannel.type !== 4) { // Not a category
+            console.error(`[TicketCreation] Channel ${spawnCategoryId} is not a category`);
+            categoryChannel = null;
           }
         } catch (error: any) {
           if (error.code === 10003) {
