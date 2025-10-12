@@ -230,10 +230,18 @@ export default function TicketSystemConfig({
       // Fetch categories
       const categoriesResponse = await botsAPI.getTicketCategories(botId);
       setCategories(categoriesResponse.data.categories || []);
-      
+
       // Fetch panels
       const panelsResponse = await botsAPI.getTicketPanels(botId);
       setPanels(panelsResponse.data.panels || []);
+
+      // Fetch commands
+      try {
+        const commandsResponse = await botsAPI.getTicketCommands(botId);
+        setTicketCommands(commandsResponse.data || ticketCommands);
+      } catch (error) {
+        console.log('Commands not yet configured, using defaults');
+      }
       
       // Fetch real ticket statistics from the API
       try {
