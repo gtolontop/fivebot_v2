@@ -672,7 +672,7 @@ export class TicketCreationHandler {
       // Default values for direct creation
       const subject = `${categoryName} Ticket`;
       const description = `Ticket created by <@${interaction.user.id}>`;
-      const priority = TicketPriority.NORMAL;
+      const priority = 'NORMAL';
 
       // Create ticket container (thread or channel)
       const container = await this.createTicketContainer(
