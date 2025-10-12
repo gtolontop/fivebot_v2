@@ -302,9 +302,9 @@ export default function TicketViewModal({
 
     return (
       <>
-        <div className="break-words">{parseText(formatted)}</div>
+        {formatted && <div className="break-words mb-2">{parseText(formatted)}</div>}
         {media.length > 0 && (
-          <div className="mt-2 space-y-3">
+          <div className="space-y-2">
             {media.map((item, idx) => {
               if (item.type === 'youtube') {
                 return (
