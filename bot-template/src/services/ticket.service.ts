@@ -392,7 +392,7 @@ export class TicketService {
 
     const updatedTicket = await this.updateTicket(ticketId, {
       assignedStaffId: null,
-      state: TicketState.OPEN
+      state: 'OPEN'
     });
 
     await this.logAction(ticketId, 'TICKET_UNASSIGNED', unassignedBy, {
