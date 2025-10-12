@@ -773,6 +773,7 @@ export default function BotConfigPage() {
     { id: 'commands', name: 'Commands', icon: ChatBubbleLeftRightIcon, description: 'Custom commands' },
     { id: 'status', name: 'Status', icon: ChartBarIcon, description: 'Bot status rotation' },
     { id: 'v2commands', name: 'V2 Embeds', icon: DocumentTextIcon, description: 'Advanced V2 embed commands' },
+    { id: 'collaborators', name: 'Collaboration', icon: UserGroupIcon, description: 'Manage bot collaborators' },
     { id: 'advanced', name: 'Advanced', icon: WrenchScrewdriverIcon, description: 'Advanced settings' },
   ];
 
