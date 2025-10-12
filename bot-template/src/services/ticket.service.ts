@@ -259,7 +259,7 @@ export class TicketService {
 
   async closeTicket(ticketId: string, closedBy: string, reason?: string): Promise<Ticket> {
     const ticket = await this.updateTicket(ticketId, {
-      state: TicketState.CLOSED,
+      state: 'CLOSED',
       closedAt: new Date()
     });
 
