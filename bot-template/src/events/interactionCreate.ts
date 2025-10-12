@@ -96,6 +96,27 @@ export async function interactionCreate(
     }
   }
 
+  // Handle ticket moderation commands
+  const ticketModerationCommands = ['close', 'add', 'remove', 'claim', 'unclaim', 'lock', 'unlock', 'rename', 'transfer', 'priority'];
+  if (ticketModerationCommands.includes(command) && ticketHandler) {
+    try {
+      const ticketCommandsModule = await import('../commands/ticket-commands');
+      const ticketService = ticketHandler.getServices().ticketService;
+      const stateManager = ticketHandler.getServices().stateManager;
+
+      if (ticketCommandsModule.ticketCommands[command]) {
+        await ticketCommandsModule.ticketCommands[command].execute(interaction, ticketService, stateManager);
+        return;
+      }
+    } catch (error) {
+      console.error(`Error executing ticket command ${command}:`, error);
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({ content: '❌ An error occurred executing this command.', ephemeral: true });
+      }
+      return;
+    }
+  }
+
   // Handle built-in configuration commands
   await handleBuiltInCommands(interaction, configService);
 }
