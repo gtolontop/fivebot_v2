@@ -297,11 +297,12 @@ export default function TicketViewModal({
       const processSegment = (segment: string, depth = 0): React.ReactNode => {
         if (depth > 5) return segment; // Prevent infinite recursion
 
-        // Discord mentions @Username, @RoleName, #channel-name
-        const mentionMatch = segment.match(/(@[A-Za-z0-9_\-\s]+|#[a-z0-9\-]+)/);
+        // Discord mentions - handle both @Username and old format @User <@id>
+        const mentionMatch = segment.match(/(@[A-Za-z0-9_\-]+)(?:\s*<@[!&]?\d+>)?|#[a-z0-9\-]+/);
         if (mentionMatch) {
           const before = segment.substring(0, mentionMatch.index);
-          const mention = mentionMatch[0];
+          // Use capture group for @mentions (removes <@id> part), or full match for channels
+          const mention = mentionMatch[1] || mentionMatch[0];
           const after = segment.substring(mentionMatch.index! + mentionMatch[0].length);
           return (
             <>
