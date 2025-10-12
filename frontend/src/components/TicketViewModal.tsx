@@ -88,6 +88,20 @@ export default function TicketViewModal({
         }
       }
 
+      // Add message optimistically to UI
+      const optimisticMessage: Message = {
+        id: `temp-${Date.now()}`,
+        content: newMessage,
+        userId: currentUser.discordId,
+        isStaff: true,
+        createdAt: new Date().toISOString(),
+        username: currentUser.username,
+        avatar: currentUser.avatar,
+      };
+      setMessages(prev => [...prev, optimisticMessage]);
+      setNewMessage('');
+
+      // Send message to Discord
       await botsAPI.sendTicketMessage(botId, ticketId, {
         content: newMessage,
         userId: currentUser.discordId,
@@ -95,13 +109,14 @@ export default function TicketViewModal({
         avatar: avatarUrl
       });
 
-      setNewMessage('');
-      // Fetch messages immediately to show the sent message
+      // Fetch messages to get the real message
       await fetchMessages();
       toast.success('Message sent');
     } catch (error: any) {
       console.error('Error sending message:', error);
       toast.error(error.response?.data?.message || 'Failed to send message');
+      // Remove optimistic message on error
+      await fetchMessages();
     } finally {
       setSending(false);
     }
