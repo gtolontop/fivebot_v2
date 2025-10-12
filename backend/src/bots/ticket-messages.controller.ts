@@ -89,8 +89,32 @@ export class TicketMessagesController {
       take: limit ? parseInt(limit) : 50,
     });
 
+    // Fetch user information for each message from the bot
+    const botInstance = this.botsService.getBotInstance(botId);
+    const messagesWithUserInfo = await Promise.all(
+      messages.map(async (message) => {
+        if (botInstance?.client) {
+          try {
+            const user = await botInstance.client.users.fetch(message.userId);
+            return {
+              ...message,
+              username: user.username,
+              avatar: user.avatar,
+            };
+          } catch (error) {
+            console.error(`Failed to fetch user ${message.userId}:`, error);
+          }
+        }
+        return {
+          ...message,
+          username: 'Unknown User',
+          avatar: null,
+        };
+      })
+    );
+
     // Reverse to get chronological order
-    return { messages: messages.reverse() };
+    return { messages: messagesWithUserInfo.reverse() };
   }
 
   // Send message to ticket (via webhook)
