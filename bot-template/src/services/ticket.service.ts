@@ -423,7 +423,7 @@ export class TicketService {
         ticketId,
         action,
         performedBy,
-        details
+        details: details ? JSON.stringify(details) : null
       }
     });
   }
