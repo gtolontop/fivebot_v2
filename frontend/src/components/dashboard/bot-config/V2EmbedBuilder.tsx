@@ -13,7 +13,7 @@ import {
   Bars3BottomLeftIcon,
   Bars2Icon
 } from '@heroicons/react/24/outline';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import toast from 'react-hot-toast';
 
 interface V2EmbedBuilderProps {
