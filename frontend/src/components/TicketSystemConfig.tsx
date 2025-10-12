@@ -745,11 +745,6 @@ export default function TicketSystemConfig({
                                   Priority {category.priority}
                                 </span>
                               )}
-                              {category.privateByDefault && (
-                                <span className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-800">
-                                  Private
-                                </span>
-                              )}
                             </div>
                             <p className="text-sm text-gray-600 mb-2">{category.description}</p>
                             <div className="flex items-center flex-wrap gap-3 text-xs text-gray-500">
@@ -1566,19 +1561,6 @@ export default function TicketSystemConfig({
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Max Tickets Per User
-                  </label>
-                  <input
-                    type="number"
-                    value={categoryForm.maxTickets}
-                    onChange={(e) => setCategoryForm(prev => ({ ...prev, maxTickets: parseInt(e.target.value) }))}
-                    min="1"
-                    max="10"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  />
-                </div>
               </div>
 
               {/* Advanced options - Collapsible */}
