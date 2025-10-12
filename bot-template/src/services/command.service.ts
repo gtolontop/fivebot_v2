@@ -161,6 +161,30 @@ export class CommandService {
     // This would trigger a config reload in the bot
   }
 
+  private async handleSendTicketMessage(data: any) {
+    const { channelId, content, username, avatar } = data;
+
+    if (!channelId || !content || !username) {
+      throw new Error('Missing required fields: channelId, content, username');
+    }
+
+    console.log(`[CommandService] Sending ticket message to channel ${channelId}`);
+
+    // Send message via webhook
+    const success = await this.webhookService.sendMessage(
+      channelId,
+      content,
+      username,
+      avatar
+    );
+
+    if (!success) {
+      throw new Error('Failed to send message via webhook');
+    }
+
+    console.log(`[CommandService] Message sent successfully`);
+  }
+
   // Clean up old commands
   async cleanupOldCommands() {
     // Check if botCommand model exists
