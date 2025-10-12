@@ -25,11 +25,13 @@ export class TicketCreationHandler {
   private stateManager: TicketStateManager;
   private ticketPanelService: TicketPanelService | null = null;
   private validationService: TicketValidationService;
+  private prisma: PrismaClient;
 
-  constructor(ticketService: TicketService, stateManager: TicketStateManager) {
+  constructor(ticketService: TicketService, stateManager: TicketStateManager, prisma: PrismaClient) {
     this.ticketService = ticketService;
     this.stateManager = stateManager;
     this.validationService = new TicketValidationService(ticketService['client'], ticketService);
+    this.prisma = prisma;
   }
   
   setTicketPanelService(panelService: TicketPanelService) {
