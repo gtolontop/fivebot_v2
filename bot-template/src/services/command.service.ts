@@ -360,14 +360,14 @@ export class CommandService {
     const ticket = await this.prisma.ticket.findUnique({ where: { id: ticketId } });
     if (!ticket) throw new Error('Ticket not found');
 
-    const channel = this.client.channels.cache.get(ticket.channelId || ticket.threadId);
-    if (channel) {
-      await channel.delete();
-    }
-
+    // Just soft delete in DB, don't delete the Discord channel
+    // The channel will be deleted when the ticket is closed normally
     await this.prisma.ticket.update({
       where: { id: ticketId },
-      data: { deletedAt: new Date() }
+      data: {
+        deletedAt: new Date(),
+        state: 'CLOSED'
+      }
     });
   }
 }
