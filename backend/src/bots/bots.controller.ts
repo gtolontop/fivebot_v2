@@ -426,7 +426,7 @@ export class BotsController {
   @Post(':id/tickets/:ticketId/close')
   @UseGuards(AuthGuard('jwt'))
   async closeTicket(
-    @Param('id') id: string, 
+    @Param('id') id: string,
     @Param('ticketId') ticketId: string,
     @Req() req: any
   ) {
@@ -434,9 +434,157 @@ export class BotsController {
     if (!bot) {
       throw new NotFoundException('Bot not found');
     }
-    
+
     await this.ticketService.closeTicket(id, ticketId);
     return { success: true, message: 'Ticket closed' };
+  }
+
+  @Post(':id/tickets/:ticketId/rename')
+  @UseGuards(AuthGuard('jwt'))
+  async renameTicket(
+    @Param('id') id: string,
+    @Param('ticketId') ticketId: string,
+    @Body('name') name: string,
+    @Req() req: any
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    await this.ticketService.renameTicket(id, ticketId, name);
+    return { success: true, message: 'Ticket renamed' };
+  }
+
+  @Post(':id/tickets/:ticketId/claim')
+  @UseGuards(AuthGuard('jwt'))
+  async claimTicket(
+    @Param('id') id: string,
+    @Param('ticketId') ticketId: string,
+    @Req() req: any
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    await this.ticketService.claimTicket(id, ticketId);
+    return { success: true, message: 'Ticket claimed' };
+  }
+
+  @Post(':id/tickets/:ticketId/unclaim')
+  @UseGuards(AuthGuard('jwt'))
+  async unclaimTicket(
+    @Param('id') id: string,
+    @Param('ticketId') ticketId: string,
+    @Req() req: any
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    await this.ticketService.unclaimTicket(id, ticketId);
+    return { success: true, message: 'Ticket unclaimed' };
+  }
+
+  @Post(':id/tickets/:ticketId/lock')
+  @UseGuards(AuthGuard('jwt'))
+  async lockTicket(
+    @Param('id') id: string,
+    @Param('ticketId') ticketId: string,
+    @Req() req: any
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    await this.ticketService.lockTicket(id, ticketId);
+    return { success: true, message: 'Ticket locked' };
+  }
+
+  @Post(':id/tickets/:ticketId/unlock')
+  @UseGuards(AuthGuard('jwt'))
+  async unlockTicket(
+    @Param('id') id: string,
+    @Param('ticketId') ticketId: string,
+    @Req() req: any
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    await this.ticketService.unlockTicket(id, ticketId);
+    return { success: true, message: 'Ticket unlocked' };
+  }
+
+  @Post(':id/tickets/:ticketId/add-user')
+  @UseGuards(AuthGuard('jwt'))
+  async addUserToTicket(
+    @Param('id') id: string,
+    @Param('ticketId') ticketId: string,
+    @Body('userId') userId: string,
+    @Req() req: any
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    await this.ticketService.addUserToTicket(id, ticketId, userId);
+    return { success: true, message: 'User added to ticket' };
+  }
+
+  @Post(':id/tickets/:ticketId/remove-user')
+  @UseGuards(AuthGuard('jwt'))
+  async removeUserFromTicket(
+    @Param('id') id: string,
+    @Param('ticketId') ticketId: string,
+    @Body('userId') userId: string,
+    @Req() req: any
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    await this.ticketService.removeUserFromTicket(id, ticketId, userId);
+    return { success: true, message: 'User removed from ticket' };
+  }
+
+  @Post(':id/tickets/:ticketId/priority')
+  @UseGuards(AuthGuard('jwt'))
+  async changeTicketPriority(
+    @Param('id') id: string,
+    @Param('ticketId') ticketId: string,
+    @Body('priority') priority: string,
+    @Req() req: any
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    await this.ticketService.changeTicketPriority(id, ticketId, priority);
+    return { success: true, message: 'Ticket priority changed' };
+  }
+
+  @Delete(':id/tickets/:ticketId')
+  @UseGuards(AuthGuard('jwt'))
+  async deleteTicket(
+    @Param('id') id: string,
+    @Param('ticketId') ticketId: string,
+    @Req() req: any
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    await this.ticketService.deleteTicket(id, ticketId);
+    return { success: true, message: 'Ticket deleted' };
   }
 
   // Ticket Categories
