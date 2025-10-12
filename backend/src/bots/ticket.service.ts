@@ -525,4 +525,68 @@ export class TicketService {
     await this.saveTicketData(botId, { commands: updatedCommands });
     return updatedCommands;
   }
+
+  // Ticket Actions via Bot Commands
+  async renameTicket(botId: string, ticketId: string, name: string): Promise<void> {
+    await this.botsService.sendCommandToBot(botId, {
+      action: 'RENAME_TICKET',
+      data: { ticketId, name }
+    });
+  }
+
+  async claimTicket(botId: string, ticketId: string): Promise<void> {
+    await this.botsService.sendCommandToBot(botId, {
+      action: 'CLAIM_TICKET',
+      data: { ticketId }
+    });
+  }
+
+  async unclaimTicket(botId: string, ticketId: string): Promise<void> {
+    await this.botsService.sendCommandToBot(botId, {
+      action: 'UNCLAIM_TICKET',
+      data: { ticketId }
+    });
+  }
+
+  async lockTicket(botId: string, ticketId: string): Promise<void> {
+    await this.botsService.sendCommandToBot(botId, {
+      action: 'LOCK_TICKET',
+      data: { ticketId }
+    });
+  }
+
+  async unlockTicket(botId: string, ticketId: string): Promise<void> {
+    await this.botsService.sendCommandToBot(botId, {
+      action: 'UNLOCK_TICKET',
+      data: { ticketId }
+    });
+  }
+
+  async addUserToTicket(botId: string, ticketId: string, userId: string): Promise<void> {
+    await this.botsService.sendCommandToBot(botId, {
+      action: 'ADD_USER_TO_TICKET',
+      data: { ticketId, userId }
+    });
+  }
+
+  async removeUserFromTicket(botId: string, ticketId: string, userId: string): Promise<void> {
+    await this.botsService.sendCommandToBot(botId, {
+      action: 'REMOVE_USER_FROM_TICKET',
+      data: { ticketId, userId }
+    });
+  }
+
+  async changeTicketPriority(botId: string, ticketId: string, priority: string): Promise<void> {
+    await this.botsService.sendCommandToBot(botId, {
+      action: 'CHANGE_TICKET_PRIORITY',
+      data: { ticketId, priority }
+    });
+  }
+
+  async deleteTicket(botId: string, ticketId: string): Promise<void> {
+    await this.botsService.sendCommandToBot(botId, {
+      action: 'DELETE_TICKET',
+      data: { ticketId }
+    });
+  }
 }
