@@ -86,7 +86,7 @@ model CreditsHistory {
   amount    Int
   reason    String
   type      CreditType
-  metadata  String?    @db.LongText
+  metadata  String?    @db.Text
   createdAt DateTime   @default(now()) @map("created_at")
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
