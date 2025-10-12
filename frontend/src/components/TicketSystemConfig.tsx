@@ -197,10 +197,19 @@ export default function TicketSystemConfig({
 
   const fetchTicketData = async () => {
     try {
-      // Fetch active tickets
+      // Fetch all tickets
       const ticketsResponse = await botsAPI.getTickets(botId);
-      const tickets = ticketsResponse.data.tickets || [];
-      setActiveTickets(tickets);
+      const allTickets = ticketsResponse.data.tickets || [];
+
+      // Separate active and closed tickets
+      const active = allTickets.filter((t: any) => t.state !== 'CLOSED');
+      const closed = allTickets.filter((t: any) => t.state === 'CLOSED');
+
+      setActiveTickets(active);
+      setClosedTickets(closed);
+
+      // Use all tickets for calculations
+      const tickets = allTickets;
       
       // Calculate peak hours
       const hourlyTickets: { [hour: number]: number } = {};
