@@ -274,7 +274,7 @@ export default function TicketViewModal({
                   const timeDiff = prevMessage ? (new Date(message.createdAt).getTime() - new Date(prevMessage.createdAt).getTime()) : Infinity;
                   const shouldGroup = prevMessage &&
                     prevMessage.userId === message.userId &&
-                    timeDiff < 300000; // 5 minutes
+                    timeDiff < 120000; // 2 minutes - like Discord
 
                   if (shouldGroup) {
                     messageGroups[messageGroups.length - 1].messages.push(message);
