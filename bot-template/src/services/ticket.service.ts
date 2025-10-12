@@ -209,14 +209,11 @@ export class TicketService {
           take: 50
         },
         participants: {
-          where: { leftAt: null }
-        },
-        timers: {
-          where: { active: true }
+          where: { removedAt: null }
         }
       }
     });
-    
+
     return ticket as TicketData | null;
   }
 
