@@ -1802,9 +1802,19 @@ export default function BotConfigPage() {
                 {/* V2 Commands Tab */}
                 {activeTab === 'v2commands' && (
                   <div className="p-6">
-                    <V2CommandsConfig 
+                    <V2CommandsConfig
                       config={config}
                       updateConfig={updateConfig}
+                    />
+                  </div>
+                )}
+
+                {/* Collaborators Tab */}
+                {activeTab === 'collaborators' && (
+                  <div className="p-6">
+                    <CollaboratorManagement
+                      botId={botId}
+                      isOwner={bot.owner?.id === user?.id}
                     />
                   </div>
                 )}
