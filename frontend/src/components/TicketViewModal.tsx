@@ -159,6 +159,11 @@ export default function TicketViewModal({
 
   const renderMessageContent = (content: string) => {
     const formatted = formatContent(content);
+
+    // Check for image URLs
+    const imageRegex = /(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp))/gi;
+    const hasImage = imageRegex.test(formatted);
+
     const parts: React.ReactNode[] = [];
     let lastIndex = 0;
 
@@ -166,16 +171,19 @@ export default function TicketViewModal({
     const codeRegex = /`([^`]+)`/g;
     let match;
 
-    while ((match = codeRegex.exec(formatted)) !== null) {
+    let workingText = formatted;
+
+    // Process inline code
+    while ((match = codeRegex.exec(workingText)) !== null) {
       // Add text before code
       if (match.index > lastIndex) {
-        parts.push(formatted.substring(lastIndex, match.index));
+        parts.push(workingText.substring(lastIndex, match.index));
       }
 
       // Add code with styling
       parts.push(
         <code
-          key={match.index}
+          key={`code-${match.index}`}
           className="px-1.5 py-0.5 mx-0.5 bg-gray-800 text-gray-100 rounded text-sm font-mono"
         >
           {match[1]}
@@ -186,11 +194,35 @@ export default function TicketViewModal({
     }
 
     // Add remaining text
-    if (lastIndex < formatted.length) {
-      parts.push(formatted.substring(lastIndex));
+    if (lastIndex < workingText.length) {
+      parts.push(workingText.substring(lastIndex));
     }
 
-    return parts.length > 0 ? parts : formatted;
+    // Extract and display images separately
+    const images: string[] = [];
+    formatted.replace(imageRegex, (match) => {
+      images.push(match);
+      return match;
+    });
+
+    return (
+      <>
+        <div>{parts.length > 0 ? parts : formatted}</div>
+        {images.length > 0 && (
+          <div className="mt-2 space-y-2">
+            {images.map((img, idx) => (
+              <img
+                key={`img-${idx}`}
+                src={img}
+                alt="Attachment"
+                className="max-w-sm rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                onClick={() => window.open(img, '_blank')}
+              />
+            ))}
+          </div>
+        )}
+      </>
+    );
   };
 
   return (
@@ -305,9 +337,9 @@ export default function TicketViewModal({
                           }`}
                         >
                           {group.messages.map((msg) => (
-                            <p key={msg.id} className="text-[15px] leading-[22px] whitespace-pre-wrap break-words">
-                              {formatContent(msg.content)}
-                            </p>
+                            <div key={msg.id} className="text-[15px] leading-[22px]">
+                              {renderMessageContent(msg.content)}
+                            </div>
                           ))}
                         </div>
                       </div>
