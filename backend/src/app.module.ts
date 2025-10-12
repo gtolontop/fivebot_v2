@@ -14,6 +14,7 @@ import { CreditsModule } from './credits/credits.module';
 import { QueueModule } from './queue/queue.module';
 import { TasksModule } from './tasks/tasks.module';
 import { UrlMetadataController } from './utils/url-metadata.controller';
+import { UploadController } from './utils/upload.controller';
 
 @Module({
   imports: [
