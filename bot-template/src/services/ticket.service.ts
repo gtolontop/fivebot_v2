@@ -4,8 +4,10 @@ import {
   TicketMessage,
   TicketParticipant,
   TicketLog,
-  TicketCategory,
-  TicketPanel
+  TicketCategory as PrismaTicketCategory,
+  TicketPanel as PrismaTicketPanel,
+  TicketPriority,
+  ContainerType
 } from '@prisma/client';
 
 // Additional type definitions
@@ -102,9 +104,15 @@ export class TicketService {
   async createConfig(guildId: string, data?: Partial<TicketConfigWithArrays>): Promise<TicketConfigWithArrays> {
     const { categories, panels, ...configData } = data || {};
 
+    // Ensure botId is provided
+    if (!configData.botId) {
+      throw new Error('botId is required to create ticket config');
+    }
+
     const config = await prisma.ticketConfig.create({
       data: {
         guildId,
+        botId: configData.botId,
         ...configData,
         categories: categories ? JSON.stringify(categories) : null,
         panels: panels ? JSON.stringify(panels) : null
@@ -113,6 +121,8 @@ export class TicketService {
 
     return {
       ...config,
+      staffRoles: [],
+      allowedFileTypes: [],
       categories: categories || [],
       panels: panels || []
     };
@@ -136,9 +146,11 @@ export class TicketService {
 
     return {
       ...config,
-      categories: config.categories ? JSON.parse(config.categories) : [],
-      panels: config.panels ? JSON.parse(config.panels) : []
-    };
+      staffRoles: [],
+      allowedFileTypes: [],
+      categories: config.categories ? JSON.parse(config.categories as string) : [],
+      panels: config.panels ? JSON.parse(config.panels as string) : []
+    } as TicketConfigWithArrays;
   }
 
   // Ticket CRUD Operations
@@ -412,11 +424,9 @@ export class TicketService {
     };
 
     return await this.updateTicket(ticketId, {
-      deletedAt: new Date(),
-      deletedBy,
-      deletionReason: reason,
-      permanentDeleteAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-      backupData: backupData as any
+      deletedAt: new Date()
+      // Note: deletedBy, deletionReason, permanentDeleteAt, backupData fields don't exist in schema
+      // Add them to Ticket model if you need them for tracking deleted tickets
     });
   }
 
@@ -599,7 +609,7 @@ export class TicketService {
     channelId?: string;
     order?: number;
     botId?: string;
-  }): Promise<TicketCategory> {
+  }): Promise<PrismaTicketCategory> {
     return await prisma.ticketCategory.create({
       data: {
         guildId,
@@ -611,7 +621,7 @@ export class TicketService {
     });
   }
 
-  async updateCategory(categoryId: string, data: Partial<TicketCategory>): Promise<TicketCategory> {
+  async updateCategory(categoryId: string, data: Partial<PrismaTicketCategory>): Promise<PrismaTicketCategory> {
     return await prisma.ticketCategory.update({
       where: { id: categoryId },
       data
@@ -624,17 +634,21 @@ export class TicketService {
     type: 'BUTTON' | 'DROPDOWN' | 'HYBRID';
     embedData: any;
     components: any;
+    botId?: string;
   }): Promise<PrismaTicketPanel> {
     return await prisma.ticketPanel.create({
       data: {
         guildId,
-        configId,
-        ...data
+        botId: data.botId || configId, // Use botId if provided, otherwise use configId as botId
+        channelId: data.channelId,
+        type: data.type,
+        config: data.embedData,
+        active: true
       }
     });
   }
 
-  async updatePanel(panelId: string, data: any): Promise<TicketPanel> {
+  async updatePanel(panelId: string, data: any): Promise<PrismaTicketPanel> {
     // Remove fields that shouldn't be updated directly
     const { id, guildId, botId, createdAt, ...updateData } = data;
     
