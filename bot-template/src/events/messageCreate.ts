@@ -97,8 +97,8 @@ async function updateChannelWithActivityState(
     
     const stateEmoji = stateManager.getStateEmoji(ticket.activityState);
 
-    // Remove existing state emoji if present
-    const emojiPattern = /^(🕔|🟡|🟢|🔴)[-・]/;
+    // Remove existing state emoji if present (including ⚪)
+    const emojiPattern = /^(🕔|🟡|🟢|🔴|⚪)[-・]/;
     let baseName = currentName.replace(emojiPattern, '');
 
     // Add new state emoji
