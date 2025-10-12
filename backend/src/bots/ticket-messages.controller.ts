@@ -16,6 +16,10 @@ import { BotsService } from './bots.service';
 @Controller('bots/:botId/tickets')
 @UseGuards(AuthGuard('jwt'))
 export class TicketMessagesController {
+  // Cache for user info to avoid rate limiting
+  private userCache = new Map<string, { username: string; avatar: string | null; timestamp: number }>();
+  private readonly CACHE_TTL = 3600000; // 1 hour
+
   constructor(
     private prisma: PrismaService,
     private botsService: BotsService,
