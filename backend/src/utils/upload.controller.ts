@@ -3,7 +3,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { WebhookClient } from 'discord.js';
 
-@Controller('api/upload')
+@Controller('upload')
 @UseGuards(AuthGuard('jwt'))
 export class UploadController {
   @Post('image')
