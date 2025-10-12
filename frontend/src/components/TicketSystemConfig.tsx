@@ -1626,43 +1626,6 @@ export default function TicketSystemConfig({
                     />
                   </div>
 
-                  <div className="space-y-3">
-                    <label className="flex items-center space-x-3">
-                      <input
-                        type="checkbox"
-                        checked={categoryForm.privateByDefault}
-                        onChange={(e) => setCategoryForm(prev => ({ ...prev, privateByDefault: e.target.checked }))}
-                        className="rounded border-gray-300 text-indigo-600"
-                      />
-                      <span className="text-sm text-gray-700">Private by default</span>
-                    </label>
-
-                    <label className="flex items-center space-x-3">
-                      <input
-                        type="checkbox"
-                        checked={categoryForm.autoClose}
-                        onChange={(e) => setCategoryForm(prev => ({ ...prev, autoClose: e.target.checked }))}
-                        className="rounded border-gray-300 text-indigo-600"
-                      />
-                      <span className="text-sm text-gray-700">Auto-close inactive tickets</span>
-                    </label>
-
-                    {categoryForm.autoClose && (
-                      <div className="ml-6">
-                        <label className="block text-sm text-gray-700 mb-1">
-                          Close after (hours)
-                        </label>
-                        <input
-                          type="number"
-                          value={categoryForm.autoCloseHours}
-                          onChange={(e) => setCategoryForm(prev => ({ ...prev, autoCloseHours: parseInt(e.target.value) }))}
-                          min="1"
-                          max="168"
-                          className="w-20 px-2 py-1 text-sm border border-gray-300 rounded-md"
-                        />
-                      </div>
-                    )}
-                  </div>
                 </div>
               </details>
 
