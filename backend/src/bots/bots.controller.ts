@@ -1089,6 +1089,33 @@ export class BotsController {
     return this.ticketService.getTicketStats(id);
   }
 
+  @Get(':id/tickets/commands')
+  @UseGuards(AuthGuard('jwt'))
+  async getTicketCommands(
+    @Param('id') id: string,
+    @Req() req: any,
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+    return this.ticketService.getCommands(id);
+  }
+
+  @Put(':id/tickets/commands')
+  @UseGuards(AuthGuard('jwt'))
+  async updateTicketCommands(
+    @Param('id') id: string,
+    @Body() commands: any,
+    @Req() req: any,
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+    return this.ticketService.updateCommands(id, commands);
+  }
+
   @Get('analytics/overview')
   @UseGuards(AuthGuard('jwt'))
   async getAnalyticsOverview(@Req() req: any) {
