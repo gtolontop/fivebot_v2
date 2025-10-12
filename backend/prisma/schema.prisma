@@ -43,7 +43,7 @@ model Bot {
   config         BotConfig?
   logs           BotLog[]
   metrics        BotMetrics[]
-  owner          User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  owner          User               @relation(fields: [ownerId], references: [id], onDelete: Cascade, map: "bot_owner_fkey")
   hosts          Host[]
   jobLogs        JobLog[]
   commands       BotCommand[]
