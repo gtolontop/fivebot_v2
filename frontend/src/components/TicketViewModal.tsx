@@ -109,7 +109,7 @@ export default function TicketViewModal({
 
     try {
       // Construct full Discord avatar URL if we have an avatar hash
-      let avatarUrl = undefined;
+      let avatarUrl: string | undefined = undefined;
       if (currentUser.avatar) {
         // Check if it's already a full URL
         if (currentUser.avatar.startsWith('http')) {
