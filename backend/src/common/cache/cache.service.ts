@@ -50,6 +50,14 @@ export class CacheService {
     return this.cache.delete(key);
   }
 
+  /**
+   * Delete rate limit for a specific endpoint and identifier
+   */
+  deleteRateLimit(endpoint: string, identifier?: string): boolean {
+    const key = identifier ? `${endpoint}:${identifier}` : endpoint;
+    return this.rateLimits.delete(key);
+  }
+
   clear(): void {
     this.cache.clear();
     this.rateLimits.clear();
