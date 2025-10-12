@@ -28,6 +28,7 @@ export interface TicketCategory {
   description?: string | null;
   staffRoleId?: string | null;
   channelId?: string | null;
+  spawnCategoryId?: string | null;
   order?: number | null;
   active: boolean;
   useCustomModal?: boolean;
