@@ -1,3 +1,5 @@
+const path = require('path');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -14,13 +16,16 @@ const nextConfig = {
       },
     ];
   },
-  // Désactiver le splitting automatique des chunks pour éviter les erreurs de chargement
   experimental: {
     optimizeCss: false,
   },
-  // Configuration webpack pour résoudre les problèmes de chunks
   webpack: (config, { dev, isServer }) => {
-    // Désactiver le code splitting en développement si nécessaire
+    // Add path alias resolution
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': path.resolve(__dirname, 'src'),
+    };
+
     if (dev && !isServer) {
       config.optimization.splitChunks = {
         chunks: 'all',
@@ -33,7 +38,7 @@ const nextConfig = {
         }
       };
     }
-    
+
     return config;
   },
 };
