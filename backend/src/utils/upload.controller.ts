@@ -45,7 +45,8 @@ export class UploadController {
       });
 
       // Get the uploaded file URL from Discord CDN
-      const attachment = message.attachments.first();
+      const attachments = Array.from(message.attachments.values());
+      const attachment = attachments[0];
 
       if (!attachment) {
         throw new Error('Failed to get uploaded file URL');
