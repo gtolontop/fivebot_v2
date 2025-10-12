@@ -1165,26 +1165,88 @@ export default function TicketSystemConfig({
                               {ticket.claimedBy && <span>Claimed by: {ticket.claimedByName}</span>}
                             </div>
                           </div>
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-1">
                             <button
                               onClick={() => {
                                 setSelectedTicket(ticket);
                                 setShowTicketModal(true);
                               }}
-                              className="text-indigo-600 hover:text-indigo-800 transition-colors"
+                              className="p-1.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors"
                               title="View ticket messages"
                             >
                               <EyeIcon className="w-4 h-4" />
                             </button>
+                            <button
+                              onClick={() => renameTicket(ticket.id)}
+                              className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
+                              title="Rename ticket"
+                            >
+                              <PencilIcon className="w-4 h-4" />
+                            </button>
+                            {ticket.claimedBy ? (
+                              <button
+                                onClick={() => unclaimTicket(ticket.id)}
+                                className="p-1.5 text-orange-600 hover:text-orange-800 hover:bg-orange-50 rounded transition-colors"
+                                title="Unclaim ticket"
+                              >
+                                <UserMinusIcon className="w-4 h-4" />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => claimTicket(ticket.id)}
+                                className="p-1.5 text-green-600 hover:text-green-800 hover:bg-green-50 rounded transition-colors"
+                                title="Claim ticket"
+                              >
+                                <UserPlusIcon className="w-4 h-4" />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => addUserToTicket(ticket.id)}
+                              className="p-1.5 text-purple-600 hover:text-purple-800 hover:bg-purple-50 rounded transition-colors"
+                              title="Add user to ticket"
+                            >
+                              <UserPlusIcon className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => removeUserFromTicket(ticket.id)}
+                              className="p-1.5 text-pink-600 hover:text-pink-800 hover:bg-pink-50 rounded transition-colors"
+                              title="Remove user from ticket"
+                            >
+                              <UserMinusIcon className="w-4 h-4" />
+                            </button>
+                            {ticket.locked ? (
+                              <button
+                                onClick={() => unlockTicket(ticket.id)}
+                                className="p-1.5 text-yellow-600 hover:text-yellow-800 hover:bg-yellow-50 rounded transition-colors"
+                                title="Unlock ticket"
+                              >
+                                <LockOpenIcon className="w-4 h-4" />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => lockTicket(ticket.id)}
+                                className="p-1.5 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded transition-colors"
+                                title="Lock ticket"
+                              >
+                                <LockClosedIcon className="w-4 h-4" />
+                              </button>
+                            )}
                             {ticket.state === 'OPEN' && (
                               <button
                                 onClick={() => closeTicket(ticket.id)}
-                                className="text-red-600 hover:text-red-800"
+                                className="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
                                 title="Close ticket"
                               >
-                                <TrashIcon className="w-4 h-4" />
+                                <XMarkIcon className="w-4 h-4" />
                               </button>
                             )}
+                            <button
+                              onClick={() => deleteTicket(ticket.id)}
+                              className="p-1.5 text-red-700 hover:text-red-900 hover:bg-red-50 rounded transition-colors"
+                              title="Delete ticket permanently"
+                            >
+                              <TrashIcon className="w-4 h-4" />
+                            </button>
                           </div>
                         </div>
                       </div>
