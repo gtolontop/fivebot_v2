@@ -508,6 +508,10 @@ export class BotsService {
 
     await this.updateStatus(botId, BotStatus.STARTING);
 
+    // Invalidate Discord cache so fresh data is fetched
+    const decryptedToken = this.encryptionService.decrypt(bot.tokenEncrypted);
+    this.discordService.invalidateBotCache(decryptedToken);
+
     // Set startedAt timestamp when bot starts
     await this.prisma.bot.update({
       where: { id: botId },
