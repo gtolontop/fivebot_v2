@@ -9,13 +9,13 @@ import {
   ClockIcon,
   CheckCircleIcon,
   XCircleIcon,
-  PencilIcon,
   ChevronDownIcon,
   ChevronUpIcon,
   EyeIcon,
   WrenchScrewdriverIcon,
   CodeBracketIcon,
-  ShieldExclamationIcon
+  ShieldExclamationIcon,
+  AdjustmentsHorizontalIcon
 } from '@heroicons/react/24/outline';
 import {
   BotCollaborator,
@@ -96,11 +96,47 @@ const statusConfig: Record<CollaboratorStatus, { label: string; color: string; i
   },
 };
 
+const permissionGroups = {
+  'Dashboard & Monitoring': [
+    { key: 'viewDashboard', label: 'View Dashboard', description: 'Access bot dashboard' },
+    { key: 'viewLogs', label: 'View Logs', description: 'Read bot logs and console' },
+    { key: 'viewAnalytics', label: 'View Analytics', description: 'Access analytics and metrics' },
+    { key: 'viewMetrics', label: 'View Metrics', description: 'View performance metrics' },
+  ],
+  'Bot Control': [
+    { key: 'startBot', label: 'Start Bot', description: 'Start the bot instance' },
+    { key: 'stopBot', label: 'Stop Bot', description: 'Stop the bot instance' },
+    { key: 'restartBot', label: 'Restart Bot', description: 'Restart the bot' },
+  ],
+  'Configuration': [
+    { key: 'editWelcome', label: 'Edit Welcome', description: 'Configure welcome messages' },
+    { key: 'editAutoRoles', label: 'Edit Auto Roles', description: 'Manage automatic role assignment' },
+    { key: 'editModeration', label: 'Edit Moderation', description: 'Configure moderation settings' },
+    { key: 'editLogging', label: 'Edit Logging', description: 'Configure logging channels' },
+    { key: 'editCustomCommands', label: 'Edit Commands', description: 'Manage custom commands' },
+    { key: 'editStatusRotation', label: 'Edit Status', description: 'Configure status rotation' },
+    { key: 'editEmbedCommands', label: 'Edit Embeds', description: 'Manage embed commands' },
+  ],
+  'Ticket System': [
+    { key: 'viewTickets', label: 'View Tickets', description: 'View support tickets' },
+    { key: 'manageTickets', label: 'Manage Tickets', description: 'Respond to and manage tickets' },
+    { key: 'closeTickets', label: 'Close Tickets', description: 'Close support tickets' },
+    { key: 'deleteTickets', label: 'Delete Tickets', description: 'Delete ticket records' },
+    { key: 'configureTickets', label: 'Configure Tickets', description: 'Configure ticket system settings' },
+    { key: 'editTicketSystem', label: 'Edit Ticket System', description: 'Full ticket system configuration' },
+  ],
+  'Advanced': [
+    { key: 'manageCollaborators', label: 'Manage Collaborators', description: 'Invite and manage other collaborators' },
+    { key: 'deleteBot', label: 'Delete Bot', description: 'Permanently delete the bot (owner only)' },
+  ],
+};
+
 export default function CollaboratorManagement({ botId, isOwner }: CollaboratorManagementProps) {
   const [collaborators, setCollaborators] = useState<BotCollaborator[]>([]);
   const [loading, setLoading] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [expandedCollaborators, setExpandedCollaborators] = useState<Set<string>>(new Set());
+  const [showCustomPermissions, setShowCustomPermissions] = useState(false);
 
   const [inviteForm, setInviteForm] = useState<InviteCollaboratorForm>({
     userDiscordId: '',
@@ -153,6 +189,7 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
       if (response.ok) {
         toast.success('Invitation sent successfully');
         setShowInviteModal(false);
+        setShowCustomPermissions(false);
         setInviteForm({
           userDiscordId: '',
           role: CollaboratorRole.VIEWER,
@@ -206,6 +243,32 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
       newSet.add(id);
     }
     setExpandedCollaborators(newSet);
+  };
+
+  const togglePermission = (key: string) => {
+    setInviteForm({
+      ...inviteForm,
+      permissions: {
+        ...inviteForm.permissions,
+        [key]: !inviteForm.permissions?.[key],
+      },
+    });
+  };
+
+  const selectAllInGroup = (groupPerms: any[]) => {
+    const newPermissions = { ...inviteForm.permissions };
+    groupPerms.forEach((perm) => {
+      newPermissions[perm.key] = true;
+    });
+    setInviteForm({ ...inviteForm, permissions: newPermissions });
+  };
+
+  const deselectAllInGroup = (groupPerms: any[]) => {
+    const newPermissions = { ...inviteForm.permissions };
+    groupPerms.forEach((perm) => {
+      newPermissions[perm.key] = false;
+    });
+    setInviteForm({ ...inviteForm, permissions: newPermissions });
   };
 
   if (loading) {
@@ -374,7 +437,7 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
       {/* Invite Modal */}
       {showInviteModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 border border-gray-700 rounded-2xl p-6 max-w-lg w-full shadow-2xl">
+          <div className="bg-gray-800 border border-gray-700 rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="flex items-center space-x-3 mb-6">
               <div className="p-2 bg-blue-500/10 rounded-lg">
                 <UserGroupIcon className="h-6 w-6 text-blue-400" />
@@ -435,6 +498,75 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
                 </div>
               </div>
 
+              {/* Custom Permissions Toggle */}
+              <div className="border-t border-gray-700 pt-5">
+                <button
+                  onClick={() => setShowCustomPermissions(!showCustomPermissions)}
+                  className="flex items-center justify-between w-full p-4 bg-gray-700/30 hover:bg-gray-700/50 rounded-xl transition-colors"
+                >
+                  <div className="flex items-center space-x-3">
+                    <AdjustmentsHorizontalIcon className="h-5 w-5 text-purple-400" />
+                    <div className="text-left">
+                      <h4 className="font-medium text-white">Custom Permissions</h4>
+                      <p className="text-xs text-gray-400">Override role defaults with specific permissions</p>
+                    </div>
+                  </div>
+                  <ChevronDownIcon className={`h-5 w-5 text-gray-400 transition-transform ${showCustomPermissions ? 'rotate-180' : ''}`} />
+                </button>
+
+                {/* Custom Permissions Editor */}
+                {showCustomPermissions && (
+                  <div className="mt-4 space-y-4">
+                    {Object.entries(permissionGroups).map(([groupName, permissions]) => (
+                      <div key={groupName} className="bg-gray-700/20 rounded-xl p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h5 className="font-semibold text-white">{groupName}</h5>
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => selectAllInGroup(permissions)}
+                              className="text-xs px-3 py-1 bg-green-500/20 text-green-400 hover:bg-green-500/30 rounded-lg transition-colors"
+                            >
+                              All
+                            </button>
+                            <button
+                              onClick={() => deselectAllInGroup(permissions)}
+                              className="text-xs px-3 py-1 bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded-lg transition-colors"
+                            >
+                              None
+                            </button>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          {permissions.map((perm) => (
+                            <button
+                              key={perm.key}
+                              onClick={() => togglePermission(perm.key)}
+                              className={`p-3 rounded-lg border-2 transition-all text-left ${
+                                inviteForm.permissions?.[perm.key]
+                                  ? 'border-green-500 bg-green-500/10'
+                                  : 'border-gray-700 bg-gray-900/30 hover:border-gray-600'
+                              }`}
+                            >
+                              <div className="flex items-start justify-between mb-1">
+                                <span className={`text-sm font-medium ${
+                                  inviteForm.permissions?.[perm.key] ? 'text-green-400' : 'text-gray-300'
+                                }`}>
+                                  {perm.label}
+                                </span>
+                                <CheckCircleIcon className={`h-5 w-5 flex-shrink-0 ${
+                                  inviteForm.permissions?.[perm.key] ? 'text-green-400' : 'text-gray-600'
+                                }`} />
+                              </div>
+                              <p className="text-xs text-gray-500">{perm.description}</p>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {/* Optional Message */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -453,7 +585,10 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
             {/* Modal Actions */}
             <div className="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-700">
               <button
-                onClick={() => setShowInviteModal(false)}
+                onClick={() => {
+                  setShowInviteModal(false);
+                  setShowCustomPermissions(false);
+                }}
                 className="px-5 py-2.5 text-gray-300 hover:text-white hover:bg-gray-700 rounded-xl transition-colors"
               >
                 Cancel
