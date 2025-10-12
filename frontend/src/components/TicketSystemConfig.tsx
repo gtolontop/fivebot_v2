@@ -118,6 +118,7 @@ export default function TicketSystemConfig({
     categories: true,
     panels: true,
     active: false,
+    closed: false,
     settings: false,
     transcripts: false,
     analytics: false,
