@@ -193,6 +193,12 @@ async function restoreTicketPanels(client: Client, prisma: PrismaClient) {
           continue;
         }
 
+        if (!guild) {
+          console.warn(`Guild is undefined for panel ${panel.id}`);
+          failedCount++;
+          continue;
+        }
+
         // Find the channel
         const channel = guild.channels.cache.get(panel.channelId) as TextChannel;
         if (!channel) {
@@ -274,7 +280,7 @@ async function restoreTicketPanels(client: Client, prisma: PrismaClient) {
               .setCustomId('ticket:category:select')
               .setPlaceholder('Select a category...')
               .addOptions(
-                panel.config.categories.map(category => ({
+                panel.config.categories.map((category: any) => ({
                   label: category.name,
                   description: category.description?.substring(0, 100),
                   value: category.id,

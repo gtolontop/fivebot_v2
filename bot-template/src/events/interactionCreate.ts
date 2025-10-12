@@ -104,8 +104,9 @@ export async function interactionCreate(
       const ticketService = ticketHandler.getServices().ticketService;
       const stateManager = ticketHandler.getServices().stateManager;
 
-      if (ticketCommandsModule.ticketCommands[command]) {
-        await ticketCommandsModule.ticketCommands[command].execute(interaction, ticketService, stateManager);
+      const ticketCommands = ticketCommandsModule.ticketCommands as Record<string, any>;
+      if (ticketCommands[command]) {
+        await ticketCommands[command].execute(interaction, ticketService, stateManager);
         return;
       }
     } catch (error) {
