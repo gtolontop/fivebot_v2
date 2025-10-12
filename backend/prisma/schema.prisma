@@ -285,6 +285,36 @@ enum CollaboratorStatus {
   REVOKED       // Accès révoqué
 }
 
+// Enums pour le système de tickets
+enum ContainerType {
+  CHANNEL
+  THREAD
+  HYBRID
+}
+
+enum TicketPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum AssignmentModel {
+  AUTO_ASSIGN
+  COLLABORATIVE
+  SOFT_CLAIM
+  STRICT_CLAIM
+  NO_ASSIGNMENT
+}
+
+enum TicketState {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+  RESOLVED
+  ARCHIVED
+}
+
 model Ticket {
   id              String                @id @default(uuid())
   guildId         String                @map("guild_id")
