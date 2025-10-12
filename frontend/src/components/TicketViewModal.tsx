@@ -226,12 +226,15 @@ export default function TicketViewModal({
       textWithoutMedia = textWithoutMedia.replace(match[0], '').trim();
     });
 
-    // Extract other URLs for embeds (Trello, generic links, etc.) - but not media URLs
+    // Extract other URLs for embeds (Trello, generic links, etc.) - but not media URLs or YouTube
     const genericUrlRegex = /(https?:\/\/[^\s]+)/gi;
     Array.from(formatted.matchAll(genericUrlRegex)).forEach(match => {
       const url = match[0];
-      // Skip if it's already a media URL
-      if (!media.some(m => m.url === url)) {
+      // Skip if it's a media URL or YouTube (YouTube is handled separately in media section)
+      const isYoutube = /youtube\.com\/watch\?v=|youtu\.be\//i.test(url);
+      const isMediaUrl = media.some(m => m.url === url && m.type !== 'youtube');
+
+      if (!isYoutube && !isMediaUrl) {
         try {
           const urlObj = new URL(url);
           linkEmbeds.push({ url, domain: urlObj.hostname });
