@@ -20,8 +20,22 @@ async function bootstrap() {
   app.use(compression());
 
   // CORS
+  const frontendUrl = configService.get('FRONTEND_URL') || 'http://localhost:3000';
+  const allowedOrigins = [
+    frontendUrl,
+    'https://fivebot.lol',
+    'https://www.fivebot.lol',
+    'http://localhost:3000'
+  ];
+
   app.enableCors({
-    origin: configService.get('FRONTEND_URL') || 'http://localhost:3000',
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   });
 
