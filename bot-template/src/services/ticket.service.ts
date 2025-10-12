@@ -598,12 +598,15 @@ export class TicketService {
     staffRoleId?: string;
     channelId?: string;
     order?: number;
-  }): Promise<PrismaTicketCategory> {
+    botId?: string;
+  }): Promise<TicketCategory> {
     return await prisma.ticketCategory.create({
       data: {
         guildId,
-        configId,
-        ...data
+        botId: data.botId || configId, // Use botId if provided, otherwise use configId as botId
+        name: data.name,
+        emoji: data.emoji,
+        active: true
       }
     });
   }
