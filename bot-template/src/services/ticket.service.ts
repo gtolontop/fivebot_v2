@@ -78,12 +78,25 @@ export class TicketService {
 
     if (!config) return null;
 
-    // Parse JSON fields
-    return {
+    // Parse JSON fields and transform data
+    const parsed: any = {
       ...config,
       categories: config.categories ? JSON.parse(config.categories) : [],
-      panels: config.panels ? JSON.parse(config.panels) : []
+      panels: config.panels ? JSON.parse(config.panels) : [],
+      // Transform single IDs to arrays for compatibility
+      staffRoles: config.staffRoleId ? [config.staffRoleId] : [],
+      allowedFileTypes: [],
+      // Map categoryId to supportCategoryId for validation
+      supportCategoryId: config.categoryId,
+      // Map namingFormat to namingPattern for consistency
+      namingPattern: config.namingFormat || 'ticket-{counter}',
+      // Map maxTickets to maxTicketsPerUser
+      maxTicketsPerUser: config.maxTickets || 3,
+      // Set default container type if not set
+      containerType: 'CHANNEL' as any
     };
+
+    return parsed;
   }
 
   async createConfig(guildId: string, data?: Partial<TicketConfigWithArrays>): Promise<TicketConfigWithArrays> {
