@@ -348,7 +348,9 @@ model TicketMessage {
   id            String   @id @default(uuid())
   ticketId      String   @map("ticket_id")
   userId        String   @map("user_id")
+  authorId      String   @map("author_id")
   content       String   @db.Text
+  attachments   Json?
   isStaff       Boolean  @default(false) @map("is_staff")
   messageNumber Int      @default(1) @map("message_number")
   createdAt     DateTime @default(now()) @map("created_at")
