@@ -1350,13 +1350,14 @@ export default function TicketSystemConfig({
 
           {/* Closed Tickets Section */}
           <div className="bg-white border border-gray-200 rounded-lg">
-            <button
-              onClick={() => toggleSection('closed')}
-              className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex items-center">
-                <DocumentTextIcon className="w-5 h-5 text-gray-600 mr-3" />
-                <h3 className="text-lg font-semibold text-gray-900">Closed Tickets</h3>
+            <div className="px-6 py-4 flex items-center justify-between">
+              <button
+                onClick={() => toggleSection('closed')}
+                className="flex-1 flex items-center justify-between hover:bg-gray-50 transition-colors -mx-6 px-6 py-4"
+              >
+                <div className="flex items-center">
+                  <DocumentTextIcon className="w-5 h-5 text-gray-600 mr-3" />
+                  <h3 className="text-lg font-semibold text-gray-900">Closed Tickets</h3>
                 <span className="ml-2 text-sm text-gray-500">({closedTickets.length})</span>
               </div>
               {expandedSections.closed ? <ChevronUpIcon className="w-5 h-5" /> : <ChevronDownIcon className="w-5 h-5" />}
