@@ -314,12 +314,12 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
 
       {/* Collaborators List */}
       {collaborators.length === 0 ? (
-        <div className="text-center py-16 bg-gray-800/50 rounded-xl border border-gray-700">
-          <div className="inline-flex p-4 bg-gray-700/50 rounded-full mb-4">
-            <UserGroupIcon className="h-12 w-12 text-gray-500" />
+        <div className="text-center py-16 bg-white rounded-xl border border-gray-200 shadow-sm">
+          <div className="inline-flex p-4 bg-gray-100 rounded-full mb-4">
+            <UserGroupIcon className="h-12 w-12 text-gray-400" />
           </div>
-          <h3 className="text-lg font-medium text-white mb-2">No collaborators yet</h3>
-          <p className="text-gray-400 mb-6">Start by inviting someone to help manage your bot</p>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No collaborators yet</h3>
+          <p className="text-gray-600 mb-6">Start by inviting someone to help manage your bot</p>
           {isOwner && (
             <button
               onClick={() => setShowInviteModal(true)}
