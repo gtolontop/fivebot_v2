@@ -88,11 +88,6 @@ export class TicketStateManager {
             notIn: [TicketState.CLOSED, TicketState.RESOLVED]
           },
           deletedAt: null
-        },
-        include: {
-          timers: {
-            where: { active: true }
-          }
         }
       });
 
