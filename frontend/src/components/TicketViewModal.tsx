@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { XMarkIcon, PaperAirplaneIcon, UserIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, PaperAirplaneIcon, UserIcon, PhotoIcon, PaperClipIcon } from '@heroicons/react/24/outline';
 import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
 
@@ -36,9 +36,11 @@ export default function TicketViewModal({
   const [sending, setSending] = useState(false);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const [optimisticMessages, setOptimisticMessages] = useState<Message[]>([]);
+  const [attachmentUrl, setAttachmentUrl] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch messages
   useEffect(() => {
@@ -119,10 +121,16 @@ export default function TicketViewModal({
       }
     }
 
+    // Combine message with attachment URL if present
+    let fullContent = newMessage;
+    if (attachmentUrl.trim()) {
+      fullContent = fullContent ? `${fullContent}\n${attachmentUrl}` : attachmentUrl;
+    }
+
     // Add message optimistically to UI
     const optimisticMessage: Message = {
       id: `temp-${Date.now()}`,
-      content: newMessage,
+      content: fullContent,
       userId: currentUser.discordId,
       isStaff: true,
       createdAt: new Date().toISOString(),
@@ -130,8 +138,9 @@ export default function TicketViewModal({
       avatar: currentUser.avatar,
     };
     setOptimisticMessages(prev => [...prev, optimisticMessage]);
-    const messageContent = newMessage;
+    const messageContent = fullContent;
     setNewMessage('');
+    setAttachmentUrl('');
 
     try {
 
