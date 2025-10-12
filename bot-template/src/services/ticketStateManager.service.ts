@@ -275,13 +275,14 @@ export class TicketStateManager {
 
     // Determine new activity state
     const newActivityState = isStaff ? ActivityState.GREEN : ActivityState.ORANGE;
-    
+
+    // Note: warningsentAt field doesn't exist in schema, commenting out
     // Reset timers if there was a warning
-    if (ticket.warningsentAt) {
-      await this.ticketService.updateTicket(ticketId, {
-        warningsentAt: null
-      });
-    }
+    // if (ticket.warningsentAt) {
+    //   await this.ticketService.updateTicket(ticketId, {
+    //     warningsentAt: null
+    //   });
+    // }
 
     // Update activity state and last activity
     await this.ticketService.updateTicket(ticketId, {
