@@ -38,6 +38,12 @@ interface Bot {
   clientId?: string;
   config?: BotConfig;
   updatedAt?: string;
+  ownerId?: string;
+  owner?: {
+    id: string;
+    username: string;
+    discordId: string;
+  };
 }
 
 interface BotConfig {
