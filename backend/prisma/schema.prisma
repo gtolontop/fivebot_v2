@@ -395,13 +395,14 @@ model TicketConfig {
 }
 
 model TicketParticipant {
-  id         String   @id @default(uuid())
-  ticketId   String   @map("ticket_id")
-  userId     String   @map("user_id")
-  role       String   @default("OBSERVER")
-  addedAt    DateTime @default(now()) @map("added_at")
+  id         String    @id @default(uuid())
+  ticketId   String    @map("ticket_id")
+  userId     String    @map("user_id")
+  role       String    @default("OBSERVER")
+  addedAt    DateTime  @default(now()) @map("added_at")
   removedAt  DateTime? @map("removed_at")
-  ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  leftAt     DateTime? @map("left_at")
+  ticket     Ticket    @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 
   @@unique([ticketId, userId], map: "ticketId_userId")
   @@index([ticketId])
