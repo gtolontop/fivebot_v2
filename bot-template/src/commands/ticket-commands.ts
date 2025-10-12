@@ -53,17 +53,19 @@ export const closeCommand: TicketCommand = {
 
     try {
       // Send closing message to ticket before closing
-      await interaction.channel?.send({
-        embeds: [{
-          title: '🔒 Ticket Closed',
-          description: `This ticket has been closed by <@${interaction.user.id}>.`,
-          fields: [
-            { name: 'Reason', value: reason }
-          ],
-          color: 0xed4245,
-          timestamp: new Date().toISOString()
-        }]
-      });
+      if (interaction.channel && isMessageableChannel(interaction.channel)) {
+        await interaction.channel.send({
+          embeds: [{
+            title: '🔒 Ticket Closed',
+            description: `This ticket has been closed by <@${interaction.user.id}>.`,
+            fields: [
+              { name: 'Reason', value: reason }
+            ],
+            color: 0xed4245,
+            timestamp: new Date().toISOString()
+          }]
+        });
+      }
 
       await interaction.editReply(`✅ Ticket #${ticket.ticketNumber} has been closed.\nReason: ${reason}`);
 
