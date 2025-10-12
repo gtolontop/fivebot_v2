@@ -31,12 +31,16 @@ async function handleSlashCommand(interaction: ChatInputCommandInteraction, pris
           userId: user.id,
           action: `COMMAND_${interaction.commandName.toUpperCase()}`,
           resource: 'command',
-          metadata: {
+          metadata: JSON.stringify({
             commandName: interaction.commandName,
-            options: interaction.options.data,
+            options: interaction.options.data.map(opt => ({
+              name: opt.name,
+              type: opt.type,
+              value: opt.value
+            })),
             guildId: interaction.guildId,
             channelId: interaction.channelId,
-          },
+          }),
         },
       });
     }
