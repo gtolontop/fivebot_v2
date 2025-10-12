@@ -526,10 +526,7 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
             {/* Modal Actions */}
             <div className="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-200">
               <button
-                onClick={() => {
-                  setShowInviteModal(false);
-                  setShowCustomPermissions(false);
-                }}
+                onClick={() => setShowInviteModal(false)}
                 className="px-5 py-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-colors"
               >
                 Cancel
