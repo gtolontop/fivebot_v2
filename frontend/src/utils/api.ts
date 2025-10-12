@@ -222,6 +222,16 @@ export const botsAPI = {
 export const utilsAPI = {
   getUrlMetadata: (url: string) =>
     api.get('/url-metadata', { params: { url } }),
+
+  uploadImage: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/upload/image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
 };
 
 export const usersAPI = {
