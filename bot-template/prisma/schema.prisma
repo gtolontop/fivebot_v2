@@ -232,6 +232,18 @@ enum CreditType {
   ADMIN_ADJUSTMENT
 }
 
+enum ContainerType {
+  CHANNEL
+  THREAD
+}
+
+enum TicketPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
 model BotCommand {
   id          String    @id @default(uuid())
   botId       String    @map("bot_id")
