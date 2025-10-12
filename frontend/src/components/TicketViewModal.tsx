@@ -184,7 +184,7 @@ export default function TicketViewModal({
                         <span className={`text-xs font-medium ${
                           showOnRight ? 'text-indigo-200' : 'text-gray-500'
                         }`}>
-                          {message.username || (message.isStaff ? 'Staff' : 'User')}
+                          {isCurrentUser ? currentUser.username : (message.username || (message.isStaff ? 'Staff' : 'User'))}
                         </span>
                         <span className={`text-xs ${
                           showOnRight ? 'text-indigo-200' : 'text-gray-400'
