@@ -40,8 +40,24 @@ export class TicketCreationHandler {
   async handleButtonInteraction(interaction: ButtonInteraction): Promise<void> {
     if (!interaction.customId.startsWith('ticket:create:')) return;
 
-    const categoryId = interaction.customId.split(':')[2];
-    await this.showTicketModal(interaction, categoryId);
+    try {
+      const categoryId = interaction.customId.split(':')[2];
+      await this.showTicketModal(interaction, categoryId);
+    } catch (error) {
+      console.error('[TicketCreationHandler] Error handling button interaction:', error);
+
+      // Try to respond to the interaction
+      try {
+        if (!interaction.replied && !interaction.deferred) {
+          await interaction.reply({
+            content: '❌ An error occurred while creating the ticket. Please try again or contact an administrator.',
+            flags: 64 // EPHEMERAL flag
+          });
+        }
+      } catch (replyError) {
+        console.error('[TicketCreationHandler] Failed to send error message:', replyError);
+      }
+    }
   }
 
   // Handle dropdown selection for ticket creation
