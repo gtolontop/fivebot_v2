@@ -50,7 +50,10 @@ export class DiscordService {
     const guildsKey = this.cacheService.createKey('discord_guilds', tokenPrefix);
     this.cacheService.delete(guildsKey);
 
-    console.log(`🗑️ Invalidated Discord cache for bot ${tokenPrefix}`);
+    // Clear rate limits to allow immediate fresh fetch
+    this.cacheService.deleteRateLimit('discord_guilds', tokenPrefix);
+
+    console.log(`🗑️ Invalidated Discord cache and rate limit for bot ${tokenPrefix}`);
   }
 
   /**
@@ -63,7 +66,11 @@ export class DiscordService {
     this.cacheService.delete(channelsKey);
     this.cacheService.delete(rolesKey);
 
-    console.log(`🗑️ Invalidated cache for guild ${guildId}`);
+    // Clear rate limits
+    this.cacheService.deleteRateLimit('discord_channels', guildId);
+    this.cacheService.deleteRateLimit('discord_roles', guildId);
+
+    console.log(`🗑️ Invalidated cache and rate limits for guild ${guildId}`);
   }
 
   private async delay(ms: number): Promise<void> {
