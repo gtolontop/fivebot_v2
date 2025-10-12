@@ -124,12 +124,14 @@ export const addCommand: TicketCommand = {
 
       await interaction.editReply(`✅ Added <@${user.id}> to this ticket.`);
 
-      await interaction.channel?.send({
-        embeds: [{
-          description: `<@${user.id}> has been added to this ticket by <@${interaction.user.id}>.`,
-          color: 0x57f287
-        }]
-      });
+      if (interaction.channel && isMessageableChannel(interaction.channel)) {
+        await interaction.channel.send({
+          embeds: [{
+            description: `<@${user.id}> has been added to this ticket by <@${interaction.user.id}>.`,
+            color: 0x57f287
+          }]
+        });
+      }
     } catch (error) {
       console.error('Error adding user to ticket:', error);
       await interaction.editReply('❌ Failed to add user to the ticket.');
@@ -178,12 +180,14 @@ export const removeCommand: TicketCommand = {
 
       await interaction.editReply(`✅ Removed <@${user.id}> from this ticket.`);
 
-      await interaction.channel?.send({
-        embeds: [{
-          description: `<@${user.id}> has been removed from this ticket by <@${interaction.user.id}>.`,
-          color: 0xed4245
-        }]
-      });
+      if (interaction.channel && isMessageableChannel(interaction.channel)) {
+        await interaction.channel.send({
+          embeds: [{
+            description: `<@${user.id}> has been removed from this ticket by <@${interaction.user.id}>.`,
+            color: 0xed4245
+          }]
+        });
+      }
     } catch (error) {
       console.error('Error removing user from ticket:', error);
       await interaction.editReply('❌ Failed to remove user from the ticket.');
@@ -217,12 +221,14 @@ export const claimCommand: TicketCommand = {
 
       await interaction.editReply(`✅ You have claimed ticket #${ticket.ticketNumber}.`);
 
-      await interaction.channel?.send({
-        embeds: [{
-          description: `🙋 <@${interaction.user.id}> has claimed this ticket.`,
-          color: 0x5865f2
-        }]
-      });
+      if (interaction.channel && isMessageableChannel(interaction.channel)) {
+        await interaction.channel.send({
+          embeds: [{
+            description: `🙋 <@${interaction.user.id}> has claimed this ticket.`,
+            color: 0x5865f2
+          }]
+        });
+      }
     } catch (error) {
       console.error('Error claiming ticket:', error);
       await interaction.editReply('❌ Failed to claim the ticket.');
@@ -261,12 +267,14 @@ export const unclaimCommand: TicketCommand = {
 
       await interaction.editReply(`✅ You have released ticket #${ticket.ticketNumber}.`);
 
-      await interaction.channel?.send({
-        embeds: [{
-          description: `<@${interaction.user.id}> has released this ticket. It is now available for others to claim.`,
-          color: 0xfee75c
-        }]
-      });
+      if (interaction.channel && isMessageableChannel(interaction.channel)) {
+        await interaction.channel.send({
+          embeds: [{
+            description: `<@${interaction.user.id}> has released this ticket. It is now available for others to claim.`,
+            color: 0xfee75c
+          }]
+        });
+      }
     } catch (error) {
       console.error('Error unclaiming ticket:', error);
       await interaction.editReply('❌ Failed to unclaim the ticket.');
@@ -300,12 +308,18 @@ export const renameCommand: TicketCommand = {
 
     try {
       const channel = interaction.channel;
+      let oldName: string | undefined;
+
       if (channel?.isTextBased() && 'setName' in channel) {
+        // Store old name before renaming (only for channels with 'name' property)
+        if ('name' in channel && typeof channel.name === 'string') {
+          oldName = channel.name;
+        }
         await channel.setName(newName);
       }
 
       await ticketService.logAction(ticket.id, 'TICKET_RENAMED', interaction.user.id, {
-        oldName: channel?.name,
+        oldName,
         newName
       });
 
@@ -359,12 +373,14 @@ export const priorityCommand: TicketCommand = {
 
       await interaction.editReply(`✅ Ticket priority changed to **${priorityEmoji[priority]} ${priority}**`);
 
-      await interaction.channel?.send({
-        embeds: [{
-          description: `Priority changed to **${priorityEmoji[priority]} ${priority}** by <@${interaction.user.id}>.`,
-          color: 0x5865f2
-        }]
-      });
+      if (interaction.channel && isMessageableChannel(interaction.channel)) {
+        await interaction.channel.send({
+          embeds: [{
+            description: `Priority changed to **${priorityEmoji[priority]} ${priority}** by <@${interaction.user.id}>.`,
+            color: 0x5865f2
+          }]
+        });
+      }
     } catch (error) {
       console.error('Error changing priority:', error);
       await interaction.editReply('❌ Failed to change ticket priority.');
