@@ -78,10 +78,10 @@ export class CollaboratorsController {
     });
 
     if (!targetUser) {
-      throw new NotFoundException('Utilisateur non trouvé sur la plateforme');
+      throw new NotFoundException('User not found on the platform');
     }
 
-    // Vérifier que l'utilisateur n'est pas déjà collaborateur
+    // Check if user is already a collaborator
     const existing = await this.prisma.botCollaborator.findUnique({
       where: {
         botId_userId: {
@@ -92,10 +92,10 @@ export class CollaboratorsController {
     });
 
     if (existing) {
-      throw new BadRequestException('Cet utilisateur est déjà collaborateur');
+      throw new BadRequestException('This user is already a collaborator');
     }
 
-    // Créer l'invitation
+    // Create the invitation
     const collaborator = await this.prisma.botCollaborator.create({
       data: {
         botId,
@@ -117,7 +117,7 @@ export class CollaboratorsController {
       },
     });
 
-    // TODO: Envoyer une notification à l'utilisateur invité
+    // TODO: Send notification to invited user
 
     return {
       ...collaborator,
