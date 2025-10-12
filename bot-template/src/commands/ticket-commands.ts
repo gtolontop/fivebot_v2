@@ -50,9 +50,6 @@ export const closeCommand: TicketCommand = {
       // Close the ticket
       await ticketService.closeTicket(ticket.id, interaction.user.id, reason);
 
-      // Deactivate timers
-      await stateManager.deactivateAllTimers(ticket.id);
-
       await interaction.editReply(`✅ Ticket #${ticket.ticketNumber} has been closed.\nReason: ${reason}`);
 
       // Send closing message to ticket
