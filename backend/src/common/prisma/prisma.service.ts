@@ -66,13 +66,13 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   async cleanDatabase() {
     if (process.env.NODE_ENV === 'production') return;
 
-    const tables = await this.$queryRaw<Array<{ TABLE_NAME: string }>>`
-      SELECT TABLE_NAME from information_schema.TABLES WHERE TABLE_SCHEMA = 'fivebot';
+    const tables = await this.$queryRaw<Array<{ tablename: string }>>`
+      SELECT tablename FROM pg_tables WHERE schemaname = 'public';
     `;
 
     await this.$transaction(
       tables.map((table) =>
-        this.$executeRawUnsafe(`TRUNCATE TABLE \`${table.TABLE_NAME}\``),
+        this.$executeRawUnsafe(`TRUNCATE TABLE "${table.tablename}" CASCADE`),
       ),
     );
   }
