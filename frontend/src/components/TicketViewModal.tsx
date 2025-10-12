@@ -160,20 +160,32 @@ export default function TicketViewModal({
   const renderMessageContent = (content: string, isStaffMessage: boolean = false) => {
     let formatted = formatContent(content);
 
-    // Extract images - support any URL with image extension + query params
-    const imageRegex = /(https?:\/\/\S+?\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?\S*)?)/gi;
-    const images: string[] = [];
-    let textWithoutImages = formatted;
+    // Extract all media types
+    const media: Array<{ type: string; url: string; embed?: string }> = [];
+    let textWithoutMedia = formatted;
 
-    // Find and extract all image URLs
-    const matches = Array.from(formatted.matchAll(imageRegex));
-    matches.forEach(match => {
-      images.push(match[0]);
-      // Remove image URL from text
-      textWithoutImages = textWithoutImages.replace(match[0], '').trim();
+    // YouTube URLs
+    const youtubeRegex = /(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/gi;
+    Array.from(formatted.matchAll(youtubeRegex)).forEach(match => {
+      media.push({ type: 'youtube', url: match[0], embed: match[4] });
+      textWithoutMedia = textWithoutMedia.replace(match[0], '').trim();
     });
 
-    formatted = textWithoutImages;
+    // Video files
+    const videoRegex = /(https?:\/\/\S+?\.(mp4|webm|mov|avi|mkv)(\?\S*)?)/gi;
+    Array.from(formatted.matchAll(videoRegex)).forEach(match => {
+      media.push({ type: 'video', url: match[0] });
+      textWithoutMedia = textWithoutMedia.replace(match[0], '').trim();
+    });
+
+    // Image files (including Discord CDN, Imgur, etc.)
+    const imageRegex = /(https?:\/\/\S+?\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?\S*)?)/gi;
+    Array.from(formatted.matchAll(imageRegex)).forEach(match => {
+      media.push({ type: 'image', url: match[0] });
+      textWithoutMedia = textWithoutMedia.replace(match[0], '').trim();
+    });
+
+    formatted = textWithoutMedia;
 
     // Parse Discord markdown
     const parseText = (text: string): React.ReactNode => {
