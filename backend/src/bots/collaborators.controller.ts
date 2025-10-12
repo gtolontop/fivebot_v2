@@ -299,15 +299,15 @@ export class CollaboratorsController {
     });
 
     if (!bot) {
-      throw new NotFoundException('Bot non trouvé');
+      throw new NotFoundException('Bot not found');
     }
 
-    // Vérifier si propriétaire
+    // Check if owner
     if (bot.ownerId === userId) {
       return;
     }
 
-    // Vérifier si collaborateur actif
+    // Check if active collaborator
     const collaborator = await this.prisma.botCollaborator.findFirst({
       where: {
         botId,
@@ -317,7 +317,7 @@ export class CollaboratorsController {
     });
 
     if (!collaborator) {
-      throw new ForbiddenException('Vous n\'avez pas accès à ce bot');
+      throw new ForbiddenException('You do not have access to this bot');
     }
   }
 
@@ -327,15 +327,15 @@ export class CollaboratorsController {
     });
 
     if (!bot) {
-      throw new NotFoundException('Bot non trouvé');
+      throw new NotFoundException('Bot not found');
     }
 
-    // Vérifier si propriétaire
+    // Check if owner
     if (bot.ownerId === userId) {
       return;
     }
 
-    // Vérifier si admin collaborateur
+    // Check if admin collaborator
     const collaborator = await this.prisma.botCollaborator.findFirst({
       where: {
         botId,
@@ -346,7 +346,7 @@ export class CollaboratorsController {
     });
 
     if (!collaborator) {
-      throw new ForbiddenException('Vous devez être propriétaire ou administrateur');
+      throw new ForbiddenException('You must be the owner or an administrator');
     }
   }
 }
