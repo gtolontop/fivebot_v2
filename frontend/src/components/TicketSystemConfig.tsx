@@ -811,9 +811,20 @@ export default function TicketSystemConfig({
             {expandedSections.setup && (
               <div className="px-6 pb-6 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Default Ticket Category
-                  </label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Default Ticket Category
+                    </label>
+                    <button
+                      onClick={() => window.location.reload()}
+                      className="p-1.5 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                      title="Refresh Discord data"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                    </button>
+                  </div>
                   {guilds.length === 0 ? (
                     <div className="text-sm text-gray-500 p-3 bg-gray-50 rounded-md">
                       Loading Discord data... If this persists, make sure your bot is online and in a server.
