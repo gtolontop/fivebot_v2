@@ -36,7 +36,7 @@ import { UploadController } from './utils/upload.controller';
     QueueModule,
     TasksModule,
   ],
-  controllers: [UrlMetadataController],
+  controllers: [UrlMetadataController, UploadController],
   providers: [AppService],
 })
 export class AppModule {}
