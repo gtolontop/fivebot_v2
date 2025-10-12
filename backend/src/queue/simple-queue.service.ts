@@ -520,14 +520,21 @@ export class SimpleQueueService implements IQueueService {
       console.log(`✅ Bot ${botId} stopped successfully and status FORCE updated to OFFLINE`);
       
       // Schedule a verification check after 5 seconds to ensure it really stopped
+      // ONLY if it hasn't been restarted in the meantime
       setTimeout(async () => {
         try {
+          // Check if bot was restarted (exists in runningBots)
+          if (this.runningBots.has(botId)) {
+            console.log(`✅ Bot ${botId} was restarted - skipping OFFLINE verification`);
+            return;
+          }
+
           const bot = await this.prisma.bot.findUnique({ where: { id: botId } });
           if (bot && bot.status !== BotStatus.OFFLINE) {
             console.log(`⚠️ Bot ${botId} status verification failed - forcing to OFFLINE`);
             await this.prisma.bot.update({
               where: { id: botId },
-              data: { 
+              data: {
                 status: BotStatus.OFFLINE,
                 updatedAt: new Date()
               },
