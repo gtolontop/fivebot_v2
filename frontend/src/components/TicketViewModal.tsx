@@ -466,7 +466,7 @@ export default function TicketViewModal({
                   const showOnRight = isCurrentUser || group.isStaff;
 
                   // Get avatar URL
-                  let avatarUrl = null;
+                  let avatarUrl: string | null = null;
                   if (isCurrentUser && currentUser.avatar) {
                     avatarUrl = currentUser.avatar.startsWith('http')
                       ? currentUser.avatar
