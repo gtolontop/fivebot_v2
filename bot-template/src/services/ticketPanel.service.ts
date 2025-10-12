@@ -269,13 +269,19 @@ export class TicketPanelService {
     } else {
       // Create option for each category
       for (const category of categories) {
+        // Skip categories without a name
+        if (!category.name || category.name.trim() === '') {
+          console.warn('[TicketPanelService] Skipping category without name:', category);
+          continue;
+        }
+
         const option = new StringSelectMenuOptionBuilder()
           .setLabel(category.name)
           .setValue(`ticket:create:${category.id}`);
 
         if (category.description) {
           // Limit description to 50 characters to keep dropdown compact
-          const truncatedDesc = category.description.length > 50 
+          const truncatedDesc = category.description.length > 50
             ? category.description.substring(0, 47) + '...'
             : category.description;
           option.setDescription(truncatedDesc);
