@@ -143,7 +143,7 @@ export default function TicketSystemConfig({
   const [categoryForm, setCategoryForm] = useState({
     name: '',
     description: '',
-    emoji: '🎫',
+    emoji: '',
     roleId: '',
     priority: 0,
     color: '#5865F2',
@@ -444,7 +444,7 @@ export default function TicketSystemConfig({
       setCategoryForm({
         name: '',
         description: '',
-        emoji: '🎫',
+        emoji: '',
         roleId: '',
         priority: 0,
         color: '#5865F2',
@@ -1059,7 +1059,7 @@ export default function TicketSystemConfig({
                                 setCategoryForm({
                                   name: category.name,
                                   description: category.description,
-                                  emoji: category.emoji || '🎫',
+                                  emoji: category.emoji || '',
                                   roleId: category.roleId || '',
                                   priority: category.priority || 0,
                                   color: category.color || '#5865F2',
@@ -1995,13 +1995,13 @@ export default function TicketSystemConfig({
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Emoji
+                    Emoji (Optional)
                   </label>
                   <input
                     type="text"
                     value={categoryForm.emoji}
                     onChange={(e) => setCategoryForm(prev => ({ ...prev, emoji: e.target.value }))}
-                    placeholder="🎫"
+                    placeholder="🎫 (Leave empty for no emoji)"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   />
                 </div>
