@@ -42,10 +42,24 @@ export interface TicketPanel {
   messageId?: string;
 }
 
+export interface TicketCommands {
+  close: boolean;
+  add: boolean;
+  remove: boolean;
+  claim: boolean;
+  unclaim: boolean;
+  lock: boolean;
+  unlock: boolean;
+  rename: boolean;
+  transfer: boolean;
+  priority: boolean;
+}
+
 export interface TicketData {
   categories: TicketCategory[];
   panels: TicketPanel[];
   tickets: any[];
+  commands?: TicketCommands;
 }
 
 @Injectable()
