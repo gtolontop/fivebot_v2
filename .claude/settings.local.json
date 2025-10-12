@@ -44,7 +44,8 @@
       "Bash(start:*)",
       "Bash(cat:*)",
       "Bash(findstr:*)",
-      "Bash(npx ts-node:*)"
+      "Bash(npx ts-node:*)",
+      "Bash(tasklist)"
     ],
     "deny": [],
     "ask": [],
