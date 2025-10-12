@@ -168,7 +168,7 @@ export class CollaboratorsController {
     };
   }
 
-  @Delete(':collaboratorId')
+  @Delete(':botId/collaborators/:collaboratorId')
   async removeCollaborator(
     @Param('botId') botId: string,
     @Param('collaboratorId') collaboratorId: string,
