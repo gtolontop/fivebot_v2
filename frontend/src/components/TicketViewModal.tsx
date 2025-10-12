@@ -254,6 +254,30 @@ export default function TicketViewModal({
       const processSegment = (segment: string, depth = 0): React.ReactNode => {
         if (depth > 5) return segment; // Prevent infinite recursion
 
+        // URLs (make them clickable and styled like Discord)
+        const urlMatch = segment.match(/(https?:\/\/[^\s]+)/);
+        if (urlMatch) {
+          const before = segment.substring(0, urlMatch.index);
+          const url = urlMatch[1];
+          const after = segment.substring(urlMatch.index! + urlMatch[0].length);
+          return (
+            <>
+              {before && processSegment(before, depth + 1)}
+              <a
+                key={`url-${key++}`}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:underline cursor-pointer"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {url}
+              </a>
+              {after && processSegment(after, depth + 1)}
+            </>
+          );
+        }
+
         // Code blocks (highest priority)
         const codeBlockMatch = segment.match(/```([\s\S]*?)```/);
         if (codeBlockMatch) {
@@ -405,6 +429,41 @@ export default function TicketViewModal({
                 />
               );
             })}
+          </div>
+        )}
+        {linkEmbeds.length > 0 && (
+          <div className="space-y-2 mt-2">
+            {linkEmbeds.map((link, idx) => (
+              <a
+                key={`embed-${idx}`}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`block border rounded-lg p-3 hover:bg-opacity-80 transition-colors ${
+                  isStaffMessage ? 'border-indigo-400 bg-indigo-700' : 'border-gray-300 bg-gray-100'
+                }`}
+              >
+                <div className="flex items-start space-x-3">
+                  <div className={`flex-shrink-0 w-10 h-10 rounded flex items-center justify-center ${
+                    isStaffMessage ? 'bg-indigo-600' : 'bg-gray-200'
+                  }`}>
+                    <PaperClipIcon className={`w-5 h-5 ${isStaffMessage ? 'text-white' : 'text-gray-600'}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className={`text-sm font-medium truncate ${
+                      isStaffMessage ? 'text-white' : 'text-gray-900'
+                    }`}>
+                      {link.domain}
+                    </div>
+                    <div className={`text-xs truncate ${
+                      isStaffMessage ? 'text-indigo-200' : 'text-gray-500'
+                    }`}>
+                      {link.url}
+                    </div>
+                  </div>
+                </div>
+              </a>
+            ))}
           </div>
         )}
       </>
