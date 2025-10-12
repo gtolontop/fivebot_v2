@@ -11,6 +11,7 @@ import {
   ChevronUpIcon,
   Cog6ToothIcon,
   ChatBubbleLeftRightIcon,
+  ChatBubbleLeftIcon,
   ShieldCheckIcon,
   ClockIcon,
   UserGroupIcon,
