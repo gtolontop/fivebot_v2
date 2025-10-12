@@ -377,10 +377,10 @@ export class TicketService {
   async assignTicket(ticketId: string, staffId: string, assignedBy: string): Promise<Ticket> {
     const ticket = await this.updateTicket(ticketId, {
       assignedStaffId: staffId,
-      state: TicketState.IN_PROGRESS
+      state: 'IN_PROGRESS'
     });
 
-    await this.addParticipant(ticketId, staffId, ParticipantRole.STAFF);
+    await this.addParticipant(ticketId, staffId, 'STAFF');
     await this.logAction(ticketId, 'TICKET_ASSIGNED', assignedBy, { staffId });
 
     return ticket;
