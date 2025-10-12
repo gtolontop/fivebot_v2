@@ -580,7 +580,11 @@ export default function BotConfigPage() {
         autoAssignStaff: false,
         autoTagUrgent: false,
         autoEscalate: false,
-        statusRotation: {},
+        statusRotation: {
+          enabled: false,
+          interval: 30,
+          statuses: []
+        },
         embedV2Commands: {},
       };
 
