@@ -36,6 +36,7 @@ export default function TicketViewModal({
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Fetch messages
   useEffect(() => {
@@ -112,7 +113,11 @@ export default function TicketViewModal({
 
       // Don't fetch immediately - let the polling (3s) get the real message
       // This prevents the flicker of optimistic message disappearing/reappearing
-      toast.success('Message sent');
+
+      // Refocus input after sending
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
     } catch (error: any) {
       console.error('Error sending message:', error);
       toast.error(error.response?.data?.message || 'Failed to send message');
