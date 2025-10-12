@@ -10,6 +10,7 @@ import SearchableDropdown from '@/components/SearchableDropdown';
 import TicketSystemConfig from '@/components/TicketSystemConfig';
 import StatusRotationConfig from '@/components/StatusRotationConfig';
 import V2CommandsConfig from '@/components/V2CommandsConfig';
+import CollaboratorManagement from '@/components/CollaboratorManagement';
 import { 
   ChartBarIcon, 
   Cog6ToothIcon, 
