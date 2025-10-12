@@ -175,6 +175,8 @@ export class CommandService {
       throw new Error('Bot is not in any guild');
     }
 
+    // Debug: log received categories
+    console.log('[CommandService] Received categories:', JSON.stringify(data.categories, null, 2));
 
     // Create the panel using the ticket panel service
     const result = await this.ticketPanelService.createPanel(
