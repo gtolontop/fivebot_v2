@@ -84,7 +84,10 @@ export default function TicketSystemConfig({
   textChannels,
   allRoles
 }: TicketSystemConfigProps) {
+  const { user } = useAuth();
   const [activeTickets, setActiveTickets] = useState<any[]>([]);
+  const [selectedTicket, setSelectedTicket] = useState<any | null>(null);
+  const [showTicketModal, setShowTicketModal] = useState(false);
   const [ticketStats, setTicketStats] = useState({
     total: 0,
     open: 0,
