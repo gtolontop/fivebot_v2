@@ -360,8 +360,23 @@ export class CommandService {
     const ticket = await this.prisma.ticket.findUnique({ where: { id: ticketId } });
     if (!ticket) throw new Error('Ticket not found');
 
-    // Just soft delete in DB, don't delete the Discord channel
-    // The channel will be deleted when the ticket is closed normally
+    // Get the ticket channel/thread (NOT the category)
+    const channelId = ticket.channelId || ticket.threadId;
+    if (channelId) {
+      const channel = this.client.channels.cache.get(channelId);
+
+      // Verify it's a text channel or thread, NOT a category
+      if (channel && (channel.isTextBased() || channel.isThread())) {
+        // Double check it's not a category channel
+        if (channel.type !== 4) { // 4 = GUILD_CATEGORY
+          await channel.delete('Ticket deleted from dashboard');
+        } else {
+          console.error(`[DeleteTicket] channelId ${channelId} is a category, not deleting!`);
+        }
+      }
+    }
+
+    // Soft delete in DB
     await this.prisma.ticket.update({
       where: { id: ticketId },
       data: {
