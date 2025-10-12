@@ -332,6 +332,25 @@ export class CommandService {
     });
   }
 
+  private async handleCloseTicket(data: any) {
+    const { ticketId, reason } = data;
+
+    if (!this.ticketService) {
+      console.warn('[CommandService] Ticket service not initialized');
+      return;
+    }
+
+    try {
+      // Close the ticket using ticket service
+      await this.ticketService.closeTicket(ticketId, 'SYSTEM', reason || 'Closed from dashboard');
+
+      console.log(`[CommandService] Ticket ${ticketId} closed successfully`);
+    } catch (error) {
+      console.error('[CommandService] Error closing ticket:', error);
+      throw error;
+    }
+  }
+
   private async handleAddUserToTicket(data: any) {
     const { ticketId, userId } = data;
     const ticket = await this.prisma.ticket.findUnique({ where: { id: ticketId } });
