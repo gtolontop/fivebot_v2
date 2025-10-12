@@ -104,13 +104,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       } catch (error: any) {
         const isLockTimeout =
           error.code === 'P2034' || // Prisma lock timeout
-          error.code === 'ER_LOCK_WAIT_TIMEOUT' || // MySQL lock wait timeout
+          error.code === '40P01' || // PostgreSQL deadlock detected
+          error.code === '55P03' || // PostgreSQL lock not available
           error.message?.includes('timeout') ||
-          error.message?.includes('Lock wait timeout exceeded');
+          error.message?.includes('lock timeout');
 
         const isDeadlock =
           error.code === 'P2023' || // Prisma deadlock
-          error.code === 'ER_LOCK_DEADLOCK' || // MySQL deadlock
+          error.code === '40P01' || // PostgreSQL deadlock detected
           error.message?.includes('deadlock');
 
         if ((isLockTimeout || isDeadlock) && attempt < maxRetries) {
