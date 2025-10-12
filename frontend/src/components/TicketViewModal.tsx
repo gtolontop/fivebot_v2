@@ -205,11 +205,11 @@ export default function TicketViewModal({
     const linkEmbeds: Array<{ url: string; domain: string }> = [];
     let textWithoutMedia = formatted;
 
-    // YouTube URLs
+    // YouTube URLs - keep the URL in text, don't remove it
     const youtubeRegex = /(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/gi;
     Array.from(formatted.matchAll(youtubeRegex)).forEach(match => {
       media.push({ type: 'youtube', url: match[0], embed: match[4] });
-      textWithoutMedia = textWithoutMedia.replace(match[0], '').trim();
+      // Don't remove YouTube URLs from text - they should be visible above the embed
     });
 
     // Video files
