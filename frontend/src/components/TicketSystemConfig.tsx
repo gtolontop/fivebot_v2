@@ -448,6 +448,7 @@ export default function TicketSystemConfig({
         description: '',
         emoji: '',
         roleId: '',
+        spawnCategoryId: '',
         priority: 0,
         color: '#5865F2',
         requiredRoles: [],
