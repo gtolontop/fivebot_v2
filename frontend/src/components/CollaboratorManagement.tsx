@@ -440,25 +440,25 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
       {/* Invite Modal */}
       {showInviteModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 border border-gray-700 rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="flex items-center space-x-3 mb-6">
-              <div className="p-2 bg-blue-500/10 rounded-lg">
-                <UserGroupIcon className="h-6 w-6 text-blue-400" />
+              <div className="p-2 bg-blue-50 rounded-lg">
+                <UserGroupIcon className="h-6 w-6 text-blue-600" />
               </div>
-              <h3 className="text-xl font-bold text-white">Invite Collaborator</h3>
+              <h3 className="text-xl font-bold text-gray-900">Invite Collaborator</h3>
             </div>
 
             <div className="space-y-5">
               {/* Discord ID Input */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   User Discord ID
                 </label>
                 <input
                   type="text"
                   value={inviteForm.userDiscordId}
                   onChange={(e) => setInviteForm({ ...inviteForm, userDiscordId: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   placeholder="123456789012345678"
                 />
                 <p className="text-xs text-gray-500 mt-2">
@@ -468,7 +468,7 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
 
               {/* Role Selection */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-3">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
                   Role
                 </label>
                 <div className="grid grid-cols-2 gap-3">
@@ -483,12 +483,12 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
                         className={`p-4 rounded-xl border-2 transition-all text-left ${
                           isSelected
                             ? `${config.borderColor} ${config.bgColor}`
-                            : 'border-gray-700 bg-gray-900/30 hover:border-gray-600'
+                            : 'border-gray-200 bg-gray-50 hover:border-gray-300'
                         }`}
                       >
                         <div className="flex items-center space-x-2 mb-2">
                           <RoleIcon className={`h-5 w-5 ${isSelected ? config.color : 'text-gray-400'}`} />
-                          <span className={`font-medium ${isSelected ? config.color : 'text-gray-400'}`}>
+                          <span className={`font-medium ${isSelected ? config.color : 'text-gray-600'}`}>
                             {config.label}
                           </span>
                         </div>
@@ -502,16 +502,16 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
               </div>
 
               {/* Custom Permissions Toggle */}
-              <div className="border-t border-gray-700 pt-5">
+              <div className="border-t border-gray-200 pt-5">
                 <button
                   onClick={() => setShowCustomPermissions(!showCustomPermissions)}
-                  className="flex items-center justify-between w-full p-4 bg-gray-700/30 hover:bg-gray-700/50 rounded-xl transition-colors"
+                  className="flex items-center justify-between w-full p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors"
                 >
                   <div className="flex items-center space-x-3">
-                    <AdjustmentsHorizontalIcon className="h-5 w-5 text-purple-400" />
+                    <AdjustmentsHorizontalIcon className="h-5 w-5 text-purple-600" />
                     <div className="text-left">
-                      <h4 className="font-medium text-white">Custom Permissions</h4>
-                      <p className="text-xs text-gray-400">Override role defaults with specific permissions</p>
+                      <h4 className="font-medium text-gray-900">Custom Permissions</h4>
+                      <p className="text-xs text-gray-500">Override role defaults with specific permissions</p>
                     </div>
                   </div>
                   <ChevronDownIcon className={`h-5 w-5 text-gray-400 transition-transform ${showCustomPermissions ? 'rotate-180' : ''}`} />
@@ -521,19 +521,19 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
                 {showCustomPermissions && (
                   <div className="mt-4 space-y-4">
                     {Object.entries(permissionGroups).map(([groupName, permissions]) => (
-                      <div key={groupName} className="bg-gray-700/20 rounded-xl p-4">
+                      <div key={groupName} className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                         <div className="flex items-center justify-between mb-3">
-                          <h5 className="font-semibold text-white">{groupName}</h5>
+                          <h5 className="font-semibold text-gray-900">{groupName}</h5>
                           <div className="flex space-x-2">
                             <button
                               onClick={() => selectAllInGroup(permissions)}
-                              className="text-xs px-3 py-1 bg-green-500/20 text-green-400 hover:bg-green-500/30 rounded-lg transition-colors"
+                              className="text-xs px-3 py-1 bg-green-100 text-green-700 hover:bg-green-200 rounded-lg transition-colors"
                             >
                               All
                             </button>
                             <button
                               onClick={() => deselectAllInGroup(permissions)}
-                              className="text-xs px-3 py-1 bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded-lg transition-colors"
+                              className="text-xs px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg transition-colors"
                             >
                               None
                             </button>
@@ -546,18 +546,18 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
                               onClick={() => togglePermission(perm.key)}
                               className={`p-3 rounded-lg border-2 transition-all text-left ${
                                 inviteForm.permissions?.[perm.key]
-                                  ? 'border-green-500 bg-green-500/10'
-                                  : 'border-gray-700 bg-gray-900/30 hover:border-gray-600'
+                                  ? 'border-green-500 bg-green-50'
+                                  : 'border-gray-200 bg-white hover:border-gray-300'
                               }`}
                             >
                               <div className="flex items-start justify-between mb-1">
                                 <span className={`text-sm font-medium ${
-                                  inviteForm.permissions?.[perm.key] ? 'text-green-400' : 'text-gray-300'
+                                  inviteForm.permissions?.[perm.key] ? 'text-green-700' : 'text-gray-700'
                                 }`}>
                                   {perm.label}
                                 </span>
                                 <CheckCircleIcon className={`h-5 w-5 flex-shrink-0 ${
-                                  inviteForm.permissions?.[perm.key] ? 'text-green-400' : 'text-gray-600'
+                                  inviteForm.permissions?.[perm.key] ? 'text-green-500' : 'text-gray-300'
                                 }`} />
                               </div>
                               <p className="text-xs text-gray-500">{perm.description}</p>
@@ -569,38 +569,24 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
                   </div>
                 )}
               </div>
-
-              {/* Optional Message */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Message (optional)
-                </label>
-                <textarea
-                  value={inviteForm.message || ''}
-                  onChange={(e) => setInviteForm({ ...inviteForm, message: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
-                  rows={3}
-                  placeholder="Add a personal message to your invitation..."
-                />
-              </div>
             </div>
 
             {/* Modal Actions */}
-            <div className="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-700">
+            <div className="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-200">
               <button
                 onClick={() => {
                   setShowInviteModal(false);
                   setShowCustomPermissions(false);
                 }}
-                className="px-5 py-2.5 text-gray-300 hover:text-white hover:bg-gray-700 rounded-xl transition-colors"
+                className="px-5 py-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleInvite}
-                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors font-medium shadow-lg shadow-blue-500/20"
+                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors font-medium"
               >
-                Send Invitation
+                Add Collaborator
               </button>
             </div>
           </div>
