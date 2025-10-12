@@ -136,7 +136,6 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
   const [loading, setLoading] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [expandedCollaborators, setExpandedCollaborators] = useState<Set<string>>(new Set());
-  const [showCustomPermissions, setShowCustomPermissions] = useState(false);
 
   const [inviteForm, setInviteForm] = useState<InviteCollaboratorForm>({
     userDiscordId: '',
@@ -192,7 +191,6 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
 
       if (response.ok) {
         setShowInviteModal(false);
-        setShowCustomPermissions(false);
         setInviteForm({
           userDiscordId: '',
           role: CollaboratorRole.VIEWER,
