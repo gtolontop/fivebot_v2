@@ -1,6 +1,6 @@
 import { TicketConfig, TicketCategory, TicketPanel } from '@prisma/client';
 
-export interface TicketConfigWithArrays extends Omit<TicketConfig, 'staffRoles' | 'allowedFileTypes' | 'transcriptChannelId'> {
+export interface TicketConfigWithArrays extends Omit<TicketConfig, 'staffRoles' | 'allowedFileTypes' | 'categories' | 'panels'> {
   staffRoles: string[];
   allowedFileTypes: string[];
   categories?: TicketCategory[];
@@ -21,7 +21,6 @@ export interface TicketConfigWithArrays extends Omit<TicketConfig, 'staffRoles' 
     showDelete?: boolean;
   };
   inactivityTimeout?: number;
-  transcriptChannelId?: string | null;
   dmNotifications?: boolean;
   maxActiveTickets?: number;
 }
