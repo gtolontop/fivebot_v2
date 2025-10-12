@@ -549,41 +549,65 @@ export default function TicketSystemConfig({
 
   const claimTicket = async (ticketId: string) => {
     try {
+      // Update UI optimistically
+      setActiveTickets(prev => prev.map(t =>
+        t.id === ticketId ? { ...t, claimedBy: user.username } : t
+      ));
+
       await botsAPI.claimTicket(botId, ticketId);
       toast.success('Ticket claimed successfully');
-      fetchTicketData();
+      setTimeout(() => fetchTicketData(), 2000);
     } catch (error) {
       toast.error('Failed to claim ticket');
+      fetchTicketData();
     }
   };
 
   const unclaimTicket = async (ticketId: string) => {
     try {
+      // Update UI optimistically
+      setActiveTickets(prev => prev.map(t =>
+        t.id === ticketId ? { ...t, claimedBy: null } : t
+      ));
+
       await botsAPI.unclaimTicket(botId, ticketId);
       toast.success('Ticket unclaimed successfully');
-      fetchTicketData();
+      setTimeout(() => fetchTicketData(), 2000);
     } catch (error) {
       toast.error('Failed to unclaim ticket');
+      fetchTicketData();
     }
   };
 
   const lockTicket = async (ticketId: string) => {
     try {
+      // Update UI optimistically
+      setActiveTickets(prev => prev.map(t =>
+        t.id === ticketId ? { ...t, locked: true } : t
+      ));
+
       await botsAPI.lockTicket(botId, ticketId);
       toast.success('Ticket locked successfully');
-      fetchTicketData();
+      setTimeout(() => fetchTicketData(), 2000);
     } catch (error) {
       toast.error('Failed to lock ticket');
+      fetchTicketData();
     }
   };
 
   const unlockTicket = async (ticketId: string) => {
     try {
+      // Update UI optimistically
+      setActiveTickets(prev => prev.map(t =>
+        t.id === ticketId ? { ...t, locked: false } : t
+      ));
+
       await botsAPI.unlockTicket(botId, ticketId);
       toast.success('Ticket unlocked successfully');
-      fetchTicketData();
+      setTimeout(() => fetchTicketData(), 2000);
     } catch (error) {
       toast.error('Failed to unlock ticket');
+      fetchTicketData();
     }
   };
 
@@ -638,11 +662,18 @@ export default function TicketSystemConfig({
     }
 
     try {
+      // Remove ticket optimistically from UI
+      setActiveTickets(prev => prev.filter(t => t.id !== ticketId));
+
       await botsAPI.deleteTicket(botId, ticketId);
       toast.success('Ticket deleted successfully');
-      fetchTicketData();
+
+      // Fetch again to ensure sync
+      setTimeout(() => fetchTicketData(), 2000);
     } catch (error) {
       toast.error('Failed to delete ticket');
+      // Restore ticket on error
+      fetchTicketData();
     }
   };
 
