@@ -37,6 +37,7 @@ export default function TicketViewModal({
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const [optimisticMessages, setOptimisticMessages] = useState<Message[]>([]);
   const [attachmentUrl, setAttachmentUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -100,6 +101,52 @@ export default function TicketViewModal({
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Handle paste event for image upload
+  const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+
+      // Check if it's an image
+      if (item.type.indexOf('image') !== -1) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (!file) continue;
+
+        setUploading(true);
+        toast.loading('Uploading image...', { id: 'upload' });
+
+        try {
+          // Upload to imgbb (free image hosting)
+          const formData = new FormData();
+          formData.append('image', file);
+
+          const response = await fetch(`https://api.imgbb.com/1/upload?key=d0db2f0b8d8661e8d4d2e7e8ee0a7ae7`, {
+            method: 'POST',
+            body: formData,
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            setAttachmentUrl(data.data.url);
+            toast.success('Image uploaded!', { id: 'upload' });
+          } else {
+            toast.error('Upload failed', { id: 'upload' });
+          }
+        } catch (error) {
+          console.error('Upload error:', error);
+          toast.error('Upload failed', { id: 'upload' });
+        } finally {
+          setUploading(false);
+        }
+        break;
+      }
+    }
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
