@@ -183,11 +183,14 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(inviteForm),
+        body: JSON.stringify({
+          userDiscordId: inviteForm.userDiscordId,
+          role: inviteForm.role,
+          permissions: inviteForm.permissions,
+        }),
       });
 
       if (response.ok) {
-        toast.success('Invitation sent successfully');
         setShowInviteModal(false);
         setShowCustomPermissions(false);
         setInviteForm({
