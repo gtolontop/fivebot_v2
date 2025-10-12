@@ -271,7 +271,7 @@ export default function TicketViewModal({
                 href={url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-500 hover:underline cursor-pointer"
+                className="text-blue-400 hover:underline cursor-pointer"
                 onClick={(e) => e.stopPropagation()}
               >
                 {url}
@@ -592,7 +592,7 @@ export default function TicketViewModal({
                         <div
                           className={`${
                             showOnRight
-                              ? 'bg-indigo-600 text-white rounded-2xl px-4 py-2 space-y-1'
+                              ? 'bg-gray-700 text-white rounded-2xl px-4 py-2 space-y-1'
                               : 'space-y-1'
                           }`}
                         >
