@@ -425,7 +425,7 @@ export default function TicketViewModal({
 
     return (
       <>
-        {formatted && <div className="break-words mb-2">{parseText(formatted)}</div>}
+        {formatted && <div className="break-words">{parseText(formatted)}</div>}
         {media.length > 0 && (
           <div className="space-y-2">
             {media.map((item, idx) => {
@@ -632,7 +632,7 @@ export default function TicketViewModal({
                         <div
                           className={`${
                             showOnRight
-                              ? 'bg-gray-700 text-white rounded-2xl px-4 py-2 space-y-1'
+                              ? 'bg-gray-700 text-white rounded-2xl p-4 space-y-1'
                               : 'space-y-1'
                           }`}
                         >
