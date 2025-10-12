@@ -157,7 +157,7 @@ export default function TicketViewModal({
     return formatted;
   };
 
-  const renderMessageContent = (content: string) => {
+  const renderMessageContent = (content: string, isStaffMessage: boolean = false) => {
     const formatted = formatContent(content);
 
     // Check for image URLs
@@ -180,11 +180,15 @@ export default function TicketViewModal({
         parts.push(workingText.substring(lastIndex, match.index));
       }
 
-      // Add code with styling
+      // Add code with styling - different style for staff messages (blue bg) vs user messages
       parts.push(
         <code
           key={`code-${match.index}`}
-          className="px-1.5 py-0.5 mx-0.5 bg-gray-800 text-gray-100 rounded text-sm font-mono"
+          className={`px-1.5 py-0.5 mx-0.5 rounded text-sm font-mono ${
+            isStaffMessage
+              ? 'bg-indigo-800 text-indigo-100'
+              : 'bg-gray-200 text-gray-900'
+          }`}
         >
           {match[1]}
         </code>
@@ -338,7 +342,7 @@ export default function TicketViewModal({
                         >
                           {group.messages.map((msg) => (
                             <div key={msg.id} className="text-[15px] leading-[22px]">
-                              {renderMessageContent(msg.content)}
+                              {renderMessageContent(msg.content, showOnRight)}
                             </div>
                           ))}
                         </div>
