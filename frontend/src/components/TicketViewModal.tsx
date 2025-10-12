@@ -443,23 +443,23 @@ export default function TicketViewModal({
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`block border rounded-lg p-3 hover:bg-opacity-80 transition-colors ${
-                  isStaffMessage ? 'border-indigo-400 bg-indigo-700' : 'border-gray-300 bg-gray-100'
+                  isStaffMessage ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-gray-100'
                 }`}
               >
                 <div className="flex items-start space-x-3">
                   <div className={`flex-shrink-0 w-10 h-10 rounded flex items-center justify-center ${
-                    isStaffMessage ? 'bg-indigo-600' : 'bg-gray-200'
+                    isStaffMessage ? 'bg-gray-600' : 'bg-gray-200'
                   }`}>
-                    <PaperClipIcon className={`w-5 h-5 ${isStaffMessage ? 'text-white' : 'text-gray-600'}`} />
+                    <PaperClipIcon className={`w-5 h-5 ${isStaffMessage ? 'text-gray-300' : 'text-gray-600'}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className={`text-sm font-medium truncate ${
-                      isStaffMessage ? 'text-white' : 'text-gray-900'
+                      isStaffMessage ? 'text-gray-100' : 'text-gray-900'
                     }`}>
                       {link.domain}
                     </div>
                     <div className={`text-xs truncate ${
-                      isStaffMessage ? 'text-indigo-200' : 'text-gray-500'
+                      isStaffMessage ? 'text-gray-400' : 'text-gray-500'
                     }`}>
                       {link.url}
                     </div>
