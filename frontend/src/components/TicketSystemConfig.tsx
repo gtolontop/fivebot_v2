@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { 
-  TicketIcon, 
-  PlusIcon, 
+import {
+  TicketIcon,
+  PlusIcon,
   TrashIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
@@ -18,7 +18,12 @@ import {
   EyeIcon,
   PencilIcon,
   ChartBarIcon,
-  CpuChipIcon
+  CpuChipIcon,
+  XMarkIcon,
+  LockClosedIcon,
+  LockOpenIcon,
+  UserPlusIcon,
+  UserMinusIcon
 } from '@heroicons/react/24/outline';
 import SearchableDropdown from './SearchableDropdown';
 import TicketViewModal from './TicketViewModal';
