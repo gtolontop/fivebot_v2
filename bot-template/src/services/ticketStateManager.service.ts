@@ -284,17 +284,6 @@ export class TicketStateManager {
       activityState: newActivityState,
       lastActivity: new Date()
     });
-
-    // Reset any active timers
-    await this.ticketService.prismaClient.ticketTimer.updateMany({
-      where: {
-        ticketId,
-        active: true
-      },
-      data: {
-        lastReset: new Date()
-      }
-    });
   }
 
   // Get activity state color
