@@ -13,6 +13,7 @@ import { BotsModule } from './bots/bots.module';
 import { CreditsModule } from './credits/credits.module';
 import { QueueModule } from './queue/queue.module';
 import { TasksModule } from './tasks/tasks.module';
+import { UrlMetadataController } from './utils/url-metadata.controller';
 
 @Module({
   imports: [
@@ -34,7 +35,7 @@ import { TasksModule } from './tasks/tasks.module';
     QueueModule,
     TasksModule,
   ],
-  controllers: [],
+  controllers: [UrlMetadataController],
   providers: [AppService],
 })
 export class AppModule {}
