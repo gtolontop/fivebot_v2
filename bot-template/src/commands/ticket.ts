@@ -219,7 +219,15 @@ async function handlePanel(
   // Use the specified channel, or fall back to current channel
   const targetChannel = channelOption || interaction.channel;
 
-  if (!targetChannel || !targetChannel.isTextBased()) {
+  if (!targetChannel) {
+    await interaction.editReply({
+      content: '❌ Invalid channel. Please use a text channel.'
+    });
+    return;
+  }
+
+  // Type guard: check if it's a text-based channel
+  if (!('send' in targetChannel) || typeof targetChannel.send !== 'function') {
     await interaction.editReply({
       content: '❌ Invalid channel. Please use a text channel.'
     });
