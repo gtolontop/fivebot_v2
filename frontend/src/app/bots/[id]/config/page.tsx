@@ -590,12 +590,12 @@ export default function BotConfigPage() {
       // Update local state
       setConfig(defaultConfig);
 
-      toast.success('Configuration reset to defaults successfully');
+      toast.success('Configuration reset to defaults successfully. Refreshing page...');
 
-      // If bot is running, suggest restart
-      if (bot?.status === 'ONLINE') {
-        toast('Bot is running - restart to apply changes', { icon: '⚠️' });
-      }
+      // Refresh the page to clear all component states
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
     } catch (error) {
       toast.error('Failed to reset configuration');
       console.error('Reset config error:', error);
