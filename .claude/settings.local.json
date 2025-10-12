@@ -47,7 +47,8 @@
       "Bash(npx ts-node:*)",
       "Bash(tasklist)",
       "Read(//tmp/scp35119/opt/fivebot/backend/**)",
-      "Bash(del vercel.json)"
+      "Bash(del vercel.json)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": [],
