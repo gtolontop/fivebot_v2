@@ -1180,13 +1180,13 @@ export default function TicketSystemConfig({
               className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
             >
               <div className="flex items-center">
-                <DocumentTextIcon className="w-5 h-5 text-gray-600 mr-3" />
+                <DocumentTextIcon className="w-5 h-5 text-green-600 mr-3" />
                 <h3 className="text-lg font-semibold text-gray-900">Active Tickets</h3>
                 <span className="ml-2 text-sm text-gray-500">({activeTickets.length})</span>
               </div>
               {expandedSections.active ? <ChevronUpIcon className="w-5 h-5" /> : <ChevronDownIcon className="w-5 h-5" />}
             </button>
-            
+
             {expandedSections.active && (
               <div className="px-6 pb-6">
                 {activeTickets.length > 0 ? (
