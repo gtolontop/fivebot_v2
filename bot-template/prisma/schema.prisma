@@ -269,10 +269,10 @@ model Ticket {
   assignedStaffId String?               @map("assigned_staff_id")
   type            String
   category        String?
-  priority        String                @default("medium")
+  priority        String                @default("NORMAL")
   state           String                @default("open")
   activityState   String                @default("active") @map("activity_state")
-  containerType   String                @default("channel") @map("container_type")
+  containerType   ContainerType         @default(CHANNEL) @map("container_type")
   lastActivity    DateTime              @default(now()) @map("last_activity")
   feedbackRating  Int?                  @map("feedback_rating")
   createdAt       DateTime              @default(now()) @map("created_at")
