@@ -186,9 +186,10 @@ export default function TicketViewModal({
 
                 // Check if this message should be grouped with the previous one
                 const prevMessage = index > 0 ? messages[index - 1] : null;
+                const timeDiff = prevMessage ? (new Date(message.createdAt).getTime() - new Date(prevMessage.createdAt).getTime()) : Infinity;
                 const isGrouped = prevMessage &&
                   prevMessage.userId === message.userId &&
-                  (new Date(message.createdAt).getTime() - new Date(prevMessage.createdAt).getTime()) < 300000; // 5 minutes
+                  timeDiff < 300000; // 5 minutes
 
                 // Get avatar URL
                 let avatarUrl = null;
@@ -205,52 +206,54 @@ export default function TicketViewModal({
                 return (
                   <div
                     key={message.id}
-                    className={`flex gap-2 ${showOnRight ? 'justify-end' : 'justify-start'} ${isGrouped ? 'mt-1' : 'mt-4'}`}
+                    className={`flex gap-3 ${showOnRight ? 'justify-end' : 'justify-start'} ${isGrouped ? 'mt-0.5' : 'mt-4'}`}
                   >
                     {!showOnRight && (
-                      <div className="flex-shrink-0 w-8">
-                        {!isGrouped && avatarUrl ? (
-                          <img src={avatarUrl} alt="Avatar" className="w-8 h-8 rounded-full" />
-                        ) : !isGrouped ? (
-                          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
-                            <UserIcon className="w-5 h-5 text-gray-600" />
-                          </div>
+                      <div className="flex-shrink-0 w-10">
+                        {!isGrouped ? (
+                          avatarUrl ? (
+                            <img src={avatarUrl} alt="Avatar" className="w-10 h-10 rounded-full" />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
+                              <UserIcon className="w-6 h-6 text-gray-600" />
+                            </div>
+                          )
                         ) : null}
                       </div>
                     )}
-                    <div className="flex flex-col max-w-[70%]">
+                    <div className="flex flex-col" style={{ maxWidth: '65%' }}>
                       {!isGrouped && (
-                        <div className="flex items-center space-x-2 mb-1 px-1">
-                          <span className={`text-xs font-medium ${
-                            showOnRight ? 'text-gray-700' : 'text-gray-700'
-                          }`}>
+                        <div className="flex items-baseline space-x-2 mb-1">
+                          <span className="text-sm font-semibold text-gray-900">
                             {isCurrentUser ? currentUser.username : (message.username || (message.isStaff ? 'Staff' : 'User'))}
                           </span>
-                          <span className="text-xs text-gray-400">
+                          <span className="text-xs text-gray-500">
                             {formatTime(message.createdAt)}
                           </span>
                         </div>
                       )}
                       <div
-                        className={`rounded-lg px-4 py-2 ${
+                        className={`${
                           showOnRight
-                            ? 'bg-indigo-600 text-white'
-                            : 'bg-white text-gray-900 border border-gray-200'
+                            ? 'bg-indigo-600 text-white rounded-2xl px-4 py-2'
+                            : 'text-gray-900'
                         }`}
                       >
-                        <p className="text-sm whitespace-pre-wrap break-words">
+                        <p className="text-[15px] leading-[22px] whitespace-pre-wrap break-words">
                           {message.content}
                         </p>
                       </div>
                     </div>
                     {showOnRight && (
-                      <div className="flex-shrink-0 w-8">
-                        {!isGrouped && avatarUrl ? (
-                          <img src={avatarUrl} alt="Avatar" className="w-8 h-8 rounded-full" />
-                        ) : !isGrouped ? (
-                          <div className="w-8 h-8 rounded-full bg-indigo-300 flex items-center justify-center">
-                            <UserIcon className="w-5 h-5 text-indigo-700" />
-                          </div>
+                      <div className="flex-shrink-0 w-10">
+                        {!isGrouped ? (
+                          avatarUrl ? (
+                            <img src={avatarUrl} alt="Avatar" className="w-10 h-10 rounded-full" />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-indigo-300 flex items-center justify-center">
+                              <UserIcon className="w-6 h-6 text-indigo-700" />
+                            </div>
+                          )
                         ) : null}
                       </div>
                     )}
