@@ -183,6 +183,13 @@ export default function TicketSystemConfig({
   useEffect(() => {
     if (config.ticketEnabled && botId) {
       fetchTicketData();
+
+      // Auto-refresh tickets every 5 seconds
+      const interval = setInterval(() => {
+        fetchTicketData();
+      }, 5000);
+
+      return () => clearInterval(interval);
     }
   }, [config.ticketEnabled, botId]);
 
