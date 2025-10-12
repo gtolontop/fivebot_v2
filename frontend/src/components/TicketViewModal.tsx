@@ -364,28 +364,32 @@ export default function TicketViewModal({
         </div>
 
         {/* Message Input */}
-        <form onSubmit={handleSendMessage} className="px-6 py-4 border-t border-gray-200 bg-white">
-          <div className="flex space-x-3">
-            <input
-              type="text"
+        <form onSubmit={handleSendMessage} className="px-6 py-4 border-t border-gray-200 bg-white rounded-b-lg">
+          <div className="flex items-end space-x-3">
+            <textarea
+              ref={inputRef}
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Type your message..."
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage(e);
+                }
+              }}
+              placeholder="Type your message... (Shift+Enter for new line)"
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none min-h-[44px] max-h-32"
+              rows={1}
               disabled={sending}
             />
             <button
               type="submit"
               disabled={!newMessage.trim() || sending}
-              className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 transition-colors"
+              className="px-5 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-all hover:scale-105 active:scale-95"
             >
               {sending ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
               ) : (
-                <>
-                  <span>Send</span>
-                  <PaperAirplaneIcon className="w-5 h-5" />
-                </>
+                <PaperAirplaneIcon className="w-5 h-5" />
               )}
             </button>
           </div>
