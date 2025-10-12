@@ -534,6 +534,118 @@ export default function TicketSystemConfig({
     }
   };
 
+  const renameTicket = async (ticketId: string) => {
+    const newName = prompt('Enter new ticket name:');
+    if (!newName) return;
+
+    try {
+      await botsAPI.renameTicket(botId, ticketId, newName);
+      toast.success('Ticket renamed successfully');
+      fetchTicketData();
+    } catch (error) {
+      toast.error('Failed to rename ticket');
+    }
+  };
+
+  const claimTicket = async (ticketId: string) => {
+    try {
+      await botsAPI.claimTicket(botId, ticketId);
+      toast.success('Ticket claimed successfully');
+      fetchTicketData();
+    } catch (error) {
+      toast.error('Failed to claim ticket');
+    }
+  };
+
+  const unclaimTicket = async (ticketId: string) => {
+    try {
+      await botsAPI.unclaimTicket(botId, ticketId);
+      toast.success('Ticket unclaimed successfully');
+      fetchTicketData();
+    } catch (error) {
+      toast.error('Failed to unclaim ticket');
+    }
+  };
+
+  const lockTicket = async (ticketId: string) => {
+    try {
+      await botsAPI.lockTicket(botId, ticketId);
+      toast.success('Ticket locked successfully');
+      fetchTicketData();
+    } catch (error) {
+      toast.error('Failed to lock ticket');
+    }
+  };
+
+  const unlockTicket = async (ticketId: string) => {
+    try {
+      await botsAPI.unlockTicket(botId, ticketId);
+      toast.success('Ticket unlocked successfully');
+      fetchTicketData();
+    } catch (error) {
+      toast.error('Failed to unlock ticket');
+    }
+  };
+
+  const addUserToTicket = async (ticketId: string) => {
+    const userId = prompt('Enter Discord User ID to add:');
+    if (!userId) return;
+
+    try {
+      await botsAPI.addUserToTicket(botId, ticketId, userId);
+      toast.success('User added to ticket successfully');
+      fetchTicketData();
+    } catch (error) {
+      toast.error('Failed to add user to ticket');
+    }
+  };
+
+  const removeUserFromTicket = async (ticketId: string) => {
+    const userId = prompt('Enter Discord User ID to remove:');
+    if (!userId) return;
+
+    try {
+      await botsAPI.removeUserFromTicket(botId, ticketId, userId);
+      toast.success('User removed from ticket successfully');
+      fetchTicketData();
+    } catch (error) {
+      toast.error('Failed to remove user from ticket');
+    }
+  };
+
+  const changeTicketPriority = async (ticketId: string) => {
+    const priority = prompt('Enter priority (LOW, NORMAL, HIGH, URGENT):');
+    if (!priority) return;
+
+    const validPriorities = ['LOW', 'NORMAL', 'HIGH', 'URGENT'];
+    if (!validPriorities.includes(priority.toUpperCase())) {
+      toast.error('Invalid priority. Use: LOW, NORMAL, HIGH, or URGENT');
+      return;
+    }
+
+    try {
+      await botsAPI.changeTicketPriority(botId, ticketId, priority.toUpperCase());
+      toast.success('Ticket priority changed successfully');
+      fetchTicketData();
+    } catch (error) {
+      toast.error('Failed to change ticket priority');
+    }
+  };
+
+  const deleteTicket = async (ticketId: string) => {
+    if (!confirm('Are you sure you want to delete this ticket? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await botsAPI.deleteTicket(botId, ticketId);
+      toast.success('Ticket deleted successfully');
+      fetchTicketData();
+    } catch (error) {
+      toast.error('Failed to delete ticket');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
