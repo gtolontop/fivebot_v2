@@ -244,13 +244,10 @@ export class TicketService {
   async updateTicket(ticketId: string, data: any): Promise<Ticket> {
     // Remove fields that shouldn't be updated directly
     const { id, guildId, ticketNumber, createdAt, ...updateData } = data;
-    
+
     return await prisma.ticket.update({
       where: { id: ticketId },
-      data: {
-        ...updateData,
-        updatedAt: new Date()
-      }
+      data: updateData
     });
   }
 
@@ -316,7 +313,6 @@ export class TicketService {
       const newActivityState = data.isStaff ? 'GREEN' : 'ORANGE';
       await this.updateTicket(data.ticketId, {
         activityState: newActivityState,
-        lastMessageFrom: data.authorId,
         lastActivity: new Date()
       });
     }
