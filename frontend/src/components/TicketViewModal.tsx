@@ -297,6 +297,34 @@ export default function TicketViewModal({
       const processSegment = (segment: string, depth = 0): React.ReactNode => {
         if (depth > 5) return segment; // Prevent infinite recursion
 
+        // Discord mentions @Username, @RoleName, #channel-name
+        const mentionMatch = segment.match(/(@[A-Za-z0-9_\-\s]+|#[a-z0-9\-]+)/);
+        if (mentionMatch) {
+          const before = segment.substring(0, mentionMatch.index);
+          const mention = mentionMatch[0];
+          const after = segment.substring(mentionMatch.index! + mentionMatch[0].length);
+          return (
+            <>
+              {before && processSegment(before, depth + 1)}
+              <span
+                key={`mention-${key++}`}
+                className={`${
+                  mention.startsWith('@')
+                    ? isStaffMessage
+                      ? 'bg-indigo-900 text-indigo-200'
+                      : 'bg-blue-100 text-blue-800'
+                    : isStaffMessage
+                    ? 'bg-indigo-900 text-indigo-200'
+                    : 'bg-gray-200 text-gray-700'
+                } px-1 py-0.5 rounded font-medium`}
+              >
+                {mention}
+              </span>
+              {after && processSegment(after, depth + 1)}
+            </>
+          );
+        }
+
         // URLs (make them clickable and styled like Discord)
         const urlMatch = segment.match(/(https?:\/\/[^\s]+)/);
         if (urlMatch) {
