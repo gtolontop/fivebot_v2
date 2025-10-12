@@ -1049,18 +1049,21 @@ export default function TicketSystemConfig({
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <a
-                              href={`https://discord.com/channels/${ticket.guildId}/${ticket.channelId}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-indigo-600 hover:text-indigo-800"
+                            <button
+                              onClick={() => {
+                                setSelectedTicket(ticket);
+                                setShowTicketModal(true);
+                              }}
+                              className="text-indigo-600 hover:text-indigo-800 transition-colors"
+                              title="View ticket messages"
                             >
                               <EyeIcon className="w-4 h-4" />
-                            </a>
+                            </button>
                             {ticket.state === 'OPEN' && (
                               <button
                                 onClick={() => closeTicket(ticket.id)}
                                 className="text-red-600 hover:text-red-800"
+                                title="Close ticket"
                               >
                                 <TrashIcon className="w-4 h-4" />
                               </button>
