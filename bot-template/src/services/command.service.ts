@@ -91,11 +91,15 @@ export class CommandService {
         case 'SEND_TICKET_PANEL':
           await this.handleSendTicketPanel(command.data);
           break;
-          
+
+        case 'SEND_TICKET_MESSAGE':
+          await this.handleSendTicketMessage(command.data);
+          break;
+
         case 'UPDATE_CONFIG':
           await this.handleUpdateConfig(command.data);
           break;
-          
+
         default:
           throw new Error(`Unknown command action: ${command.action}`);
       }
