@@ -18,6 +18,9 @@ import { TicketService } from './ticket.service';
 // Define types locally since they're not in Prisma schema
 type PanelType = 'BUTTON' | 'DROPDOWN' | 'HYBRID' | 'REACTION';
 
+// Import TicketPanel from Prisma
+import { TicketPanel, TicketCategory } from '@prisma/client';
+
 interface TicketCategory {
   id: string;
   name: string;
@@ -328,14 +331,15 @@ export class TicketPanelService {
 
       const categories = await prisma.ticketCategory.findMany({
         where: {
-          configId: panel.configId,
+          botId: panel.botId,
+          guildId: guild.id,
           active: true
-        },
-        orderBy: { order: 'asc' }
+        }
+        // Note: 'order' field doesn't exist in TicketCategory schema
       });
 
-      const embed = this.buildEmbed(panel.embedData as any, guild);
-      const components = await this.buildComponents(panel.type, categories, panel.configId);
+      const embed = this.buildEmbed(panel.config as any, guild);
+      const components = await this.buildComponents(panel.type as PanelType, categories as any[], panel.botId);
 
       await message.edit({
         embeds: [embed],
