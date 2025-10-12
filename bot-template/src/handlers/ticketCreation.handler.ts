@@ -17,7 +17,7 @@ import { TicketService, TicketConfigWithArrays } from '../services/ticket.servic
 import { TicketStateManager } from '../services/ticketStateManager.service';
 import { TicketPanelService } from '../services/ticketPanel.service';
 import { TicketValidationService } from '../services/ticketValidation.service';
-import { ContainerType, TicketPriority } from '@prisma/client';
+import { ContainerType, TicketPriority, PrismaClient } from '@prisma/client';
 import { getErrorMessage, formatError } from '../utils/ticketErrorMessages';
 
 export class TicketCreationHandler {
