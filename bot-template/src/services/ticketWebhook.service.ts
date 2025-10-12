@@ -20,8 +20,8 @@ export class TicketWebhookService {
 
       const channel = await this.client.channels.fetch(channelId);
 
-      if (!channel || !channel.isTextBased()) {
-        console.error(`Channel ${channelId} is not a text channel`);
+      if (!channel) {
+        console.error(`Channel ${channelId} not found`);
         return null;
       }
 
@@ -35,8 +35,11 @@ export class TicketWebhookService {
           return null;
         }
         webhookChannel = parent;
+      } else if (channel instanceof TextChannel) {
+        webhookChannel = channel;
       } else {
-        webhookChannel = channel as TextChannel;
+        console.error(`Channel ${channelId} is not a text channel or thread (type: ${channel.type})`);
+        return null;
       }
 
       // Fetch existing webhooks
