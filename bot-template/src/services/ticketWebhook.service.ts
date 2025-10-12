@@ -88,10 +88,18 @@ export class TicketWebhookService {
       const channel = await this.client.channels.fetch(channelId);
       const threadId = channel?.isThread() ? channelId : undefined;
 
+      // Validate and sanitize avatar URL
+      let validAvatarURL = avatarURL;
+      if (avatarURL && !avatarURL.startsWith('http://') && !avatarURL.startsWith('https://')) {
+        // Invalid URL format, skip it
+        console.warn(`Invalid avatar URL format: ${avatarURL}, skipping avatar`);
+        validAvatarURL = undefined;
+      }
+
       await webhook.send({
         content,
         username,
-        avatarURL,
+        avatarURL: validAvatarURL,
         threadId
       });
 
