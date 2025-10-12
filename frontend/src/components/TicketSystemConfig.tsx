@@ -628,18 +628,24 @@ export default function TicketSystemConfig({
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Default Ticket Category
                   </label>
-                  <SearchableDropdown
-                    options={guilds.flatMap(guild =>
-                      guild.channels.filter((channel: any) => channel.type === 4).map((channel: any) => ({
-                        ...channel,
-                        guildName: guild.name
-                      }))
-                    )}
-                    value={config.ticketCategoryId || ''}
-                    onChange={(value) => updateConfig({ ticketCategoryId: value as string })}
-                    placeholder="Select a category for ticket channels"
-                    emptyMessage="No categories available"
-                  />
+                  {guilds.length === 0 ? (
+                    <div className="text-sm text-gray-500 p-3 bg-gray-50 rounded-md">
+                      Loading Discord data... If this persists, make sure your bot is online and in a server.
+                    </div>
+                  ) : (
+                    <SearchableDropdown
+                      options={guilds.flatMap(guild =>
+                        guild.channels.filter((channel: any) => channel.type === 4).map((channel: any) => ({
+                          ...channel,
+                          guildName: guild.name
+                        }))
+                      )}
+                      value={config.ticketCategoryId || ''}
+                      onChange={(value) => updateConfig({ ticketCategoryId: value as string })}
+                      placeholder="Select a category for ticket channels"
+                      emptyMessage="No categories available - Create a category in your Discord server first"
+                    />
+                  )}
                   <p className="text-xs text-gray-500 mt-1">
                     New tickets will be created in this Discord category
                   </p>
