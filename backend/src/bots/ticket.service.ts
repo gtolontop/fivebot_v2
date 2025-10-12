@@ -497,4 +497,32 @@ export class TicketService {
     // TODO: Close ticket channel in Discord
     console.log(`TODO: Close ticket ${ticket.id} in Discord`);
   }
+
+  // Commands Management
+  private getDefaultCommands(): TicketCommands {
+    return {
+      close: true,
+      add: true,
+      remove: true,
+      claim: true,
+      unclaim: true,
+      lock: true,
+      unlock: true,
+      rename: true,
+      transfer: true,
+      priority: true
+    };
+  }
+
+  async getCommands(botId: string): Promise<TicketCommands> {
+    const data = await this.getTicketData(botId);
+    return data.commands || this.getDefaultCommands();
+  }
+
+  async updateCommands(botId: string, commands: Partial<TicketCommands>): Promise<TicketCommands> {
+    const data = await this.getTicketData(botId);
+    const updatedCommands = { ...data.commands, ...commands };
+    await this.saveTicketData(botId, { commands: updatedCommands });
+    return updatedCommands;
+  }
 }
