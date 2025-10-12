@@ -733,14 +733,16 @@ export class BotsService {
           return;
         }
 
-        // Use a simple update with timeout
+        // Use a simple update with timeout (PostgreSQL version)
         try {
-          await this.prisma.$executeRaw`SET SESSION innodb_lock_wait_timeout = 1`;
-          await this.prisma.$executeRaw`
-            UPDATE bots 
-            SET status = ${status}, updated_at = NOW()
-            WHERE id = ${botId}
-          `;
+          await this.prisma.$executeRaw`SET statement_timeout = '1s'`;
+          await this.prisma.bot.update({
+            where: { id: botId },
+            data: {
+              status: status,
+              updatedAt: new Date(),
+            },
+          });
 
           console.log(`✅ Successfully updated bot ${botId} status to ${status}`);
 
@@ -763,7 +765,7 @@ export class BotsService {
           return; // Success, exit function
         } finally {
           // Reset to default timeout
-          await this.prisma.$executeRaw`SET SESSION innodb_lock_wait_timeout = 50`;
+          await this.prisma.$executeRaw`SET statement_timeout = '30s'`;
         }
         
       } catch (error: any) {
