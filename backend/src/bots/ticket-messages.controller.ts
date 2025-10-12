@@ -54,9 +54,9 @@ export class TicketMessagesController {
   async getMessages(
     @Param('botId') botId: string,
     @Param('ticketId') ticketId: string,
+    @Req() req: any,
     @Query('limit') limit?: string,
     @Query('before') before?: string,
-    @Req() req: any,
   ) {
     // Verify bot ownership
     const bot = await this.botsService.findOne(botId, req.user.id);
