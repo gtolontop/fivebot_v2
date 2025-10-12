@@ -558,7 +558,7 @@ export default function TicketSystemConfig({
     try {
       // Update UI optimistically
       setActiveTickets(prev => prev.map(t =>
-        t.id === ticketId ? { ...t, claimedBy: user.username } : t
+        t.id === ticketId ? { ...t, claimedBy: user?.username || 'Unknown' } : t
       ));
 
       await botsAPI.claimTicket(botId, ticketId);
