@@ -571,9 +571,21 @@ export class TicketCreationHandler {
       return thread;
     } else {
       // Create channel
-      const category = config.supportCategoryId
-        ? await interaction.guild!.channels.fetch(config.supportCategoryId)
-        : null;
+      let category = null;
+      if (config.supportCategoryId) {
+        try {
+          category = await interaction.guild!.channels.fetch(config.supportCategoryId);
+          if (category && category.type !== 4) { // Not a category
+            console.error(`[TicketCreation] Channel ${config.supportCategoryId} is not a category`);
+            category = null;
+          }
+        } catch (error: any) {
+          if (error.code === 10003) {
+            throw new Error('❌ The configured ticket category no longer exists. Please update your ticket system configuration in the dashboard.');
+          }
+          throw error;
+        }
+      }
 
       const channel = await interaction.guild!.channels.create({
         name: channelName,
