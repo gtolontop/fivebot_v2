@@ -13,7 +13,11 @@ const TicketState = {
 const ActivityState = {
   ACTIVE: 'ACTIVE',
   INACTIVE: 'INACTIVE',
-  WARNING: 'WARNING'
+  WARNING: 'WARNING',
+  GRAY: 'GRAY',
+  GREEN: 'GREEN',
+  ORANGE: 'ORANGE',
+  RED: 'RED'
 } as const;
 
 const TimerType = {
@@ -287,7 +291,7 @@ export class TicketStateManager {
   }
 
   // Get activity state color
-  getActivityColor(state: ActivityState): number {
+  getActivityColor(state: typeof ActivityState[keyof typeof ActivityState]): number {
     switch (state) {
       case ActivityState.GRAY:
         return 0x808080; // Gray
