@@ -250,8 +250,8 @@ export class DiscordService {
         return guildsWithDetails;
       });
 
-      // Cache the result for 10 minutes
-      this.cacheService.set(cacheKey, guilds, 10 * 60 * 1000);
+      // Cache the result for 1 minute (reduced from 10 minutes for fresher data)
+      this.cacheService.set(cacheKey, guilds, 1 * 60 * 1000);
       console.log(`Cached ${guilds.length} guilds`);
       
       return guilds;
@@ -308,8 +308,8 @@ export class DiscordService {
         }));
       });
 
-      // Cache for 15 minutes
-      this.cacheService.set(cacheKey, channels, 15 * 60 * 1000);
+      // Cache for 1 minute (reduced for fresher data)
+      this.cacheService.set(cacheKey, channels, 1 * 60 * 1000);
       return channels;
     } catch (error) {
       console.error('Error fetching guild channels:', error);
@@ -409,8 +409,8 @@ export class DiscordService {
         }));
       });
 
-      // Cache for 15 minutes
-      this.cacheService.set(cacheKey, roles, 15 * 60 * 1000);
+      // Cache for 1 minute (reduced for fresher data)
+      this.cacheService.set(cacheKey, roles, 1 * 60 * 1000);
       return roles;
     } catch (error) {
       console.error('Error fetching guild roles:', error);
