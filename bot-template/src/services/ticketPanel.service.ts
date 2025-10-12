@@ -96,11 +96,11 @@ export class TicketPanelService {
 
       // Get existing panels and add the new one
       const existingPanels = config.panels || [];
-      const updatedPanels = [...existingPanels, panelData];
+      const updatedPanels = [...existingPanels, panelData] as any;
 
       // Update config with new panel
       await this.ticketService.updateConfig(guild.id, {
-        panels: updatedPanels
+        panels: updatedPanels as any
       });
 
       return message;
