@@ -91,6 +91,7 @@ export default function TicketSystemConfig({
 }: TicketSystemConfigProps) {
   const { user } = useAuth();
   const [activeTickets, setActiveTickets] = useState<any[]>([]);
+  const [closedTickets, setClosedTickets] = useState<any[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<any | null>(null);
   const [showTicketModal, setShowTicketModal] = useState(false);
   const [ticketStats, setTicketStats] = useState({
