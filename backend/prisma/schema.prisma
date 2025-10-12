@@ -366,7 +366,7 @@ model TicketLog {
   ticketId    String   @map("ticket_id")
   action      String
   performedBy String   @map("performed_by")
-  details     String?  @db.LongText
+  details     String?  @db.Text
   createdAt   DateTime @default(now()) @map("created_at")
   ticket      Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 
