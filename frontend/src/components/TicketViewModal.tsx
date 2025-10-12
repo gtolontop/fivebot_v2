@@ -20,7 +20,7 @@ interface TicketViewModalProps {
   ticketId: string;
   ticketNumber: number;
   onClose: () => void;
-  currentUser: { id: string; username: string; avatar?: string };
+  currentUser: { id: string; discordId: string; username: string; avatar?: string };
 }
 
 export default function TicketViewModal({
@@ -84,13 +84,13 @@ export default function TicketViewModal({
           avatarUrl = currentUser.avatar;
         } else {
           // Construct Discord CDN URL from hash
-          avatarUrl = `https://cdn.discordapp.com/avatars/${currentUser.id}/${currentUser.avatar}.png`;
+          avatarUrl = `https://cdn.discordapp.com/avatars/${currentUser.discordId}/${currentUser.avatar}.png`;
         }
       }
 
       await botsAPI.sendTicketMessage(botId, ticketId, {
         content: newMessage,
-        userId: currentUser.id,
+        userId: currentUser.discordId,
         username: currentUser.username,
         avatar: avatarUrl
       });
