@@ -227,7 +227,7 @@ export class TicketService {
           { channelId },
           { threadId: channelId }
         ],
-        state: { not: TicketState.CLOSED },
+        state: { not: 'CLOSED' },
         deletedAt: null
       }
     });
