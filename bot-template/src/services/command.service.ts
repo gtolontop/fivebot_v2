@@ -272,7 +272,10 @@ export class CommandService {
     const ticket = await this.prisma.ticket.findUnique({ where: { id: ticketId } });
     if (!ticket) throw new Error('Ticket not found');
 
-    const channel = this.client.channels.cache.get(ticket.channelId || ticket.threadId);
+    const channelId = ticket.channelId || ticket.threadId;
+    if (!channelId) return;
+
+    const channel = this.client.channels.cache.get(channelId);
     if (channel && channel.isTextBased()) {
       await (channel as any).setName(name);
     }
