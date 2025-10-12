@@ -106,12 +106,14 @@ export class TicketService {
     const data = await this.getTicketData(botId);
     const newCategory: TicketCategory = {
       id: Date.now().toString(),
-      ...category
+      ...category,
+      // Set active to true by default if not provided
+      active: category.active !== undefined ? category.active : true
     };
-    
+
     data.categories.push(newCategory);
     await this.saveTicketData(botId, { categories: data.categories });
-    
+
     return newCategory;
   }
 
