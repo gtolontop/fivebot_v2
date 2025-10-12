@@ -9,8 +9,9 @@ export default {
     const ticket = await ticketService.getTicketByChannel(message.channel.id);
     if (!ticket) return;
 
-    // Ignore bot messages and webhooks (webhooks are saved by command service with correct userId)
-    if (message.author.bot || message.webhookId !== null) {
+    // Ignore only webhooks (webhooks are saved by command service with correct userId)
+    // Allow normal bot messages to be saved
+    if (message.webhookId !== null) {
       return;
     }
 
