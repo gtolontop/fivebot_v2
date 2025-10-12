@@ -625,17 +625,17 @@ export class TicketCreationHandler {
   }
 
   // Parse priority from text
-  private parsePriority(text: string): TicketPriority {
+  private parsePriority(text: string): string {
     const normalized = text.toLowerCase().trim();
     switch (normalized) {
       case 'low':
-        return TicketPriority.LOW;
+        return 'LOW';
       case 'high':
-        return TicketPriority.HIGH;
+        return 'HIGH';
       case 'urgent':
-        return TicketPriority.URGENT;
+        return 'URGENT';
       default:
-        return TicketPriority.NORMAL;
+        return 'NORMAL';
     }
   }
 
