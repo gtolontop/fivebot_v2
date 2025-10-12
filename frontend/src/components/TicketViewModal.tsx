@@ -160,13 +160,20 @@ export default function TicketViewModal({
   const renderMessageContent = (content: string, isStaffMessage: boolean = false) => {
     let formatted = formatContent(content);
 
-    // Extract images
-    const imageRegex = /(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp))/gi;
+    // Extract images - support any URL with image extension + query params
+    const imageRegex = /(https?:\/\/\S+?\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?\S*)?)/gi;
     const images: string[] = [];
-    formatted.replace(imageRegex, (match) => {
-      images.push(match);
-      return match;
+    let textWithoutImages = formatted;
+
+    // Find and extract all image URLs
+    const matches = Array.from(formatted.matchAll(imageRegex));
+    matches.forEach(match => {
+      images.push(match[0]);
+      // Remove image URL from text
+      textWithoutImages = textWithoutImages.replace(match[0], '').trim();
     });
+
+    formatted = textWithoutImages;
 
     // Parse Discord markdown
     const parseText = (text: string): React.ReactNode => {
