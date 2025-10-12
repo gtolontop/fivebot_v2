@@ -1,6 +1,7 @@
 import { Client } from 'discord.js';
 import { PrismaClient } from '@prisma/client';
 import { TicketPanelService } from './ticketPanel.service';
+import { TicketWebhookService } from './ticketWebhook.service';
 
 interface BotCommand {
   id: string;
@@ -13,12 +14,14 @@ export class CommandService {
   private prisma: PrismaClient;
   private botId: string;
   private ticketPanelService: TicketPanelService | null = null;
+  private webhookService: TicketWebhookService;
   private pollInterval: NodeJS.Timeout | null = null;
 
   constructor(client: Client, prisma: PrismaClient, botId: string) {
     this.client = client;
     this.prisma = prisma;
     this.botId = botId;
+    this.webhookService = new TicketWebhookService(client);
   }
 
   setTicketPanelService(service: TicketPanelService) {
