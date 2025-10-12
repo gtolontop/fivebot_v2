@@ -99,6 +99,42 @@ export class CommandService {
           await this.handleSendTicketMessage(command.data);
           break;
 
+        case 'RENAME_TICKET':
+          await this.handleRenameTicket(command.data);
+          break;
+
+        case 'CLAIM_TICKET':
+          await this.handleClaimTicket(command.data);
+          break;
+
+        case 'UNCLAIM_TICKET':
+          await this.handleUnclaimTicket(command.data);
+          break;
+
+        case 'LOCK_TICKET':
+          await this.handleLockTicket(command.data);
+          break;
+
+        case 'UNLOCK_TICKET':
+          await this.handleUnlockTicket(command.data);
+          break;
+
+        case 'ADD_USER_TO_TICKET':
+          await this.handleAddUserToTicket(command.data);
+          break;
+
+        case 'REMOVE_USER_FROM_TICKET':
+          await this.handleRemoveUserFromTicket(command.data);
+          break;
+
+        case 'CHANGE_TICKET_PRIORITY':
+          await this.handleChangeTicketPriority(command.data);
+          break;
+
+        case 'DELETE_TICKET':
+          await this.handleDeleteTicket(command.data);
+          break;
+
         case 'UPDATE_CONFIG':
           await this.handleUpdateConfig(command.data);
           break;
