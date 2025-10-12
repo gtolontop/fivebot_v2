@@ -255,7 +255,8 @@ export class TicketService {
           t.claimed_by as "claimedBy",
           t.locked,
           t.type,
-          t.category as "categoryName",
+          t.category as "categoryId",
+          COALESCE(tc.name, t.category) as "categoryName",
           t.priority,
           t.state,
           t.activity_state as "activityState",
@@ -265,6 +266,7 @@ export class TicketService {
           t.closed_at as "closedAt",
           (SELECT COUNT(*) FROM ticket_messages WHERE ticket_id = t.id) as "messageCount"
         FROM tickets t
+        LEFT JOIN ticket_categories tc ON t.category = tc.id AND t.guild_id = tc.guild_id
         WHERE t.deleted_at IS NULL
           AND t.guild_id IN (${placeholders})
         ORDER BY t.created_at DESC
