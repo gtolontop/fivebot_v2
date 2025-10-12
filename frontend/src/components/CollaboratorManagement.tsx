@@ -11,7 +11,11 @@ import {
   XCircleIcon,
   PencilIcon,
   ChevronDownIcon,
-  ChevronUpIcon
+  ChevronUpIcon,
+  EyeIcon,
+  WrenchScrewdriverIcon,
+  CodeBracketIcon,
+  ShieldExclamationIcon
 } from '@heroicons/react/24/outline';
 import {
   BotCollaborator,
@@ -27,48 +31,67 @@ interface CollaboratorManagementProps {
   isOwner: boolean;
 }
 
-const roleLabels: Record<CollaboratorRole, { label: string; color: string; description: string }> = {
+const roleConfig: Record<CollaboratorRole, {
+  label: string;
+  color: string;
+  borderColor: string;
+  bgColor: string;
+  icon: any;
+  description: string
+}> = {
   [CollaboratorRole.VIEWER]: {
-    label: 'Spectateur',
-    color: 'bg-gray-100 text-gray-800',
-    description: 'Peut uniquement voir les statistiques et logs'
+    label: 'Viewer',
+    color: 'text-gray-300',
+    borderColor: 'border-gray-600',
+    bgColor: 'bg-gray-700/50',
+    icon: EyeIcon,
+    description: 'View dashboard, logs, and analytics only'
   },
   [CollaboratorRole.MODERATOR]: {
-    label: 'Modérateur',
-    color: 'bg-blue-100 text-blue-800',
-    description: 'Gère la modération, tickets et logs'
+    label: 'Moderator',
+    color: 'text-blue-400',
+    borderColor: 'border-blue-500',
+    bgColor: 'bg-blue-500/10',
+    icon: ShieldCheckIcon,
+    description: 'Manage moderation, tickets, and logs'
   },
   [CollaboratorRole.DEVELOPER]: {
-    label: 'Développeur',
-    color: 'bg-purple-100 text-purple-800',
-    description: 'Gère les commandes et la configuration'
+    label: 'Developer',
+    color: 'text-purple-400',
+    borderColor: 'border-purple-500',
+    bgColor: 'bg-purple-500/10',
+    icon: CodeBracketIcon,
+    description: 'Manage commands, configuration, and bot control'
   },
   [CollaboratorRole.ADMIN]: {
-    label: 'Administrateur',
-    color: 'bg-red-100 text-red-800',
-    description: 'Tous les droits sauf supprimer le bot'
+    label: 'Administrator',
+    color: 'text-red-400',
+    borderColor: 'border-red-500',
+    bgColor: 'bg-red-500/10',
+    icon: ShieldExclamationIcon,
+    description: 'Full access except deleting the bot'
   },
 };
 
-const statusLabels: Record<CollaboratorStatus, { label: string; color: string; icon: any }> = {
+const statusConfig: Record<CollaboratorStatus, { label: string; color: string; icon: any }> = {
   [CollaboratorStatus.PENDING]: {
-    label: 'En attente',
-    color: 'text-yellow-600',
+    label: 'Pending',
+    color: 'text-yellow-400',
     icon: ClockIcon
   },
   [CollaboratorStatus.ACTIVE]: {
-    label: 'Actif',
-    color: 'text-green-600',
+    label: 'Active',
+    color: 'text-green-400',
     icon: CheckCircleIcon
   },
   [CollaboratorStatus.SUSPENDED]: {
-    label: 'Suspendu',
-    color: 'text-orange-600',
+    label: 'Suspended',
+    color: 'text-orange-400',
     icon: XCircleIcon
   },
   [CollaboratorStatus.REVOKED]: {
-    label: 'Révoqué',
-    color: 'text-red-600',
+    label: 'Revoked',
+    color: 'text-red-400',
     icon: XCircleIcon
   },
 };
@@ -77,11 +100,8 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
   const [collaborators, setCollaborators] = useState<BotCollaborator[]>([]);
   const [loading, setLoading] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [showPermissionsModal, setShowPermissionsModal] = useState(false);
-  const [selectedCollaborator, setSelectedCollaborator] = useState<BotCollaborator | null>(null);
   const [expandedCollaborators, setExpandedCollaborators] = useState<Set<string>>(new Set());
 
-  // Invite form state
   const [inviteForm, setInviteForm] = useState<InviteCollaboratorForm>({
     userDiscordId: '',
     role: CollaboratorRole.VIEWER,
@@ -106,8 +126,8 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
         setCollaborators(data);
       }
     } catch (error) {
-      console.error('Erreur lors du chargement des collaborateurs:', error);
-      toast.error('Erreur lors du chargement des collaborateurs');
+      console.error('Error loading collaborators:', error);
+      toast.error('Failed to load collaborators');
     } finally {
       setLoading(false);
     }
@@ -115,7 +135,7 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
 
   const handleInvite = async () => {
     if (!inviteForm.userDiscordId.trim()) {
-      toast.error('Veuillez entrer un Discord ID');
+      toast.error('Please enter a Discord ID');
       return;
     }
 
@@ -131,7 +151,7 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
       });
 
       if (response.ok) {
-        toast.success('Invitation envoyée avec succès');
+        toast.success('Invitation sent successfully');
         setShowInviteModal(false);
         setInviteForm({
           userDiscordId: '',
@@ -141,43 +161,16 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
         fetchCollaborators();
       } else {
         const error = await response.json();
-        toast.error(error.message || 'Erreur lors de l\'invitation');
+        toast.error(error.message || 'Failed to send invitation');
       }
     } catch (error) {
-      console.error('Erreur lors de l\'invitation:', error);
-      toast.error('Erreur lors de l\'invitation');
-    }
-  };
-
-  const handleUpdateCollaborator = async (collaboratorId: string, updates: any) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/bots/${botId}/collaborators/${collaboratorId}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(updates),
-        }
-      );
-
-      if (response.ok) {
-        toast.success('Collaborateur mis à jour');
-        fetchCollaborators();
-      } else {
-        toast.error('Erreur lors de la mise à jour');
-      }
-    } catch (error) {
-      console.error('Erreur:', error);
-      toast.error('Erreur lors de la mise à jour');
+      console.error('Error sending invitation:', error);
+      toast.error('Failed to send invitation');
     }
   };
 
   const handleRemoveCollaborator = async (collaboratorId: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir retirer ce collaborateur ?')) {
+    if (!confirm('Are you sure you want to remove this collaborator?')) {
       return;
     }
 
@@ -194,14 +187,14 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
       );
 
       if (response.ok) {
-        toast.success('Collaborateur retiré');
+        toast.success('Collaborator removed');
         fetchCollaborators();
       } else {
-        toast.error('Erreur lors de la suppression');
+        toast.error('Failed to remove collaborator');
       }
     } catch (error) {
-      console.error('Erreur:', error);
-      toast.error('Erreur lors de la suppression');
+      console.error('Error:', error);
+      toast.error('Failed to remove collaborator');
     }
   };
 
@@ -217,12 +210,12 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
 
   if (loading) {
     return (
-      <div className="bg-gray-800 rounded-lg p-6">
+      <div className="space-y-4">
         <div className="animate-pulse">
-          <div className="h-6 bg-gray-700 rounded w-1/4 mb-4"></div>
+          <div className="h-8 bg-gray-700 rounded w-1/3 mb-6"></div>
           <div className="space-y-3">
-            <div className="h-16 bg-gray-700 rounded"></div>
-            <div className="h-16 bg-gray-700 rounded"></div>
+            <div className="h-20 bg-gray-700/50 rounded-xl"></div>
+            <div className="h-20 bg-gray-700/50 rounded-xl"></div>
           </div>
         </div>
       </div>
@@ -230,114 +223,142 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
   }
 
   return (
-    <div className="bg-gray-800 rounded-lg p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-3">
-          <UserGroupIcon className="h-6 w-6 text-blue-400" />
-          <h3 className="text-xl font-bold text-white">Gestion des Collaborateurs</h3>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center space-x-3 mb-2">
+            <div className="p-2 bg-blue-500/10 rounded-lg">
+              <UserGroupIcon className="h-6 w-6 text-blue-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-white">Collaborators</h2>
+          </div>
+          <p className="text-gray-400 text-sm">Manage who has access to your bot</p>
         </div>
         {isOwner && (
           <button
             onClick={() => setShowInviteModal(true)}
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            className="flex items-center space-x-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all duration-200 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40"
           >
             <PlusIcon className="h-5 w-5" />
-            <span>Inviter</span>
+            <span className="font-medium">Invite</span>
           </button>
         )}
       </div>
 
+      {/* Collaborators List */}
       {collaborators.length === 0 ? (
-        <div className="text-center py-12 text-gray-400">
-          <UserGroupIcon className="h-12 w-12 mx-auto mb-3 opacity-50" />
-          <p>Aucun collaborateur pour le moment</p>
+        <div className="text-center py-16 bg-gray-800/50 rounded-xl border border-gray-700">
+          <div className="inline-flex p-4 bg-gray-700/50 rounded-full mb-4">
+            <UserGroupIcon className="h-12 w-12 text-gray-500" />
+          </div>
+          <h3 className="text-lg font-medium text-white mb-2">No collaborators yet</h3>
+          <p className="text-gray-400 mb-6">Start by inviting someone to help manage your bot</p>
           {isOwner && (
             <button
               onClick={() => setShowInviteModal(true)}
-              className="mt-4 text-blue-400 hover:text-blue-300"
+              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors"
             >
-              Inviter votre première personne
+              Invite your first collaborator
             </button>
           )}
         </div>
       ) : (
         <div className="space-y-3">
           {collaborators.map((collaborator) => {
-            const StatusIcon = statusLabels[collaborator.status].icon;
+            const roleInfo = roleConfig[collaborator.role];
+            const statusInfo = statusConfig[collaborator.status];
+            const StatusIcon = statusInfo.icon;
+            const RoleIcon = roleInfo.icon;
             const isExpanded = expandedCollaborators.has(collaborator.id);
 
             return (
-              <div key={collaborator.id} className="bg-gray-750 rounded-lg p-4">
+              <div
+                key={collaborator.id}
+                className={`bg-gray-800/70 border ${roleInfo.borderColor} rounded-xl p-5 hover:bg-gray-800 transition-all duration-200`}
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4 flex-1">
-                    {collaborator.user?.avatar ? (
-                      <img
-                        src={`https://cdn.discordapp.com/avatars/${collaborator.user.discordId}/${collaborator.user.avatar}.png`}
-                        alt={collaborator.user.username}
-                        className="w-12 h-12 rounded-full"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 rounded-full bg-gray-600 flex items-center justify-center">
-                        <UserGroupIcon className="h-6 w-6 text-gray-400" />
-                      </div>
-                    )}
+                    {/* Avatar */}
+                    <div className="relative">
+                      {collaborator.user?.avatar ? (
+                        <img
+                          src={`https://cdn.discordapp.com/avatars/${collaborator.user.discordId}/${collaborator.user.avatar}.png?size=128`}
+                          alt={collaborator.user.username}
+                          className="w-14 h-14 rounded-full ring-2 ring-gray-700"
+                        />
+                      ) : (
+                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center ring-2 ring-gray-700">
+                          <UserGroupIcon className="h-7 w-7 text-gray-400" />
+                        </div>
+                      )}
+                      <StatusIcon className={`absolute -bottom-1 -right-1 h-5 w-5 ${statusInfo.color} bg-gray-800 rounded-full p-0.5`} />
+                    </div>
 
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3">
-                        <h4 className="text-white font-medium">
-                          {collaborator.user?.username || 'Utilisateur inconnu'}
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-3 mb-1">
+                        <h4 className="text-white font-semibold truncate">
+                          {collaborator.user?.username || 'Unknown User'}
                         </h4>
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${roleLabels[collaborator.role].color}`}>
-                          {roleLabels[collaborator.role].label}
-                        </span>
-                        <StatusIcon className={`h-5 w-5 ${statusLabels[collaborator.status].color}`} />
+                        <div className={`flex items-center space-x-1.5 px-3 py-1 ${roleInfo.bgColor} border ${roleInfo.borderColor} rounded-lg`}>
+                          <RoleIcon className={`h-3.5 w-3.5 ${roleInfo.color}`} />
+                          <span className={`text-xs font-medium ${roleInfo.color}`}>
+                            {roleInfo.label}
+                          </span>
+                        </div>
                       </div>
-                      <p className="text-sm text-gray-400 mt-1">
-                        {roleLabels[collaborator.role].description}
+                      <p className="text-sm text-gray-400 mb-1">
+                        {roleInfo.description}
                       </p>
                       {collaborator.lastAccessAt && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          Dernier accès: {new Date(collaborator.lastAccessAt).toLocaleString('fr-FR')}
+                        <p className="text-xs text-gray-500">
+                          Last active: {new Date(collaborator.lastAccessAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
                         </p>
                       )}
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-2">
-                    {isOwner && (
-                      <>
-                        <button
-                          onClick={() => toggleExpanded(collaborator.id)}
-                          className="p-2 text-gray-400 hover:text-white transition-colors"
-                          title="Voir les permissions"
-                        >
-                          {isExpanded ? (
-                            <ChevronUpIcon className="h-5 w-5" />
-                          ) : (
-                            <ChevronDownIcon className="h-5 w-5" />
-                          )}
-                        </button>
-                        <button
-                          onClick={() => handleRemoveCollaborator(collaborator.id)}
-                          className="p-2 text-red-400 hover:text-red-300 transition-colors"
-                          title="Retirer"
-                        >
-                          <TrashIcon className="h-5 w-5" />
-                        </button>
-                      </>
-                    )}
-                  </div>
+                  {/* Actions */}
+                  {isOwner && (
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => toggleExpanded(collaborator.id)}
+                        className="p-2.5 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+                        title="View permissions"
+                      >
+                        {isExpanded ? (
+                          <ChevronUpIcon className="h-5 w-5" />
+                        ) : (
+                          <ChevronDownIcon className="h-5 w-5" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => handleRemoveCollaborator(collaborator.id)}
+                        className="p-2.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
+                        title="Remove"
+                      >
+                        <TrashIcon className="h-5 w-5" />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
+                {/* Expanded Permissions */}
                 {isExpanded && collaborator.permissions && (
-                  <div className="mt-4 pt-4 border-t border-gray-700">
-                    <h5 className="text-sm font-medium text-gray-300 mb-3">Permissions personnalisées:</h5>
+                  <div className="mt-5 pt-5 border-t border-gray-700">
+                    <h5 className="text-sm font-semibold text-gray-300 mb-3">Custom Permissions</h5>
                     <div className="grid grid-cols-2 gap-2">
                       {Object.entries(collaborator.permissions).map(([key, value]) => (
                         value && (
-                          <div key={key} className="flex items-center space-x-2 text-xs text-gray-400">
-                            <CheckCircleIcon className="h-4 w-4 text-green-500" />
-                            <span>{key}</span>
+                          <div key={key} className="flex items-center space-x-2 text-sm text-gray-400 bg-gray-700/30 px-3 py-2 rounded-lg">
+                            <CheckCircleIcon className="h-4 w-4 text-green-400 flex-shrink-0" />
+                            <span className="truncate">{key}</span>
                           </div>
                         )
                       ))}
@@ -350,72 +371,98 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
         </div>
       )}
 
-      {/* Modal d'invitation */}
+      {/* Invite Modal */}
       {showInviteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold text-white mb-4">Inviter un collaborateur</h3>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 border border-gray-700 rounded-2xl p-6 max-w-lg w-full shadow-2xl">
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="p-2 bg-blue-500/10 rounded-lg">
+                <UserGroupIcon className="h-6 w-6 text-blue-400" />
+              </div>
+              <h3 className="text-xl font-bold text-white">Invite Collaborator</h3>
+            </div>
 
-            <div className="space-y-4">
+            <div className="space-y-5">
+              {/* Discord ID Input */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Discord ID de l'utilisateur
+                  User Discord ID
                 </label>
                 <input
                   type="text"
                   value={inviteForm.userDiscordId}
                   onChange={(e) => setInviteForm({ ...inviteForm, userDiscordId: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                  className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   placeholder="123456789012345678"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  L'utilisateur doit avoir un compte sur la plateforme
+                <p className="text-xs text-gray-500 mt-2">
+                  User must have an account on the platform
                 </p>
               </div>
 
+              {/* Role Selection */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Rôle
+                <label className="block text-sm font-medium text-gray-300 mb-3">
+                  Role
                 </label>
-                <select
-                  value={inviteForm.role}
-                  onChange={(e) => setInviteForm({ ...inviteForm, role: e.target.value as CollaboratorRole })}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
-                >
-                  {Object.entries(roleLabels).map(([value, { label, description }]) => (
-                    <option key={value} value={value}>
-                      {label} - {description}
-                    </option>
-                  ))}
-                </select>
+                <div className="grid grid-cols-2 gap-3">
+                  {Object.entries(roleConfig).map(([value, config]) => {
+                    const RoleIcon = config.icon;
+                    const isSelected = inviteForm.role === value;
+
+                    return (
+                      <button
+                        key={value}
+                        onClick={() => setInviteForm({ ...inviteForm, role: value as CollaboratorRole })}
+                        className={`p-4 rounded-xl border-2 transition-all text-left ${
+                          isSelected
+                            ? `${config.borderColor} ${config.bgColor}`
+                            : 'border-gray-700 bg-gray-900/30 hover:border-gray-600'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2 mb-2">
+                          <RoleIcon className={`h-5 w-5 ${isSelected ? config.color : 'text-gray-400'}`} />
+                          <span className={`font-medium ${isSelected ? config.color : 'text-gray-400'}`}>
+                            {config.label}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 leading-relaxed">
+                          {config.description}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
+              {/* Optional Message */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Message d'invitation (optionnel)
+                  Message (optional)
                 </label>
                 <textarea
                   value={inviteForm.message || ''}
                   onChange={(e) => setInviteForm({ ...inviteForm, message: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                  className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
                   rows={3}
-                  placeholder="Un message personnalisé pour accompagner l'invitation..."
+                  placeholder="Add a personal message to your invitation..."
                 />
               </div>
             </div>
 
-            <div className="flex justify-end space-x-3 mt-6">
+            {/* Modal Actions */}
+            <div className="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-700">
               <button
                 onClick={() => setShowInviteModal(false)}
-                className="px-4 py-2 text-gray-300 hover:text-white transition-colors"
+                className="px-5 py-2.5 text-gray-300 hover:text-white hover:bg-gray-700 rounded-xl transition-colors"
               >
-                Annuler
+                Cancel
               </button>
               <button
                 onClick={handleInvite}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors font-medium shadow-lg shadow-blue-500/20"
               >
-                Envoyer l'invitation
+                Send Invitation
               </button>
             </div>
           </div>
