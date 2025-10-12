@@ -8,18 +8,19 @@ datasource db {
 }
 
 model User {
-  id             String           @id @default(uuid())
-  discordId      String           @unique @map("discord_id")
+  id             String             @id @default(uuid())
+  discordId      String             @unique @map("discord_id")
   username       String
   email          String?
   avatar         String?
-  role           UserRole         @default(USER)
-  credits        Int              @default(100)
-  createdAt      DateTime         @default(now()) @map("created_at")
-  updatedAt      DateTime         @updatedAt @map("updated_at")
+  role           UserRole           @default(USER)
+  credits        Int                @default(100)
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
   auditLogs      AuditLog[]
   bots           Bot[]
   creditsHistory CreditsHistory[]
+  collaborations BotCollaborator[]
 
   @@map("users")
 }
