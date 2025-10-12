@@ -133,7 +133,7 @@ model BotLog {
   level     LogLevel @default(INFO)
   message   String   @db.Text
   source    String?
-  metadata  String?  @db.LongText
+  metadata  String?  @db.Text
   createdAt DateTime @default(now()) @map("created_at")
   bot       Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
 
@@ -147,7 +147,7 @@ model AuditLog {
   botId     String?  @map("bot_id")
   action    String
   resource  String?
-  metadata  String?  @db.LongText
+  metadata  String?  @db.Text
   ipAddress String?  @map("ip_address")
   userAgent String?  @map("user_agent")
   createdAt DateTime @default(now()) @map("created_at")
