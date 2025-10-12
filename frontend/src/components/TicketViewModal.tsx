@@ -240,6 +240,69 @@ export default function TicketViewModal({
   const renderMessageContent = (content: string, isStaffMessage: boolean = false) => {
     let formatted = formatContent(content);
 
+    // Check if this looks like a bot embed (has **Title** followed by fields)
+    const embedPattern = /^\*\*(.+?)\*\*\n([\s\S]+?)(?:\n\*\*(.+?):\*\*\s+(.+?)(?:\n|$))+/;
+    const hasEmbedStructure = embedPattern.test(formatted) ||
+      (formatted.includes('**') && formatted.includes('\n**') && formatted.includes(':**'));
+
+    // If it looks like an embed, parse and display it as such
+    if (hasEmbedStructure) {
+      const lines = formatted.split('\n');
+      let title = '';
+      let description = '';
+      const fields: Array<{ name: string; value: string }> = [];
+      let inDescription = false;
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+
+        // Check for title (first **text**)
+        if (line.startsWith('**') && line.endsWith('**') && !title && !line.includes(':')) {
+          title = line.replace(/^\*\*|\*\*$/g, '');
+          inDescription = true;
+          continue;
+        }
+
+        // Check for field (**Name:** value)
+        const fieldMatch = line.match(/^\*\*(.+?):\*\*\s+(.+)$/);
+        if (fieldMatch) {
+          fields.push({ name: fieldMatch[1], value: fieldMatch[2] });
+          inDescription = false;
+          continue;
+        }
+
+        // Check for separator
+        if (line === '---' || line.match(/^={3,}$/)) {
+          continue;
+        }
+
+        // Otherwise, it's part of the description
+        if (inDescription && line) {
+          description += (description ? '\n' : '') + line;
+        }
+      }
+
+      // Render as Discord-like embed
+      return (
+        <div className="my-2">
+          <div className={`border-l-4 rounded ${isStaffMessage ? 'border-indigo-500 bg-indigo-900/20' : 'border-blue-500 bg-gray-800'} p-3`}>
+            {title && <div className="font-semibold text-white mb-2">{title}</div>}
+            {description && <div className="text-gray-300 text-sm mb-2 whitespace-pre-wrap">{description}</div>}
+            {fields.length > 0 && (
+              <div className="space-y-2">
+                {fields.map((field, idx) => (
+                  <div key={idx}>
+                    <div className="text-white font-semibold text-xs">{field.name}</div>
+                    <div className="text-gray-300 text-sm">{field.value}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
     // Extract all media types and embeds
     const media: Array<{ type: string; url: string; embed?: string }> = [];
     const linkEmbeds: Array<{ url: string; domain: string }> = [];
