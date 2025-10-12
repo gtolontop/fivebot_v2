@@ -107,6 +107,9 @@ export class TicketMessagesController {
               username: user.username,
               avatar: user.avatar,
             };
+          } else {
+            const errorText = await response.text();
+            console.error(`Failed to fetch user ${message.userId}: ${response.status} - ${errorText}`);
           }
         } catch (error) {
           console.error(`Failed to fetch user ${message.userId}:`, error);
