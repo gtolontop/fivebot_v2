@@ -166,6 +166,12 @@ export const botsAPI = {
   sendTicketPanel: (botId: string, panelId: string) =>
     api.post(`/bots/${botId}/ticket-panels/${panelId}/send`),
 
+  getTicketCommands: (botId: string) =>
+    api.get(`/bots/${botId}/tickets/commands`),
+
+  updateTicketCommands: (botId: string, commands: any) =>
+    api.put(`/bots/${botId}/tickets/commands`, commands),
+
   // Logs
   getLiveLogs: (botId: string) =>
     api.get(`/bots/${botId}/logs/live`),
