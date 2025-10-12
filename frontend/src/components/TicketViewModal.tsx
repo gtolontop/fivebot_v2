@@ -143,6 +143,12 @@ export default function TicketViewModal({
     });
   };
 
+  const formatContent = (content: string) => {
+    // Replace Discord mentions <@USER_ID> with @username
+    // For now, just show @User since we don't have user cache
+    return content.replace(/<@!?(\d+)>/g, '@User');
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl h-[80vh] flex flex-col">
