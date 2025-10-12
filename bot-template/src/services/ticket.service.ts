@@ -308,6 +308,7 @@ export class TicketService {
       data: {
         ticketId: data.ticketId,
         messageId: data.messageId,
+        userId: data.authorId,
         authorId: data.authorId,
         content: data.content,
         isStaff: data.isStaff,
