@@ -282,7 +282,6 @@ export class TicketStateManager {
     // Update activity state and last activity
     await this.ticketService.updateTicket(ticketId, {
       activityState: newActivityState,
-      lastMessageFrom: authorId,
       lastActivity: new Date()
     });
 
