@@ -27,6 +27,10 @@ interface BotConfig {
   autoRoleId?: string;
   loggingChannelId?: string;
   customCommands?: any;
+  ticketEnabled?: boolean;
+  ticketCategoryId?: string;
+  ticketStaffRoleId?: string;
+  ticketTranscriptChannelId?: string;
   ticketData?: any;
   statusRotation?: any;
   embedV2Commands?: any;
