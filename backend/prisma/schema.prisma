@@ -247,6 +247,40 @@ model BotCommand {
   @@map("bot_commands")
 }
 
+model BotCollaborator {
+  id            String               @id @default(uuid())
+  botId         String               @map("bot_id")
+  userId        String               @map("user_id")
+  invitedBy     String               @map("invited_by")
+  role          CollaboratorRole     @default(VIEWER)
+  permissions   String?              @db.LongText // JSON des permissions granulaires
+  status        CollaboratorStatus   @default(PENDING)
+  invitedAt     DateTime             @default(now()) @map("invited_at")
+  acceptedAt    DateTime?            @map("accepted_at")
+  lastAccessAt  DateTime?            @map("last_access_at")
+  createdAt     DateTime             @default(now()) @map("created_at")
+  updatedAt     DateTime             @updatedAt @map("updated_at")
+
+  @@unique([botId, userId])
+  @@index([userId])
+  @@index([botId, status])
+  @@map("bot_collaborators")
+}
+
+enum CollaboratorRole {
+  VIEWER        // Voir seulement
+  MODERATOR     // Gérer modération, tickets, logs
+  DEVELOPER     // Gérer commandes, config avancée
+  ADMIN         // Tout sauf supprimer le bot
+}
+
+enum CollaboratorStatus {
+  PENDING       // Invitation envoyée
+  ACTIVE        // Acceptée et active
+  SUSPENDED     // Temporairement suspendu
+  REVOKED       // Accès révoqué
+}
+
 model Ticket {
   id              String                @id @default(uuid())
   guildId         String                @map("guild_id")
