@@ -173,12 +173,12 @@ export class TicketService {
         creatorId: data.creatorId,
         type: data.type || 'support',
         category: data.category,
-        priority: data.priority || TicketPriority.NORMAL,
+        priority: data.priority || 'NORMAL',
         containerType: data.containerType || config.containerType,
         channelId: data.channelId,
         threadId: data.threadId,
-        state: TicketState.NEW,
-        activityState: ActivityState.GRAY
+        state: 'open',
+        activityState: 'active'
       }
     });
 
