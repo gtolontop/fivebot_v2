@@ -158,60 +158,132 @@ export default function TicketViewModal({
   };
 
   const renderMessageContent = (content: string, isStaffMessage: boolean = false) => {
-    const formatted = formatContent(content);
+    let formatted = formatContent(content);
 
-    // Check for image URLs
+    // Extract images
     const imageRegex = /(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp))/gi;
-    const hasImage = imageRegex.test(formatted);
-
-    const parts: React.ReactNode[] = [];
-    let lastIndex = 0;
-
-    // Regex for inline code: `code`
-    const codeRegex = /`([^`]+)`/g;
-    let match;
-
-    let workingText = formatted;
-
-    // Process inline code
-    while ((match = codeRegex.exec(workingText)) !== null) {
-      // Add text before code
-      if (match.index > lastIndex) {
-        parts.push(workingText.substring(lastIndex, match.index));
-      }
-
-      // Add code with styling - different style for staff messages (blue bg) vs user messages
-      parts.push(
-        <code
-          key={`code-${match.index}`}
-          className={`px-1.5 py-0.5 mx-0.5 rounded text-sm font-mono ${
-            isStaffMessage
-              ? 'bg-indigo-800 text-indigo-100'
-              : 'bg-gray-200 text-gray-900'
-          }`}
-        >
-          {match[1]}
-        </code>
-      );
-
-      lastIndex = match.index + match[0].length;
-    }
-
-    // Add remaining text
-    if (lastIndex < workingText.length) {
-      parts.push(workingText.substring(lastIndex));
-    }
-
-    // Extract and display images separately
     const images: string[] = [];
     formatted.replace(imageRegex, (match) => {
       images.push(match);
       return match;
     });
 
+    // Parse Discord markdown
+    const parseText = (text: string): React.ReactNode => {
+      // Split by different markdown patterns, process in order of precedence
+      const parts: React.ReactNode[] = [];
+      let remaining = text;
+      let key = 0;
+
+      // Helper to process a segment recursively
+      const processSegment = (segment: string, depth = 0): React.ReactNode => {
+        if (depth > 5) return segment; // Prevent infinite recursion
+
+        // Code blocks (highest priority)
+        const codeBlockMatch = segment.match(/```([\s\S]*?)```/);
+        if (codeBlockMatch) {
+          const before = segment.substring(0, codeBlockMatch.index);
+          const code = codeBlockMatch[1];
+          const after = segment.substring(codeBlockMatch.index! + codeBlockMatch[0].length);
+          return (
+            <>
+              {before && processSegment(before, depth + 1)}
+              <pre
+                key={`cb-${key++}`}
+                className={`block my-1 px-3 py-2 rounded font-mono text-sm overflow-x-auto ${
+                  isStaffMessage ? 'bg-indigo-900 text-indigo-100' : 'bg-gray-800 text-gray-100'
+                }`}
+              >
+                {code}
+              </pre>
+              {after && processSegment(after, depth + 1)}
+            </>
+          );
+        }
+
+        // Inline code
+        const codeMatch = segment.match(/`([^`]+)`/);
+        if (codeMatch) {
+          const before = segment.substring(0, codeMatch.index);
+          const code = codeMatch[1];
+          const after = segment.substring(codeMatch.index! + codeMatch[0].length);
+          return (
+            <>
+              {before && processSegment(before, depth + 1)}
+              <code
+                key={`code-${key++}`}
+                className={`px-1.5 py-0.5 mx-0.5 rounded text-sm font-mono ${
+                  isStaffMessage ? 'bg-indigo-800 text-indigo-100' : 'bg-gray-200 text-gray-900'
+                }`}
+              >
+                {code}
+              </code>
+              {after && processSegment(after, depth + 1)}
+            </>
+          );
+        }
+
+        // Bold **text** or __text__
+        const boldMatch = segment.match(/\*\*([^\*]+)\*\*|__([^_]+)__/);
+        if (boldMatch) {
+          const before = segment.substring(0, boldMatch.index);
+          const text = boldMatch[1] || boldMatch[2];
+          const after = segment.substring(boldMatch.index! + boldMatch[0].length);
+          return (
+            <>
+              {before && processSegment(before, depth + 1)}
+              <strong key={`bold-${key++}`} className="font-bold">
+                {processSegment(text, depth + 1)}
+              </strong>
+              {after && processSegment(after, depth + 1)}
+            </>
+          );
+        }
+
+        // Italic *text* or _text_ (single asterisk/underscore)
+        const italicMatch = segment.match(/(?<!\*)\*([^\*]+)\*(?!\*)|(?<!_)_([^_]+)_(?!_)/);
+        if (italicMatch) {
+          const before = segment.substring(0, italicMatch.index);
+          const text = italicMatch[1] || italicMatch[2];
+          const after = segment.substring(italicMatch.index! + italicMatch[0].length);
+          return (
+            <>
+              {before && processSegment(before, depth + 1)}
+              <em key={`italic-${key++}`} className="italic">
+                {processSegment(text, depth + 1)}
+              </em>
+              {after && processSegment(after, depth + 1)}
+            </>
+          );
+        }
+
+        // Strikethrough ~~text~~
+        const strikeMatch = segment.match(/~~([^~]+)~~/);
+        if (strikeMatch) {
+          const before = segment.substring(0, strikeMatch.index);
+          const text = strikeMatch[1];
+          const after = segment.substring(strikeMatch.index! + strikeMatch[0].length);
+          return (
+            <>
+              {before && processSegment(before, depth + 1)}
+              <span key={`strike-${key++}`} className="line-through">
+                {processSegment(text, depth + 1)}
+              </span>
+              {after && processSegment(after, depth + 1)}
+            </>
+          );
+        }
+
+        // No markdown found, return as-is
+        return segment;
+      };
+
+      return processSegment(formatted);
+    };
+
     return (
       <>
-        <div>{parts.length > 0 ? parts : formatted}</div>
+        <div className="break-words">{parseText(formatted)}</div>
         {images.length > 0 && (
           <div className="mt-2 space-y-2">
             {images.map((img, idx) => (
