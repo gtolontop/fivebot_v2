@@ -20,7 +20,14 @@ export default {
 
     try {
       // Check if user is staff
-      const isStaff = await ticketService.isStaff(message.guildId!, message.author.id);
+      // For webhook messages from dashboard, they are always staff
+      let isStaff = false;
+      if (isWebhook) {
+        // Webhook messages from dashboard are staff
+        isStaff = true;
+      } else {
+        isStaff = await ticketService.isStaff(message.guildId!, message.author.id);
+      }
 
       // Track the message
       await ticketService.addMessage({

@@ -163,6 +163,7 @@ export class TicketMessagesController {
           userId: body.userId,
           username: body.username,
           avatar: body.avatar,
+          isStaff: true, // Messages from dashboard are from staff
         },
       },
     });
