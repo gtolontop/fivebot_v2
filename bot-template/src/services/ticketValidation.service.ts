@@ -130,17 +130,8 @@ export class TicketValidationService {
           severity: 'error'
         });
       } else {
-        // Validate category-specific channel if configured
-        if (category.channelId) {
-          const channel = await this.validateChannel(category.channelId, guildId);
-          if (!channel.isValid) {
-            warnings.push({
-              field: 'categoryChannel',
-              message: `The channel configured for category "${category.name}" is invalid. Using default location.`,
-              messageFr: `Le canal configuré pour la catégorie "${category.name}" est invalide. Utilisation de l'emplacement par défaut.`
-            });
-          }
-        }
+        // Note: channelId doesn't exist in TicketCategory schema
+        // Skipping category-specific channel validation
       }
     }
 
@@ -235,29 +226,8 @@ export class TicketValidationService {
 
     // Validate each category
     for (const category of activeCategories) {
-      // Validate category channel if specified
-      if (category.channelId) {
-        const validation = await this.validateChannel(category.channelId, guildId);
-        if (!validation.isValid) {
-          warnings.push({
-            field: `category.${category.id}.channelId`,
-            message: `Category "${category.name}" has an invalid channel configuration: ${validation.error}`,
-            messageFr: `La catégorie "${category.name}" a une configuration de canal invalide: ${validation.error}`
-          });
-        }
-      }
-
-      // Validate staff role if specified
-      if (category.staffRoleId) {
-        const guild = this.client.guilds.cache.get(guildId);
-        if (guild && !guild.roles.cache.has(category.staffRoleId)) {
-          warnings.push({
-            field: `category.${category.id}.staffRoleId`,
-            message: `Category "${category.name}" has an invalid staff role. Default staff roles will be used.`,
-            messageFr: `La catégorie "${category.name}" a un rôle de personnel invalide. Les rôles de personnel par défaut seront utilisés.`
-          });
-        }
-      }
+      // Note: channelId and staffRoleId don't exist in TicketCategory schema
+      // These validations are skipped - add these fields to schema if needed
 
       // Validate custom modal fields
       // TODO: Add support for custom modal fields in the schema
