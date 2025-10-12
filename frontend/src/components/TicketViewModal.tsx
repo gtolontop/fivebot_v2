@@ -74,11 +74,23 @@ export default function TicketViewModal({
     setSending(true);
 
     try {
+      // Construct full Discord avatar URL if we have an avatar hash
+      let avatarUrl = undefined;
+      if (currentUser.avatar) {
+        // Check if it's already a full URL
+        if (currentUser.avatar.startsWith('http')) {
+          avatarUrl = currentUser.avatar;
+        } else {
+          // Construct Discord CDN URL from hash
+          avatarUrl = `https://cdn.discordapp.com/avatars/${currentUser.id}/${currentUser.avatar}.png`;
+        }
+      }
+
       await botsAPI.sendTicketMessage(botId, ticketId, {
         content: newMessage,
         userId: currentUser.id,
         username: currentUser.username,
-        avatar: currentUser.avatar
+        avatar: avatarUrl
       });
 
       setNewMessage('');
