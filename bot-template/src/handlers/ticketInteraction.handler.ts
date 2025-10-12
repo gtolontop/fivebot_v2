@@ -5,6 +5,7 @@ import {
   ModalSubmitInteraction,
   Client
 } from 'discord.js';
+import { PrismaClient } from '@prisma/client';
 import { TicketService } from '../services/ticket.service';
 import { TicketStateManager } from '../services/ticketStateManager.service';
 import { TicketPanelService } from '../services/ticketPanel.service';
@@ -12,6 +13,8 @@ import { TicketContainerService } from '../services/ticketContainer.service';
 import { TicketAssignmentService } from '../services/ticketAssignment.service';
 import { TicketCreationHandler } from './ticketCreation.handler';
 import { TicketControlsHandler } from './ticketControls.handler';
+
+const prisma = new PrismaClient();
 
 export class TicketInteractionHandler {
   private ticketService: TicketService;
@@ -29,9 +32,9 @@ export class TicketInteractionHandler {
     this.panelService = new TicketPanelService(this.ticketService);
     this.containerService = new TicketContainerService(this.ticketService);
     this.assignmentService = new TicketAssignmentService(this.ticketService);
-    
+
     // Initialize handlers
-    this.creationHandler = new TicketCreationHandler(this.ticketService, this.stateManager);
+    this.creationHandler = new TicketCreationHandler(this.ticketService, this.stateManager, prisma);
     this.creationHandler.setTicketPanelService(this.panelService);
     this.controlsHandler = new TicketControlsHandler(
       this.ticketService,
