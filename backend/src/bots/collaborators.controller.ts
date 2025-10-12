@@ -140,7 +140,7 @@ export class CollaboratorsController {
     });
 
     if (!collaborator || collaborator.botId !== botId) {
-      throw new NotFoundException('Collaborateur non trouvé');
+      throw new NotFoundException('Collaborator not found');
     }
 
     const updated = await this.prisma.botCollaborator.update({
@@ -174,7 +174,7 @@ export class CollaboratorsController {
     @Param('collaboratorId') collaboratorId: string,
     @Req() req: any,
   ) {
-    // Vérifier que l'utilisateur est propriétaire ou admin du bot
+    // Verify user is owner or admin of the bot
     await this.verifyBotOwnerOrAdmin(botId, req.user.id);
 
     const collaborator = await this.prisma.botCollaborator.findUnique({
@@ -182,14 +182,14 @@ export class CollaboratorsController {
     });
 
     if (!collaborator || collaborator.botId !== botId) {
-      throw new NotFoundException('Collaborateur non trouvé');
+      throw new NotFoundException('Collaborator not found');
     }
 
     await this.prisma.botCollaborator.delete({
       where: { id: collaboratorId },
     });
 
-    return { success: true, message: 'Collaborateur supprimé' };
+    return { success: true, message: 'Collaborator removed' };
   }
 
   @Post(':collaboratorId/accept')
@@ -203,15 +203,15 @@ export class CollaboratorsController {
     });
 
     if (!collaborator || collaborator.botId !== botId) {
-      throw new NotFoundException('Invitation non trouvée');
+      throw new NotFoundException('Invitation not found');
     }
 
     if (collaborator.userId !== req.user.id) {
-      throw new ForbiddenException('Cette invitation ne vous est pas destinée');
+      throw new ForbiddenException('This invitation is not for you');
     }
 
     if (collaborator.status !== 'PENDING') {
-      throw new BadRequestException('Cette invitation a déjà été traitée');
+      throw new BadRequestException('This invitation has already been processed');
     }
 
     const updated = await this.prisma.botCollaborator.update({
@@ -249,22 +249,22 @@ export class CollaboratorsController {
     });
 
     if (!collaborator || collaborator.botId !== botId) {
-      throw new NotFoundException('Invitation non trouvée');
+      throw new NotFoundException('Invitation not found');
     }
 
     if (collaborator.userId !== req.user.id) {
-      throw new ForbiddenException('Cette invitation ne vous est pas destinée');
+      throw new ForbiddenException('This invitation is not for you');
     }
 
     if (collaborator.status !== 'PENDING') {
-      throw new BadRequestException('Cette invitation a déjà été traitée');
+      throw new BadRequestException('This invitation has already been processed');
     }
 
     await this.prisma.botCollaborator.delete({
       where: { id: collaboratorId },
     });
 
-    return { success: true, message: 'Invitation refusée' };
+    return { success: true, message: 'Invitation declined' };
   }
 
   @Get('my-invitations')
