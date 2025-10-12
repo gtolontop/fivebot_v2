@@ -93,39 +93,60 @@ export class TicketMessagesController {
       take: limit ? parseInt(limit) : 50,
     });
 
-    // Fetch user information for each message via Discord REST API
+    // Get unique user IDs
+    const uniqueUserIds = [...new Set(messages.map(m => m.userId))];
     const decryptedToken = await this.botsService.getDecryptedToken(botId);
-    const messagesWithUserInfo = await Promise.all(
-      messages.map(async (message) => {
-        try {
-          const response = await fetch(`https://discord.com/api/v10/users/${message.userId}`, {
-            headers: {
-              'Authorization': `Bot ${decryptedToken}`,
-            },
-          });
 
-          if (response.ok) {
-            const user = await response.json();
-            return {
-              ...message,
-              username: user.username,
-              avatar: user.avatar,
-            };
-          } else {
-            const errorText = await response.text();
-            console.error(`Failed to fetch user ${message.userId}: ${response.status} - ${errorText}`);
-          }
-        } catch (error) {
-          console.error(`Failed to fetch user ${message.userId}:`, error);
+    // Fetch only users not in cache or expired
+    const usersToFetch = uniqueUserIds.filter(userId => {
+      const cached = this.userCache.get(userId);
+      if (!cached) return true;
+      return Date.now() - cached.timestamp > this.CACHE_TTL;
+    });
+
+    // Batch fetch missing users (max 5 at a time to avoid rate limit)
+    if (usersToFetch.length > 0) {
+      const batchSize = 5;
+      for (let i = 0; i < usersToFetch.length; i += batchSize) {
+        const batch = usersToFetch.slice(i, i + batchSize);
+        await Promise.all(
+          batch.map(async (userId) => {
+            try {
+              const response = await fetch(`https://discord.com/api/v10/users/${userId}`, {
+                headers: {
+                  'Authorization': `Bot ${decryptedToken}`,
+                },
+              });
+
+              if (response.ok) {
+                const user = await response.json();
+                this.userCache.set(userId, {
+                  username: user.username,
+                  avatar: user.avatar,
+                  timestamp: Date.now()
+                });
+              }
+            } catch (error) {
+              // Silently fail, will show as Unknown User
+            }
+          })
+        );
+        // Small delay between batches to avoid rate limit
+        if (i + batchSize < usersToFetch.length) {
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
+      }
+    }
 
-        return {
-          ...message,
-          username: 'Unknown User',
-          avatar: null,
-        };
-      })
-    );
+    // Map messages with cached user info
+    const messagesWithUserInfo = messages.map(message => {
+      const cached = this.userCache.get(message.userId);
+      return {
+        ...message,
+        username: cached?.username || 'Unknown User',
+        avatar: cached?.avatar || null,
+      };
+    });
 
     // Reverse to get chronological order
     return { messages: messagesWithUserInfo.reverse() };
