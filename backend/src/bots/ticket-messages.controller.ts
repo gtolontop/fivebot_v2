@@ -98,8 +98,8 @@ export class TicketMessagesController {
   async sendMessage(
     @Param('botId') botId: string,
     @Param('ticketId') ticketId: string,
-    @Body() body: { content: string; userId: string; username: string; avatar?: string },
     @Req() req: any,
+    @Body() body: { content: string; userId: string; username: string; avatar?: string },
   ) {
     // Verify bot ownership
     const bot = await this.botsService.findOne(botId, req.user.id);
