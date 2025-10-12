@@ -1067,17 +1067,28 @@ export default function TicketSystemConfig({
 
           {/* Ticket Panels Section */}
           <div className="bg-white border border-gray-200 rounded-lg">
-            <button
-              onClick={() => toggleSection('panels')}
-              className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex items-center">
-                <ChatBubbleLeftRightIcon className="w-5 h-5 text-gray-600 mr-3" />
-                <h3 className="text-lg font-semibold text-gray-900">Ticket Panels</h3>
-                <span className="ml-2 text-sm text-gray-500">({panels.length})</span>
-              </div>
-              {expandedSections.panels ? <ChevronUpIcon className="w-5 h-5" /> : <ChevronDownIcon className="w-5 h-5" />}
-            </button>
+            <div className="px-6 py-4 flex items-center justify-between">
+              <button
+                onClick={() => toggleSection('panels')}
+                className="flex-1 flex items-center justify-between hover:bg-gray-50 transition-colors -mx-6 px-6 py-4"
+              >
+                <div className="flex items-center">
+                  <ChatBubbleLeftRightIcon className="w-5 h-5 text-gray-600 mr-3" />
+                  <h3 className="text-lg font-semibold text-gray-900">Ticket Panels</h3>
+                  <span className="ml-2 text-sm text-gray-500">({panels.length})</span>
+                </div>
+                {expandedSections.panels ? <ChevronUpIcon className="w-5 h-5" /> : <ChevronDownIcon className="w-5 h-5" />}
+              </button>
+              <button
+                onClick={fetchTicketData}
+                className="ml-2 p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                title="Refresh panels"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            </div>
             
             {expandedSections.panels && (
               <div className="px-6 pb-6">
