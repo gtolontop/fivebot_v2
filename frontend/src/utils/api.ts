@@ -134,8 +134,35 @@ export const botsAPI = {
   getTicketStats: (botId: string) =>
     api.get(`/bots/${botId}/tickets/stats`),
   
-  closeTicket: (botId: string, ticketId: string) => 
+  closeTicket: (botId: string, ticketId: string) =>
     api.post(`/bots/${botId}/tickets/${ticketId}/close`),
+
+  renameTicket: (botId: string, ticketId: string, name: string) =>
+    api.post(`/bots/${botId}/tickets/${ticketId}/rename`, { name }),
+
+  claimTicket: (botId: string, ticketId: string) =>
+    api.post(`/bots/${botId}/tickets/${ticketId}/claim`),
+
+  unclaimTicket: (botId: string, ticketId: string) =>
+    api.post(`/bots/${botId}/tickets/${ticketId}/unclaim`),
+
+  lockTicket: (botId: string, ticketId: string) =>
+    api.post(`/bots/${botId}/tickets/${ticketId}/lock`),
+
+  unlockTicket: (botId: string, ticketId: string) =>
+    api.post(`/bots/${botId}/tickets/${ticketId}/unlock`),
+
+  addUserToTicket: (botId: string, ticketId: string, userId: string) =>
+    api.post(`/bots/${botId}/tickets/${ticketId}/add-user`, { userId }),
+
+  removeUserFromTicket: (botId: string, ticketId: string, userId: string) =>
+    api.post(`/bots/${botId}/tickets/${ticketId}/remove-user`, { userId }),
+
+  changeTicketPriority: (botId: string, ticketId: string, priority: string) =>
+    api.post(`/bots/${botId}/tickets/${ticketId}/priority`, { priority }),
+
+  deleteTicket: (botId: string, ticketId: string) =>
+    api.delete(`/bots/${botId}/tickets/${ticketId}`),
 
   // Ticket Categories
   getTicketCategories: (botId: string) => 
