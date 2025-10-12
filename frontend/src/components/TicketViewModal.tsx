@@ -11,6 +11,8 @@ interface Message {
   userId: string;
   isStaff: boolean;
   createdAt: string;
+  username?: string;
+  avatar?: string;
 }
 
 interface TicketViewModalProps {
@@ -161,36 +163,42 @@ export default function TicketViewModal({
             </div>
           ) : (
             <>
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex ${message.isStaff ? 'justify-end' : 'justify-start'}`}
-                >
+              {messages.map((message) => {
+                // Check if message is from current user
+                const isCurrentUser = message.userId === currentUser.id;
+                const showOnRight = isCurrentUser || message.isStaff;
+
+                return (
                   <div
-                    className={`max-w-[70%] rounded-lg px-4 py-2 ${
-                      message.isStaff
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-white text-gray-900 border border-gray-200'
-                    }`}
+                    key={message.id}
+                    className={`flex ${showOnRight ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className="flex items-center space-x-2 mb-1">
-                      <span className={`text-xs font-medium ${
-                        message.isStaff ? 'text-indigo-200' : 'text-gray-500'
-                      }`}>
-                        {message.isStaff ? 'Staff' : 'User'}
-                      </span>
-                      <span className={`text-xs ${
-                        message.isStaff ? 'text-indigo-200' : 'text-gray-400'
-                      }`}>
-                        {formatTime(message.createdAt)}
-                      </span>
+                    <div
+                      className={`max-w-[70%] rounded-lg px-4 py-2 ${
+                        showOnRight
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-white text-gray-900 border border-gray-200'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className={`text-xs font-medium ${
+                          showOnRight ? 'text-indigo-200' : 'text-gray-500'
+                        }`}>
+                          {message.username || (message.isStaff ? 'Staff' : 'User')}
+                        </span>
+                        <span className={`text-xs ${
+                          showOnRight ? 'text-indigo-200' : 'text-gray-400'
+                        }`}>
+                          {formatTime(message.createdAt)}
+                        </span>
+                      </div>
+                      <p className="text-sm whitespace-pre-wrap break-words">
+                        {message.content}
+                      </p>
                     </div>
-                    <p className="text-sm whitespace-pre-wrap break-words">
-                      {message.content}
-                    </p>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               <div ref={messagesEndRef} />
             </>
           )}
