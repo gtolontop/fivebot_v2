@@ -200,8 +200,9 @@ export default function TicketViewModal({
   const renderMessageContent = (content: string, isStaffMessage: boolean = false) => {
     let formatted = formatContent(content);
 
-    // Extract all media types
+    // Extract all media types and embeds
     const media: Array<{ type: string; url: string; embed?: string }> = [];
+    const linkEmbeds: Array<{ url: string; domain: string }> = [];
     let textWithoutMedia = formatted;
 
     // YouTube URLs
