@@ -252,14 +252,98 @@ export class TicketService {
   }
 
   async closeTicket(ticketId: string, closedBy: string, reason?: string): Promise<Ticket> {
-    const ticket = await this.updateTicket(ticketId, {
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
+      include: { messages: true }
+    });
+
+    if (!ticket) throw new Error('Ticket not found');
+
+    // Update ticket state
+    const updatedTicket = await this.updateTicket(ticketId, {
       state: 'CLOSED',
       closedAt: new Date()
     });
 
     await this.logAction(ticketId, 'TICKET_CLOSED', closedBy, { reason });
 
-    return ticket;
+    // Generate and send transcript if transcript channel is configured
+    const config = await this.getConfig(ticket.guildId);
+    if (config?.transcriptChannelId) {
+      try {
+        const { Client } = await import('discord.js');
+        const client = (global as any).discordClient;
+
+        if (client) {
+          const transcriptChannel = await client.channels.fetch(config.transcriptChannelId);
+          if (transcriptChannel?.isTextBased()) {
+            const messages = ticket.messages || [];
+
+            let transcript = `Ticket #${ticket.ticketNumber} Transcript\n`;
+            transcript += `Creator: <@${ticket.creatorId}>\n`;
+            transcript += `Closed by: ${closedBy}\n`;
+            transcript += `Reason: ${reason || 'No reason provided'}\n`;
+            transcript += `Created: ${new Date(ticket.createdAt).toLocaleString()}\n`;
+            transcript += `Closed: ${new Date().toLocaleString()}\n\n`;
+            transcript += '='.repeat(50) + '\n\n';
+
+            for (const msg of messages.reverse()) {
+              transcript += `[${new Date(msg.createdAt).toLocaleString()}] ${msg.authorId}: ${msg.content}\n`;
+              if (msg.attachments) {
+                transcript += `  [Attachments]\n`;
+              }
+              transcript += '\n';
+            }
+
+            const buffer = Buffer.from(transcript, 'utf-8');
+
+            await transcriptChannel.send({
+              embeds: [{
+                color: 0x5865f2,
+                title: `📋 Ticket #${ticket.ticketNumber} Closed`,
+                fields: [
+                  { name: 'Creator', value: `<@${ticket.creatorId}>`, inline: true },
+                  { name: 'Closed By', value: closedBy, inline: true },
+                  { name: 'Reason', value: reason || 'No reason provided', inline: false },
+                  { name: 'Messages', value: messages.length.toString(), inline: true },
+                  { name: 'Duration', value: `${Math.floor((Date.now() - new Date(ticket.createdAt).getTime()) / 60000)} minutes`, inline: true }
+                ],
+                timestamp: new Date().toISOString()
+              }],
+              files: [{
+                attachment: buffer,
+                name: `ticket-${ticket.ticketNumber}-transcript.txt`
+              }]
+            });
+          }
+        }
+      } catch (transcriptError) {
+        console.error('[TicketService] Error sending transcript:', transcriptError);
+      }
+    }
+
+    // Delete the channel after a delay (5 seconds)
+    setTimeout(async () => {
+      try {
+        const { Client } = await import('discord.js');
+        const client = (global as any).discordClient;
+
+        if (client) {
+          const channelId = ticket.channelId || ticket.threadId;
+          if (channelId) {
+            const channel = await client.channels.fetch(channelId);
+            if (channel && 'delete' in channel) {
+              await (channel as any).delete();
+              console.log(`[TicketService] Channel deleted for ticket #${ticket.ticketNumber}`);
+            }
+          }
+        }
+      } catch (deleteError) {
+        console.error('[TicketService] Error deleting channel:', deleteError);
+      }
+    }, 5000);
+
+    return updatedTicket;
   }
 
   async deleteTicket(ticketId: string, deletedBy: string, reason?: string): Promise<Ticket> {
