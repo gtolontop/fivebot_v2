@@ -161,6 +161,11 @@ export default function TicketSystemConfig({
   });
 
   useEffect(() => {
+    console.log('TicketSystemConfig - guilds:', guilds.length, guilds);
+    console.log('TicketSystemConfig - config:', config);
+  }, [guilds, config]);
+
+  useEffect(() => {
     if (config.ticketEnabled && botId) {
       fetchTicketData();
     }
