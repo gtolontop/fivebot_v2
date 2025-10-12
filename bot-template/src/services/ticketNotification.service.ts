@@ -77,7 +77,7 @@ export class TicketNotificationService {
       username: creator.username,
       userId: creator.id,
       guildName: guild.name,
-      channelId: ticket.threadId || ticket.channelId
+      channelId: ticket.threadId || ticket.channelId || 'unknown'
     };
 
     // Notify creator
