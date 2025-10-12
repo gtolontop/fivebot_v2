@@ -329,18 +329,33 @@ model TicketMessage {
 }
 
 model TicketConfig {
-  id                    String   @id @default(uuid())
-  guildId               String   @unique @map("guild_id")
-  botId                 String   @map("bot_id")
-  categoryId            String?  @map("category_id")
-  staffRoleId           String?  @map("staff_role_id")
-  transcriptChannelId   String?  @map("transcript_channel_id")
-  namingFormat          String?  @map("naming_format")
-  maxTickets            Int      @default(3) @map("max_tickets")
-  categories            String?  @db.Text
-  panels                String?  @db.Text
-  createdAt             DateTime @default(now()) @map("created_at")
-  updatedAt             DateTime @updatedAt @map("updated_at")
+  id                    String          @id @default(uuid())
+  guildId               String          @unique @map("guild_id")
+  botId                 String          @map("bot_id")
+  enabled               Boolean         @default(true)
+  containerType         ContainerType   @default(CHANNEL) @map("container_type")
+  categoryId            String?         @map("category_id")
+  supportCategoryId     String?         @map("support_category_id")
+  staffRoleId           String?         @map("staff_role_id")
+  staffRoles            Json?           @map("staff_roles")
+  transcriptChannelId   String?         @map("transcript_channel_id")
+  logChannelId          String?         @map("log_channel_id")
+  namingFormat          String?         @map("naming_format")
+  namingPattern         String?         @map("naming_pattern")
+  maxTickets            Int             @default(3) @map("max_tickets")
+  maxTicketsPerUser     Int             @default(3) @map("max_tickets_per_user")
+  cooldownMinutes       Int             @default(5) @map("cooldown_minutes")
+  warningHours          Int             @default(24) @map("warning_hours")
+  autoCloseHours        Int             @default(48) @map("auto_close_hours")
+  assignmentModel       AssignmentModel @default(COLLABORATIVE) @map("assignment_model")
+  allowedFileTypes      Json?           @map("allowed_file_types")
+  autoSaveTranscripts   Boolean         @default(false) @map("auto_save_transcripts")
+  sendTranscriptToUser  Boolean         @default(false) @map("send_transcript_to_user")
+  includeAttachments    Boolean         @default(true) @map("include_attachments")
+  categories            String?         @db.Text
+  panels                String?         @db.Text
+  createdAt             DateTime        @default(now()) @map("created_at")
+  updatedAt             DateTime        @updatedAt @map("updated_at")
 
   @@index([botId])
   @@index([guildId])
