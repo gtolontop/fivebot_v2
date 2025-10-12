@@ -164,8 +164,8 @@ export default function TicketViewModal({
           ) : (
             <>
               {messages.map((message) => {
-                // Check if message is from current user
-                const isCurrentUser = message.userId === currentUser.id;
+                // Check if message is from current user (compare with discordId)
+                const isCurrentUser = message.userId === currentUser.discordId;
                 const showOnRight = isCurrentUser || message.isStaff;
 
                 return (
