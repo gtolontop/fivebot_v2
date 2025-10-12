@@ -2431,6 +2431,7 @@ export default function TicketSystemConfig({
           }}
           currentUser={{
             id: user.id,
+            discordId: user.discordId,
             username: user.username,
             avatar: user.avatar
           }}
