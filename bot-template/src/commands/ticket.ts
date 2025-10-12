@@ -251,12 +251,22 @@ async function handlePanel(
 ) {
   await interaction.deferReply({ ephemeral: true });
 
-  const channel = interaction.options.getChannel('channel');
+  const channelOption = interaction.options.getChannel('channel');
   const type = interaction.options.getString('type') || 'BUTTON';
 
   if (!interaction.guildId || !interaction.guild) {
     await interaction.editReply({
       content: '❌ This command can only be used in a server.'
+    });
+    return;
+  }
+
+  // Use the specified channel, or fall back to current channel
+  const targetChannel = channelOption || interaction.channel;
+
+  if (!targetChannel || !targetChannel.isTextBased()) {
+    await interaction.editReply({
+      content: '❌ Invalid channel. Please use a text channel.'
     });
     return;
   }
@@ -273,7 +283,7 @@ async function handlePanel(
     // Validate configuration before creating panel
     const validationService = new TicketValidationService(interaction.client, ticketService);
     const validation = await validationService.validateConfiguration(config, interaction.guildId);
-    
+
     if (!validation.isValid) {
       const message = validationService.formatValidationMessage(validation);
       await interaction.editReply({
@@ -295,7 +305,7 @@ async function handlePanel(
     // Create panel
     const message = await panelService.createPanel(
       interaction.guild,
-      channel!.id,
+      targetChannel.id,
       type,
       embedData,
       config.categories || []
@@ -303,7 +313,7 @@ async function handlePanel(
 
     if (message) {
       await interaction.editReply({
-        content: `✅ Ticket panel created in ${channel}!`
+        content: `✅ Ticket panel created in ${channelOption ? `<#${targetChannel.id}>` : 'this channel'}!`
       });
     } else {
       await interaction.editReply({
