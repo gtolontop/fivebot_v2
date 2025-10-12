@@ -483,9 +483,20 @@ export class TicketCreationHandler {
     if (config.containerType === ContainerType.THREAD) {
       // Find or create hub channel for threads
       let hubChannel: TextChannel;
-      
+
       if (config.supportCategoryId) {
-        const category = await interaction.guild!.channels.fetch(config.supportCategoryId) as CategoryChannel;
+        let category;
+        try {
+          category = await interaction.guild!.channels.fetch(config.supportCategoryId) as CategoryChannel;
+          if (category && category.type !== 4) {
+            throw new Error('❌ The configured support category is not a valid category channel. Please update your ticket system configuration.');
+          }
+        } catch (error: any) {
+          if (error.code === 10003) {
+            throw new Error('❌ The configured ticket category no longer exists. Please update your ticket system configuration in the dashboard.');
+          }
+          throw error;
+        }
         
         // Look for existing hub channel
         hubChannel = category.children.cache.find(
