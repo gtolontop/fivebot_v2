@@ -192,7 +192,7 @@ export class CollaboratorsController {
     return { success: true, message: 'Collaborator removed' };
   }
 
-  @Post(':collaboratorId/accept')
+  @Post(':botId/collaborators/:collaboratorId/accept')
   async acceptInvitation(
     @Param('botId') botId: string,
     @Param('collaboratorId') collaboratorId: string,
