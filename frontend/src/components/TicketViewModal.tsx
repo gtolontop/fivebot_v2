@@ -262,7 +262,7 @@ export default function TicketViewModal({
                         >
                           {group.messages.map((msg) => (
                             <p key={msg.id} className="text-[15px] leading-[22px] whitespace-pre-wrap break-words">
-                              {msg.content}
+                              {formatContent(msg.content)}
                             </p>
                           ))}
                         </div>
