@@ -3,14 +3,13 @@ import {
   TicketConfig,
   TicketMessage,
   TicketParticipant,
-  TicketLog
+  TicketLog,
+  TicketCategory,
+  TicketPanel
 } from '@prisma/client';
 
 // Additional type definitions
 type TicketState = 'OPEN' | 'IN_PROGRESS' | 'CLOSED' | 'ARCHIVED';
-type ActivityState = 'ACTIVE' | 'INACTIVE' | 'WARNING';
-type ContainerType = 'CHANNEL' | 'THREAD';
-type TicketPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
 type ParticipantRole = 'CREATOR' | 'STAFF' | 'OBSERVER';
 type AssignmentModel = 'COLLABORATIVE' | 'ASSIGNED';
 import { prisma } from '../lib/database';
@@ -434,6 +433,7 @@ export class TicketService {
       data: {
         ticketId: data.ticketId,
         userId: data.authorId,
+        authorId: data.authorId,
         content: data.content,
         isStaff: data.isStaff
       }
@@ -442,7 +442,8 @@ export class TicketService {
     // Update activity state based on who sent the message
     const ticket = await this.getTicket(data.ticketId);
     if (ticket && ticket.state !== 'CLOSED') {
-      const newActivityState = data.isStaff ? 'GREEN' : 'ORANGE';
+      // Map to valid ActivityState values from the schema
+      const newActivityState = data.isStaff ? 'ACTIVE' : 'WARNING';
       await this.updateTicket(data.ticketId, {
         activityState: newActivityState,
         lastActivity: new Date()
@@ -526,7 +527,7 @@ export class TicketService {
   }
 
   // Activity State Management
-  async updateActivityState(ticketId: string, state: ActivityState): Promise<void> {
+  async updateActivityState(ticketId: string, state: string): Promise<void> {
     await this.updateTicket(ticketId, {
       activityState: state,
       lastActivity: new Date()
@@ -607,7 +608,7 @@ export class TicketService {
     });
   }
 
-  async updateCategory(categoryId: string, data: Partial<PrismaTicketCategory>): Promise<PrismaTicketCategory> {
+  async updateCategory(categoryId: string, data: Partial<TicketCategory>): Promise<TicketCategory> {
     return await prisma.ticketCategory.update({
       where: { id: categoryId },
       data
@@ -630,9 +631,9 @@ export class TicketService {
     });
   }
 
-  async updatePanel(panelId: string, data: any): Promise<PrismaTicketPanel> {
+  async updatePanel(panelId: string, data: any): Promise<TicketPanel> {
     // Remove fields that shouldn't be updated directly
-    const { id, guildId, configId, createdAt, ...updateData } = data;
+    const { id, guildId, botId, createdAt, ...updateData } = data;
     
     return await prisma.ticketPanel.update({
       where: { id: panelId },
@@ -649,8 +650,9 @@ export class TicketService {
     
     const deleted = await prisma.ticket.deleteMany({
       where: {
-        deletedAt: { lt: sevenDaysAgo },
-        permanentDeleteAt: { lt: new Date() }
+        deletedAt: { lt: sevenDaysAgo }
+        // Note: permanentDeleteAt field doesn't exist in the schema
+        // Add it to the Ticket model if you need permanent deletion tracking
       }
     });
 
