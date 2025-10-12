@@ -35,6 +35,7 @@ export default function TicketViewModal({
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const [optimisticMessages, setOptimisticMessages] = useState<Message[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -52,7 +53,7 @@ export default function TicketViewModal({
     if (shouldAutoScroll) {
       scrollToBottom();
     }
-  }, [messages]);
+  }, [messages, optimisticMessages]);
 
   // Detect when user scrolls manually
   useEffect(() => {
@@ -72,7 +73,19 @@ export default function TicketViewModal({
   const fetchMessages = async () => {
     try {
       const response = await botsAPI.getTicketMessages(botId, ticketId, 100);
-      setMessages(response.data.messages || []);
+      const fetchedMessages = response.data.messages || [];
+
+      // Remove optimistic messages that now exist in real messages (match by content and userId)
+      setOptimisticMessages(prev =>
+        prev.filter(optMsg =>
+          !fetchedMessages.some(realMsg =>
+            realMsg.content === optMsg.content &&
+            realMsg.userId === optMsg.userId
+          )
+        )
+      );
+
+      setMessages(fetchedMessages);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -117,7 +130,7 @@ export default function TicketViewModal({
         username: currentUser.username,
         avatar: currentUser.avatar,
       };
-      setMessages(prev => [...prev, optimisticMessage]);
+      setOptimisticMessages(prev => [...prev, optimisticMessage]);
       const messageContent = newMessage;
       setNewMessage('');
 
@@ -129,8 +142,7 @@ export default function TicketViewModal({
         avatar: avatarUrl
       });
 
-      // Don't fetch immediately - let the polling (3s) get the real message
-      // This prevents the flicker of optimistic message disappearing/reappearing
+      // Optimistic message will be automatically removed when real message arrives in fetchMessages
 
       // Refocus input after sending
       setTimeout(() => {
@@ -140,7 +152,7 @@ export default function TicketViewModal({
       console.error('Error sending message:', error);
       toast.error(error.response?.data?.message || 'Failed to send message');
       // Remove optimistic message on error
-      await fetchMessages();
+      setOptimisticMessages(prev => prev.filter(msg => msg.id !== optimisticMessage.id));
     } finally {
       setSending(false);
     }
