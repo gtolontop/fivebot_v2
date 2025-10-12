@@ -113,6 +113,19 @@ export default function TicketSystemConfig({
     automations: false
   });
 
+  const [ticketCommands, setTicketCommands] = useState({
+    close: true,
+    add: true,
+    remove: true,
+    claim: true,
+    unclaim: true,
+    lock: true,
+    unlock: true,
+    rename: true,
+    transfer: true,
+    priority: true
+  });
+
   // Category form state
   const [categoryForm, setCategoryForm] = useState({
     name: '',
