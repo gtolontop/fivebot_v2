@@ -317,8 +317,8 @@ export class TicketService {
 
     // Update activity state based on who sent the message
     const ticket = await this.getTicket(data.ticketId);
-    if (ticket && ticket.state !== TicketState.CLOSED) {
-      const newActivityState = data.isStaff ? ActivityState.GREEN : ActivityState.ORANGE;
+    if (ticket && ticket.state !== 'CLOSED') {
+      const newActivityState = data.isStaff ? 'GREEN' : 'ORANGE';
       await this.updateTicket(data.ticketId, {
         activityState: newActivityState,
         lastMessageFrom: data.authorId,
