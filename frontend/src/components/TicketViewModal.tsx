@@ -149,9 +149,48 @@ export default function TicketViewModal({
   };
 
   const formatContent = (content: string) => {
+    let formatted = content;
+
     // Replace Discord mentions <@USER_ID> with @username
-    // For now, just show @User since we don't have user cache
-    return content.replace(/<@!?(\d+)>/g, '@User');
+    formatted = formatted.replace(/<@!?(\d+)>/g, '@User');
+
+    return formatted;
+  };
+
+  const renderMessageContent = (content: string) => {
+    const formatted = formatContent(content);
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+
+    // Regex for inline code: `code`
+    const codeRegex = /`([^`]+)`/g;
+    let match;
+
+    while ((match = codeRegex.exec(formatted)) !== null) {
+      // Add text before code
+      if (match.index > lastIndex) {
+        parts.push(formatted.substring(lastIndex, match.index));
+      }
+
+      // Add code with styling
+      parts.push(
+        <code
+          key={match.index}
+          className="px-1.5 py-0.5 mx-0.5 bg-gray-800 text-gray-100 rounded text-sm font-mono"
+        >
+          {match[1]}
+        </code>
+      );
+
+      lastIndex = match.index + match[0].length;
+    }
+
+    // Add remaining text
+    if (lastIndex < formatted.length) {
+      parts.push(formatted.substring(lastIndex));
+    }
+
+    return parts.length > 0 ? parts : formatted;
   };
 
   return (
