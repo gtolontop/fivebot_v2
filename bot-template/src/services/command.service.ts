@@ -198,10 +198,10 @@ export class CommandService {
   }
 
   private async handleSendTicketMessage(data: any) {
-    const { channelId, content, username, avatar } = data;
+    const { ticketId, channelId, content, username, avatar, userId, isStaff } = data;
 
-    if (!channelId || !content || !username) {
-      throw new Error('Missing required fields: channelId, content, username');
+    if (!channelId || !content || !username || !userId) {
+      throw new Error('Missing required fields: channelId, content, username, userId');
     }
 
     console.log(`[CommandService] Sending ticket message to channel ${channelId}`);
@@ -219,6 +219,23 @@ export class CommandService {
     }
 
     console.log(`[CommandService] Message sent successfully`);
+
+    // Save message to database with real user ID (not webhook ID)
+    if (ticketId) {
+      const TicketService = require('./ticket.service').TicketService;
+      const ticketService = new TicketService(this.client);
+
+      await ticketService.addMessage({
+        ticketId,
+        messageId: `webhook-${Date.now()}`,
+        authorId: userId,
+        content,
+        isStaff: isStaff !== undefined ? isStaff : true,
+        attachments: undefined
+      });
+
+      console.log(`[CommandService] Message saved to database with userId: ${userId}`);
+    }
   }
 
   // Clean up old commands
