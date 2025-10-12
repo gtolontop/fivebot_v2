@@ -152,18 +152,18 @@ export class TicketAssignmentService {
     const category = await prisma.ticketCategory.findFirst({
       where: {
         id: ticket.category,
-        configId: config.id
+        botId: config.botId
       }
     });
 
-    if (!category || !category.staffRoleId) {
+    // Note: staffRoleId doesn't exist in TicketCategory schema
+    // Using all available staff instead
+    if (!category) {
       return this.assignLeastBusy(availableStaff, ticket.guildId);
     }
 
-    // Filter staff by category role
-    const categoryStaff = availableStaff.filter(member => 
-      member.roles.cache.has(category.staffRoleId!)
-    );
+    // Use all available staff as category doesn't have specific staff role
+    const categoryStaff = availableStaff;
 
     if (categoryStaff.length === 0) {
       return this.assignLeastBusy(availableStaff, ticket.guildId);
