@@ -9,9 +9,8 @@ export default {
     const ticket = await ticketService.getTicketByChannel(message.channel.id);
     if (!ticket) return;
 
-    // Ignore bot messages EXCEPT webhooks (webhooks have author.bot = true but are from dashboard)
-    const isWebhook = message.webhookId !== null;
-    if (message.author.bot && !isWebhook) {
+    // Ignore bot messages and webhooks (webhooks are saved by command service with correct userId)
+    if (message.author.bot || message.webhookId !== null) {
       return;
     }
 
@@ -20,14 +19,7 @@ export default {
 
     try {
       // Check if user is staff
-      // For webhook messages from dashboard, they are always staff
-      let isStaff = false;
-      if (isWebhook) {
-        // Webhook messages from dashboard are staff
-        isStaff = true;
-      } else {
-        isStaff = await ticketService.isStaff(message.guildId!, message.author.id);
-      }
+      const isStaff = await ticketService.isStaff(message.guildId!, message.author.id);
 
       // Track the message
       await ticketService.addMessage({
