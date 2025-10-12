@@ -23,6 +23,14 @@ export async function syncTicketConfigFromDashboard(guildId: string, botId: stri
     if (botConfig.ticketData) {
       try {
         ticketData = JSON.parse(botConfig.ticketData);
+
+        // Fix categories that don't have 'active' field - set to true by default
+        if (ticketData.categories && Array.isArray(ticketData.categories)) {
+          ticketData.categories = ticketData.categories.map((cat: any) => ({
+            ...cat,
+            active: cat.active !== undefined ? cat.active : true
+          }));
+        }
       } catch (e) {
         console.error('Failed to parse ticketData:', e);
       }
