@@ -482,15 +482,19 @@ export class TicketCreationHandler {
       nameVariables
     );
 
+    // Check if category has custom spawn location
+    const category = config?.categories?.find((c: any) => c.id === categoryId);
+    const spawnCategoryId = category?.spawnCategoryId || config.supportCategoryId;
+
     if (config.containerType === ContainerType.THREAD) {
       // Find or create hub channel for threads
       let hubChannel: TextChannel;
 
-      if (config.supportCategoryId) {
-        let category;
+      if (spawnCategoryId) {
+        let categoryChannel;
         try {
-          category = await interaction.guild!.channels.fetch(config.supportCategoryId) as CategoryChannel;
-          if (category && category.type !== 4) {
+          categoryChannel = await interaction.guild!.channels.fetch(spawnCategoryId) as CategoryChannel;
+          if (categoryChannel && categoryChannel.type !== 4) {
             throw new Error('❌ The configured support category is not a valid category channel. Please update your ticket system configuration.');
           }
         } catch (error: any) {
