@@ -1,6 +1,25 @@
-import { ActivityState, TicketState, TimerType } from '@prisma/client';
 import { Client } from 'discord.js';
 import { TicketService } from './ticket.service';
+
+// These are stored as strings in the database, not enums
+const TicketState = {
+  OPEN: 'OPEN',
+  IN_PROGRESS: 'IN_PROGRESS',
+  CLOSED: 'CLOSED',
+  RESOLVED: 'RESOLVED',
+  ARCHIVED: 'ARCHIVED'
+} as const;
+
+const ActivityState = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  WARNING: 'WARNING'
+} as const;
+
+const TimerType = {
+  INACTIVITY_WARNING: 'INACTIVITY_WARNING',
+  AUTO_CLOSE: 'AUTO_CLOSE'
+} as const;
 
 interface TimerConfig {
   idleThreshold: number;
