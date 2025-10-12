@@ -46,7 +46,8 @@
       "Bash(findstr:*)",
       "Bash(npx ts-node:*)",
       "Bash(tasklist)",
-      "Read(//tmp/scp35119/opt/fivebot/backend/**)"
+      "Read(//tmp/scp35119/opt/fivebot/backend/**)",
+      "Bash(del vercel.json)"
     ],
     "deny": [],
     "ask": [],
