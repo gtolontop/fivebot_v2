@@ -1022,7 +1022,7 @@ export default function TicketSystemConfig({
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center space-x-2 mb-1">
-                              <span className="text-2xl">{category.emoji || '🎫'}</span>
+                              {category.emoji && <span className="text-2xl">{category.emoji}</span>}
                               <h4 className="font-medium text-gray-900">{category.name}</h4>
                               {category.priority && category.priority > 0 && (
                                 <span className="px-2 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-800">
@@ -2502,7 +2502,7 @@ export default function TicketSystemConfig({
                           className="rounded border-gray-300 text-indigo-600"
                         />
                         <span className="text-sm">
-                          {category.emoji} {category.name}
+                          {category.emoji && `${category.emoji} `}{category.name}
                         </span>
                       </label>
                     ))
