@@ -2237,6 +2237,24 @@ export default function TicketSystemConfig({
           </div>
         </div>
       )}
+
+      {/* Ticket View Modal */}
+      {showTicketModal && selectedTicket && user && (
+        <TicketViewModal
+          botId={botId}
+          ticketId={selectedTicket.id}
+          ticketNumber={selectedTicket.ticketNumber}
+          onClose={() => {
+            setShowTicketModal(false);
+            setSelectedTicket(null);
+          }}
+          currentUser={{
+            id: user.id,
+            username: user.username,
+            avatar: user.avatar
+          }}
+        />
+      )}
     </div>
   );
 }
