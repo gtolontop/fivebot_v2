@@ -47,6 +47,7 @@ interface TicketCategory {
   description: string;
   emoji?: string;
   roleId?: string;
+  spawnCategoryId?: string;
   priority?: number;
   color?: string;
   requiredRoles?: string[];
@@ -2056,6 +2057,27 @@ export default function TicketSystemConfig({
                       placeholder="Select a role to auto-assign"
                       emptyMessage="No roles available"
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Custom Spawn Category (Optional)
+                    </label>
+                    <SearchableDropdown
+                      options={guilds.flatMap(guild =>
+                        guild.channels.filter((channel: any) => channel.type === 4).map((channel: any) => ({
+                          ...channel,
+                          guildName: guild.name
+                        }))
+                      )}
+                      value={categoryForm.spawnCategoryId || ''}
+                      onChange={(value) => setCategoryForm(prev => ({ ...prev, spawnCategoryId: value as string }))}
+                      placeholder="Select a Discord category (defaults to Basic Setup category)"
+                      emptyMessage="No categories available"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Override the default ticket category for this ticket type
+                    </p>
                   </div>
 
                   <div>
