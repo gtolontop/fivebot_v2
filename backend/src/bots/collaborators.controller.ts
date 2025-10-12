@@ -238,7 +238,7 @@ export class CollaboratorsController {
     };
   }
 
-  @Post(':collaboratorId/decline')
+  @Post(':botId/collaborators/:collaboratorId/decline')
   async declineInvitation(
     @Param('botId') botId: string,
     @Param('collaboratorId') collaboratorId: string,
