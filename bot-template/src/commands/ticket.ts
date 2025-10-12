@@ -50,8 +50,8 @@ export const data = new SlashCommandBuilder()
       .addChannelOption(option =>
         option
           .setName('channel')
-          .setDescription('Channel to send the panel to')
-          .setRequired(true)
+          .setDescription('Channel to send the panel to (defaults to current channel)')
+          .setRequired(false)
           .addChannelTypes(ChannelType.GuildText)
       )
       .addStringOption(option =>
