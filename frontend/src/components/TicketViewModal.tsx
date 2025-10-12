@@ -99,18 +99,19 @@ export default function TicketViewModal({
         avatar: currentUser.avatar,
       };
       setMessages(prev => [...prev, optimisticMessage]);
+      const messageContent = newMessage;
       setNewMessage('');
 
       // Send message to Discord
       await botsAPI.sendTicketMessage(botId, ticketId, {
-        content: newMessage,
+        content: messageContent,
         userId: currentUser.discordId,
         username: currentUser.username,
         avatar: avatarUrl
       });
 
-      // Fetch messages to get the real message
-      await fetchMessages();
+      // Don't fetch immediately - let the polling (3s) get the real message
+      // This prevents the flicker of optimistic message disappearing/reappearing
       toast.success('Message sent');
     } catch (error: any) {
       console.error('Error sending message:', error);
@@ -183,11 +184,34 @@ export default function TicketViewModal({
                 const isCurrentUser = message.userId === currentUser.discordId;
                 const showOnRight = isCurrentUser || message.isStaff;
 
+                // Get avatar URL
+                let avatarUrl = null;
+                if (isCurrentUser && currentUser.avatar) {
+                  avatarUrl = currentUser.avatar.startsWith('http')
+                    ? currentUser.avatar
+                    : `https://cdn.discordapp.com/avatars/${currentUser.discordId}/${currentUser.avatar}.png`;
+                } else if (message.avatar && message.userId) {
+                  avatarUrl = message.avatar.startsWith('http')
+                    ? message.avatar
+                    : `https://cdn.discordapp.com/avatars/${message.userId}/${message.avatar}.png`;
+                }
+
                 return (
                   <div
                     key={message.id}
-                    className={`flex ${showOnRight ? 'justify-end' : 'justify-start'}`}
+                    className={`flex gap-2 ${showOnRight ? 'justify-end' : 'justify-start'}`}
                   >
+                    {!showOnRight && (
+                      <div className="flex-shrink-0">
+                        {avatarUrl ? (
+                          <img src={avatarUrl} alt="Avatar" className="w-8 h-8 rounded-full" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
+                            <UserIcon className="w-5 h-5 text-gray-600" />
+                          </div>
+                        )}
+                      </div>
+                    )}
                     <div
                       className={`max-w-[70%] rounded-lg px-4 py-2 ${
                         showOnRight
@@ -211,6 +235,17 @@ export default function TicketViewModal({
                         {message.content}
                       </p>
                     </div>
+                    {showOnRight && (
+                      <div className="flex-shrink-0">
+                        {avatarUrl ? (
+                          <img src={avatarUrl} alt="Avatar" className="w-8 h-8 rounded-full" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-indigo-300 flex items-center justify-center">
+                            <UserIcon className="w-5 h-5 text-indigo-700" />
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}
