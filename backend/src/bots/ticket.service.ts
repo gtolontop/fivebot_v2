@@ -97,7 +97,8 @@ export class TicketService {
     return {
       categories: ticketData.categories || [],
       panels: ticketData.panels || [],
-      tickets: ticketData.tickets || []
+      tickets: ticketData.tickets || [],
+      commands: ticketData.commands || this.getDefaultCommands()
     };
   }
 
