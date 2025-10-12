@@ -8,44 +8,46 @@ datasource db {
 }
 
 model User {
-  id             String           @id @default(uuid())
-  discordId      String           @unique @map("discord_id")
+  id             String             @id @default(uuid())
+  discordId      String             @unique @map("discord_id")
   username       String
   email          String?
   avatar         String?
-  role           UserRole         @default(USER)
-  credits        Int              @default(100)
-  createdAt      DateTime         @default(now()) @map("created_at")
-  updatedAt      DateTime         @updatedAt @map("updated_at")
+  role           UserRole           @default(USER)
+  credits        Int                @default(100)
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
   auditLogs      AuditLog[]
   bots           Bot[]
   creditsHistory CreditsHistory[]
+  collaborations BotCollaborator[]
 
   @@map("users")
 }
 
 model Bot {
-  id             String       @id @default(uuid())
-  ownerId        String       @map("owner_id")
+  id             String             @id @default(uuid())
+  ownerId        String             @map("owner_id")
   name           String
-  tokenEncrypted String       @map("token_encrypted") @db.Text
-  clientId       String?      @map("client_id")
-  prefix         String       @default("!")
-  isActive       Boolean      @default(false) @map("is_active")
-  containerId    String?      @map("container_id")
-  instanceId     String?      @map("instance_id")
-  status         BotStatus    @default(OFFLINE)
-  startedAt      DateTime?    @map("started_at")
-  createdAt      DateTime     @default(now()) @map("created_at")
-  updatedAt      DateTime     @updatedAt @map("updated_at")
+  tokenEncrypted String             @map("token_encrypted") @db.Text
+  clientId       String?            @map("client_id")
+  prefix         String             @default("!")
+  isActive       Boolean            @default(false) @map("is_active")
+  containerId    String?            @map("container_id")
+  instanceId     String?            @map("instance_id")
+  status         BotStatus          @default(OFFLINE)
+  startedAt      DateTime?          @map("started_at")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
   auditLogs      AuditLog[]
   config         BotConfig?
   logs           BotLog[]
   metrics        BotMetrics[]
-  owner          User         @relation(fields: [ownerId], references: [id], onDelete: Cascade, map: "bot_owner_fkey")
+  owner          User               @relation(fields: [ownerId], references: [id], onDelete: Cascade, map: "bot_owner_fkey")
   hosts          Host[]
   jobLogs        JobLog[]
   commands       BotCommand[]
+  collaborators  BotCollaborator[]
 
   @@index([ownerId], map: "bots_owner_id_fkey")
   @@map("bots")
@@ -232,18 +234,6 @@ enum CreditType {
   ADMIN_ADJUSTMENT
 }
 
-enum ContainerType {
-  CHANNEL
-  THREAD
-}
-
-enum TicketPriority {
-  LOW
-  NORMAL
-  HIGH
-  URGENT
-}
-
 model BotCommand {
   id          String    @id @default(uuid())
   botId       String    @map("bot_id")
@@ -259,6 +249,42 @@ model BotCommand {
   @@map("bot_commands")
 }
 
+model BotCollaborator {
+  id            String               @id @default(uuid())
+  botId         String               @map("bot_id")
+  userId        String               @map("user_id")
+  invitedBy     String               @map("invited_by")
+  role          CollaboratorRole     @default(VIEWER)
+  permissions   String?              @db.Text // JSON des permissions granulaires
+  status        CollaboratorStatus   @default(PENDING)
+  invitedAt     DateTime             @default(now()) @map("invited_at")
+  acceptedAt    DateTime?            @map("accepted_at")
+  lastAccessAt  DateTime?            @map("last_access_at")
+  createdAt     DateTime             @default(now()) @map("created_at")
+  updatedAt     DateTime             @updatedAt @map("updated_at")
+  bot           Bot                  @relation(fields: [botId], references: [id], onDelete: Cascade)
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([botId, userId])
+  @@index([userId])
+  @@index([botId, status])
+  @@map("bot_collaborators")
+}
+
+enum CollaboratorRole {
+  VIEWER        // Voir seulement
+  MODERATOR     // Gérer modération, tickets, logs
+  DEVELOPER     // Gérer commandes, config avancée
+  ADMIN         // Tout sauf supprimer le bot
+}
+
+enum CollaboratorStatus {
+  PENDING       // Invitation envoyée
+  ACTIVE        // Acceptée et active
+  SUSPENDED     // Temporairement suspendu
+  REVOKED       // Accès révoqué
+}
+
 model Ticket {
   id              String                @id @default(uuid())
   guildId         String                @map("guild_id")
@@ -269,10 +295,10 @@ model Ticket {
   assignedStaffId String?               @map("assigned_staff_id")
   type            String
   category        String?
-  priority        String                @default("NORMAL")
+  priority        String                @default("medium")
   state           String                @default("open")
   activityState   String                @default("active") @map("activity_state")
-  containerType   ContainerType         @default(CHANNEL) @map("container_type")
+  containerType   String                @default("channel") @map("container_type")
   lastActivity    DateTime              @default(now()) @map("last_activity")
   feedbackRating  Int?                  @map("feedback_rating")
   createdAt       DateTime              @default(now()) @map("created_at")
