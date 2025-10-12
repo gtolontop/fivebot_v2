@@ -53,11 +53,27 @@ export function buildCommands(customCommands: Record<string, any> = {}, v2Comman
   
   // Add ticket commands if enabled
   const parsedConfig = process.env.CONFIG ? JSON.parse(process.env.CONFIG) : {};
-  const ticketEnabledNow = parsedConfig.ticketData?.ticketEnabled || false;
+  const ticketEnabledNow = parsedConfig.ticketEnabled || false;
   if (ticketEnabledNow) {
     commands.push(ticketCommand.data);
     commands.push(ticketExampleCommand.data);
     commands.push(ticketDebugCommand.data);
+
+    // Add ticket moderation commands based on ticketData.commands config
+    const ticketData = parsedConfig.ticketData ?
+      (typeof parsedConfig.ticketData === 'string' ? JSON.parse(parsedConfig.ticketData) : parsedConfig.ticketData) :
+      {};
+    const ticketCommands = ticketData.commands || {};
+
+    // Import and add enabled commands
+    const ticketCommandsModule = require('./ticket-commands');
+    if (ticketCommands.close !== false) commands.push(ticketCommandsModule.ticketCommands.close.data);
+    if (ticketCommands.add !== false) commands.push(ticketCommandsModule.ticketCommands.add.data);
+    if (ticketCommands.remove !== false) commands.push(ticketCommandsModule.ticketCommands.remove.data);
+    if (ticketCommands.claim !== false) commands.push(ticketCommandsModule.ticketCommands.claim.data);
+    if (ticketCommands.unclaim !== false) commands.push(ticketCommandsModule.ticketCommands.unclaim.data);
+    if (ticketCommands.rename !== false) commands.push(ticketCommandsModule.ticketCommands.rename.data);
+    if (ticketCommands.priority !== false) commands.push(ticketCommandsModule.ticketCommands.priority.data);
   }
   
   // Add custom commands
