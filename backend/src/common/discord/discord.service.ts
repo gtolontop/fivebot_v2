@@ -39,6 +39,33 @@ export class DiscordService {
 
   constructor(private cacheService: CacheService) {}
 
+  /**
+   * Invalidate all Discord cache for a specific bot
+   * Call this when bot status changes or when fresh data is needed
+   */
+  invalidateBotCache(botToken: string): void {
+    const tokenPrefix = botToken.substring(0, 10);
+
+    // Clear guilds cache
+    const guildsKey = this.cacheService.createKey('discord_guilds', tokenPrefix);
+    this.cacheService.delete(guildsKey);
+
+    console.log(`🗑️ Invalidated Discord cache for bot ${tokenPrefix}`);
+  }
+
+  /**
+   * Invalidate cache for a specific guild (channels, roles)
+   */
+  invalidateGuildCache(guildId: string): void {
+    const channelsKey = this.cacheService.createKey('discord_channels', guildId);
+    const rolesKey = this.cacheService.createKey('discord_roles', guildId);
+
+    this.cacheService.delete(channelsKey);
+    this.cacheService.delete(rolesKey);
+
+    console.log(`🗑️ Invalidated cache for guild ${guildId}`);
+  }
+
   private async delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
