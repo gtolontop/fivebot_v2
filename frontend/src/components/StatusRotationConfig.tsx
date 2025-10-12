@@ -42,10 +42,10 @@ const AVAILABLE_VARIABLES = [
 ];
 
 export default function StatusRotationConfig({ config, updateConfig }: Props) {
-  const statusConfig = config.statusRotation || {
-    enabled: false,
-    interval: 60,
-    statuses: DEFAULT_STATUSES
+  const statusConfig: StatusRotationConfig = {
+    enabled: config.statusRotation?.enabled || false,
+    interval: config.statusRotation?.interval || 60,
+    statuses: config.statusRotation?.statuses || DEFAULT_STATUSES
   };
 
   const [newStatus, setNewStatus] = useState<StatusItem>({
