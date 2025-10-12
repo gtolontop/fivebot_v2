@@ -56,8 +56,6 @@ export function buildCommands(customCommands: Record<string, any> = {}, v2Comman
   const ticketEnabledNow = parsedConfig.ticketEnabled || false;
   if (ticketEnabledNow) {
     commands.push(ticketCommand.data);
-    commands.push(ticketExampleCommand.data);
-    commands.push(ticketDebugCommand.data);
 
     // Add ticket moderation commands based on ticketData.commands config
     const ticketData = parsedConfig.ticketData ?
