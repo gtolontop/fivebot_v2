@@ -540,20 +540,50 @@ export default function BotConfigPage() {
     event.target.value = '';
   };
 
-  const resetConfig = () => {
-    if (!confirm('Are you sure you want to reset the entire configuration? This action is irreversible.')) {
+  const resetConfig = async () => {
+    if (!confirm('Are you sure you want to reset the entire configuration? This will disable all features and clear all settings. This action is irreversible.')) {
       return;
     }
 
-    const defaultConfig: BotConfig = {
-      welcomeEnabled: false,
-      moderationEnabled: false,
-      autoRoleEnabled: false,
-      customCommands: {},
-    };
+    setSaving(true);
+    try {
+      const defaultConfig: BotConfig = {
+        welcomeEnabled: false,
+        welcomeChannelId: '',
+        welcomeEmbedJson: { title: '', description: '', color: '#5865F2' },
+        welcomeLogoUrl: '',
+        moderationEnabled: false,
+        autoRoleEnabled: false,
+        autoRoleId: '',
+        autoRoleIds: [],
+        loggingChannelId: '',
+        customCommands: {},
+        ticketEnabled: false,
+        ticketCategoryId: '',
+        ticketStaffRoleId: '',
+        ticketTranscriptChannelId: '',
+        statusRotation: {},
+        embedV2Commands: {},
+      };
 
-    setConfig(defaultConfig);
-    toast.success('Configuration reset');
+      // Save to backend
+      await botsAPI.updateConfig(botId, defaultConfig);
+
+      // Update local state
+      setConfig(defaultConfig);
+
+      toast.success('Configuration reset to defaults successfully');
+
+      // If bot is running, suggest restart
+      if (bot?.status === 'ONLINE') {
+        toast('Bot is running - restart to apply changes', { icon: '⚠️' });
+      }
+    } catch (error) {
+      toast.error('Failed to reset configuration');
+      console.error('Reset config error:', error);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleUpdateToken = async () => {
