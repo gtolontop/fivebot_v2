@@ -341,7 +341,7 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
             return (
               <div
                 key={collaborator.id}
-                className={`bg-gray-800/70 border ${roleInfo.borderColor} rounded-xl p-5 hover:bg-gray-800 transition-all duration-200`}
+                className={`bg-white border ${roleInfo.borderColor} rounded-xl p-5 hover:shadow-md transition-all duration-200`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4 flex-1">
@@ -351,20 +351,20 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
                         <img
                           src={`https://cdn.discordapp.com/avatars/${collaborator.user.discordId}/${collaborator.user.avatar}.png?size=128`}
                           alt={collaborator.user.username}
-                          className="w-14 h-14 rounded-full ring-2 ring-gray-700"
+                          className="w-14 h-14 rounded-full ring-2 ring-gray-200"
                         />
                       ) : (
-                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center ring-2 ring-gray-700">
+                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center ring-2 ring-gray-200">
                           <UserGroupIcon className="h-7 w-7 text-gray-400" />
                         </div>
                       )}
-                      <StatusIcon className={`absolute -bottom-1 -right-1 h-5 w-5 ${statusInfo.color} bg-gray-800 rounded-full p-0.5`} />
+                      <StatusIcon className={`absolute -bottom-1 -right-1 h-5 w-5 ${statusInfo.color} bg-white rounded-full p-0.5`} />
                     </div>
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center space-x-3 mb-1">
-                        <h4 className="text-white font-semibold truncate">
+                        <h4 className="text-gray-900 font-semibold truncate">
                           {collaborator.user?.username || 'Unknown User'}
                         </h4>
                         <div className={`flex items-center space-x-1.5 px-3 py-1 ${roleInfo.bgColor} border ${roleInfo.borderColor} rounded-lg`}>
@@ -374,7 +374,7 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
                           </span>
                         </div>
                       </div>
-                      <p className="text-sm text-gray-400 mb-1">
+                      <p className="text-sm text-gray-600 mb-1">
                         {roleInfo.description}
                       </p>
                       {collaborator.lastAccessAt && (
@@ -395,7 +395,7 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => toggleExpanded(collaborator.id)}
-                        className="p-2.5 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+                        className="p-2.5 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
                         title="View permissions"
                       >
                         {isExpanded ? (
@@ -406,7 +406,7 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
                       </button>
                       <button
                         onClick={() => handleRemoveCollaborator(collaborator.id)}
-                        className="p-2.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
+                        className="p-2.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
                         title="Remove"
                       >
                         <TrashIcon className="h-5 w-5" />
@@ -417,13 +417,13 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
 
                 {/* Expanded Permissions */}
                 {isExpanded && collaborator.permissions && (
-                  <div className="mt-5 pt-5 border-t border-gray-700">
-                    <h5 className="text-sm font-semibold text-gray-300 mb-3">Custom Permissions</h5>
+                  <div className="mt-5 pt-5 border-t border-gray-200">
+                    <h5 className="text-sm font-semibold text-gray-900 mb-3">Custom Permissions</h5>
                     <div className="grid grid-cols-2 gap-2">
                       {Object.entries(collaborator.permissions).map(([key, value]) => (
                         value && (
-                          <div key={key} className="flex items-center space-x-2 text-sm text-gray-400 bg-gray-700/30 px-3 py-2 rounded-lg">
-                            <CheckCircleIcon className="h-4 w-4 text-green-400 flex-shrink-0" />
+                          <div key={key} className="flex items-center space-x-2 text-sm text-gray-700 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
+                            <CheckCircleIcon className="h-4 w-4 text-green-500 flex-shrink-0" />
                             <span className="truncate">{key}</span>
                           </div>
                         )
