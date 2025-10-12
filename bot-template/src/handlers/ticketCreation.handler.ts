@@ -634,17 +634,20 @@ export class TicketCreationHandler {
 
   // Get next ticket number
   private async getNextTicketNumber(guildId: string): Promise<number> {
-    const lastTicket = await this.ticketService.getConfig(guildId)
-      .then(async (config) => {
-        if (!config) return null;
-        
-        const last = await this.ticketService.getUserActiveTickets(guildId, '')
-          .then(tickets => tickets.sort((a, b) => b.ticketNumber - a.ticketNumber)[0]);
-        
-        return last?.ticketNumber || config.startingNumber - 1;
-      });
+    // Get the highest ticket number from ALL tickets in the guild (not just active ones)
+    const lastTicket = await this.prisma.ticket.findFirst({
+      where: {
+        guildId: guildId
+      },
+      orderBy: {
+        ticketNumber: 'desc'
+      },
+      select: {
+        ticketNumber: true
+      }
+    });
 
-    return (lastTicket || 0) + 1;
+    return (lastTicket?.ticketNumber || 0) + 1;
   }
 
   // Parse priority from text
