@@ -122,48 +122,19 @@ export default function TicketViewModal({
         toast.loading('Uploading image...', { id: 'upload' });
 
         try {
-          // Convert file to base64
-          const reader = new FileReader();
+          // Upload to our backend (which uses Discord CDN)
+          const response = await utilsAPI.uploadImage(file);
 
-          reader.onload = async () => {
-            try {
-              const base64 = (reader.result as string).split(',')[1];
-
-              // Upload to imgbb (free image hosting)
-              const formData = new FormData();
-              formData.append('image', base64);
-
-              const response = await fetch(`https://api.imgbb.com/1/upload?key=d0db2f0b8d8661e8d4d2e7e8ee0a7ae7`, {
-                method: 'POST',
-                body: formData,
-              });
-
-              const data = await response.json();
-
-              if (data.success) {
-                setAttachmentUrl(data.data.url);
-                toast.success('Image uploaded!', { id: 'upload' });
-              } else {
-                console.error('ImgBB error:', data);
-                toast.error('Upload failed: ' + (data.error?.message || 'Unknown error'), { id: 'upload' });
-              }
-            } catch (error: any) {
-              console.error('Upload error:', error);
-              toast.error('Upload failed: ' + error.message, { id: 'upload' });
-            } finally {
-              setUploading(false);
-            }
-          };
-
-          reader.onerror = () => {
-            toast.error('Failed to read file', { id: 'upload' });
-            setUploading(false);
-          };
-
-          reader.readAsDataURL(file);
+          if (response.data.success) {
+            setAttachmentUrl(response.data.url);
+            toast.success('Image uploaded!', { id: 'upload' });
+          } else {
+            toast.error('Upload failed', { id: 'upload' });
+          }
         } catch (error: any) {
           console.error('Upload error:', error);
-          toast.error('Upload failed: ' + error.message, { id: 'upload' });
+          toast.error('Upload failed: ' + (error.response?.data?.message || error.message), { id: 'upload' });
+        } finally {
           setUploading(false);
         }
         break;
