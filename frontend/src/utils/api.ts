@@ -219,6 +219,11 @@ export const botsAPI = {
     api.get(`/bots/${botId}/logs/recent`),
 };
 
+export const utilsAPI = {
+  getUrlMetadata: (url: string) =>
+    api.get('/url-metadata', { params: { url } }),
+};
+
 export const usersAPI = {
   me: () => api.get('/users/me'),
   updateMe: (data: { username?: string; email?: string }) => 
