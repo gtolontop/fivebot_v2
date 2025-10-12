@@ -179,87 +179,103 @@ export default function TicketViewModal({
             </div>
           ) : (
             <>
-              {messages.map((message, index) => {
-                // Check if message is from current user (compare with discordId)
-                const isCurrentUser = message.userId === currentUser.discordId;
-                const showOnRight = isCurrentUser || message.isStaff;
+              {(() => {
+                // Group messages by user and time
+                const messageGroups: Array<{ messages: Message[], user: any, isStaff: boolean }> = [];
 
-                // Check if this message should be grouped with the previous one
-                const prevMessage = index > 0 ? messages[index - 1] : null;
-                const timeDiff = prevMessage ? (new Date(message.createdAt).getTime() - new Date(prevMessage.createdAt).getTime()) : Infinity;
-                const isGrouped = prevMessage &&
-                  prevMessage.userId === message.userId &&
-                  timeDiff < 300000; // 5 minutes
+                messages.forEach((message, index) => {
+                  const prevMessage = index > 0 ? messages[index - 1] : null;
+                  const timeDiff = prevMessage ? (new Date(message.createdAt).getTime() - new Date(prevMessage.createdAt).getTime()) : Infinity;
+                  const shouldGroup = prevMessage &&
+                    prevMessage.userId === message.userId &&
+                    timeDiff < 300000; // 5 minutes
 
-                // Get avatar URL
-                let avatarUrl = null;
-                if (isCurrentUser && currentUser.avatar) {
-                  avatarUrl = currentUser.avatar.startsWith('http')
-                    ? currentUser.avatar
-                    : `https://cdn.discordapp.com/avatars/${currentUser.discordId}/${currentUser.avatar}.png`;
-                } else if (message.avatar && message.userId) {
-                  avatarUrl = message.avatar.startsWith('http')
-                    ? message.avatar
-                    : `https://cdn.discordapp.com/avatars/${message.userId}/${message.avatar}.png`;
-                }
+                  if (shouldGroup) {
+                    messageGroups[messageGroups.length - 1].messages.push(message);
+                  } else {
+                    const isCurrentUser = message.userId === currentUser.discordId;
+                    messageGroups.push({
+                      messages: [message],
+                      user: isCurrentUser ? currentUser : {
+                        username: message.username || 'User',
+                        avatar: message.avatar,
+                        discordId: message.userId
+                      },
+                      isStaff: message.isStaff
+                    });
+                  }
+                });
 
-                return (
-                  <div
-                    key={message.id}
-                    className={`flex gap-3 ${showOnRight ? 'justify-end' : 'justify-start'} ${isGrouped ? 'mt-0.5' : 'mt-4'}`}
-                  >
-                    {!showOnRight && (
-                      <div className="flex-shrink-0 w-10">
-                        {!isGrouped ? (
-                          avatarUrl ? (
+                return messageGroups.map((group, groupIndex) => {
+                  const isCurrentUser = group.messages[0].userId === currentUser.discordId;
+                  const showOnRight = isCurrentUser || group.isStaff;
+
+                  // Get avatar URL
+                  let avatarUrl = null;
+                  if (isCurrentUser && currentUser.avatar) {
+                    avatarUrl = currentUser.avatar.startsWith('http')
+                      ? currentUser.avatar
+                      : `https://cdn.discordapp.com/avatars/${currentUser.discordId}/${currentUser.avatar}.png`;
+                  } else if (group.user.avatar && group.user.discordId) {
+                    avatarUrl = group.user.avatar.startsWith('http')
+                      ? group.user.avatar
+                      : `https://cdn.discordapp.com/avatars/${group.user.discordId}/${group.user.avatar}.png`;
+                  }
+
+                  return (
+                    <div
+                      key={`group-${groupIndex}`}
+                      className={`flex gap-3 ${showOnRight ? 'justify-end' : 'justify-start'} mt-4`}
+                    >
+                      {!showOnRight && (
+                        <div className="flex-shrink-0 w-10">
+                          {avatarUrl ? (
                             <img src={avatarUrl} alt="Avatar" className="w-10 h-10 rounded-full" />
                           ) : (
                             <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
                               <UserIcon className="w-6 h-6 text-gray-600" />
                             </div>
-                          )
-                        ) : null}
-                      </div>
-                    )}
-                    <div className="flex flex-col" style={{ maxWidth: '65%' }}>
-                      {!isGrouped && (
-                        <div className="flex items-baseline space-x-2 mb-1">
-                          <span className="text-sm font-semibold text-gray-900">
-                            {isCurrentUser ? currentUser.username : (message.username || (message.isStaff ? 'Staff' : 'User'))}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {formatTime(message.createdAt)}
-                          </span>
+                          )}
                         </div>
                       )}
-                      <div
-                        className={`${
-                          showOnRight
-                            ? 'bg-indigo-600 text-white rounded-2xl px-4 py-2'
-                            : 'text-gray-900'
-                        }`}
-                      >
-                        <p className="text-[15px] leading-[22px] whitespace-pre-wrap break-words">
-                          {message.content}
-                        </p>
+                      <div className="flex flex-col" style={{ maxWidth: '65%' }}>
+                        <div className="flex items-baseline space-x-2 mb-1">
+                          <span className="text-sm font-semibold text-gray-900">
+                            {group.user.username}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {formatTime(group.messages[0].createdAt)}
+                          </span>
+                        </div>
+                        <div
+                          className={`${
+                            showOnRight
+                              ? 'bg-indigo-600 text-white rounded-2xl px-4 py-2 space-y-1'
+                              : 'space-y-1'
+                          }`}
+                        >
+                          {group.messages.map((msg) => (
+                            <p key={msg.id} className="text-[15px] leading-[22px] whitespace-pre-wrap break-words">
+                              {msg.content}
+                            </p>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                    {showOnRight && (
-                      <div className="flex-shrink-0 w-10">
-                        {!isGrouped ? (
-                          avatarUrl ? (
+                      {showOnRight && (
+                        <div className="flex-shrink-0 w-10">
+                          {avatarUrl ? (
                             <img src={avatarUrl} alt="Avatar" className="w-10 h-10 rounded-full" />
                           ) : (
                             <div className="w-10 h-10 rounded-full bg-indigo-300 flex items-center justify-center">
                               <UserIcon className="w-6 h-6 text-indigo-700" />
                             </div>
-                          )
-                        ) : null}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                });
+              })()}
               <div ref={messagesEndRef} />
             </>
           )}
