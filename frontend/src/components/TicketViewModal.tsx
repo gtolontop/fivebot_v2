@@ -107,32 +107,33 @@ export default function TicketViewModal({
 
     setSending(true);
 
-    try {
-      // Construct full Discord avatar URL if we have an avatar hash
-      let avatarUrl: string | undefined = undefined;
-      if (currentUser.avatar) {
-        // Check if it's already a full URL
-        if (currentUser.avatar.startsWith('http')) {
-          avatarUrl = currentUser.avatar;
-        } else {
-          // Construct Discord CDN URL from hash
-          avatarUrl = `https://cdn.discordapp.com/avatars/${currentUser.discordId}/${currentUser.avatar}.png`;
-        }
+    // Construct full Discord avatar URL if we have an avatar hash
+    let avatarUrl: string | undefined = undefined;
+    if (currentUser.avatar) {
+      // Check if it's already a full URL
+      if (currentUser.avatar.startsWith('http')) {
+        avatarUrl = currentUser.avatar;
+      } else {
+        // Construct Discord CDN URL from hash
+        avatarUrl = `https://cdn.discordapp.com/avatars/${currentUser.discordId}/${currentUser.avatar}.png`;
       }
+    }
 
-      // Add message optimistically to UI
-      const optimisticMessage: Message = {
-        id: `temp-${Date.now()}`,
-        content: newMessage,
-        userId: currentUser.discordId,
-        isStaff: true,
-        createdAt: new Date().toISOString(),
-        username: currentUser.username,
-        avatar: currentUser.avatar,
-      };
-      setOptimisticMessages(prev => [...prev, optimisticMessage]);
-      const messageContent = newMessage;
-      setNewMessage('');
+    // Add message optimistically to UI
+    const optimisticMessage: Message = {
+      id: `temp-${Date.now()}`,
+      content: newMessage,
+      userId: currentUser.discordId,
+      isStaff: true,
+      createdAt: new Date().toISOString(),
+      username: currentUser.username,
+      avatar: currentUser.avatar,
+    };
+    setOptimisticMessages(prev => [...prev, optimisticMessage]);
+    const messageContent = newMessage;
+    setNewMessage('');
+
+    try {
 
       // Send message to Discord
       await botsAPI.sendTicketMessage(botId, ticketId, {
