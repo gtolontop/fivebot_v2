@@ -123,11 +123,19 @@ export class ConfigService {
         moderationEnabled: false,
         autoRoleEnabled: false,
         autoRoleId: null,
+        autoRoleIds: null,
         loggingChannelId: null,
         customCommands: null,
+        ticketEnabled: false,
+        ticketCategoryId: null,
+        ticketStaffRoleId: null,
+        ticketTranscriptChannelId: null,
+        ticketData: null,
+        statusRotation: null,
+        embedV2Commands: null,
         createdAt: new Date(),
         updatedAt: new Date(),
-      };
+      } as any;
     }
   }
 
