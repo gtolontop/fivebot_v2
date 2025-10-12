@@ -44,15 +44,7 @@ export const closeCommand: TicketCommand = {
     }
 
     try {
-      // Get config for transcript channel
-      const config = await ticketService.getConfig(ticket.guildId);
-
-      // Close the ticket
-      await ticketService.closeTicket(ticket.id, interaction.user.id, reason);
-
-      await interaction.editReply(`✅ Ticket #${ticket.ticketNumber} has been closed.\nReason: ${reason}`);
-
-      // Send closing message to ticket
+      // Send closing message to ticket before closing
       await interaction.channel?.send({
         embeds: [{
           title: '🔒 Ticket Closed',
@@ -65,68 +57,15 @@ export const closeCommand: TicketCommand = {
         }]
       });
 
-      // Generate and send transcript to transcript channel
-      if (config?.transcriptChannelId) {
-        try {
-          const transcriptChannel = interaction.guild?.channels.cache.get(config.transcriptChannelId);
-          if (transcriptChannel?.isTextBased()) {
-            const fullTicket = await ticketService.getTicket(ticket.id);
-            const messages = fullTicket?.messages || [];
+      await interaction.editReply(`✅ Ticket #${ticket.ticketNumber} has been closed.\nReason: ${reason}`);
 
-            let transcript = `Ticket #${ticket.ticketNumber} Transcript\n`;
-            transcript += `Creator: <@${ticket.creatorId}>\n`;
-            transcript += `Closed by: ${interaction.user.tag}\n`;
-            transcript += `Reason: ${reason}\n`;
-            transcript += `Created: ${ticket.createdAt}\n`;
-            transcript += `Closed: ${new Date().toLocaleString()}\n\n`;
-            transcript += '='.repeat(50) + '\n\n';
-
-            for (const msg of messages.reverse()) {
-              transcript += `[${msg.createdAt.toLocaleString()}] ${msg.userId}: ${msg.content}\n`;
-              if (msg.attachments) {
-                transcript += `  [Attachments]\n`;
-              }
-              transcript += '\n';
-            }
-
-            const buffer = Buffer.from(transcript, 'utf-8');
-
-            await transcriptChannel.send({
-              embeds: [{
-                color: 0x5865f2,
-                title: `📋 Ticket #${ticket.ticketNumber} Closed`,
-                fields: [
-                  { name: 'Creator', value: `<@${ticket.creatorId}>`, inline: true },
-                  { name: 'Closed By', value: interaction.user.tag, inline: true },
-                  { name: 'Reason', value: reason, inline: false },
-                  { name: 'Messages', value: messages.length.toString(), inline: true },
-                  { name: 'Duration', value: `${Math.floor((Date.now() - new Date(ticket.createdAt).getTime()) / 60000)} minutes`, inline: true }
-                ],
-                timestamp: new Date().toISOString()
-              }],
-              files: [{
-                attachment: buffer,
-                name: `ticket-${ticket.ticketNumber}-transcript.txt`
-              }]
-            });
-          }
-        } catch (transcriptError) {
-          console.error('Error sending transcript:', transcriptError);
-          // Don't fail the close if transcript fails
-        }
-      }
-
-      // Delete the channel after a delay (5 seconds)
-      setTimeout(async () => {
-        try {
-          if (interaction.channel && 'delete' in interaction.channel) {
-            await interaction.channel.delete();
-            console.log(`[Ticket Close] Channel deleted for ticket #${ticket.ticketNumber}`);
-          }
-        } catch (deleteError) {
-          console.error('[Ticket Close] Error deleting channel:', deleteError);
-        }
-      }, 5000);
+      // Close the ticket - this handles:
+      // - Updating ticket state in database
+      // - Generating and sending transcript (if autoSaveTranscripts is enabled)
+      // - Sending transcript to user DM (if sendTranscriptToUser is enabled)
+      // - Including attachments in transcript (if includeAttachments is enabled)
+      // - Deleting the Discord channel after 5 seconds
+      await ticketService.closeTicket(ticket.id, interaction.user.id, reason);
 
     } catch (error) {
       console.error('Error closing ticket:', error);
