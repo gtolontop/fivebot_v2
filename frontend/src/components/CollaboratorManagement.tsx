@@ -466,59 +466,16 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
                 </p>
               </div>
 
-              {/* Role Selection */}
+              {/* Custom Permissions */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Role
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  {Object.entries(roleConfig).map(([value, config]) => {
-                    const RoleIcon = config.icon;
-                    const isSelected = inviteForm.role === value;
-
-                    return (
-                      <button
-                        key={value}
-                        onClick={() => setInviteForm({ ...inviteForm, role: value as CollaboratorRole })}
-                        className={`p-4 rounded-xl border-2 transition-all text-left ${
-                          isSelected
-                            ? `${config.borderColor} ${config.bgColor}`
-                            : 'border-gray-200 bg-gray-50 hover:border-gray-300'
-                        }`}
-                      >
-                        <div className="flex items-center space-x-2 mb-2">
-                          <RoleIcon className={`h-5 w-5 ${isSelected ? config.color : 'text-gray-400'}`} />
-                          <span className={`font-medium ${isSelected ? config.color : 'text-gray-600'}`}>
-                            {config.label}
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-500 leading-relaxed">
-                          {config.description}
-                        </p>
-                      </button>
-                    );
-                  })}
+                <div className="flex items-center space-x-3 mb-4">
+                  <AdjustmentsHorizontalIcon className="h-5 w-5 text-purple-600" />
+                  <h4 className="font-medium text-gray-900">Custom Permissions</h4>
                 </div>
-              </div>
-
-              {/* Custom Permissions Toggle */}
-              <div className="border-t border-gray-200 pt-5">
-                <button
-                  onClick={() => setShowCustomPermissions(!showCustomPermissions)}
-                  className="flex items-center justify-between w-full p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors"
-                >
-                  <div className="flex items-center space-x-3">
-                    <AdjustmentsHorizontalIcon className="h-5 w-5 text-purple-600" />
-                    <div className="text-left">
-                      <h4 className="font-medium text-gray-900">Custom Permissions</h4>
-                      <p className="text-xs text-gray-500">Override role defaults with specific permissions</p>
-                    </div>
-                  </div>
-                  <ChevronDownIcon className={`h-5 w-5 text-gray-400 transition-transform ${showCustomPermissions ? 'rotate-180' : ''}`} />
-                </button>
 
                 {/* Custom Permissions Editor */}
-                {showCustomPermissions && (
+                <div className="space-y-4">
+                  {(
                   <div className="mt-4 space-y-4">
                     {Object.entries(permissionGroups).map(([groupName, permissions]) => (
                       <div key={groupName} className="bg-gray-50 rounded-xl p-4 border border-gray-200">
