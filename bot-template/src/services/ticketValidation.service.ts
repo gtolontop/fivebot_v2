@@ -53,16 +53,9 @@ export class TicketValidationService {
       return { isValid: false, errors, warnings };
     }
 
-    // Validate if tickets are enabled
-    if (!config.enabled) {
-      errors.push({
-        field: 'enabled',
-        message: 'Ticket system is disabled. Enable it in the dashboard to use tickets.',
-        messageFr: 'Le système de tickets est désactivé. Activez-le dans le tableau de bord pour utiliser les tickets.',
-        severity: 'error'
-      });
-      return { isValid: false, errors, warnings };
-    }
+    // Note: Ticket system enabled/disabled is controlled by BotConfig.ticketEnabled
+    // If we reach this point, the ticket system is already enabled at the bot level
+    // No need to check a separate 'enabled' field in TicketConfig
 
     // Validate container configuration
     await this.validateContainerConfiguration(config, guildId, errors, warnings);
