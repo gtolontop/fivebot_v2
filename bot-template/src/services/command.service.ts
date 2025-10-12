@@ -16,6 +16,7 @@ export class CommandService {
   private ticketPanelService: TicketPanelService | null = null;
   private webhookService: TicketWebhookService;
   private pollInterval: NodeJS.Timeout | null = null;
+  private ticketService: any = null; // Will be set if needed
 
   constructor(client: Client, prisma: PrismaClient, botId: string) {
     this.client = client;
@@ -420,8 +421,8 @@ export class CommandService {
 
       // Verify it's a text channel or thread, NOT a category
       if (channel && (channel.isTextBased() || channel.isThread())) {
-        // Double check it's not a category channel
-        if (channel.type !== 4) { // 4 = GUILD_CATEGORY
+        // Double check it's not a category channel (ChannelType.GuildCategory = 4)
+        if (channel.type !== 4 as any) {
           await channel.delete('Ticket deleted from dashboard');
         } else {
           console.error(`[DeleteTicket] channelId ${channelId} is a category, not deleting!`);
