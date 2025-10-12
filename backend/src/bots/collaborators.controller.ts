@@ -125,7 +125,7 @@ export class CollaboratorsController {
     };
   }
 
-  @Put(':collaboratorId')
+  @Put(':botId/collaborators/:collaboratorId')
   async updateCollaborator(
     @Param('botId') botId: string,
     @Param('collaboratorId') collaboratorId: string,
