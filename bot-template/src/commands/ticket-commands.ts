@@ -115,6 +115,19 @@ export const closeCommand: TicketCommand = {
           // Don't fail the close if transcript fails
         }
       }
+
+      // Delete the channel after a delay (5 seconds)
+      setTimeout(async () => {
+        try {
+          if (interaction.channel && 'delete' in interaction.channel) {
+            await interaction.channel.delete();
+            console.log(`[Ticket Close] Channel deleted for ticket #${ticket.ticketNumber}`);
+          }
+        } catch (deleteError) {
+          console.error('[Ticket Close] Error deleting channel:', deleteError);
+        }
+      }, 5000);
+
     } catch (error) {
       console.error('Error closing ticket:', error);
       await interaction.editReply('❌ Failed to close the ticket. Please try again.');
