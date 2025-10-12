@@ -22,22 +22,22 @@ export default {
       // Check if user is staff
       const isStaff = await ticketService.isStaff(message.guildId!, message.author.id);
 
+      // Build content with attachments
+      let fullContent = message.content || '';
+      if (message.attachments.size > 0) {
+        const attachmentUrls = Array.from(message.attachments.values())
+          .map(att => att.url)
+          .join('\n');
+        fullContent = fullContent ? `${fullContent}\n${attachmentUrls}` : attachmentUrls;
+      }
+
       // Track the message
       await ticketService.addMessage({
         ticketId: ticket.id,
         messageId: message.id,
         authorId: message.author.id,
-        content: message.content.substring(0, 1000), // Limit content length
+        content: fullContent.substring(0, 2000), // Increased limit for URLs
         isStaff,
-        attachments: message.attachments.size > 0 ? {
-          count: message.attachments.size,
-          files: Array.from(message.attachments.values()).map(att => ({
-            name: att.name,
-            url: att.url,
-            size: att.size,
-            contentType: att.contentType
-          }))
-        } : undefined
       });
 
       // Update activity state
