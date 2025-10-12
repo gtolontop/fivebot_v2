@@ -5,15 +5,15 @@ import { TicketStateManager } from '../services/ticketStateManager.service';
 export default {
   name: Events.MessageCreate,
   async execute(message: Message, ticketService: TicketService, stateManager: TicketStateManager) {
-    // Ignore bot messages unless whitelisted
-    if (message.author.bot) {
-      // TODO: Check whitelist from config
-      return;
-    }
-
     // Check if message is in a ticket channel/thread
     const ticket = await ticketService.getTicketByChannel(message.channel.id);
     if (!ticket) return;
+
+    // Ignore bot messages EXCEPT webhooks (webhooks have author.bot = true but are from dashboard)
+    const isWebhook = message.webhookId !== null;
+    if (message.author.bot && !isWebhook) {
+      return;
+    }
 
     // Check if it's a valid activity message
     if (!isActivityMessage(message)) return;
