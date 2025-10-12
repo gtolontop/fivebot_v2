@@ -607,7 +607,7 @@ export class TicketCreationHandler {
       const channel = await interaction.guild!.channels.create({
         name: channelName,
         type: ChannelType.GuildText,
-        parent: category?.id,
+        parent: categoryChannel?.id,
         permissionOverwrites: [
           {
             id: interaction.guild!.id,
