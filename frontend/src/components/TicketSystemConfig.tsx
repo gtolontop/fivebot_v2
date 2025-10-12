@@ -759,20 +759,16 @@ export default function TicketSystemConfig({
                                   {allRoles.find(r => r.id === category.roleId)?.name || 'Unknown'}
                                 </span>
                               )}
-                              <span className="flex items-center">
-                                <UserGroupIcon className="w-3 h-3 mr-1" />
-                                Max {category.maxTickets || '∞'} tickets
-                              </span>
-                              {category.autoClose && (
-                                <span className="flex items-center">
-                                  <ClockIcon className="w-3 h-3 mr-1" />
-                                  Auto-close {category.autoCloseHours}h
-                                </span>
-                              )}
                               {category.color && (
                                 <span className="flex items-center">
                                   <div className="w-3 h-3 rounded-full mr-1" style={{ backgroundColor: category.color }}></div>
                                   Color
+                                </span>
+                              )}
+                              {category.useCustomModal && (
+                                <span className="flex items-center">
+                                  <DocumentTextIcon className="w-3 h-3 mr-1" />
+                                  Custom Modal
                                 </span>
                               )}
                             </div>
@@ -786,12 +782,8 @@ export default function TicketSystemConfig({
                                   description: category.description,
                                   emoji: category.emoji || '🎫',
                                   roleId: category.roleId || '',
-                                  maxTickets: category.maxTickets || 3,
                                   priority: category.priority || 0,
                                   color: category.color || '#5865F2',
-                                  autoClose: category.autoClose || false,
-                                  autoCloseHours: category.autoCloseHours || 72,
-                                  privateByDefault: category.privateByDefault || false,
                                   requiredRoles: category.requiredRoles || [],
                                   welcomeMessage: category.welcomeMessage || '',
                                   useCustomModal: category.useCustomModal || false,
