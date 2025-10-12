@@ -145,7 +145,7 @@ model AuditLog {
   botId     String?  @map("bot_id")
   action    String
   resource  String?
-  metadata  String?  @db.LongText
+  metadata  String?  @db.Text
   ipAddress String?  @map("ip_address")
   userAgent String?  @map("user_agent")
   createdAt DateTime @default(now()) @map("created_at")
