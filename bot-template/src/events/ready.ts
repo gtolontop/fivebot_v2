@@ -193,14 +193,8 @@ async function restoreTicketPanels(client: Client, prisma: PrismaClient) {
           continue;
         }
 
-        if (!guild) {
-          console.warn(`Guild is undefined for panel ${panel.id}`);
-          failedCount++;
-          continue;
-        }
-
         // Find the channel
-        const channel = guild.channels.cache.get(panel.channelId) as TextChannel;
+        const channel = guild!.channels.cache.get(panel.channelId) as TextChannel;
         if (!channel) {
           console.warn(`Channel ${panel.channelId} not found for panel ${panel.id}`);
           failedCount++;
