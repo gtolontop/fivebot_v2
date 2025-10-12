@@ -258,12 +258,6 @@ export class TicketService {
     });
 
     await this.logAction(ticketId, 'TICKET_CLOSED', closedBy, { reason });
-    
-    // Deactivate all timers
-    await prisma.ticketTimer.updateMany({
-      where: { ticketId, active: true },
-      data: { active: false }
-    });
 
     return ticket;
   }
