@@ -2,7 +2,7 @@ import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import * as cheerio from 'cheerio';
 
-@Controller('api/url-metadata')
+@Controller('url-metadata')
 @UseGuards(AuthGuard('jwt'))
 export class UrlMetadataController {
   private cache = new Map<string, { data: any; timestamp: number }>();
