@@ -172,6 +172,18 @@ export const botsAPI = {
   updateTicketCommands: (botId: string, commands: any) =>
     api.put(`/bots/${botId}/tickets/commands`, commands),
 
+  // Ticket Messages
+  getTicket: (botId: string, ticketId: string) =>
+    api.get(`/bots/${botId}/tickets/${ticketId}`),
+
+  getTicketMessages: (botId: string, ticketId: string, limit?: number, before?: string) =>
+    api.get(`/bots/${botId}/tickets/${ticketId}/messages`, {
+      params: { limit, before }
+    }),
+
+  sendTicketMessage: (botId: string, ticketId: string, data: { content: string; userId: string; username: string; avatar?: string }) =>
+    api.post(`/bots/${botId}/tickets/${ticketId}/messages`, data),
+
   // Logs
   getLiveLogs: (botId: string) =>
     api.get(`/bots/${botId}/logs/live`),
