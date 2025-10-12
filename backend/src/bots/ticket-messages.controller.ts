@@ -89,22 +89,29 @@ export class TicketMessagesController {
       take: limit ? parseInt(limit) : 50,
     });
 
-    // Fetch user information for each message from the bot
-    const botInstance = this.botsService.getBotInstance(botId);
+    // Fetch user information for each message via Discord REST API
+    const decryptedToken = await this.botsService.getDecryptedToken(botId);
     const messagesWithUserInfo = await Promise.all(
       messages.map(async (message) => {
-        if (botInstance?.client) {
-          try {
-            const user = await botInstance.client.users.fetch(message.userId);
+        try {
+          const response = await fetch(`https://discord.com/api/v10/users/${message.userId}`, {
+            headers: {
+              'Authorization': `Bot ${decryptedToken}`,
+            },
+          });
+
+          if (response.ok) {
+            const user = await response.json();
             return {
               ...message,
               username: user.username,
               avatar: user.avatar,
             };
-          } catch (error) {
-            console.error(`Failed to fetch user ${message.userId}:`, error);
           }
+        } catch (error) {
+          console.error(`Failed to fetch user ${message.userId}:`, error);
         }
+
         return {
           ...message,
           username: 'Unknown User',
