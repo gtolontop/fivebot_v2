@@ -181,7 +181,7 @@ model BotMetrics {
 model SecurityKey {
   id        String   @id @default(uuid())
   purpose   String   @unique
-  keyMeta   String?  @map("key_meta") @db.LongText
+  keyMeta   String?  @map("key_meta") @db.Text
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -255,7 +255,7 @@ model BotCollaborator {
   userId        String               @map("user_id")
   invitedBy     String               @map("invited_by")
   role          CollaboratorRole     @default(VIEWER)
-  permissions   String?              @db.LongText // JSON des permissions granulaires
+  permissions   String?              @db.Text // JSON des permissions granulaires
   status        CollaboratorStatus   @default(PENDING)
   invitedAt     DateTime             @default(now()) @map("invited_at")
   acceptedAt    DateTime?            @map("accepted_at")
@@ -337,8 +337,8 @@ model TicketConfig {
   transcriptChannelId   String?  @map("transcript_channel_id")
   namingFormat          String?  @map("naming_format")
   maxTickets            Int      @default(3) @map("max_tickets")
-  categories            String?  @db.LongText
-  panels                String?  @db.LongText
+  categories            String?  @db.Text
+  panels                String?  @db.Text
   createdAt             DateTime @default(now()) @map("created_at")
   updatedAt             DateTime @updatedAt @map("updated_at")
 
