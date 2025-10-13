@@ -597,9 +597,9 @@ export class BotsService {
 
     // Add simple stopping message
     await this.botLogsService.addLog(
-      botId, 
-      LogLevel.INFO, 
-      'Server marked as stopping...', 
+      botId,
+      LogLevel.INFO,
+      'Server marked as stopping...',
       'System'
     );
 
@@ -617,6 +617,8 @@ export class BotsService {
       data: { startedAt: null }
     });
 
+    // Note: The actual state saving happens in simple-queue.service.ts
+    // This ensures the user's intention to stop is recorded
     await this.queueService.addJob('stop-bot', { botId });
 
     await this.prisma.auditLog.create({
