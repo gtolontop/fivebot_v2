@@ -32,101 +32,19 @@ export class CollaboratorsService {
       return false;
     }
 
-    // Admins ont tous les droits sauf deleteBot
-    if (collaborator.role === 'ADMIN') {
-      if (permission === 'deleteBot') {
-        return false;
-      }
-      return true;
-    }
-
-    // Vérifier permissions personnalisées
+    // Vérifier permissions personnalisées uniquement
     if (collaborator.permissions) {
       try {
         const perms = JSON.parse(collaborator.permissions);
-
-        // Vérifier permission spécifique
-        if (perms[permission] === true) {
-          return true;
-        }
-
-        // Permissions par défaut selon le rôle
-        return this.getDefaultRolePermissions(collaborator.role, permission);
+        return perms[permission] === true;
       } catch (e) {
-        // En cas d'erreur de parsing, utiliser les permissions par défaut
-        return this.getDefaultRolePermissions(collaborator.role, permission);
+        return false;
       }
     }
 
-    // Permissions par défaut selon le rôle
-    return this.getDefaultRolePermissions(collaborator.role, permission);
+    return false;
   }
 
-  private getDefaultRolePermissions(role: string, permission: string): boolean {
-    const rolePermissions: Record<string, string[]> = {
-      VIEWER: [
-        'viewDashboard',
-        'viewLogs',
-        'viewAnalytics',
-        'viewMetrics',
-      ],
-      MODERATOR: [
-        'viewDashboard',
-        'viewLogs',
-        'viewAnalytics',
-        'viewMetrics',
-        'viewTickets',
-        'manageTickets',
-        'closeTickets',
-        'editModeration',
-        'editLogging',
-      ],
-      DEVELOPER: [
-        'viewDashboard',
-        'viewLogs',
-        'viewAnalytics',
-        'viewMetrics',
-        'startBot',
-        'stopBot',
-        'restartBot',
-        'editWelcome',
-        'editAutoRoles',
-        'editModeration',
-        'editLogging',
-        'editCustomCommands',
-        'editStatusRotation',
-        'editEmbedCommands',
-        'viewTickets',
-        'manageTickets',
-        'configureTickets',
-      ],
-      ADMIN: [
-        'viewDashboard',
-        'viewLogs',
-        'viewAnalytics',
-        'viewMetrics',
-        'startBot',
-        'stopBot',
-        'restartBot',
-        'editWelcome',
-        'editAutoRoles',
-        'editModeration',
-        'editLogging',
-        'editCustomCommands',
-        'editTicketSystem',
-        'editStatusRotation',
-        'editEmbedCommands',
-        'viewTickets',
-        'manageTickets',
-        'closeTickets',
-        'deleteTickets',
-        'configureTickets',
-        'manageCollaborators',
-      ],
-    };
-
-    return rolePermissions[role]?.includes(permission) || false;
-  }
 
   async getAllPermissions(botId: string, userId: string): Promise<string[]> {
     // Vérifier si propriétaire (tous les droits)
