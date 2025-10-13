@@ -14,14 +14,14 @@ export async function ready(client: Client, prisma: PrismaClient) {
       data: {
         action: 'BOT_MANAGER_STARTED',
         resource: 'system',
-        metadata: {
+        metadata: JSON.stringify({
           guilds: client.guilds.cache.size,
           users: client.users.cache.size,
           uptime: process.uptime(),
-        },
+        }) as any,
       },
     });
-    
+
     console.log('✅ Bot startup logged to database');
   } catch (error) {
     console.error('❌ Failed to log startup:', error);
