@@ -314,17 +314,18 @@ export class BotMetricsService {
     let monthlyMetrics: any[] = [];
     if (bots.length > 0 && metricsTableExists) {
       try {
-        const placeholders = bots.map(() => '?').join(',');
+        const botIds = bots.map(bot => bot.id);
+        const placeholders = botIds.map((_, i) => `$${i + 1}`).join(',');
         // Use a more robust query that handles invalid dates
         const query = `SELECT * FROM bot_metrics
                        WHERE bot_id IN (${placeholders})
-                       AND date >= ?
+                       AND date >= $${botIds.length + 1}
                        AND date IS NOT NULL
                        AND EXTRACT(YEAR FROM date) > 1000
                        AND updated_at IS NOT NULL
                        AND EXTRACT(YEAR FROM updated_at) > 1000
                        ORDER BY date ASC`;
-        monthlyMetrics = await this.prisma.$queryRawUnsafe(query, ...bots.map(bot => bot.id), thirtyDaysAgo) as any[];
+        monthlyMetrics = await this.prisma.$queryRawUnsafe(query, ...botIds, thirtyDaysAgo) as any[];
       } catch (error) {
         console.log('Failed to query monthly bot_metrics, using fallback:', error.message);
         monthlyMetrics = [];
