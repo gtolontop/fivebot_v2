@@ -150,7 +150,7 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
   const fetchCollaborators = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/bots/${botId}/collaborators`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/bots/${botId}/collaborators`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -176,7 +176,7 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/bots/${botId}/collaborators/invite`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/bots/${botId}/collaborators/invite`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -222,7 +222,7 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/bots/${botId}/collaborators/${collaboratorId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/bots/${botId}/collaborators/${collaboratorId}`,
         {
           method: 'DELETE',
           headers: {
