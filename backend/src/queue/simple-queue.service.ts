@@ -3,6 +3,7 @@ import { IQueueService, JobData } from './queue.interface';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { EncryptionService } from '../common/encryption/encryption.service';
 import { BotLogsService } from '../bots/bot-logs.service';
+import { RedisService } from '../common/redis/redis.service';
 import { spawn, ChildProcess } from 'child_process';
 import * as path from 'path';
 import { BotStatus, LogLevel } from '@prisma/client';
@@ -26,6 +27,7 @@ export class SimpleQueueService implements IQueueService {
   constructor(
     private prisma: PrismaService,
     private encryptionService: EncryptionService,
+    private redisService: RedisService,
     @Inject(forwardRef(() => BotLogsService))
     private botLogsService: BotLogsService,
   ) {}
