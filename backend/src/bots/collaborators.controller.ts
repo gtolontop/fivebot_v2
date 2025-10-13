@@ -74,10 +74,26 @@ export class CollaboratorsController {
 
     console.log('[COLLABORATOR INVITE] Searching for Discord ID:', dto.userDiscordId);
 
+    // Normaliser le Discord ID (enlever les espaces)
+    const normalizedDiscordId = dto.userDiscordId.trim();
+
     // Trouver l'utilisateur à inviter par son Discord ID
-    const targetUser = await this.prisma.user.findUnique({
-      where: { discordId: dto.userDiscordId },
+    let targetUser = await this.prisma.user.findUnique({
+      where: { discordId: normalizedDiscordId },
     });
+
+    // Si pas trouvé, essayer de chercher par username aussi
+    if (!targetUser) {
+      targetUser = await this.prisma.user.findFirst({
+        where: {
+          OR: [
+            { discordId: normalizedDiscordId },
+            { username: normalizedDiscordId },
+            { id: normalizedDiscordId },
+          ],
+        },
+      });
+    }
 
     console.log('[COLLABORATOR INVITE] Target user found:', targetUser ? `${targetUser.username} (${targetUser.id})` : 'NOT FOUND');
 
@@ -88,7 +104,7 @@ export class CollaboratorsController {
         take: 10,
       });
       console.log('[COLLABORATOR INVITE] Available users:', allUsers);
-      throw new NotFoundException('User not found on the platform');
+      throw new NotFoundException(`User not found on the platform. Discord ID searched: ${normalizedDiscordId}`);
     }
 
     // Check if user is already a collaborator
