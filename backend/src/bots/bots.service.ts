@@ -279,13 +279,26 @@ export class BotsService {
   }
 
   async findOne(id: string, ownerId?: string): Promise<Bot | null> {
+    // Build where clause to check owner OR active collaborator
     const where: any = { id };
-    if (ownerId) {
-      where.ownerId = ownerId;
-    }
-    // No need for isActive filter since bots are hard deleted
 
-    const bot = await this.prisma.bot.findUnique({
+    if (ownerId) {
+      where.OR = [
+        { id, ownerId },
+        {
+          id,
+          collaborators: {
+            some: {
+              userId: ownerId,
+              status: 'ACTIVE',
+            },
+          },
+        },
+      ];
+      delete where.id; // Remove id from where since it's in OR
+    }
+
+    const bot = await this.prisma.bot.findFirst({
       where,
       include: {
         config: true,
