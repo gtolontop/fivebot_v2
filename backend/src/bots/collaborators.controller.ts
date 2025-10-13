@@ -107,6 +107,20 @@ export class CollaboratorsController {
       throw new NotFoundException(`User not found on the platform. Discord ID searched: ${normalizedDiscordId}`);
     }
 
+    // Vérifier que l'utilisateur n'essaie pas de s'inviter lui-même
+    if (targetUser.id === req.user.id) {
+      throw new BadRequestException('You cannot invite yourself as a collaborator');
+    }
+
+    // Vérifier que l'utilisateur n'est pas déjà le propriétaire
+    const bot = await this.prisma.bot.findUnique({
+      where: { id: botId },
+    });
+
+    if (bot?.ownerId === targetUser.id) {
+      throw new BadRequestException('This user is already the owner of this bot');
+    }
+
     // Check if user is already a collaborator
     const existing = await this.prisma.botCollaborator.findUnique({
       where: {
