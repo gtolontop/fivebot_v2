@@ -469,39 +469,6 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
                 </p>
               </div>
 
-              {/* Role Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Role
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  {Object.entries(roleConfig).map(([role, config]) => {
-                    const RoleIcon = config.icon;
-                    const isSelected = inviteForm.role === role;
-                    return (
-                      <button
-                        key={role}
-                        type="button"
-                        onClick={() => setInviteForm({ ...inviteForm, role: role as CollaboratorRole })}
-                        className={`p-4 rounded-xl border-2 transition-all text-left ${
-                          isSelected
-                            ? `${config.borderColor} ${config.bgColor}`
-                            : 'border-gray-200 bg-white hover:border-gray-300'
-                        }`}
-                      >
-                        <div className="flex items-center space-x-3 mb-2">
-                          <RoleIcon className={`h-5 w-5 ${isSelected ? config.color : 'text-gray-400'}`} />
-                          <span className={`font-semibold ${isSelected ? config.color : 'text-gray-700'}`}>
-                            {config.label}
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-500">{config.description}</p>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
               {/* Custom Permissions */}
               <div>
                 <div className="flex items-center space-x-3 mb-4">
