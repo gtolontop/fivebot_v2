@@ -377,7 +377,7 @@ export class TicketService {
           COUNT(*) as totalTickets,
           COUNT(CASE WHEN state = 'OPEN' OR state = 'IN_PROGRESS' THEN 1 END) as openTickets,
           COUNT(CASE WHEN state = 'CLOSED' THEN 1 END) as closedTickets,
-          COUNT(CASE WHEN DATE(created_at) = CURDATE() THEN 1 END) as todayTickets
+          COUNT(CASE WHEN created_at::date = CURRENT_DATE THEN 1 END) as todayTickets
         FROM tickets
         WHERE deleted_at IS NULL
           AND guild_id IN (${placeholders})
