@@ -1101,10 +1101,10 @@ export class BotsController {
   async killAllBotProcesses(@Req() req: any) {
     try {
       const queueService = this.botsService['queueService'];
-      const runningBots = queueService.getRunningBots ? queueService.getRunningBots() : [];
-      
+      const runningBots = queueService.getRunningBots ? await queueService.getRunningBots() : [];
+
       console.log(`🔪 Killing all ${runningBots.length} running bot processes...`);
-      
+
       let killed = 0;
       for (const botId of runningBots) {
         try {
