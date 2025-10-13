@@ -97,11 +97,11 @@ export const createBot = {
           botId: bot.id,
           action: 'BOT_CREATED_VIA_COMMAND',
           resource: 'bot',
-          metadata: {
+          metadata: JSON.stringify({
             discordUserId: interaction.user.id,
             guildId: interaction.guildId,
             channelId: interaction.channelId,
-          },
+          }),
         },
       });
 
