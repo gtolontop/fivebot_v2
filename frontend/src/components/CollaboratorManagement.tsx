@@ -138,10 +138,9 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [expandedCollaborators, setExpandedCollaborators] = useState<Set<string>>(new Set());
 
-  const [inviteForm, setInviteForm] = useState<InviteCollaboratorForm>({
+  const [inviteForm, setInviteForm] = useState({
     userDiscordId: '',
-    role: CollaboratorRole.VIEWER,
-    permissions: {},
+    permissions: {} as Record<string, boolean>,
   });
 
   useEffect(() => {
@@ -185,7 +184,6 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
         },
         body: JSON.stringify({
           userDiscordId: inviteForm.userDiscordId,
-          role: inviteForm.role,
           permissions: inviteForm.permissions,
         }),
       });
@@ -195,7 +193,6 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
         setShowInviteModal(false);
         setInviteForm({
           userDiscordId: '',
-          role: CollaboratorRole.VIEWER,
           permissions: {},
         });
         fetchCollaborators();
