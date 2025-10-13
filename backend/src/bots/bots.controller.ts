@@ -11,6 +11,7 @@ import {
   Req,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { BotsService } from './bots.service';
@@ -23,6 +24,7 @@ import { BotLogsService } from './bot-logs.service';
 import { TicketService } from './ticket.service';
 import { ConsoleBufferService } from './console-buffer.service';
 import { BotRealtimeMetricsService } from './bot-realtime-metrics.service';
+import { CollaboratorsService } from './collaborators.service';
 import { LogLevel } from '@prisma/client';
 
 interface CreateBotDto {
