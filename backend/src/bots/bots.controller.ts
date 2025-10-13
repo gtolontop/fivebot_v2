@@ -1322,14 +1322,14 @@ export class BotsController {
 
   // ==================== COLLABORATORS ROUTES ====================
 
-  @Get(':botId/collaborators')
+  @Get(':id/collaborators')
   @UseGuards(AuthGuard('jwt'))
-  async getCollaborators(@Param('botId') botId: string, @Req() req: any) {
+  async getCollaborators(@Param('id') id: string, @Req() req: any) {
     // Vérifier que l'utilisateur a accès au bot
-    await this.verifyBotAccess(botId, req.user.id);
+    await this.verifyBotAccess(id, req.user.id);
 
     const collaborators = await this.prisma.botCollaborator.findMany({
-      where: { botId },
+      where: { botId: id },
       include: {
         user: {
           select: {
@@ -1349,15 +1349,15 @@ export class BotsController {
     }));
   }
 
-  @Post(':botId/collaborators/invite')
+  @Post(':id/collaborators/invite')
   @UseGuards(AuthGuard('jwt'))
   async inviteCollaborator(
-    @Param('botId') botId: string,
+    @Param('id') id: string,
     @Body() dto: { userDiscordId: string; role: string; permissions?: any },
     @Req() req: any,
   ) {
     // Vérifier que l'utilisateur est propriétaire ou admin du bot
-    await this.verifyBotOwnerOrAdmin(botId, req.user.id);
+    await this.verifyBotOwnerOrAdmin(id, req.user.id);
 
     console.log('[COLLABORATOR INVITE] Searching for Discord ID:', dto.userDiscordId);
 
@@ -1401,7 +1401,7 @@ export class BotsController {
 
     // Vérifier que l'utilisateur n'est pas déjà le propriétaire
     const bot = await this.prisma.bot.findUnique({
-      where: { id: botId },
+      where: { id },
     });
 
     if (bot?.ownerId === targetUser.id) {
@@ -1412,7 +1412,7 @@ export class BotsController {
     const existing = await this.prisma.botCollaborator.findUnique({
       where: {
         botId_userId: {
-          botId,
+          botId: id,
           userId: targetUser.id,
         },
       },
@@ -1425,7 +1425,7 @@ export class BotsController {
     // Create the invitation
     const collaborator = await this.prisma.botCollaborator.create({
       data: {
-        botId,
+        botId: id,
         userId: targetUser.id,
         invitedBy: req.user.id,
         role: dto.role as any,
@@ -1450,21 +1450,21 @@ export class BotsController {
     };
   }
 
-  @Delete(':botId/collaborators/:collaboratorId')
+  @Delete(':id/collaborators/:collaboratorId')
   @UseGuards(AuthGuard('jwt'))
   async removeCollaborator(
-    @Param('botId') botId: string,
+    @Param('id') id: string,
     @Param('collaboratorId') collaboratorId: string,
     @Req() req: any,
   ) {
     // Verify user is owner or admin of the bot
-    await this.verifyBotOwnerOrAdmin(botId, req.user.id);
+    await this.verifyBotOwnerOrAdmin(id, req.user.id);
 
     const collaborator = await this.prisma.botCollaborator.findUnique({
       where: { id: collaboratorId },
     });
 
-    if (!collaborator || collaborator.botId !== botId) {
+    if (!collaborator || collaborator.botId !== id) {
       throw new NotFoundException('Collaborator not found');
     }
 
