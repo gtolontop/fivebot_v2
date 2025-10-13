@@ -251,8 +251,9 @@ export class BotsService {
         try {
           // Only sync if status seems potentially wrong
           if (bot.status === 'ONLINE' || bot.status === 'ERROR') {
-            const isProcessRunning = this.queueService.getRunningBots?.().includes(bot.id) ?? false;
-            
+            const runningBots = await this.queueService.getRunningBots?.() ?? [];
+            const isProcessRunning = runningBots.includes(bot.id);
+
             // If marked ONLINE but no process, quick sync
             if (bot.status === 'ONLINE' && !isProcessRunning) {
               console.log(`🔄 Auto-syncing bot ${bot.id} (${bot.name}) - marked ONLINE but no process`);
