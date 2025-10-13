@@ -220,15 +220,25 @@ class ChildBot {
 
         // Start command service
         if (this.commandService) {
-          this.commandService.start();
-          console.log('📡 Command service started');
+          try {
+            this.commandService.start();
+            console.log('📡 Command service started');
+          } catch (error) {
+            console.error('⚠️ Failed to start command service:', error);
+          }
         }
 
         // Start status rotation service
-        this.statusService = new StatusService(this.client);
-        this.statusService.start();
+        try {
+          this.statusService = new StatusService(this.client);
+          this.statusService.start();
+          console.log('✅ Status service started');
+        } catch (error) {
+          console.error('⚠️ Failed to start status service:', error);
+        }
 
         console.log('✅ Bot fully initialized and running');
+        console.log(`⏱️  Process uptime: ${Math.floor(process.uptime())}s`);
       } catch (error) {
         console.error('❌ Error in ready event:', error);
         // Don't exit - try to keep running
