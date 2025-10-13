@@ -9,7 +9,7 @@ export interface IQueueService {
   pauseQueue(): Promise<void>;
   resumeQueue(): Promise<void>;
   cleanJobs(type: 'completed' | 'failed', olderThan?: number): Promise<void>;
-  getRunningBots(): string[];
+  getRunningBots(): Promise<string[]>;
   forceStopBot(botId: string): Promise<void>;
   forceCleanupAndSync(): Promise<void>;
 }
