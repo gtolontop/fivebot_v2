@@ -174,8 +174,11 @@ export class SimpleQueueService implements IQueueService {
         throw new Error('Bot not found');
       }
 
-      // Check if bot is already running
-      if (this.runningBots.has(botId)) {
+      // Check if bot is already running (check both local Map and Redis)
+      const isRunningLocally = this.runningBots.has(botId);
+      const isRunningInRedis = await this.redisService.isRunningBot(botId);
+
+      if (isRunningLocally || isRunningInRedis) {
         console.log(`Bot ${botId} is already running`);
         return;
       }
