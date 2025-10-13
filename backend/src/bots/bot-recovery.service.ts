@@ -147,12 +147,18 @@ export class BotRecoveryService implements OnApplicationBootstrap {
       return true;
     }
 
-    // Check if state is recent (within last hour) - avoid recovering old states
+    // Check if state is recent (within last 24 hours) - avoid recovering very old states
     const timeSinceLastState = Date.now() - new Date(state.timestamp).getTime();
-    const oneHourMs = 60 * 60 * 1000;
+    const twentyFourHoursMs = 24 * 60 * 60 * 1000;
 
-    if (timeSinceLastState > oneHourMs) {
-      this.logger.log(`⏰ State is older than 1 hour, skipping recovery`);
+    if (timeSinceLastState > twentyFourHoursMs) {
+      this.logger.log(`⏰ State is older than 24 hours, skipping recovery`);
+      return false;
+    }
+
+    // Check metadata for explicit shouldRecover flag
+    if (state.metadata?.shouldRecover === false) {
+      this.logger.log(`🚫 Bot explicitly marked as non-recoverable`);
       return false;
     }
 

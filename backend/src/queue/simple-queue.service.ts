@@ -230,7 +230,15 @@ export class SimpleQueueService implements IQueueService {
         this.runningBots.delete(botId);
         await this.redisService.removeRunningBot(botId);
         await this.redisService.deleteBotMetadata(botId);
-        
+
+        // Mark as crash for recovery
+        await this.redisService.saveBotState(botId, {
+          status: 'OFFLINE',
+          userAction: 'crash',
+          timestamp: new Date(),
+          metadata: { error: error.message, shouldRecover: true }
+        });
+
         // Update bot status to error
         await this.updateBotStatusSafe(botId, BotStatus.ERROR);
       });
@@ -462,7 +470,15 @@ export class SimpleQueueService implements IQueueService {
 
     } catch (error) {
       console.error(`❌ Failed to start bot ${botId}:`, error);
-      
+
+      // Mark as crash for potential recovery
+      await this.redisService.saveBotState(botId, {
+        status: 'OFFLINE',
+        userAction: 'crash',
+        timestamp: new Date(),
+        metadata: { error: error.message, phase: 'startup', shouldRecover: false }
+      });
+
       // Update bot status to error
       await this.updateBotStatusSafe(botId, BotStatus.ERROR);
 
