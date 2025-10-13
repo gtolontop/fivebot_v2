@@ -72,9 +72,9 @@ export class BotMonitorService {
 
       let corrections = 0;
       
-      // Get running bots list once
+      // Get running bots list once from Redis (shared across all processes)
       const queueService = this.botsService.queueService as any;
-      const runningBots = queueService?.getRunningBots?.() ?? [];
+      const runningBots = await queueService?.getRunningBots?.() ?? [];
       console.log(`💓 Running bots in queue: [${runningBots.join(', ')}]`);
 
       for (const bot of allBots) {
