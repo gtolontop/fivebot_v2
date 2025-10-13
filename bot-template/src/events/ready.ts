@@ -17,10 +17,12 @@ export async function ready(client: Client, prisma: PrismaClient, botId: string,
   
   try {
     // Update bot status to online
+    console.log('📝 Updating bot status to ONLINE...');
     await prisma.bot.update({
       where: { id: botId },
       data: { status: 'ONLINE' },
     });
+    console.log('✅ Bot status successfully updated to ONLINE');
 
     // Update host status
     await prisma.host.updateMany({
