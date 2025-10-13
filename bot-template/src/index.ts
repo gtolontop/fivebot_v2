@@ -243,7 +243,16 @@ class ChildBot {
     });
     
     process.on('unhandledRejection', (error) => {
-      console.error('Unhandled promise rejection:', error);
+      console.error('❌ Unhandled promise rejection:', error);
+      // Don't exit - just log the error
+    });
+
+    process.on('uncaughtException', (error) => {
+      console.error('❌ Uncaught exception:', error);
+      // Don't exit immediately - give time to log
+      setTimeout(() => {
+        process.exit(1);
+      }, 1000);
     });
     
     process.on('SIGINT', async () => {
