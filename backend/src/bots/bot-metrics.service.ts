@@ -410,15 +410,13 @@ export class BotMetricsService {
     let metrics: any[] = [];
     try {
       metrics = await this.prisma.$queryRawUnsafe(
-        `SELECT * FROM bot_metrics 
-         WHERE bot_id = ? 
-         AND date >= ? 
-         AND date IS NOT NULL 
-         AND date != '0000-00-00'
-         AND YEAR(date) > 1000
+        `SELECT * FROM bot_metrics
+         WHERE bot_id = ?
+         AND date >= ?
+         AND date IS NOT NULL
+         AND EXTRACT(YEAR FROM date) > 1000
          AND updated_at IS NOT NULL
-         AND updated_at != '0000-00-00 00:00:00'
-         AND YEAR(updated_at) > 1000
+         AND EXTRACT(YEAR FROM updated_at) > 1000
          ORDER BY date ASC`,
         botId,
         startDate
