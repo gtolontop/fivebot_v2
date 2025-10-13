@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Cookies from 'js-cookie';
 import {
   UserGroupIcon,
   PlusIcon,
@@ -149,7 +150,7 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
 
   const fetchCollaborators = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = Cookies.get('token');
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/bots/${botId}/collaborators`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -175,7 +176,7 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
     }
 
     try {
-      const token = localStorage.getItem('token');
+      const token = Cookies.get('token');
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/bots/${botId}/collaborators/invite`, {
         method: 'POST',
         headers: {
@@ -220,7 +221,7 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
     }
 
     try {
-      const token = localStorage.getItem('token');
+      const token = Cookies.get('token');
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/bots/${botId}/collaborators/${collaboratorId}`,
         {
