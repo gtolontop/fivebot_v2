@@ -67,14 +67,18 @@ export class BotMonitorService {
 
       let corrections = 0;
       
+      // Get running bots list once
+      const queueService = this.botsService.queueService as any;
+      const runningBots = queueService?.getRunningBots?.() ?? [];
+      console.log(`💓 Running bots in queue: [${runningBots.join(', ')}]`);
+
       for (const bot of allBots) {
         // Get running status from queue service
-        const queueService = this.botsService.queueService as any;
-        const isProcessRunning = queueService?.getRunningBots?.().includes(bot.id) ?? false;
-        
+        const isProcessRunning = runningBots.includes(bot.id);
+
         // Quick correction for obvious mismatches
         if (bot.status === 'ONLINE' && !isProcessRunning) {
-          console.log(`💓 Heartbeat correcting bot ${bot.id} (${bot.name}): ONLINE → OFFLINE`);
+          console.log(`💓 Heartbeat correcting bot ${bot.id} (${bot.name}): ONLINE → OFFLINE (not in running list)`);
           try {
             await this.updateBotWithRetry(bot.id, { 
               status: 'OFFLINE',
