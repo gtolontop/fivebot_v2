@@ -57,6 +57,11 @@ export class BotMonitorService {
 
   @Cron('*/15 * * * * *')
   async heartbeatCheck() {
+    // Only run heartbeat in the API process, not in workers
+    if (process.env.PROCESS_TYPE === 'worker') {
+      return;
+    }
+
     try {
       console.log('💓 Heartbeat check starting...');
       
@@ -113,10 +118,15 @@ export class BotMonitorService {
   // Deep status check every 30 seconds (less frequent but more thorough)
   @Cron('*/30 * * * * *')
   async checkAllBotsStatus() {
-    // Add small random delay to prevent exact simultaneity 
+    // Only run status check in the API process, not in workers
+    if (process.env.PROCESS_TYPE === 'worker') {
+      return;
+    }
+
+    // Add small random delay to prevent exact simultaneity
     const randomDelay = Math.random() * 3000; // 0-3 seconds
     await new Promise(resolve => setTimeout(resolve, randomDelay));
-    
+
     console.log('🔍 Starting periodic bot status check...');
     
     try {

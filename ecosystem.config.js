@@ -14,7 +14,8 @@ module.exports = {
       max_memory_restart: '1G',
       env: {
         NODE_ENV: 'production',
-        PORT: 3001
+        PORT: 3001,
+        PROCESS_TYPE: 'api'
       },
       error_file: './logs/api-error.log',
       out_file: './logs/api-out.log',
@@ -31,7 +32,8 @@ module.exports = {
       watch: false,
       max_memory_restart: '512M',
       env: {
-        NODE_ENV: 'production'
+        NODE_ENV: 'production',
+        PROCESS_TYPE: 'worker'
       },
       error_file: './logs/worker-error.log',
       out_file: './logs/worker-out.log',
