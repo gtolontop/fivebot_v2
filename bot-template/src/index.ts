@@ -183,11 +183,20 @@ class ChildBot {
         await ready(this.client, this.prisma, this.botId, ticketEnabled);
 
         // Initialize metrics service after bot is ready
-        this.metricsService = new MetricsService(this.client, this.prisma, this.botId);
-        console.log('📊 Metrics tracking initialized');
+        try {
+          this.metricsService = new MetricsService(this.client, this.prisma, this.botId);
+          console.log('📊 Metrics tracking initialized');
+        } catch (error) {
+          console.error('⚠️ Failed to initialize metrics service:', error);
+        }
 
         // Initialize command service
-        this.commandService = new CommandService(this.client, this.prisma, this.botId);
+        try {
+          this.commandService = new CommandService(this.client, this.prisma, this.botId);
+          console.log('✅ Command service initialized');
+        } catch (error) {
+          console.error('⚠️ Failed to initialize command service:', error);
+        }
 
         if (ticketEnabled) {
           // Sync ticket configuration from dashboard first
