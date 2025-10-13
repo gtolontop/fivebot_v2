@@ -113,14 +113,14 @@ export class BotRealtimeMetricsService {
             ${guildsCount || 0}, ${usersCount || 0}, 3600, ${summary.avgResponseTime || 45}, ${summary.errorCount},
             NOW(), NOW()
           )
-          ON DUPLICATE KEY UPDATE
-            commands_used = commands_used + ${summary.commandCount},
-            messages_processed = messages_processed + ${summary.messageCount},
+          ON CONFLICT (bot_id, date) DO UPDATE SET
+            commands_used = bot_metrics.commands_used + ${summary.commandCount},
+            messages_processed = bot_metrics.messages_processed + ${summary.messageCount},
             guilds_count = ${guildsCount || 0},
             users_count = ${usersCount || 0},
-            uptime_seconds = uptime_seconds + 3600,
+            uptime_seconds = bot_metrics.uptime_seconds + 3600,
             avg_response_time_ms = ${summary.avgResponseTime || 45},
-            errors_count = errors_count + ${summary.errorCount},
+            errors_count = bot_metrics.errors_count + ${summary.errorCount},
             updated_at = NOW()
         `;
       }
