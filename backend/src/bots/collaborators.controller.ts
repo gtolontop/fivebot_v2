@@ -225,11 +225,13 @@ export class CollaboratorsController {
       throw new NotFoundException('Collaborator not found');
     }
 
+    const removedUserId = collaborator.userId;
+
     await this.prisma.botCollaborator.delete({
       where: { id: collaboratorId },
     });
 
-    return { success: true, message: 'Collaborator removed' };
+    return { success: true, message: 'Collaborator removed', removedUserId };
   }
 
   @Post(':botId/collaborators/:collaboratorId/accept')
