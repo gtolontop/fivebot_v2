@@ -210,10 +210,20 @@ export class BotsService {
   }
 
   async findAll(ownerId: string): Promise<Bot[]> {
+    // Get bots where user is owner OR active collaborator
     const bots = await this.prisma.bot.findMany({
-      where: { 
-        ownerId
-        // No need for isActive filter since bots are hard deleted
+      where: {
+        OR: [
+          { ownerId },
+          {
+            collaborators: {
+              some: {
+                userId: ownerId,
+                status: 'ACTIVE',
+              },
+            },
+          },
+        ],
       },
       include: {
         config: true,
