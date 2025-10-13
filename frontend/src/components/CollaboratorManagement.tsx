@@ -190,6 +190,7 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
       });
 
       if (response.ok) {
+        toast.success('Collaborator invited successfully!');
         setShowInviteModal(false);
         setInviteForm({
           userDiscordId: '',
@@ -199,7 +200,13 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
         fetchCollaborators();
       } else {
         const error = await response.json();
-        toast.error(error.message || 'Failed to send invitation');
+        if (response.status === 404) {
+          toast.error('User not found. They must have an account on the platform first.');
+        } else if (response.status === 400) {
+          toast.error(error.message || 'This user is already a collaborator');
+        } else {
+          toast.error(error.message || 'Failed to send invitation');
+        }
       }
     } catch (error) {
       console.error('Error sending invitation:', error);
