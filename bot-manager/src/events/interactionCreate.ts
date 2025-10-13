@@ -160,11 +160,11 @@ async function handleButtonInteraction(interaction: ButtonInteraction, prisma: P
         botId: bot.id,
         action: `BOT_${subaction.toUpperCase()}_BUTTON`,
         resource: 'bot',
-        metadata: {
+        metadata: JSON.stringify({
           interactionId: interaction.id,
           guildId: interaction.guildId,
           channelId: interaction.channelId,
-        },
+        }),
       },
     });
 
