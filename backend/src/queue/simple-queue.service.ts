@@ -641,8 +641,9 @@ export class SimpleQueueService implements IQueueService {
   }
 
   // Helper method to get running bots for debugging
-  getRunningBots(): string[] {
-    return Array.from(this.runningBots.keys());
+  // Returns bots from Redis (shared across all processes)
+  async getRunningBots(): Promise<string[]> {
+    return await this.redisService.getRunningBots();
   }
 
   // Helper method to force stop a specific bot (for emergency situations)
