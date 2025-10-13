@@ -1061,10 +1061,10 @@ export class BotsController {
   async getRunningBots(@Req() req: any) {
     try {
       const queueService = this.botsService['queueService'];
-      const runningBots = queueService.getRunningBots ? queueService.getRunningBots() : [];
-      
+      const runningBots = queueService.getRunningBots ? await queueService.getRunningBots() : [];
+
       console.log(`🔍 Debug: ${runningBots.length} bots currently running in process manager`);
-      
+
       return {
         runningBots,
         count: runningBots.length,
