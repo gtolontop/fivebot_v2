@@ -309,6 +309,8 @@ export class SimpleQueueService implements IQueueService {
         console.log(`[Bot ${botId}] Process exited with code ${code}`);
         console.log(`🗂️ Removing bot ${botId} from running processes list`);
         this.runningBots.delete(botId);
+        await this.redisService.removeRunningBot(botId);
+        await this.redisService.deleteBotMetadata(botId);
         
         // Add Pterodactyl-style server offline message
         try {
