@@ -7,6 +7,7 @@ import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
 import Cookies from 'js-cookie';
 import Header from '@/components/Header';
+import PendingInvitations from '@/components/PendingInvitations';
 
 interface Bot {
   id: string;
@@ -397,6 +398,9 @@ export default function BotsPage() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         
+        {/* Pending Invitations */}
+        <PendingInvitations onAccept={() => fetchBots()} />
+
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
