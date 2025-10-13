@@ -328,14 +328,14 @@ export class BotRealtimeMetricsService {
   private async getMostActiveServers(botId: string, startDate: Date): Promise<any[]> {
     try {
       const serverActivity = await this.prisma.$queryRaw`
-        SELECT 
-          JSON_EXTRACT(metadata, '$.guildId') as guild_id,
+        SELECT
+          metadata->>'guildId' as guild_id,
           COUNT(*) as activity_count
         FROM job_logs
         WHERE bot_id = ${botId}
         AND job_type IN ('COMMAND_EXECUTION', 'MESSAGE_PROCESSED')
         AND created_at >= ${startDate}
-        AND JSON_EXTRACT(metadata, '$.guildId') IS NOT NULL
+        AND metadata->>'guildId' IS NOT NULL
         GROUP BY guild_id
         ORDER BY activity_count DESC
         LIMIT 5
