@@ -479,20 +479,11 @@ export class BotsService {
       throw new NotFoundException('Bot not found');
     }
 
-    // Skip the force sync - it's causing locks and timeouts
-    // Just add the starting message
-    await this.botLogsService.addLog(
-      botId, 
-      LogLevel.INFO, 
-      'Server marked as starting...', 
-      'System'
-    );
-
     // Check if bot is actually running, not just marked as ONLINE
     if (bot.status === BotStatus.ONLINE) {
       // Verify if the bot process is actually running
       const isActuallyRunning = this.queueService['runningBots']?.has(botId);
-      
+
       if (isActuallyRunning) {
         throw new BadRequestException('Bot is already running');
       } else {
@@ -500,11 +491,19 @@ export class BotsService {
         console.log(`⚠️ Bot ${bot.name} is marked as ONLINE but process not found - allowing restart`);
       }
     }
-    
+
     // Don't allow starting if already in STARTING state
     if (bot.status === BotStatus.STARTING) {
       throw new BadRequestException('Bot is already starting');
     }
+
+    // Only add the starting log after validation checks pass
+    await this.botLogsService.addLog(
+      botId,
+      LogLevel.INFO,
+      'Server marked as starting...',
+      'System'
+    );
 
     await this.updateStatus(botId, BotStatus.STARTING);
 
