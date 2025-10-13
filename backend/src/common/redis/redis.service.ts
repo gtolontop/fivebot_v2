@@ -100,6 +100,71 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     await this.client.del(`fivebot:bot:${botId}`);
   }
 
+  // Bot state persistence for crash recovery
+  async saveBotState(botId: string, state: {
+    status: 'ONLINE' | 'OFFLINE';
+    userAction: 'start' | 'stop' | 'crash' | 'system';
+    timestamp: Date;
+    metadata?: any;
+  }): Promise<void> {
+    const key = `fivebot:bot_state:${botId}`;
+    await this.client.hset(
+      key,
+      'status', state.status,
+      'userAction', state.userAction,
+      'timestamp', state.timestamp.toISOString(),
+      'metadata', JSON.stringify(state.metadata || {})
+    );
+    // Expire after 7 days to clean up old states
+    await this.client.expire(key, 7 * 24 * 60 * 60);
+  }
+
+  async getBotState(botId: string): Promise<{
+    status: 'ONLINE' | 'OFFLINE';
+    userAction: 'start' | 'stop' | 'crash' | 'system';
+    timestamp: Date;
+    metadata?: any;
+  } | null> {
+    const key = `fivebot:bot_state:${botId}`;
+    const data = await this.client.hgetall(key);
+
+    if (!data || Object.keys(data).length === 0) {
+      return null;
+    }
+
+    return {
+      status: data.status as 'ONLINE' | 'OFFLINE',
+      userAction: data.userAction as 'start' | 'stop' | 'crash' | 'system',
+      timestamp: new Date(data.timestamp),
+      metadata: data.metadata ? JSON.parse(data.metadata) : undefined
+    };
+  }
+
+  async deleteBotState(botId: string): Promise<void> {
+    await this.client.del(`fivebot:bot_state:${botId}`);
+  }
+
+  async getAllBotStates(): Promise<Map<string, {
+    status: 'ONLINE' | 'OFFLINE';
+    userAction: 'start' | 'stop' | 'crash' | 'system';
+    timestamp: Date;
+    metadata?: any;
+  }>> {
+    const pattern = 'fivebot:bot_state:*';
+    const keys = await this.client.keys(pattern);
+    const states = new Map();
+
+    for (const key of keys) {
+      const botId = key.replace('fivebot:bot_state:', '');
+      const state = await this.getBotState(botId);
+      if (state) {
+        states.set(botId, state);
+      }
+    }
+
+    return states;
+  }
+
   getClient(): Redis {
     return this.client;
   }
