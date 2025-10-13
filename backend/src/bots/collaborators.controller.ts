@@ -72,12 +72,22 @@ export class CollaboratorsController {
     // Vérifier que l'utilisateur est propriétaire ou admin du bot
     await this.verifyBotOwnerOrAdmin(botId, req.user.id);
 
+    console.log('[COLLABORATOR INVITE] Searching for Discord ID:', dto.userDiscordId);
+
     // Trouver l'utilisateur à inviter par son Discord ID
     const targetUser = await this.prisma.user.findUnique({
       where: { discordId: dto.userDiscordId },
     });
 
+    console.log('[COLLABORATOR INVITE] Target user found:', targetUser ? `${targetUser.username} (${targetUser.id})` : 'NOT FOUND');
+
     if (!targetUser) {
+      // List all users to help debug
+      const allUsers = await this.prisma.user.findMany({
+        select: { id: true, username: true, discordId: true },
+        take: 10,
+      });
+      console.log('[COLLABORATOR INVITE] Available users:', allUsers);
       throw new NotFoundException('User not found on the platform');
     }
 
