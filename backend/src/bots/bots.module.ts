@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { BotsService } from './bots.service';
 import { BotsController } from './bots.controller';
 import { TicketMessagesController } from './ticket-messages.controller';
-import { CollaboratorsController } from './collaborators.controller';
 import { BotRecoveryService } from './bot-recovery.service';
 import { BotMetricsService } from './bot-metrics.service';
 import { SetupMetricsService } from './setup-metrics.service';
@@ -19,7 +18,7 @@ import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [QueueModule, UsersModule, DiscordModule],
-  controllers: [BotsController, TicketMessagesController, CollaboratorsController],
+  controllers: [BotsController, TicketMessagesController],
   providers: [BotsService, BotRecoveryService, BotMetricsService, SetupMetricsService, BotMonitorService, BotLogsService, ConsoleBufferService, BotRealtimeMetricsService, TicketService, CollaboratorsService, EncryptionService],
   exports: [BotsService, BotRecoveryService, BotLogsService, ConsoleBufferService, BotMetricsService, CollaboratorsService],
 })
