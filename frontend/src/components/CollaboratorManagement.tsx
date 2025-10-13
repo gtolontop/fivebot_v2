@@ -230,7 +230,25 @@ export default function CollaboratorManagement({ botId, isOwner }: CollaboratorM
       );
 
       if (response.ok) {
+        const data = await response.json();
         toast.success('Collaborator removed');
+
+        // Check if the removed user is the current user
+        const currentUserResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (currentUserResponse.ok) {
+          const currentUser = await currentUserResponse.json();
+          if (data.removedUserId === currentUser.user.id) {
+            // Redirect to bots page if the removed user is the current user
+            window.location.href = '/bots';
+            return;
+          }
+        }
+
         fetchCollaborators();
       } else {
         toast.error('Failed to remove collaborator');
