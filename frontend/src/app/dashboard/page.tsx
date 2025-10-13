@@ -7,6 +7,7 @@ import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
 import dynamic from 'next/dynamic';
 import Header from '@/components/Header';
+import PendingInvitations from '@/components/PendingInvitations';
 
 // Dynamic imports to avoid SSR issues
 const Line = dynamic(() => import('react-chartjs-2').then((mod) => mod.Line), {
