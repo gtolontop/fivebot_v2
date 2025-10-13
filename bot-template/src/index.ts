@@ -174,48 +174,56 @@ class ChildBot {
   private setupEventListeners() {
     // Core events
     this.client.once('ready', async () => {
-      // Check if ticket system is enabled BEFORE calling ready
-      // ticketEnabled is now a direct column in bot_configs, not in ticketData JSON
-      const ticketEnabled = (this.config as any).ticketEnabled || false;
-      console.log(`🎫 Ticket system enabled: ${ticketEnabled}`);
-      
-      await ready(this.client, this.prisma, this.botId, ticketEnabled);
-      // Initialize metrics service after bot is ready
-      this.metricsService = new MetricsService(this.client, this.prisma, this.botId);
-      console.log('📊 Metrics tracking initialized');
-      
-      // Initialize command service
-      this.commandService = new CommandService(this.client, this.prisma, this.botId);
-      
-      if (ticketEnabled) {
-        // Sync ticket configuration from dashboard first
-        const guildIds = this.client.guilds.cache.map(guild => guild.id);
-        await initializeTicketConfigSync(guildIds, this.botId);
-        
-        this.ticketHandler = new TicketInteractionHandler(this.client);
-        const services = this.ticketHandler.getServices();
-        this.ticketService = services.ticketService;
-        this.ticketStateManager = services.stateManager;
-        // Store on client for command access
-        (this.client as any).ticketHandler = this.ticketHandler;
-        
-        // Set ticket panel service in command service
-        if (this.commandService && this.ticketHandler) {
-          this.commandService.setTicketPanelService(this.ticketHandler.getServices().panelService);
+      try {
+        // Check if ticket system is enabled BEFORE calling ready
+        // ticketEnabled is now a direct column in bot_configs, not in ticketData JSON
+        const ticketEnabled = (this.config as any).ticketEnabled || false;
+        console.log(`🎫 Ticket system enabled: ${ticketEnabled}`);
+
+        await ready(this.client, this.prisma, this.botId, ticketEnabled);
+
+        // Initialize metrics service after bot is ready
+        this.metricsService = new MetricsService(this.client, this.prisma, this.botId);
+        console.log('📊 Metrics tracking initialized');
+
+        // Initialize command service
+        this.commandService = new CommandService(this.client, this.prisma, this.botId);
+
+        if (ticketEnabled) {
+          // Sync ticket configuration from dashboard first
+          const guildIds = this.client.guilds.cache.map(guild => guild.id);
+          await initializeTicketConfigSync(guildIds, this.botId);
+
+          this.ticketHandler = new TicketInteractionHandler(this.client);
+          const services = this.ticketHandler.getServices();
+          this.ticketService = services.ticketService;
+          this.ticketStateManager = services.stateManager;
+          // Store on client for command access
+          (this.client as any).ticketHandler = this.ticketHandler;
+
+          // Set ticket panel service in command service
+          if (this.commandService && this.ticketHandler) {
+            this.commandService.setTicketPanelService(this.ticketHandler.getServices().panelService);
+          }
+
+          console.log('🎫 Ticket system initialized');
         }
-        
-        console.log('🎫 Ticket system initialized');
+
+        // Start command service
+        if (this.commandService) {
+          this.commandService.start();
+          console.log('📡 Command service started');
+        }
+
+        // Start status rotation service
+        this.statusService = new StatusService(this.client);
+        this.statusService.start();
+
+        console.log('✅ Bot fully initialized and running');
+      } catch (error) {
+        console.error('❌ Error in ready event:', error);
+        // Don't exit - try to keep running
       }
-      
-      // Start command service
-      if (this.commandService) {
-        this.commandService.start();
-        console.log('📡 Command service started');
-      }
-      
-      // Start status rotation service
-      this.statusService = new StatusService(this.client);
-      this.statusService.start();
     });
     
     this.client.on('guildMemberAdd', (member) => 
