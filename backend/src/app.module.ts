@@ -6,6 +6,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { AppService } from './app.service';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { CacheModule } from './common/cache/cache.module';
+import { RedisModule } from './common/redis/redis.module';
 import { DiscordModule } from './common/discord/discord.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
