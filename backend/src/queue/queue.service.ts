@@ -46,7 +46,7 @@ export class QueueService implements IQueueService {
     await this.botQueue.clean(olderThan, type as any);
   }
 
-  getRunningBots(): string[] {
+  async getRunningBots(): Promise<string[]> {
     // BullMQ version doesn't track running bots directly
     return [];
   }
