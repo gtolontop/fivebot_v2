@@ -369,6 +369,11 @@ export class TicketService {
       }
       
       // Create placeholders for SQL IN clause
+      // Safety check: if no guilds, return empty array
+      if (guildIds.length === 0) {
+        return this.getDefaultTicketStats();
+      }
+
       const placeholders = guildIds.map(() => '?').join(', ');
 
       // Get ticket statistics filtered by guild_id
