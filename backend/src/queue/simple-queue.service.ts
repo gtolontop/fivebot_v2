@@ -43,9 +43,10 @@ export class SimpleQueueService implements IQueueService {
     while (retries > 0) {
       try {
         // Use raw SQL to avoid concurrency issues
+        // Cast status to BotStatus enum for PostgreSQL
         await this.prisma.$executeRaw`
-          UPDATE bots 
-          SET status = ${status}, updated_at = NOW()
+          UPDATE bots
+          SET status = ${status}::"BotStatus", updated_at = NOW()
           WHERE id = ${botId}
         `;
         return;
