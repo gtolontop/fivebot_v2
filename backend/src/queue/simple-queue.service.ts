@@ -216,6 +216,14 @@ export class SimpleQueueService implements IQueueService {
         startedAt: new Date(),
       });
 
+      // Save bot state in Redis for crash recovery
+      await this.redisService.saveBotState(botId, {
+        status: 'ONLINE',
+        userAction: 'start',
+        timestamp: new Date(),
+        metadata: { pid: botProcess.pid }
+      });
+
       // Handle process errors
       botProcess.on('error', async (error) => {
         console.error(`[Bot ${botId}] Process error:`, error);
@@ -311,6 +319,21 @@ export class SimpleQueueService implements IQueueService {
         this.runningBots.delete(botId);
         await this.redisService.removeRunningBot(botId);
         await this.redisService.deleteBotMetadata(botId);
+
+        // Check if this was a crash or intentional stop
+        const savedState = await this.redisService.getBotState(botId);
+        const wasCrash = !savedState || (savedState.userAction === 'start' && savedState.status === 'ONLINE');
+
+        // If crash, save crash state for recovery
+        if (wasCrash) {
+          console.log(`💥 Bot ${botId} crashed unexpectedly - marking for recovery`);
+          await this.redisService.saveBotState(botId, {
+            status: 'OFFLINE',
+            userAction: 'crash',
+            timestamp: new Date(),
+            metadata: { exitCode: code, shouldRecover: true }
+          });
+        }
         
         // Add Pterodactyl-style server offline message
         try {
@@ -393,6 +416,15 @@ export class SimpleQueueService implements IQueueService {
       if (this.runningBots.has(botId)) {
         // Update bot status to online
         await this.updateBotStatusSafe(botId, BotStatus.ONLINE);
+
+        // Confirm bot state in Redis (bot is really online)
+        await this.redisService.saveBotState(botId, {
+          status: 'ONLINE',
+          userAction: 'start',
+          timestamp: new Date(),
+          metadata: { confirmed: true }
+        });
+
         console.log(`✅ Bot ${botId} started successfully`);
         
         // Add Pterodactyl-style server online message
@@ -443,6 +475,14 @@ export class SimpleQueueService implements IQueueService {
     console.log(`🛑 Stopping bot ${botId}`);
 
     try {
+      // Save user's intention to stop the bot
+      await this.redisService.saveBotState(botId, {
+        status: 'OFFLINE',
+        userAction: 'stop',
+        timestamp: new Date(),
+        metadata: { intentional: true }
+      });
+
       const botProcess = this.runningBots.get(botId);
       
       if (!botProcess) {
