@@ -1475,6 +1475,110 @@ export class BotsController {
     return { success: true, message: 'Collaborator removed' };
   }
 
+  @Post(':id/collaborators/:collaboratorId/accept')
+  @UseGuards(AuthGuard('jwt'))
+  async acceptInvitation(
+    @Param('id') id: string,
+    @Param('collaboratorId') collaboratorId: string,
+    @Req() req: any,
+  ) {
+    const collaborator = await this.prisma.botCollaborator.findUnique({
+      where: { id: collaboratorId },
+    });
+
+    if (!collaborator || collaborator.botId !== id) {
+      throw new NotFoundException('Invitation not found');
+    }
+
+    if (collaborator.userId !== req.user.id) {
+      throw new ForbiddenException('This invitation is not for you');
+    }
+
+    if (collaborator.status !== 'PENDING') {
+      throw new BadRequestException('This invitation has already been processed');
+    }
+
+    const updated = await this.prisma.botCollaborator.update({
+      where: { id: collaboratorId },
+      data: {
+        status: 'ACTIVE',
+        acceptedAt: new Date(),
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            discordId: true,
+            avatar: true,
+          },
+        },
+      },
+    });
+
+    return {
+      ...updated,
+      permissions: updated.permissions ? JSON.parse(updated.permissions) : undefined,
+    };
+  }
+
+  @Post(':id/collaborators/:collaboratorId/decline')
+  @UseGuards(AuthGuard('jwt'))
+  async declineInvitation(
+    @Param('id') id: string,
+    @Param('collaboratorId') collaboratorId: string,
+    @Req() req: any,
+  ) {
+    const collaborator = await this.prisma.botCollaborator.findUnique({
+      where: { id: collaboratorId },
+    });
+
+    if (!collaborator || collaborator.botId !== id) {
+      throw new NotFoundException('Invitation not found');
+    }
+
+    if (collaborator.userId !== req.user.id) {
+      throw new ForbiddenException('This invitation is not for you');
+    }
+
+    if (collaborator.status !== 'PENDING') {
+      throw new BadRequestException('This invitation has already been processed');
+    }
+
+    await this.prisma.botCollaborator.delete({
+      where: { id: collaboratorId },
+    });
+
+    return { success: true, message: 'Invitation declined' };
+  }
+
+  @Get('collaborators/my-invitations')
+  @UseGuards(AuthGuard('jwt'))
+  async getMyInvitations(@Req() req: any) {
+    const invitations = await this.prisma.botCollaborator.findMany({
+      where: {
+        userId: req.user.id,
+        status: 'PENDING',
+      },
+      include: {
+        bot: {
+          select: {
+            id: true,
+            name: true,
+            clientId: true,
+            status: true,
+          },
+        },
+      },
+      orderBy: { invitedAt: 'desc' },
+    });
+
+    return invitations.map((inv) => ({
+      ...inv,
+      permissions: inv.permissions ? JSON.parse(inv.permissions) : undefined,
+    }));
+  }
+
   private async verifyBotAccess(botId: string, userId: string) {
     const bot = await this.prisma.bot.findUnique({
       where: { id: botId },
