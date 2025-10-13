@@ -301,7 +301,7 @@ export class MetricsService {
 
         await this.prisma.$executeRaw`
           INSERT INTO bot_metrics (
-            id, bot_id, date, commands_used, messages_processed, 
+            id, bot_id, date, commands_used, messages_processed,
             guilds_count, users_count, uptime_seconds, avg_response_time_ms, errors_count,
             created_at, updated_at
           ) VALUES (
@@ -309,14 +309,14 @@ export class MetricsService {
             ${currentGuilds}, ${currentUsers}, ${uptimeSeconds}, ${summary.avgResponseTime || 45}, ${summary.errorCount},
             NOW(), NOW()
           )
-          ON DUPLICATE KEY UPDATE
-            commands_used = commands_used + ${summary.commandCount},
-            messages_processed = messages_processed + ${summary.messageCount},
+          ON CONFLICT (bot_id, date) DO UPDATE SET
+            commands_used = bot_metrics.commands_used + ${summary.commandCount},
+            messages_processed = bot_metrics.messages_processed + ${summary.messageCount},
             guilds_count = ${currentGuilds},
             users_count = ${currentUsers},
             uptime_seconds = ${uptimeSeconds},
             avg_response_time_ms = ${summary.avgResponseTime || 45},
-            errors_count = errors_count + ${summary.errorCount},
+            errors_count = bot_metrics.errors_count + ${summary.errorCount},
             updated_at = NOW()
         `;
       }
