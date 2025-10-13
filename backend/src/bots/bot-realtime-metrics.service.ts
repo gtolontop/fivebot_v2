@@ -258,10 +258,10 @@ export class BotRealtimeMetricsService {
 
     // Get command usage statistics
     const commandStats = await this.prisma.$queryRaw`
-      SELECT 
-        JSON_EXTRACT(metadata, '$.commandName') as command_name,
+      SELECT
+        metadata->>'commandName' as command_name,
         COUNT(*) as usage_count,
-        AVG(JSON_EXTRACT(metadata, '$.responseTime')) as avg_response_time
+        AVG((metadata->>'responseTime')::numeric) as avg_response_time
       FROM job_logs
       WHERE bot_id = ${botId}
       AND job_type = 'COMMAND_EXECUTION'
