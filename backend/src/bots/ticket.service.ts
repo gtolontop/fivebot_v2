@@ -239,7 +239,12 @@ export class TicketService {
         console.error('Error fetching bot guilds:', error);
         return [];
       }
-      
+
+      // Safety check: if no guilds, return empty array
+      if (guildIds.length === 0) {
+        return [];
+      }
+
       const placeholders = guildIds.map(() => '?').join(', ');
 
       const tickets = await this.prisma.$queryRawUnsafe<any[]>(`
