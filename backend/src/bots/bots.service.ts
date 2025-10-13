@@ -997,10 +997,11 @@ export class BotsService {
 
         // Check actual Discord connection and process status
         const connectionStatus = await this.checkDiscordConnectionStatus(botId);
-        const isProcessRunning = this.queueService.getRunningBots?.().includes(botId) ?? false;
-        
+        const runningBots = await this.queueService.getRunningBots?.() ?? [];
+        const isProcessRunning = runningBots.includes(botId);
+
         let newStatus: BotStatus;
-        
+
         if (connectionStatus.isConnected && isProcessRunning) {
           newStatus = BotStatus.ONLINE;
         } else if (isProcessRunning && !connectionStatus.isConnected) {
