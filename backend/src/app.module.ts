@@ -29,7 +29,7 @@ import { UploadController } from './utils/upload.controller';
     ScheduleModule.forRoot(),
     PrismaModule,
     CacheModule,
-    RedisModule,
+    RedisModule, // Already imported - Redis for shared bot state
     DiscordModule,
     AuthModule,
     UsersModule,
