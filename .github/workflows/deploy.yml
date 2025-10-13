@@ -1,0 +1,96 @@
+name: Auto Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy Backend
+        if: contains(github.event.head_commit.modified, 'backend/') || contains(github.event.head_commit.added, 'backend/')
+        uses: appleboy/ssh-action@master
+        with:
+          host: 83.150.218.36
+          username: gtol
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/fivebot
+            git pull origin main
+            cd backend
+            npm install
+            npx prisma generate
+            npm run build
+            pm2 restart fivebot-api
+            pm2 restart fivebot-worker
+
+      - name: Deploy Bot Manager
+        if: contains(github.event.head_commit.modified, 'bot-manager/') || contains(github.event.head_commit.added, 'bot-manager/')
+        uses: appleboy/ssh-action@master
+        with:
+          host: 83.150.218.36
+          username: gtol
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/fivebot
+            git pull origin main
+            cd bot-manager
+            npm install
+            npm run build
+            pm2 restart fivebot-bot-manager
+
+      - name: Deploy Bot Template
+        if: contains(github.event.head_commit.modified, 'bot-template/') || contains(github.event.head_commit.added, 'bot-template/')
+        uses: appleboy/ssh-action@master
+        with:
+          host: 83.150.218.36
+          username: gtol
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/fivebot
+            git pull origin main
+            cd bot-template
+            npm install
+            npx prisma generate
+            npm run build
+
+      - name: Deploy All (if root files changed)
+        if: |
+          !contains(github.event.head_commit.modified, 'backend/') &&
+          !contains(github.event.head_commit.modified, 'bot-manager/') &&
+          !contains(github.event.head_commit.modified, 'bot-template/') &&
+          !contains(github.event.head_commit.modified, 'frontend/')
+        uses: appleboy/ssh-action@master
+        with:
+          host: 83.150.218.36
+          username: gtol
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/fivebot
+            git pull origin main
+
+            # Backend
+            cd backend
+            npm install
+            npx prisma generate
+            npm run build
+            cd ..
+
+            # Bot Manager
+            cd bot-manager
+            npm install
+            npm run build
+            cd ..
+
+            # Bot Template
+            cd bot-template
+            npm install
+            npx prisma generate
+            npm run build
+            cd ..
+
+            # Restart all
+            pm2 restart all
