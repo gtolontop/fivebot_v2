@@ -84,6 +84,7 @@ export class BotsController {
     private consoleBufferService: ConsoleBufferService,
     private botRealtimeMetricsService: BotRealtimeMetricsService,
     private ticketService: TicketService,
+    private collaboratorsService: CollaboratorsService,
   ) {}
 
   @Post()
