@@ -208,13 +208,20 @@ export class SimpleQueueService implements IQueueService {
         detached: process.platform !== 'win32', // Detach on Unix systems
       });
 
-      // Store the process
+      // Store the process locally and in Redis
       this.runningBots.set(botId, botProcess);
+      await this.redisService.addRunningBot(botId);
+      await this.redisService.setBotMetadata(botId, {
+        pid: botProcess.pid,
+        startedAt: new Date(),
+      });
 
       // Handle process errors
       botProcess.on('error', async (error) => {
         console.error(`[Bot ${botId}] Process error:`, error);
         this.runningBots.delete(botId);
+        await this.redisService.removeRunningBot(botId);
+        await this.redisService.deleteBotMetadata(botId);
         
         // Update bot status to error
         await this.updateBotStatusSafe(botId, BotStatus.ERROR);
