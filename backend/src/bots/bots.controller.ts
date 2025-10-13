@@ -1353,7 +1353,7 @@ export class BotsController {
   @UseGuards(AuthGuard('jwt'))
   async inviteCollaborator(
     @Param('id') id: string,
-    @Body() dto: { userDiscordId: string; role: string; permissions?: any },
+    @Body() dto: { userDiscordId: string; permissions: any },
     @Req() req: any,
   ) {
     // Vérifier que l'utilisateur est propriétaire ou admin du bot
@@ -1428,8 +1428,8 @@ export class BotsController {
         botId: id,
         userId: targetUser.id,
         invitedBy: req.user.id,
-        role: dto.role as any,
-        permissions: dto.permissions ? JSON.stringify(dto.permissions) : null,
+        role: 'VIEWER', // Default role, not used anymore
+        permissions: JSON.stringify(dto.permissions || {}),
         status: 'PENDING',
       },
       include: {
