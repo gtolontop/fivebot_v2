@@ -1319,4 +1319,216 @@ export class BotsController {
 
     return overview;
   }
+
+  // ==================== COLLABORATORS ROUTES ====================
+
+  @Get(':botId/collaborators')
+  @UseGuards(AuthGuard('jwt'))
+  async getCollaborators(@Param('botId') botId: string, @Req() req: any) {
+    // Vérifier que l'utilisateur a accès au bot
+    await this.verifyBotAccess(botId, req.user.id);
+
+    const collaborators = await this.prisma.botCollaborator.findMany({
+      where: { botId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            discordId: true,
+            avatar: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return collaborators.map((collab) => ({
+      ...collab,
+      permissions: collab.permissions ? JSON.parse(collab.permissions) : undefined,
+    }));
+  }
+
+  @Post(':botId/collaborators/invite')
+  @UseGuards(AuthGuard('jwt'))
+  async inviteCollaborator(
+    @Param('botId') botId: string,
+    @Body() dto: { userDiscordId: string; role: string; permissions?: any },
+    @Req() req: any,
+  ) {
+    // Vérifier que l'utilisateur est propriétaire ou admin du bot
+    await this.verifyBotOwnerOrAdmin(botId, req.user.id);
+
+    console.log('[COLLABORATOR INVITE] Searching for Discord ID:', dto.userDiscordId);
+
+    // Normaliser le Discord ID (enlever les espaces)
+    const normalizedDiscordId = dto.userDiscordId.trim();
+
+    // Trouver l'utilisateur à inviter par son Discord ID
+    let targetUser = await this.prisma.user.findUnique({
+      where: { discordId: normalizedDiscordId },
+    });
+
+    // Si pas trouvé, essayer de chercher par username aussi
+    if (!targetUser) {
+      targetUser = await this.prisma.user.findFirst({
+        where: {
+          OR: [
+            { discordId: normalizedDiscordId },
+            { username: normalizedDiscordId },
+            { id: normalizedDiscordId },
+          ],
+        },
+      });
+    }
+
+    console.log('[COLLABORATOR INVITE] Target user found:', targetUser ? `${targetUser.username} (${targetUser.id})` : 'NOT FOUND');
+
+    if (!targetUser) {
+      // List all users to help debug
+      const allUsers = await this.prisma.user.findMany({
+        select: { id: true, username: true, discordId: true },
+        take: 10,
+      });
+      console.log('[COLLABORATOR INVITE] Available users:', allUsers);
+      throw new NotFoundException(`User not found on the platform. Discord ID searched: ${normalizedDiscordId}`);
+    }
+
+    // Vérifier que l'utilisateur n'essaie pas de s'inviter lui-même
+    if (targetUser.id === req.user.id) {
+      throw new BadRequestException('You cannot invite yourself as a collaborator');
+    }
+
+    // Vérifier que l'utilisateur n'est pas déjà le propriétaire
+    const bot = await this.prisma.bot.findUnique({
+      where: { id: botId },
+    });
+
+    if (bot?.ownerId === targetUser.id) {
+      throw new BadRequestException('This user is already the owner of this bot');
+    }
+
+    // Check if user is already a collaborator
+    const existing = await this.prisma.botCollaborator.findUnique({
+      where: {
+        botId_userId: {
+          botId,
+          userId: targetUser.id,
+        },
+      },
+    });
+
+    if (existing) {
+      throw new BadRequestException('This user is already a collaborator');
+    }
+
+    // Create the invitation
+    const collaborator = await this.prisma.botCollaborator.create({
+      data: {
+        botId,
+        userId: targetUser.id,
+        invitedBy: req.user.id,
+        role: dto.role as any,
+        permissions: dto.permissions ? JSON.stringify(dto.permissions) : null,
+        status: 'PENDING',
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            discordId: true,
+            avatar: true,
+          },
+        },
+      },
+    });
+
+    return {
+      ...collaborator,
+      permissions: collaborator.permissions ? JSON.parse(collaborator.permissions) : undefined,
+    };
+  }
+
+  @Delete(':botId/collaborators/:collaboratorId')
+  @UseGuards(AuthGuard('jwt'))
+  async removeCollaborator(
+    @Param('botId') botId: string,
+    @Param('collaboratorId') collaboratorId: string,
+    @Req() req: any,
+  ) {
+    // Verify user is owner or admin of the bot
+    await this.verifyBotOwnerOrAdmin(botId, req.user.id);
+
+    const collaborator = await this.prisma.botCollaborator.findUnique({
+      where: { id: collaboratorId },
+    });
+
+    if (!collaborator || collaborator.botId !== botId) {
+      throw new NotFoundException('Collaborator not found');
+    }
+
+    await this.prisma.botCollaborator.delete({
+      where: { id: collaboratorId },
+    });
+
+    return { success: true, message: 'Collaborator removed' };
+  }
+
+  private async verifyBotAccess(botId: string, userId: string) {
+    const bot = await this.prisma.bot.findUnique({
+      where: { id: botId },
+    });
+
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    // Check if owner
+    if (bot.ownerId === userId) {
+      return;
+    }
+
+    // Check if active collaborator
+    const collaborator = await this.prisma.botCollaborator.findFirst({
+      where: {
+        botId,
+        userId,
+        status: 'ACTIVE',
+      },
+    });
+
+    if (!collaborator) {
+      throw new ForbiddenException('You do not have access to this bot');
+    }
+  }
+
+  private async verifyBotOwnerOrAdmin(botId: string, userId: string) {
+    const bot = await this.prisma.bot.findUnique({
+      where: { id: botId },
+    });
+
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    // Check if owner
+    if (bot.ownerId === userId) {
+      return;
+    }
+
+    // Check if admin collaborator
+    const collaborator = await this.prisma.botCollaborator.findFirst({
+      where: {
+        botId,
+        userId,
+        status: 'ACTIVE',
+        role: 'ADMIN',
+      },
+    });
+
+    if (!collaborator) {
+      throw new ForbiddenException('You must be the owner or an administrator');
+    }
+  }
 }
