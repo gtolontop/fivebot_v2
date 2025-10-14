@@ -87,7 +87,9 @@ export default function InstalledModulesPage() {
   };
 
   const handleConfigure = (moduleId: string) => {
-    toast.info('Module configuration coming soon');
+    toast('Module configuration coming soon', {
+      icon: 'ℹ️',
+    });
   };
 
   const getCategoryColor = (category: string) => {
