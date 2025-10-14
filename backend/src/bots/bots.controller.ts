@@ -84,6 +84,7 @@ export class BotsController {
     private botLogsService: BotLogsService,
     private consoleBufferService: ConsoleBufferService,
     private botRealtimeMetricsService: BotRealtimeMetricsService,
+    private botProcessMetricsService: BotProcessMetricsService,
     private ticketService: TicketService,
     private collaboratorsService: CollaboratorsService,
   ) {}
