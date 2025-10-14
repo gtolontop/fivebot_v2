@@ -45,6 +45,7 @@ interface Bot {
     autoRoleId?: string;
     loggingChannelId?: string;
   };
+  discordTag?: string; // Bot username with discriminator (e.g., "BotName#1234")
 }
 
 export default function BotDetailPage() {
