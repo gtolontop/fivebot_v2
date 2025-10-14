@@ -196,9 +196,28 @@ export class BotRecoveryService implements OnApplicationBootstrap {
       return true; // Recover
     }
 
-    // If Redis says it crashed, recover it
+    // If Redis says it crashed, check crash count
     if (redisState?.userAction === 'crash') {
-      return true;
+      const crashCount = redisState.metadata?.crashCount || 0;
+      const lastCrashTime = redisState.metadata?.lastCrashTime
+        ? new Date(redisState.metadata.lastCrashTime).getTime()
+        : 0;
+      const timeSinceLastCrash = Date.now() - lastCrashTime;
+      const oneHourMs = 60 * 60 * 1000;
+
+      // Reset crash count if last crash was more than 1 hour ago
+      if (timeSinceLastCrash > oneHourMs) {
+        this.logger.log(`🔄 Crash was more than 1 hour ago, resetting crash count`);
+        return true;
+      }
+
+      // Don't recover if crashed 2+ times recently
+      if (crashCount >= 2) {
+        this.logger.warn(`🚫 Bot has crashed ${crashCount} times recently, not recovering`);
+        return false;
+      }
+
+      return true; // Recover on first crash
     }
 
     // If Redis says it was started and ONLINE, recover it
