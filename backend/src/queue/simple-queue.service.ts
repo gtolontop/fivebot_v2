@@ -611,7 +611,7 @@ export class SimpleQueueService implements IQueueService {
         },
       });
 
-      console.log(`✅ Bot ${botId} stopped successfully and status FORCE updated to OFFLINE`);
+      console.log(`✅ Bot "${botName}" stopped successfully and status updated to OFFLINE`);
       
     } catch (error) {
       console.error(`❌ Failed to stop bot ${botId}:`, error);
