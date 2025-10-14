@@ -666,22 +666,6 @@ export default function BotDetailPage() {
                     {bot.status === 'ONLINE' ? formatUptime(realTimeStats.uptime) : 'Offline'}
                   </div>
                 </div>
-
-                <div>
-                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Disk</div>
-                  <div className="mt-1 text-xs sm:text-sm text-gray-900">0 MB / 1024 MB</div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                  <div>
-                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Network ⬇</div>
-                    <div className="mt-1 text-xs sm:text-sm text-gray-900">0 KB/s</div>
-                  </div>
-                  <div>
-                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Network ⬆</div>
-                    <div className="mt-1 text-xs sm:text-sm text-gray-900">0 KB/s</div>
-                  </div>
-                </div>
               </div>
             </div>
 
