@@ -501,9 +501,19 @@ export class SimpleQueueService implements IQueueService {
 
   private async handleStopBot(data: JobData): Promise<void> {
     const botId = data.botId;
-    console.log(`🛑 Stopping bot ${botId}`);
 
     try {
+      // Get bot info for better logging
+      const bot = await this.prisma.bot.findUnique({
+        where: { id: botId },
+        select: { name: true, owner: { select: { username: true } } }
+      });
+
+      const botName = bot?.name || botId;
+      const ownerName = bot?.owner?.username || 'unknown';
+
+      console.log(`🛑 Stopping bot "${botName}" (owner: ${ownerName})`);
+
       // Save user's intention to stop the bot
       await this.redisService.saveBotState(botId, {
         status: 'OFFLINE',
@@ -513,15 +523,15 @@ export class SimpleQueueService implements IQueueService {
       });
 
       const botProcess = this.runningBots.get(botId);
-      
+
       if (!botProcess) {
-        console.log(`⚠️ Bot ${botId} is not running in process manager`);
+        console.log(`⚠️ Bot "${botName}" is not running in process manager - updating status to OFFLINE`);
         // Update status anyway
         await this.updateBotStatusSafe(botId, BotStatus.OFFLINE);
         return;
       }
 
-      console.log(`🔄 Stopping bot ${botId} process (PID: ${botProcess.pid})`);
+      console.log(`🔄 Stopping bot "${botName}" process (PID: ${botProcess.pid})`);
       
       // On Windows, use taskkill directly for immediate termination
       if (process.platform === 'win32' && botProcess.pid) {
