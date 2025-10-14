@@ -47,14 +47,27 @@ export class BotLogsService {
         select: { name: true }
       });
       const botName = bot?.name || 'unknown';
-      
+
+      // ANSI color codes
+      const COLORS = {
+        YELLOW: '\x1b[33m',
+        BLUE: '\x1b[34m',
+        GREEN: '\x1b[32m',
+        CYAN: '\x1b[36m',
+        MAGENTA: '\x1b[35m',
+        RESET: '\x1b[0m',
+        GRAY: '\x1b[90m'
+      };
+
       const timestamp = new Date().toLocaleTimeString();
-      const prefix = source === 'Discord' ? `discord@${botName}` : 
-                     source === 'System' ? `container@fivebot` : 
-                     source === 'Commands' ? `cmd@${botName}` : 
-                     `${source?.toLowerCase() || 'bot'}@${botName}`;
-      
-      const formattedLog = `[${timestamp}] [${prefix}]: ${message}`;
+
+      // Colorize prefix based on source
+      const prefix = source === 'Discord' ? `${COLORS.CYAN}discord@${botName}${COLORS.RESET}` :
+                     source === 'System' ? `${COLORS.YELLOW}container@fivebot${COLORS.RESET}` :
+                     source === 'Commands' ? `${COLORS.GREEN}cmd@${botName}${COLORS.RESET}` :
+                     `${COLORS.BLUE}${source?.toLowerCase() || 'bot'}@${botName}${COLORS.RESET}`;
+
+      const formattedLog = `${COLORS.GRAY}[${timestamp}]${COLORS.RESET} [${prefix}]: ${message}`;
       this.consoleBufferService.addLog(botId, formattedLog);
       
     } catch (error) {
