@@ -24,6 +24,7 @@ import { BotLogsService } from './bot-logs.service';
 import { TicketService } from './ticket.service';
 import { ConsoleBufferService } from './console-buffer.service';
 import { BotRealtimeMetricsService } from './bot-realtime-metrics.service';
+import { BotProcessMetricsService } from './bot-process-metrics.service';
 import { CollaboratorsService } from './collaborators.service';
 import { LogLevel } from '@prisma/client';
 
