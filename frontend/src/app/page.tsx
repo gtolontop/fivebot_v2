@@ -443,28 +443,28 @@ export default function HomePage() {
                     <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-4 sm:mb-6">Bot Dashboard</h2>
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
                       {/* Bot Card */}
-                      <div className="col-span-2 bg-gray-800 rounded-xl p-6 border border-gray-700">
-                        <div className="flex items-center justify-between mb-6">
-                          <div className="flex items-center space-x-4">
-                            <div className="w-16 h-16 bg-gradient-to-br from-discord-400 to-discord-600 rounded-xl flex items-center justify-center">
-                              <BoltIcon className="w-8 h-8 text-white" />
+                      <div className="lg:col-span-2 bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-700">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-3">
+                          <div className="flex items-center space-x-3 sm:space-x-4">
+                            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-discord-400 to-discord-600 rounded-xl flex items-center justify-center">
+                              <BoltIcon className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                             </div>
                             <div>
-                              <h3 className="text-xl font-semibold text-white">MegaBot Ultra</h3>
-                              <p className="text-gray-400">Prefix: !</p>
+                              <h3 className="text-base sm:text-lg md:text-xl font-semibold text-white">MegaBot Ultra</h3>
+                              <p className="text-sm sm:text-base text-gray-400">Prefix: !</p>
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <div className="w-3 h-3 bg-gray-400 rounded-full animate-bot-online"></div>
-                            <span className="text-gray-400 relative">
+                            <div className="w-2 h-2 sm:w-3 sm:h-3 bg-gray-400 rounded-full animate-bot-online"></div>
+                            <span className="text-sm sm:text-base text-gray-400 relative">
                               <span className="animate-bot-status-offline">Offline</span>
                               <span className="animate-bot-status-online">Online</span>
                             </span>
                           </div>
                         </div>
-                        
+
                         {/* Console */}
-                        <div className="bg-black rounded-lg p-4 font-mono text-sm h-48 overflow-hidden mb-6">
+                        <div className="bg-black rounded-lg p-3 sm:p-4 font-mono text-xs sm:text-sm h-32 sm:h-48 overflow-hidden mb-4 sm:mb-6">
                           <div className="text-gray-400 animate-console-line-1">&gt; Initializing bot...</div>
                           <div className="text-gray-400 animate-console-line-2">&gt; Loading modules...</div>
                           <div className="text-gray-400 animate-console-line-3">&gt; Connecting to Discord...</div>
@@ -472,33 +472,33 @@ export default function HomePage() {
                           <div className="text-blue-400 animate-console-line-5">&gt; Joined 0 servers</div>
                           <div className="text-yellow-400 animate-console-line-6">&gt; Ready to accept commands_</div>
                         </div>
-                        
+
                         {/* Action Buttons */}
-                        <div className="flex space-x-4">
-                          <button className="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-all flex items-center justify-center">
-                            <PlayIcon className="w-5 h-5 mr-2" />
+                        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+                          <button className="flex-1 px-4 sm:px-6 py-2 sm:py-3 bg-green-600 hover:bg-green-700 text-white text-sm sm:text-base font-medium rounded-lg transition-all flex items-center justify-center">
+                            <PlayIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                             Start Bot
                           </button>
-                          <button className="flex-1 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-medium rounded-lg transition-all flex items-center justify-center">
-                            <CpuChipIcon className="w-5 h-5 mr-2" />
+                          <button className="flex-1 px-4 sm:px-6 py-2 sm:py-3 bg-gray-700 hover:bg-gray-600 text-white text-sm sm:text-base font-medium rounded-lg transition-all flex items-center justify-center">
+                            <CpuChipIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                             Configure
                           </button>
                         </div>
                       </div>
                       
                       {/* Stats */}
-                      <div className="space-y-4">
-                        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-                          <h4 className="text-gray-400 text-sm mb-2">Commands Run</h4>
-                          <p className="text-3xl font-bold text-white animate-count-up">0</p>
+                      <div className="grid grid-cols-3 lg:grid-cols-1 gap-4">
+                        <div className="bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-700">
+                          <h4 className="text-gray-400 text-xs sm:text-sm mb-1 sm:mb-2">Commands Run</h4>
+                          <p className="text-xl sm:text-2xl md:text-3xl font-bold text-white animate-count-up">0</p>
                         </div>
-                        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-                          <h4 className="text-gray-400 text-sm mb-2">Users Served</h4>
-                          <p className="text-3xl font-bold text-white">0</p>
+                        <div className="bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-700">
+                          <h4 className="text-gray-400 text-xs sm:text-sm mb-1 sm:mb-2">Users Served</h4>
+                          <p className="text-xl sm:text-2xl md:text-3xl font-bold text-white">0</p>
                         </div>
-                        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-                          <h4 className="text-gray-400 text-sm mb-2">Uptime</h4>
-                          <p className="text-3xl font-bold text-green-400">100%</p>
+                        <div className="bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-700">
+                          <h4 className="text-gray-400 text-xs sm:text-sm mb-1 sm:mb-2">Uptime</h4>
+                          <p className="text-xl sm:text-2xl md:text-3xl font-bold text-green-400">100%</p>
                         </div>
                       </div>
                     </div>
