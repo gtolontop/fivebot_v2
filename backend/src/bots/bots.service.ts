@@ -545,6 +545,8 @@ export class BotsService {
       'System'
     );
 
+    console.log(`🚀 Starting bot "${bot.name}" (owner: ${bot.owner.username}) - requested by user ${ownerId}`);
+
     await this.updateStatus(botId, BotStatus.STARTING);
 
     // Invalidate Discord cache so fresh data is fetched
@@ -564,9 +566,10 @@ export class BotsService {
         jobId: `start-${Date.now()}`,
         jobType: 'START_BOT',
         status: 'PROCESSING',
-        message: `🚀 Starting bot ${bot.name}...`,
+        message: `🚀 Starting bot "${bot.name}" (requested by ${bot.owner.username})`,
         metadata: JSON.stringify({
           requestedBy: ownerId,
+          requesterUsername: bot.owner.username,
           timestamp: new Date().toISOString()
         })
       }
