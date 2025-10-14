@@ -398,8 +398,8 @@ export class TicketService {
         SELECT
           COUNT(DISTINCT tm.id) as totalMessages,
           AVG(CASE
-            WHEN tm.is_staff = 1 AND tm.message_number > 1
-            THEN TIMESTAMPDIFF(SECOND, t.created_at, tm.created_at)
+            WHEN tm.is_staff = TRUE AND tm.message_number > 1
+            THEN EXTRACT(EPOCH FROM (tm.created_at - t.created_at))
           END) as avgResponseTime
         FROM tickets t
         LEFT JOIN ticket_messages tm ON t.id = tm.ticket_id
@@ -407,10 +407,10 @@ export class TicketService {
           AND t.guild_id IN (${placeholders})
       `, ...guildIds);
 
-      // Get average resolution time
+      // Get average resolution time (in hours)
       const resolutionStats = await this.prisma.$queryRawUnsafe<any[]>(`
         SELECT
-          AVG(TIMESTAMPDIFF(HOUR, created_at, closed_at)) as avgResolutionTime
+          AVG(EXTRACT(EPOCH FROM (closed_at - created_at)) / 3600) as avgResolutionTime
         FROM tickets
         WHERE deleted_at IS NULL
           AND state = 'CLOSED'
