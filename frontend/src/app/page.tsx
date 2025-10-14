@@ -659,36 +659,36 @@ export default function HomePage() {
             {pricingPlans.map((plan) => (
               <div
                 key={plan.name}
-                className={`relative bg-white rounded-2xl ${
-                  plan.popular 
-                    ? 'ring-2 ring-discord-500 shadow-xl scale-105' 
+                className={`relative bg-white rounded-xl sm:rounded-2xl ${
+                  plan.popular
+                    ? 'ring-2 ring-discord-500 shadow-xl lg:scale-105'
                     : 'shadow-sm hover:shadow-lg'
                 } transition-all duration-300`}
               >
                 {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <div className="bg-gradient-to-r from-discord-500 to-discord-600 text-white px-4 py-1 rounded-full text-sm font-medium flex items-center">
-                      <StarIcon className="w-4 h-4 mr-1" />
+                  <div className="absolute -top-3 sm:-top-4 left-1/2 -translate-x-1/2">
+                    <div className="bg-gradient-to-r from-discord-500 to-discord-600 text-white px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm font-medium flex items-center">
+                      <StarIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                       Most Popular
                     </div>
                   </div>
                 )}
-                
-                <div className="p-8">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
-                  <p className="text-gray-600 mb-6">{plan.description}</p>
-                  
-                  <div className="mb-6">
-                    <span className="text-5xl font-bold text-gray-900">${plan.price}</span>
-                    <span className="text-gray-600 ml-2">/{plan.period}</span>
+
+                <div className="p-5 sm:p-6 md:p-8">
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
+                  <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">{plan.description}</p>
+
+                  <div className="mb-4 sm:mb-6">
+                    <span className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900">${plan.price}</span>
+                    <span className="text-sm sm:text-base text-gray-600 ml-2">/{plan.period}</span>
                     {plan.savings && (
-                      <span className="block text-sm text-green-600 font-medium mt-2">{plan.savings}</span>
+                      <span className="block text-xs sm:text-sm text-green-600 font-medium mt-2">{plan.savings}</span>
                     )}
                   </div>
-                  
+
                   <Link
                     href="/auth/login"
-                    className={`block w-full text-center py-3 px-6 rounded-xl font-medium transition-all ${
+                    className={`block w-full text-center py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl text-sm sm:text-base font-medium transition-all ${
                       plan.popular
                         ? 'bg-discord-600 text-white hover:bg-discord-700'
                         : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
@@ -696,14 +696,14 @@ export default function HomePage() {
                   >
                     {plan.cta}
                   </Link>
-                  
-                  <div className="mt-8 space-y-4">
-                    <p className="text-sm font-medium text-gray-900">Everything in {plan.name}:</p>
-                    <ul className="space-y-3">
+
+                  <div className="mt-6 sm:mt-8 space-y-3 sm:space-y-4">
+                    <p className="text-xs sm:text-sm font-medium text-gray-900">Everything in {plan.name}:</p>
+                    <ul className="space-y-2 sm:space-y-3">
                       {plan.features.map((feature) => (
                         <li key={feature} className="flex items-start">
-                          <CheckIcon className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
-                          <span className="text-gray-600 text-sm">{feature}</span>
+                          <CheckIcon className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 mr-2 sm:mr-3 mt-0.5 flex-shrink-0" />
+                          <span className="text-gray-600 text-xs sm:text-sm">{feature}</span>
                         </li>
                       ))}
                     </ul>
