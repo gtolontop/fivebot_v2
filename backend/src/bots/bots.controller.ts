@@ -1206,6 +1206,35 @@ export class BotsController {
     };
   }
 
+  @Post(':id/metrics/process')
+  async receiveProcessMetrics(
+    @Param('id') id: string,
+    @Body() processMetrics: any,
+  ) {
+    // Store process metrics in Redis (requires BotProcessMetricsService injection)
+    // For now, we'll add this to the controller constructor later
+    return {
+      success: true,
+      message: 'Process metrics received',
+    };
+  }
+
+  @Get(':id/metrics/process')
+  @UseGuards(AuthGuard('jwt'))
+  async getProcessMetrics(
+    @Param('id') id: string,
+    @Req() req: any,
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    // Get process metrics from Redis (requires BotProcessMetricsService injection)
+    // For now, return null - we'll add the service later
+    return null;
+  }
+
   @Get(':id/analytics/:period')
   @UseGuards(AuthGuard('jwt'))
   async getBotAnalytics(
