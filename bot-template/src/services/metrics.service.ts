@@ -159,6 +159,11 @@ export class MetricsService {
       this.sendMetrics();
     }, 30000);
 
+    // Send process metrics every 10 seconds (more frequent for real-time dashboard)
+    setInterval(() => {
+      this.sendProcessMetrics();
+    }, 10000);
+
     // Also send on shutdown
     process.on('SIGTERM', () => this.sendMetrics());
     process.on('SIGINT', () => this.sendMetrics());
