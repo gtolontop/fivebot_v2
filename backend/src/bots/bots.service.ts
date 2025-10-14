@@ -561,11 +561,8 @@ export class BotsService {
     const decryptedToken = this.encryptionService.decrypt(bot.tokenEncrypted);
     this.discordService.invalidateBotCache(decryptedToken);
 
-    // Set startedAt timestamp when bot starts
-    await this.prisma.bot.update({
-      where: { id: botId },
-      data: { startedAt: new Date() }
-    });
+    // Don't set startedAt here - it will be set when bot actually goes ONLINE
+    // in simple-queue.service.ts after successful startup
 
     // Create detailed job log for bot start
     await this.prisma.jobLog.create({
