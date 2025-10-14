@@ -504,12 +504,23 @@ export class SimpleQueueService implements IQueueService {
       console.error(`❌ Failed to start bot ${botId}:`, error);
 
       // Mark as crash for potential recovery
+      const previousState = await this.redisService.getBotState(botId);
+      const crashCount = (previousState?.metadata?.crashCount || 0) + 1;
+
       await this.redisService.saveBotState(botId, {
         status: 'OFFLINE',
         userAction: 'crash',
         timestamp: new Date(),
-        metadata: { error: error.message, phase: 'startup', shouldRecover: false }
+        metadata: {
+          error: error.message,
+          phase: 'startup',
+          shouldRecover: false,
+          crashCount,
+          lastCrashTime: new Date().toISOString()
+        }
       });
+
+      console.error(`💥 Bot "${bot.name}" failed to start (crash count: ${crashCount})`);
 
       // Update bot status to error
       await this.updateBotStatusSafe(botId, BotStatus.ERROR);
