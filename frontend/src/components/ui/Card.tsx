@@ -109,6 +109,8 @@ export const StatCard: React.FC<StatCardProps> = ({
 
 export interface PanelCardProps {
   title: string;
+  subtitle?: string;
+  icon?: React.ReactNode;
   action?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
@@ -116,6 +118,8 @@ export interface PanelCardProps {
 
 export const PanelCard: React.FC<PanelCardProps> = ({
   title,
+  subtitle,
+  icon,
   action,
   children,
   className = '',
@@ -123,7 +127,13 @@ export const PanelCard: React.FC<PanelCardProps> = ({
   return (
     <Card variant="panel" className={className}>
       <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
-        <h3 className="text-base font-medium text-gray-900">{title}</h3>
+        <div className="flex items-center space-x-3">
+          {icon && <div className="flex-shrink-0">{icon}</div>}
+          <div>
+            <h3 className="text-base font-medium text-gray-900">{title}</h3>
+            {subtitle && <p className="text-sm text-gray-500 mt-0.5">{subtitle}</p>}
+          </div>
+        </div>
         {action && <div>{action}</div>}
       </div>
       <div className="p-6">
