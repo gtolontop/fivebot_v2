@@ -255,38 +255,38 @@ export default function HomePage() {
       <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-8">
+            <div className="flex items-center space-x-4 md:space-x-8">
               <Link href="/" className="flex items-center space-x-2">
                 <div className="w-8 h-8 bg-gradient-to-br from-discord-500 to-discord-600 rounded-lg flex items-center justify-center">
                   <BoltIcon className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-xl font-bold text-gray-900">FiveBot</span>
+                <span className="text-lg md:text-xl font-bold text-gray-900">FiveBot</span>
               </Link>
-              <nav className="hidden md:flex space-x-8">
+              <nav className="hidden md:flex space-x-4 lg:space-x-8">
                 <a href="#features" className="text-sm font-medium text-gray-600 hover:text-discord-600 transition-colors">Features</a>
                 <a href="#how-it-works" className="text-sm font-medium text-gray-600 hover:text-discord-600 transition-colors">How it works</a>
                 <a href="#pricing" className="text-sm font-medium text-gray-600 hover:text-discord-600 transition-colors">Pricing</a>
                 <a href="#testimonials" className="text-sm font-medium text-gray-600 hover:text-discord-600 transition-colors">Testimonials</a>
               </nav>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               {user ? (
                 <>
-                  <span className="text-sm text-gray-600">Welcome back, {user.username}!</span>
-                  <Link href="/dashboard" className="btn-primary">
+                  <span className="hidden sm:block text-sm text-gray-600">Welcome back, {user.username}!</span>
+                  <Link href="/dashboard" className="btn-primary text-sm sm:text-base px-3 sm:px-4 py-2">
                     Open Dashboard
                   </Link>
                 </>
               ) : (
                 <>
-                  <Link href="/auth/login" className="text-sm font-medium text-gray-600 hover:text-discord-600">
+                  <Link href="/auth/login" className="hidden sm:block text-sm font-medium text-gray-600 hover:text-discord-600">
                     Sign in
                   </Link>
-                  <Link href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/auth/discord`} className="btn-discord flex items-center gap-2">
+                  <Link href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/auth/discord`} className="btn-discord flex items-center gap-2 text-sm sm:text-base px-3 sm:px-4 py-2">
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
                     </svg>
-                    Get Started
+                    <span className="hidden sm:inline">Get Started</span>
                   </Link>
                 </>
               )}
@@ -296,87 +296,87 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section - Full Screen */}
-      <section className="relative min-h-screen flex items-center justify-center">
+      <section className="relative min-h-screen flex items-center justify-center pt-16 sm:pt-20">
         <div className="absolute inset-0 bg-gradient-to-br from-discord-50 via-white to-blue-50"></div>
         <div className="absolute inset-0">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-discord-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob"></div>
-          <div className="absolute top-40 right-10 w-72 h-72 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000"></div>
-          <div className="absolute -bottom-8 left-20 w-72 h-72 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-4000"></div>
+          <div className="absolute top-20 left-4 sm:left-10 w-48 sm:w-72 h-48 sm:h-72 bg-discord-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob"></div>
+          <div className="absolute top-40 right-4 sm:right-10 w-48 sm:w-72 h-48 sm:h-72 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000"></div>
+          <div className="absolute -bottom-8 left-10 sm:left-20 w-48 sm:w-72 h-48 sm:h-72 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-4000"></div>
         </div>
-        
+
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center px-4 py-2 rounded-full bg-discord-100 text-discord-700 text-sm font-medium mb-8 animate-fade-in-down">
-            <FireIcon className="w-4 h-4 mr-2" />
+          <div className="inline-flex items-center px-3 sm:px-4 py-2 rounded-full bg-discord-100 text-discord-700 text-xs sm:text-sm font-medium mb-6 sm:mb-8 animate-fade-in-down">
+            <FireIcon className="w-3 sm:w-4 h-3 sm:h-4 mr-2" />
             Trusted by 10,000+ Discord servers
           </div>
-          <h1 className="text-6xl lg:text-8xl font-bold text-gray-900 tracking-tight animate-fade-in-up">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-8xl font-bold text-gray-900 tracking-tight animate-fade-in-up px-2">
             The Future of
             <span className="block text-transparent bg-clip-text bg-gradient-to-r from-discord-500 to-discord-600 mt-2 pb-2">
               Discord Bot Management
             </span>
           </h1>
-          <p className="mt-6 text-xl lg:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed animate-fade-in-up animation-delay-200">
-            Create, deploy, and scale Discord bots with zero configuration. 
+          <p className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl lg:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed animate-fade-in-up animation-delay-200 px-4">
+            Create, deploy, and scale Discord bots with zero configuration.
             Powered by AI, secured by default, loved by developers.
           </p>
-          <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up animation-delay-400">
+          <div className="mt-6 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center animate-fade-in-up animation-delay-400 px-4">
             <Link
               href={user ? "/dashboard" : "/auth/login"}
-              className="group inline-flex items-center justify-center px-10 py-5 text-lg font-medium text-white bg-discord-600 rounded-xl hover:bg-discord-700 transition-all transform hover:scale-105 hover:shadow-2xl"
+              className="group inline-flex items-center justify-center px-6 sm:px-8 md:px-10 py-4 sm:py-5 text-base sm:text-lg font-medium text-white bg-discord-600 rounded-xl hover:bg-discord-700 transition-all transform hover:scale-105 hover:shadow-2xl w-full sm:w-auto"
             >
               Start Building for Free
-              <ArrowRightIcon className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <ArrowRightIcon className="ml-2 w-4 sm:w-5 h-4 sm:h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
-            <button 
+            <button
               onClick={() => setIsVideoPlaying(true)}
-              className="inline-flex items-center justify-center px-10 py-5 text-lg font-medium text-gray-700 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl hover:bg-white transition-all hover:shadow-lg"
+              className="inline-flex items-center justify-center px-6 sm:px-8 md:px-10 py-4 sm:py-5 text-base sm:text-lg font-medium text-gray-700 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl hover:bg-white transition-all hover:shadow-lg w-full sm:w-auto"
             >
-              <PlayIcon className="mr-2 w-5 h-5" />
+              <PlayIcon className="mr-2 w-4 sm:w-5 h-4 sm:h-5" />
               Watch Live Demo
             </button>
           </div>
-          <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto animate-fade-in-up animation-delay-600">
+          <div className="mt-12 sm:mt-16 md:mt-20 grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8 max-w-4xl mx-auto animate-fade-in-up animation-delay-600 px-4">
             {stats.map((stat, index) => (
               <div key={stat.label} className="text-center group hover:transform hover:scale-110 transition-all">
-                <div className="inline-flex items-center justify-center w-14 h-14 bg-white/80 backdrop-blur-sm rounded-xl mb-3 group-hover:shadow-lg transition-all">
-                  <stat.icon className="w-7 h-7 text-discord-600" />
+                <div className="inline-flex items-center justify-center w-10 sm:w-12 md:w-14 h-10 sm:h-12 md:h-14 bg-white/80 backdrop-blur-sm rounded-xl mb-2 sm:mb-3 group-hover:shadow-lg transition-all">
+                  <stat.icon className="w-5 sm:w-6 md:w-7 h-5 sm:h-6 md:h-7 text-discord-600" />
                 </div>
-                <div className="text-3xl font-bold text-gray-900">
+                <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
                   {stat.label === "Active Bots" ? activeBots.toLocaleString() : stat.number}
                 </div>
-                <div className="text-sm text-gray-600">{stat.label}</div>
+                <div className="text-xs sm:text-sm text-gray-600">{stat.label}</div>
               </div>
             ))}
           </div>
-          
+
         </div>
       </section>
 
       {/* Video Demo Modal - Interactive Flow */}
       {isVideoPlaying && (
-        <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex items-center justify-center p-2 sm:p-4">
           <div className="relative max-w-6xl w-full">
             {/* Clean Modal Container */}
-            <div className="bg-gray-900 rounded-2xl shadow-2xl border border-gray-800 overflow-hidden">
+            <div className="bg-gray-900 rounded-xl sm:rounded-2xl shadow-2xl border border-gray-800 overflow-hidden">
               {/* Header */}
-              <div className="bg-gray-800 px-6 py-4 flex items-center justify-between border-b border-gray-700">
-                <h3 className="text-lg font-semibold text-white">FiveBot Demo</h3>
-                <button 
+              <div className="bg-gray-800 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b border-gray-700">
+                <h3 className="text-base sm:text-lg font-semibold text-white">FiveBot Demo</h3>
+                <button
                   onClick={() => setIsVideoPlaying(false)}
                   className="text-gray-400 hover:text-white transition-colors"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
-              
+
               {/* Demo Content */}
-              <div className="relative" style={{ height: '600px' }}>
+              <div className="relative" style={{ height: '400px', maxHeight: '70vh' }}>
                 {/* Animated Background */}
                 <div className="absolute inset-0">
-                  <div className="absolute top-0 left-0 w-96 h-96 bg-discord-500/10 rounded-full blur-3xl animate-float"></div>
-                  <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-float-delayed"></div>
+                  <div className="absolute top-0 left-0 w-48 sm:w-96 h-48 sm:h-96 bg-discord-500/10 rounded-full blur-3xl animate-float"></div>
+                  <div className="absolute bottom-0 right-0 w-48 sm:w-96 h-48 sm:h-96 bg-purple-500/10 rounded-full blur-3xl animate-float-delayed"></div>
                 </div>
                 
                 {/* Animated Cursor */}
@@ -390,47 +390,47 @@ export default function HomePage() {
                 </div>
                 
                 {/* Page 1: Welcome */}
-                <div className="absolute inset-0 flex items-center justify-center p-12 animate-page-1">
+                <div className="absolute inset-0 flex items-center justify-center p-4 sm:p-8 md:p-12 animate-page-1">
                   <div className="text-center">
-                    <h1 className="text-5xl font-bold text-white mb-6">
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 sm:mb-6">
                       Welcome to{" "}
                       <span className="text-transparent bg-clip-text bg-gradient-to-r from-discord-400 to-purple-400">
                         FiveBot
                       </span>
                     </h1>
-                    <p className="text-xl text-gray-400 mb-12">Create your Discord bot in seconds</p>
-                    <button className="px-8 py-4 bg-gradient-to-r from-discord-500 to-discord-600 text-white font-semibold rounded-xl hover:from-discord-600 hover:to-discord-700 transition-all transform hover:scale-105 shadow-2xl">
+                    <p className="text-base sm:text-lg md:text-xl text-gray-400 mb-6 sm:mb-12">Create your Discord bot in seconds</p>
+                    <button className="px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-discord-500 to-discord-600 text-white text-sm sm:text-base font-semibold rounded-xl hover:from-discord-600 hover:to-discord-700 transition-all transform hover:scale-105 shadow-2xl">
                       Create Your Bot
                     </button>
                   </div>
                 </div>
                 
                 {/* Page 2: Bot Configuration */}
-                <div className="absolute inset-0 flex items-center justify-center p-12 animate-page-2">
+                <div className="absolute inset-0 flex items-center justify-center p-4 sm:p-8 md:p-12 animate-page-2 overflow-y-auto">
                   <div className="w-full max-w-2xl">
-                    <h2 className="text-3xl font-bold text-white mb-8 text-center">Configure Your Bot</h2>
-                    <div className="space-y-6">
+                    <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-4 sm:mb-8 text-center">Configure Your Bot</h2>
+                    <div className="space-y-4 sm:space-y-6">
                       <div>
-                        <label className="block text-gray-400 mb-2">Bot Name</label>
-                        <input 
+                        <label className="block text-gray-400 text-sm sm:text-base mb-2">Bot Name</label>
+                        <input
                           type="text"
-                          className="w-full bg-gray-800 border-2 border-gray-700 rounded-xl px-6 py-4 text-white text-lg focus:border-discord-500 transition-all animate-auto-type-name"
+                          className="w-full bg-gray-800 border-2 border-gray-700 rounded-xl px-4 sm:px-6 py-3 sm:py-4 text-white text-sm sm:text-base md:text-lg focus:border-discord-500 transition-all animate-auto-type-name"
                           placeholder="Enter bot name..."
                           value=""
                           readOnly
                         />
                       </div>
                       <div>
-                        <label className="block text-gray-400 mb-2">Bot Token</label>
-                        <input 
+                        <label className="block text-gray-400 text-sm sm:text-base mb-2">Bot Token</label>
+                        <input
                           type="text"
-                          className="w-full bg-gray-800 border-2 border-gray-700 rounded-xl px-6 py-4 text-white text-lg focus:border-discord-500 transition-all animate-auto-type-token"
+                          className="w-full bg-gray-800 border-2 border-gray-700 rounded-xl px-4 sm:px-6 py-3 sm:py-4 text-white text-sm sm:text-base md:text-lg focus:border-discord-500 transition-all animate-auto-type-token"
                           placeholder="Enter bot token..."
                           value=""
                           readOnly
                         />
                       </div>
-                      <button className="w-full px-8 py-4 bg-gradient-to-r from-discord-500 to-discord-600 text-white font-semibold rounded-xl hover:from-discord-600 hover:to-discord-700 transition-all transform hover:scale-105">
+                      <button className="w-full px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-discord-500 to-discord-600 text-white text-sm sm:text-base font-semibold rounded-xl hover:from-discord-600 hover:to-discord-700 transition-all transform hover:scale-105">
                         Create Bot
                       </button>
                     </div>
@@ -438,10 +438,10 @@ export default function HomePage() {
                 </div>
                 
                 {/* Page 3: Dashboard */}
-                <div className="absolute inset-0 p-12 animate-page-3">
+                <div className="absolute inset-0 p-4 sm:p-8 md:p-12 animate-page-3 overflow-y-auto">
                   <div className="h-full">
-                    <h2 className="text-2xl font-bold text-white mb-6">Bot Dashboard</h2>
-                    <div className="grid grid-cols-3 gap-6">
+                    <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-4 sm:mb-6">Bot Dashboard</h2>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
                       {/* Bot Card */}
                       <div className="col-span-2 bg-gray-800 rounded-xl p-6 border border-gray-700">
                         <div className="flex items-center justify-between mb-6">
