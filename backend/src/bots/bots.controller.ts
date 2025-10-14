@@ -1246,6 +1246,8 @@ export class BotsController {
         uptime: 0,
         guildsCount: 0,
         usersCount: 0,
+        networkDownload: 0,
+        networkUpload: 0,
       },
     };
   }
