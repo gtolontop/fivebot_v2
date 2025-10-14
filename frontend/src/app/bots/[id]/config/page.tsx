@@ -935,12 +935,12 @@ export default function BotConfigPage() {
                       <p className="text-sm sm:text-base text-gray-600">Bot information and connected Discord servers</p>
                     </div>
 
-                    <div className="space-y-6">
+                    <div className="space-y-4 sm:space-y-6">
                       {/* Bot Information */}
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Bot Information</h3>
-                        <div className="bg-gray-50 rounded-lg p-4">
-                          <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Bot Information</h3>
+                        <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                             <div>
                               <dt className="text-sm font-medium text-gray-500">Bot Name</dt>
                               <dd className="text-sm text-gray-900 mt-1">{bot.name}</dd>
@@ -979,52 +979,52 @@ export default function BotConfigPage() {
 
                       {/* Discord Servers */}
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Connected Discord Servers</h3>
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Connected Discord Servers</h3>
                         {guildsLoading ? (
-                          <div className="flex items-center justify-center p-8">
-                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600 mr-3"></div>
-                            <span className="text-gray-600">Loading Discord servers...</span>
+                          <div className="flex items-center justify-center p-6 sm:p-8">
+                            <div className="animate-spin rounded-full h-5 w-5 sm:h-6 sm:w-6 border-b-2 border-indigo-600 mr-2 sm:mr-3"></div>
+                            <span className="text-sm sm:text-base text-gray-600">Loading Discord servers...</span>
                           </div>
                         ) : guilds.length > 0 ? (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
                             {guilds.map((guild) => (
-                              <div key={guild.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
-                                <div className="flex items-center space-x-3">
+                              <div key={guild.id} className="border border-gray-200 rounded-lg p-3 sm:p-4 hover:shadow-sm transition-shadow">
+                                <div className="flex items-center space-x-2 sm:space-x-3">
                                   {guild.icon ? (
-                                    <img 
+                                    <img
                                       src={`https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`}
                                       alt={guild.name}
-                                      className="w-12 h-12 rounded-full"
+                                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex-shrink-0"
                                     />
                                   ) : (
-                                    <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center">
-                                      <ServerIcon className="w-6 h-6 text-gray-600" />
+                                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
+                                      <ServerIcon className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
                                     </div>
                                   )}
-                                  <div className="flex-1">
-                                    <h4 className="font-medium text-gray-900">{guild.name}</h4>
-                                    <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="font-medium text-sm sm:text-base text-gray-900 truncate">{guild.name}</h4>
+                                    <div className="flex flex-wrap items-center gap-x-2 sm:gap-x-4 text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1">
                                       <span>{guild.memberCount?.toLocaleString()} members</span>
-                                      <span>{guild.channels.length} channels</span>
-                                      <span>{guild.roles.length} roles</span>
+                                      <span className="hidden sm:inline">{guild.channels.length} channels</span>
+                                      <span className="hidden sm:inline">{guild.roles.length} roles</span>
                                     </div>
                                   </div>
-                                  <div className="flex items-center space-x-1 text-green-600">
-                                    <CheckCircleIcon className="w-4 h-4" />
-                                    <span className="text-xs font-medium">Connected</span>
+                                  <div className="flex items-center space-x-1 text-green-600 flex-shrink-0">
+                                    <CheckCircleIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                                    <span className="text-xs font-medium hidden sm:inline">Connected</span>
                                   </div>
                                 </div>
                               </div>
                             ))}
                           </div>
                         ) : (
-                          <div className="text-center p-8 bg-gray-50 rounded-lg">
-                            <ServerIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                            <h3 className="text-lg font-medium text-gray-900 mb-2">No Discord Servers</h3>
-                            <p className="text-gray-600 mb-4">Your bot hasn't been invited to any servers yet.</p>
+                          <div className="text-center p-6 sm:p-8 bg-gray-50 rounded-lg">
+                            <ServerIcon className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
+                            <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No Discord Servers</h3>
+                            <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4">Your bot hasn't been invited to any servers yet.</p>
                             <button
                               onClick={() => router.push(`/bots/${botId}`)}
-                              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                              className="inline-flex items-center px-3 sm:px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
                             >
                               Generate Invite Link
                             </button>
@@ -1034,33 +1034,33 @@ export default function BotConfigPage() {
 
                       {/* Quick Actions */}
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Setup</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Quick Setup</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                           <button
                             onClick={() => setActiveTab('welcome')}
-                            className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors"
+                            className="p-3 sm:p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors"
                           >
-                            <HandRaisedIcon className="w-8 h-8 text-indigo-600 mb-2" />
-                            <h4 className="font-medium text-gray-900">Welcome Messages</h4>
-                            <p className="text-sm text-gray-600 mt-1">Greet new members automatically</p>
+                            <HandRaisedIcon className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-600 mb-2" />
+                            <h4 className="font-medium text-sm sm:text-base text-gray-900">Welcome Messages</h4>
+                            <p className="text-xs sm:text-sm text-gray-600 mt-1">Greet new members automatically</p>
                           </button>
-                          
+
                           <button
                             onClick={() => setActiveTab('commands')}
-                            className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors"
+                            className="p-3 sm:p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors"
                           >
-                            <ChatBubbleLeftRightIcon className="w-8 h-8 text-purple-600 mb-2" />
-                            <h4 className="font-medium text-gray-900">Custom Commands</h4>
-                            <p className="text-sm text-gray-600 mt-1">Create custom slash commands</p>
+                            <ChatBubbleLeftRightIcon className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600 mb-2" />
+                            <h4 className="font-medium text-sm sm:text-base text-gray-900">Custom Commands</h4>
+                            <p className="text-xs sm:text-sm text-gray-600 mt-1">Create custom slash commands</p>
                           </button>
-                          
+
                           <button
                             onClick={() => setActiveTab('moderation')}
-                            className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors"
+                            className="p-3 sm:p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors"
                           >
-                            <ShieldCheckIcon className="w-8 h-8 text-green-600 mb-2" />
-                            <h4 className="font-medium text-gray-900">Moderation</h4>
-                            <p className="text-sm text-gray-600 mt-1">Enable automatic moderation</p>
+                            <ShieldCheckIcon className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 mb-2" />
+                            <h4 className="font-medium text-sm sm:text-base text-gray-900">Moderation</h4>
+                            <p className="text-xs sm:text-sm text-gray-600 mt-1">Enable automatic moderation</p>
                           </button>
                         </div>
                       </div>
