@@ -2,12 +2,13 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
 import Cookies from 'js-cookie';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Card, PanelCard, Badge, Avatar, Button } from '@/components/ui';
+import { Card, StatCard, Badge, Button } from '@/components/ui';
+import { designTokens } from '@/styles/design-tokens';
 import {
   PlayIcon,
   StopIcon,
@@ -16,7 +17,6 @@ import {
   ChartBarIcon,
   Cog6ToothIcon,
   CommandLineIcon,
-  TrashIcon,
 } from '@heroicons/react/24/outline';
 
 interface Bot {
@@ -28,6 +28,8 @@ interface Bot {
   startedAt?: string;
   clientId?: string;
   prefix: string;
+  avatar?: string;
+  banner?: string;
 }
 
 export default function BotDetailPage() {
@@ -39,7 +41,6 @@ export default function BotDetailPage() {
   const [bot, setBot] = useState<Bot | null>(null);
   const [botLoading, setBotLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [logs, setLogs] = useState<string[]>([]);
   const [guilds, setGuilds] = useState<any[]>([]);
   const [realTimeStats, setRealTimeStats] = useState({
     cpuUsage: 0,
@@ -48,8 +49,6 @@ export default function BotDetailPage() {
     networkDownload: 0,
     networkUpload: 0,
   });
-  const consoleRef = useRef<HTMLDivElement>(null);
-  const [autoScroll, setAutoScroll] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -63,51 +62,16 @@ export default function BotDetailPage() {
     }
   }, [user, botId]);
 
-  // Polling for logs
-  useEffect(() => {
-    if (!bot || !botId) return;
-
-    const pollLogs = async () => {
-      try {
-        const token = Cookies.get('token');
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/bots/${botId}/logs/live`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.logs && data.logs.length > 0) {
-            setLogs(data.logs);
-          }
-        }
-      } catch (error) {
-        console.log('Could not fetch bot logs:', error);
-      }
-    };
-
-    pollLogs();
-
-    if (bot.status === 'ONLINE' || bot.status === 'STARTING') {
-      const interval = setInterval(pollLogs, 2000);
-      return () => clearInterval(interval);
-    }
-  }, [bot?.status, botId]);
-
-  // Auto-scroll console
-  useEffect(() => {
-    if (consoleRef.current && autoScroll) {
-      const element = consoleRef.current;
-      element.scrollTop = element.scrollHeight;
-    }
-  }, [logs, autoScroll]);
-
   // Fetch metrics
   useEffect(() => {
     if (!bot || bot.status !== 'ONLINE') {
-      setRealTimeStats(prev => ({ ...prev, uptime: 0 }));
+      setRealTimeStats({
+        cpuUsage: 0,
+        memoryUsage: 0,
+        uptime: 0,
+        networkDownload: 0,
+        networkUpload: 0,
+      });
       return;
     }
 
@@ -124,13 +88,13 @@ export default function BotDetailPage() {
         if (response.ok) {
           const data = await response.json();
           if (data.metrics) {
-            setRealTimeStats(prev => ({
-              ...prev,
+            setRealTimeStats({
               cpuUsage: data.metrics.cpuUsage || 0,
               memoryUsage: data.metrics.memoryUsage || 0,
+              uptime: data.metrics.uptime || 0,
               networkDownload: data.metrics.networkDownload || 0,
               networkUpload: data.metrics.networkUpload || 0,
-            }));
+            });
           }
         }
       } catch (error) {
@@ -138,11 +102,11 @@ export default function BotDetailPage() {
       }
     };
 
-    const metricsInterval = setInterval(fetchMetrics, 10000);
     fetchMetrics();
+    const metricsInterval = setInterval(fetchMetrics, 3000);
 
     return () => clearInterval(metricsInterval);
-  }, [bot?.status, bot?.startedAt, botId]);
+  }, [bot?.status, botId]);
 
   // Auto-refresh status
   useEffect(() => {
@@ -238,33 +202,23 @@ export default function BotDetailPage() {
     }
   };
 
-  const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this bot? This action cannot be undone.')) {
-      return;
-    }
-
-    try {
-      await botsAPI.delete(botId);
-      toast.success('Bot deleted successfully');
-      router.push('/bots');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Error deleting bot');
-    }
-  };
-
   const formatUptime = (seconds: number) => {
     const days = Math.floor(seconds / 86400);
     const hours = Math.floor((seconds % 86400) / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
 
     const parts: string[] = [];
     if (days > 0) parts.push(`${days}d`);
     if (hours > 0) parts.push(`${hours}h`);
     if (minutes > 0) parts.push(`${minutes}m`);
-    if (secs > 0 || parts.length === 0) parts.push(`${secs}s`);
 
-    return parts.join(' ');
+    return parts.length > 0 ? parts.join(' ') : '< 1m';
+  };
+
+  const formatBytes = (bytes: number) => {
+    if (bytes < 1024) return `${bytes.toFixed(1)} B/s`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB/s`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB/s`;
   };
 
   if (loading || botLoading) {
@@ -282,257 +236,251 @@ export default function BotDetailPage() {
 
   if (!user || !bot) return null;
 
+  const botAvatar = bot.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${bot.name}`;
+  const botBanner = bot.banner || 'https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?w=1200&h=300&fit=crop';
+
   return (
     <DashboardLayout>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <Avatar
-            fallback={bot.name[0]}
-            size="xl"
-            status={bot.status as any}
-          />
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">{bot.name}</h1>
-            <p className="text-gray-600 mt-1">Bot ID: {bot.id}</p>
-          </div>
-        </div>
-        <Badge status={bot.status as any} size="md">
-          {bot.status}
-        </Badge>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <Button
-          variant="outline"
-          fullWidth
-          onClick={() => router.push(`/bots/${botId}/console`)}
-          icon={<CommandLineIcon className="w-4 h-4" />}
-        >
-          Console
-        </Button>
-        <Button
-          variant="outline"
-          fullWidth
-          onClick={() => router.push(`/bots/${botId}/analytics`)}
-          icon={<ChartBarIcon className="w-4 h-4" />}
-        >
-          Analytics
-        </Button>
-        <Button
-          variant="outline"
-          fullWidth
-          onClick={() => router.push(`/bots/${botId}/config`)}
-          icon={<Cog6ToothIcon className="w-4 h-4" />}
-        >
-          Settings
-        </Button>
-        <Button
-          variant="outline"
-          fullWidth
-          onClick={generateInviteLink}
-          icon={<LinkIcon className="w-4 h-4" />}
-        >
-          Invite Link
-        </Button>
-      </div>
-
-      {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        {/* Left Column - Console Preview */}
-        <div className="lg:col-span-2">
-          <PanelCard
-            title="Console"
-            action={
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => router.push(`/bots/${botId}/console`)}
-              >
-                View Full Console
-              </Button>
-            }
+      <div className="space-y-6">
+        {/* Banner + Avatar Header */}
+        <div className="relative">
+          {/* Banner */}
+          <div
+            className="h-48 rounded-xl bg-cover bg-center relative overflow-hidden"
+            style={{ backgroundImage: `url(${botBanner})` }}
           >
-            <div
-              ref={consoleRef}
-              className="bg-gray-900 text-gray-100 p-4 rounded-lg h-96 overflow-y-auto font-mono text-xs"
-            >
-              {logs.length === 0 ? (
-                <div className="text-gray-500">Waiting for logs...</div>
-              ) : (
-                logs.slice(-50).map((log, index) => (
-                  <div key={index} className="py-0.5">
-                    {log}
-                  </div>
-                ))
-              )}
-            </div>
-          </PanelCard>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+          </div>
 
-          {/* Server Information */}
-          {guilds.length > 0 && (
-            <Card className="mt-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Servers</h2>
-              <div className="space-y-2">
-                {guilds.slice(0, 5).map((guild) => (
-                  <div key={guild.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                    <div>
-                      <p className="font-medium text-gray-900">{guild.name}</p>
-                      <p className="text-xs text-gray-500">{guild.memberCount} members</p>
-                    </div>
+          {/* Avatar + Info */}
+          <div className="relative px-6 -mt-20">
+            <div className="flex items-end justify-between">
+              <div className="flex items-end space-x-6">
+                {/* Avatar */}
+                <div className="relative">
+                  <img
+                    src={botAvatar}
+                    alt={bot.name}
+                    className="w-32 h-32 rounded-2xl border-4 border-white bg-white shadow-xl"
+                  />
+                  <div className="absolute -bottom-2 -right-2">
+                    <Badge status={bot.status as any} dot size="md">
+                      {bot.status}
+                    </Badge>
                   </div>
-                ))}
-                {guilds.length > 5 && (
-                  <p className="text-sm text-gray-500 text-center pt-2">
-                    And {guilds.length - 5} more servers...
+                </div>
+
+                {/* Bot Name & Info */}
+                <div className="pb-2">
+                  <h1 className={designTokens.typography.display + ' text-gray-900'}>{bot.name}</h1>
+                  <p className="text-gray-500 mt-1">
+                    Created {new Date(bot.createdAt).toLocaleDateString()}
                   </p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center space-x-3 pb-2">
+                {bot.status === 'OFFLINE' && (
+                  <Button
+                    variant="success"
+                    onClick={handleStart}
+                    loading={actionLoading === 'start' || bot.status === 'STARTING'}
+                    icon={<PlayIcon className="w-4 h-4" />}
+                  >
+                    Start Bot
+                  </Button>
+                )}
+
+                {bot.status === 'ONLINE' && (
+                  <>
+                    <Button
+                      variant="secondary"
+                      onClick={handleRestart}
+                      loading={actionLoading === 'restart'}
+                      icon={<ArrowPathIcon className="w-4 h-4" />}
+                    >
+                      Restart
+                    </Button>
+                    <Button
+                      variant="danger"
+                      onClick={handleStop}
+                      loading={actionLoading === 'stop'}
+                      icon={<StopIcon className="w-4 h-4" />}
+                    >
+                      Stop
+                    </Button>
+                  </>
+                )}
+
+                {bot.status === 'STARTING' && (
+                  <Button variant="secondary" disabled loading>
+                    Starting...
+                  </Button>
                 )}
               </div>
-            </Card>
-          )}
+            </div>
+          </div>
         </div>
 
-        {/* Right Column - Controls & Stats */}
-        <div className="space-y-6">
+        {/* Quick Navigation */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Button
+            variant="outline"
+            fullWidth
+            onClick={() => router.push(`/bots/${botId}/console`)}
+            icon={<CommandLineIcon className="w-5 h-5" />}
+          >
+            Console
+          </Button>
+          <Button
+            variant="outline"
+            fullWidth
+            onClick={() => router.push(`/bots/${botId}/analytics`)}
+            icon={<ChartBarIcon className="w-5 h-5" />}
+          >
+            Analytics
+          </Button>
+          <Button
+            variant="outline"
+            fullWidth
+            onClick={() => router.push(`/bots/${botId}/config`)}
+            icon={<Cog6ToothIcon className="w-5 h-5" />}
+          >
+            Configuration
+          </Button>
+          <Button
+            variant="outline"
+            fullWidth
+            onClick={generateInviteLink}
+            icon={<LinkIcon className="w-5 h-5" />}
+          >
+            Invite Link
+          </Button>
+        </div>
 
-          {/* Control Panel */}
-          <Card>
-            <h2 className="text-base font-semibold text-gray-900 mb-4">Control Panel</h2>
-            <div className="space-y-3">
-              <Button
-                variant="success"
-                fullWidth
-                onClick={handleStart}
-                disabled={bot.status !== 'OFFLINE' || actionLoading !== null}
-                loading={actionLoading === 'start' || bot.status === 'STARTING'}
-                icon={<PlayIcon className="w-4 h-4" />}
-              >
-                {bot.status === 'STARTING' ? 'Starting...' : 'Start'}
-              </Button>
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <StatCard
+            label="Servers"
+            value={bot.status === 'ONLINE' ? guilds.length : 0}
+            icon={
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
+              </svg>
+            }
+            color="blue"
+          />
 
-              <Button
-                variant="secondary"
-                fullWidth
-                onClick={handleRestart}
-                disabled={bot.status !== 'ONLINE' || actionLoading !== null}
-                loading={actionLoading === 'restart'}
-                icon={<ArrowPathIcon className="w-4 h-4" />}
-              >
-                Restart
-              </Button>
+          <StatCard
+            label="Uptime"
+            value={bot.status === 'ONLINE' ? formatUptime(realTimeStats.uptime) : 'Offline'}
+            icon={
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd"/>
+              </svg>
+            }
+            color="green"
+          />
 
-              <Button
-                variant="danger"
-                fullWidth
-                onClick={handleStop}
-                disabled={bot.status !== 'ONLINE' || actionLoading !== null}
-                loading={actionLoading === 'stop'}
-                icon={<StopIcon className="w-4 h-4" />}
-              >
-                Stop
-              </Button>
-            </div>
+          <StatCard
+            label="CPU Usage"
+            value={bot.status === 'ONLINE' ? `${realTimeStats.cpuUsage.toFixed(1)}%` : '0%'}
+            icon={
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M13 7H7v6h6V7z"/>
+                <path fillRule="evenodd" d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z" clipRule="evenodd"/>
+              </svg>
+            }
+            color="orange"
+          />
 
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <Button
-                variant="outline"
-                fullWidth
-                onClick={handleDelete}
-                icon={<TrashIcon className="w-4 h-4" />}
-                className="text-red-600 hover:bg-red-50 border-red-200"
-              >
-                Delete Bot
-              </Button>
-            </div>
-          </Card>
+          <StatCard
+            label="Memory"
+            value={bot.status === 'ONLINE' ? `${realTimeStats.memoryUsage.toFixed(1)}%` : '0%'}
+            icon={
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z"/>
+                <path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z"/>
+                <path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z"/>
+              </svg>
+            }
+            color="purple"
+          />
 
-          {/* Live Metrics */}
-          <Card>
-            <h2 className="text-base font-semibold text-gray-900 mb-4">Live Metrics</h2>
-            <div className="space-y-4">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">CPU Load</span>
-                  <span className="text-sm font-semibold text-gray-900">{realTimeStats.cpuUsage.toFixed(0)}%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className={`h-2 rounded-full transition-all duration-500 ${
-                      realTimeStats.cpuUsage > 80 ? 'bg-red-500' :
-                      realTimeStats.cpuUsage > 60 ? 'bg-yellow-500' : 'bg-green-500'
-                    }`}
-                    style={{ width: `${realTimeStats.cpuUsage}%` }}
-                  />
-                </div>
-              </div>
+          <StatCard
+            label="Network"
+            value={bot.status === 'ONLINE' ? formatBytes(realTimeStats.networkDownload) : '0 B/s'}
+            sublabel={bot.status === 'ONLINE' ? `↑ ${formatBytes(realTimeStats.networkUpload)}` : undefined}
+            icon={
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clipRule="evenodd"/>
+              </svg>
+            }
+            color="green"
+          />
+        </div>
 
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Memory</span>
-                  <span className="text-sm font-semibold text-gray-900">{realTimeStats.memoryUsage.toFixed(0)}%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className={`h-2 rounded-full transition-all duration-500 ${
-                      realTimeStats.memoryUsage > 80 ? 'bg-red-500' :
-                      realTimeStats.memoryUsage > 60 ? 'bg-yellow-500' : 'bg-blue-500'
-                    }`}
-                    style={{ width: `${realTimeStats.memoryUsage}%` }}
-                  />
-                </div>
-              </div>
+        {/* Main Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Servers List */}
+          <div className="lg:col-span-2">
+            <Card>
+              <h2 className={designTokens.typography.h2 + ' mb-4'}>
+                Servers ({guilds.length})
+              </h2>
 
-              <div className="pt-4 border-t border-gray-100 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Servers</span>
-                  <span className="text-sm font-medium text-gray-900">
-                    {bot.status === 'ONLINE' ? guilds.length : 'Offline'}
-                  </span>
+              {guilds.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  {bot.status === 'ONLINE' ? 'No servers found' : 'Bot is offline'}
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Uptime</span>
-                  <span className="text-sm font-medium text-gray-900">
-                    {bot.status === 'ONLINE' ? formatUptime(realTimeStats.uptime) : 'Offline'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Network ⬇</span>
-                  <span className="text-sm font-medium text-gray-900">
-                    {bot.status === 'ONLINE' ? `${realTimeStats.networkDownload.toFixed(1)} KB/s` : '0 KB/s'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Network ⬆</span>
-                  <span className="text-sm font-medium text-gray-900">
-                    {bot.status === 'ONLINE' ? `${realTimeStats.networkUpload.toFixed(1)} KB/s` : '0 KB/s'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* Bot Info */}
-          <Card>
-            <h2 className="text-base font-semibold text-gray-900 mb-4">Information</h2>
-            <div className="space-y-3 text-sm">
-              <div>
-                <span className="text-gray-500">Created</span>
-                <p className="font-medium text-gray-900">{new Date(bot.createdAt).toLocaleString()}</p>
-              </div>
-              <div>
-                <span className="text-gray-500">Prefix</span>
-                <p className="font-medium text-gray-900">{bot.prefix}</p>
-              </div>
-              {bot.clientId && (
-                <div>
-                  <span className="text-gray-500">Client ID</span>
-                  <p className="font-medium text-gray-900 font-mono text-xs">{bot.clientId}</p>
+              ) : (
+                <div className="space-y-3">
+                  {guilds.map((guild) => (
+                    <div
+                      key={guild.id}
+                      className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">
+                          {guild.name[0]}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">{guild.name}</p>
+                          <p className="text-sm text-gray-500">{guild.memberCount.toLocaleString()} members</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
-            </div>
-          </Card>
+            </Card>
+          </div>
+
+          {/* Bot Information */}
+          <div className="space-y-6">
+            <Card>
+              <h2 className={designTokens.typography.h2 + ' mb-4'}>Information</h2>
+              <div className="space-y-4">
+                <div>
+                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Prefix</span>
+                  <p className="text-base font-semibold text-gray-900 mt-1 font-mono">{bot.prefix}</p>
+                </div>
+
+                {bot.clientId && (
+                  <div>
+                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Client ID</span>
+                    <p className="text-sm font-mono text-gray-900 mt-1 break-all">{bot.clientId}</p>
+                  </div>
+                )}
+
+                <div>
+                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Bot ID</span>
+                  <p className="text-sm font-mono text-gray-900 mt-1 break-all">{bot.id}</p>
+                </div>
+              </div>
+            </Card>
+          </div>
         </div>
       </div>
     </DashboardLayout>
