@@ -161,25 +161,38 @@ export class SimpleQueueService implements IQueueService {
 
   private async handleStartBot(data: JobData): Promise<void> {
     const botId = data.botId;
-    console.log(`Starting bot ${botId}`);
 
     try {
       // Get bot info from database
       const bot = await this.prisma.bot.findUnique({
         where: { id: botId },
-        include: { config: true },
+        include: { config: true, owner: { select: { username: true } } },
       });
 
       if (!bot) {
         throw new Error('Bot not found');
       }
 
+      console.log(`🚀 Starting bot "${bot.name}" (owner: ${bot.owner.username})`);
+
       // Check if bot is already running (check both local Map and Redis)
       const isRunningLocally = this.runningBots.has(botId);
       const isRunningInRedis = await this.redisService.isRunningBot(botId);
 
       if (isRunningLocally || isRunningInRedis) {
-        console.log(`Bot ${botId} is already running`);
+        console.log(`✅ Bot "${bot.name}" is already running - resynchronizing status to ONLINE`);
+
+        // Resynchronize status to ONLINE instead of failing silently
+        await this.updateBotStatusSafe(botId, BotStatus.ONLINE);
+
+        // Ensure Redis state is correct
+        await this.redisService.saveBotState(botId, {
+          status: 'ONLINE',
+          userAction: 'start',
+          timestamp: new Date(),
+          metadata: { confirmed: true, resynchronized: true }
+        });
+
         return;
       }
 
@@ -433,8 +446,8 @@ export class SimpleQueueService implements IQueueService {
           metadata: { confirmed: true }
         });
 
-        console.log(`✅ Bot ${botId} started successfully`);
-        
+        console.log(`✅ Bot "${bot.name}" (owner: ${bot.owner.username}) started successfully`);
+
         // Add Pterodactyl-style server online message
         try {
           await this.botLogsService.addLog(
