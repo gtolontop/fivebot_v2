@@ -790,49 +790,49 @@ export default function HomePage() {
       </section>
 
       {/* CTA */}
-      <section className="py-20 bg-gradient-to-br from-discord-500 to-discord-600 relative overflow-hidden">
+      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-br from-discord-500 to-discord-600 relative overflow-hidden">
         <div className="absolute inset-0">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-discord-400/20 rounded-full blur-3xl"></div>
+          <div className="absolute top-0 right-0 w-64 sm:w-96 h-64 sm:h-96 bg-white/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-64 sm:w-96 h-64 sm:h-96 bg-discord-400/20 rounded-full blur-3xl"></div>
         </div>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
-          <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/20 text-white text-sm font-medium mb-6">
-            <FireIcon className="w-4 h-4 mr-2" />
+          <div className="inline-flex items-center px-3 sm:px-4 py-2 rounded-full bg-white/20 text-white text-xs sm:text-sm font-medium mb-4 sm:mb-6">
+            <FireIcon className="w-3 sm:w-4 h-3 sm:h-4 mr-2" />
             Limited time: Get 500 bonus credits
           </div>
-          <h2 className="text-5xl font-bold text-white mb-6">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 sm:mb-6 px-4">
             Your bots deserve better
           </h2>
-          <p className="text-xl text-discord-100 mb-8 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl text-discord-100 mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
             Stop struggling with complex deployments. Start building amazing Discord experiences.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
             <Link
               href={user ? "/dashboard" : "/auth/login"}
-              className="group inline-flex items-center justify-center px-10 py-5 text-lg font-medium text-discord-600 bg-white rounded-xl hover:bg-gray-100 transition-all transform hover:scale-105 hover:shadow-2xl"
+              className="group inline-flex items-center justify-center px-6 sm:px-8 md:px-10 py-4 sm:py-5 text-base sm:text-lg font-medium text-discord-600 bg-white rounded-xl hover:bg-gray-100 transition-all transform hover:scale-105 hover:shadow-2xl w-full sm:w-auto"
             >
               Claim Your Free Credits
-              <ArrowRightIcon className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <ArrowRightIcon className="ml-2 w-4 sm:w-5 h-4 sm:h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
               href="https://docs.fivebot.app"
-              className="inline-flex items-center justify-center px-10 py-5 text-lg font-medium text-white border-2 border-white/20 rounded-xl hover:bg-white/10 transition-all backdrop-blur-sm"
+              className="inline-flex items-center justify-center px-6 sm:px-8 md:px-10 py-4 sm:py-5 text-base sm:text-lg font-medium text-white border-2 border-white/20 rounded-xl hover:bg-white/10 transition-all backdrop-blur-sm w-full sm:w-auto"
             >
-              <DocumentTextIcon className="mr-2 w-5 h-5" />
+              <DocumentTextIcon className="mr-2 w-4 sm:w-5 h-4 sm:h-5" />
               Read Documentation
             </Link>
           </div>
-          <div className="mt-12 flex items-center justify-center space-x-8 text-white/80 text-sm">
+          <div className="mt-8 sm:mt-12 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-white/80 text-xs sm:text-sm px-4">
             <div className="flex items-center">
-              <CheckIcon className="w-4 h-4 mr-2" />
+              <CheckIcon className="w-3 sm:w-4 h-3 sm:h-4 mr-2" />
               No credit card required
             </div>
             <div className="flex items-center">
-              <CheckIcon className="w-4 h-4 mr-2" />
+              <CheckIcon className="w-3 sm:w-4 h-3 sm:h-4 mr-2" />
               Cancel anytime
             </div>
             <div className="flex items-center">
-              <CheckIcon className="w-4 h-4 mr-2" />
+              <CheckIcon className="w-3 sm:w-4 h-3 sm:h-4 mr-2" />
               24/7 support
             </div>
           </div>
