@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -12,54 +12,27 @@ import {
   QuestionMarkCircleIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  CommandLineIcon,
+  ChartBarIcon,
+  WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
-import { designTokens } from '@/styles/design-tokens';
+import { botsAPI } from '@/utils/api';
+import Cookies from 'js-cookie';
 
 export interface NavItem {
   label: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   badge?: string | number;
+  children?: NavItem[];
 }
 
 export interface NavSection {
   title?: string;
   items: NavItem[];
 }
-
-const navigation: NavSection[] = [
-  {
-    items: [
-      { label: 'Dashboard', href: '/dashboard', icon: HomeIcon },
-    ],
-  },
-  {
-    title: 'Bots',
-    items: [
-      { label: 'All Bots', href: '/bots', icon: CubeIcon },
-      { label: 'Create Bot', href: '/bots/create', icon: CubeIcon },
-    ],
-  },
-  {
-    title: 'Modules',
-    items: [
-      { label: 'Browse', href: '/modules', icon: PuzzlePieceIcon },
-      { label: 'Installed', href: '/modules/installed', icon: PuzzlePieceIcon },
-    ],
-  },
-  {
-    title: 'Settings',
-    items: [
-      { label: 'Profile', href: '/settings', icon: Cog6ToothIcon },
-      { label: 'Billing', href: '/settings/billing', icon: CreditCardIcon },
-    ],
-  },
-  {
-    items: [
-      { label: 'Help & Support', href: '/help', icon: QuestionMarkCircleIcon },
-    ],
-  },
-];
 
 export interface SidebarProps {
   collapsed?: boolean;
@@ -71,6 +44,65 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onToggleCollapse,
 }) => {
   const pathname = usePathname();
+  const [currentBot, setCurrentBot] = useState<any>(null);
+  const [botsExpanded, setBotsExpanded] = useState(false);
+
+  // Extract bot ID from pathname
+  const botIdMatch = pathname?.match(/\/bots\/([^\/]+)/);
+  const botId = botIdMatch ? botIdMatch[1] : null;
+
+  // Fetch current bot if on a bot page
+  useEffect(() => {
+    if (botId && botId !== 'create') {
+      fetchBot(botId);
+    } else {
+      setCurrentBot(null);
+    }
+  }, [botId]);
+
+  const fetchBot = async (id: string) => {
+    try {
+      const response = await botsAPI.getById(id);
+      setCurrentBot(response.data);
+      setBotsExpanded(true); // Auto-expand bots section when on bot page
+    } catch (error) {
+      console.error('Error fetching bot:', error);
+    }
+  };
+
+  const navigation: NavSection[] = [
+    {
+      items: [
+        { label: 'Dashboard', href: '/dashboard', icon: HomeIcon },
+      ],
+    },
+    {
+      title: 'Bots',
+      items: [
+        { label: 'All Bots', href: '/bots', icon: CubeIcon },
+        { label: 'Create Bot', href: '/bots/create', icon: CubeIcon },
+      ],
+    },
+    {
+      title: 'Modules',
+      items: [
+        { label: 'Browse', href: '/modules', icon: PuzzlePieceIcon },
+        { label: 'Installed', href: '/modules/installed', icon: PuzzlePieceIcon },
+      ],
+    },
+    {
+      title: 'Settings',
+      items: [
+        { label: 'Profile', href: '/settings', icon: Cog6ToothIcon },
+        { label: 'Billing', href: '/settings/billing', icon: CreditCardIcon },
+      ],
+    },
+    {
+      items: [
+        { label: 'Help & Support', href: '/help', icon: QuestionMarkCircleIcon },
+      ],
+    },
+  ];
 
   const isActive = (href: string): boolean => {
     if (href === '/dashboard') {
@@ -117,6 +149,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <ul className="space-y-1">
               {section.items.map((item) => {
                 const active = isActive(item.href);
+                const isBotSection = section.title === 'Bots' && item.href === '/bots';
+
                 return (
                   <li key={item.href}>
                     <Link
@@ -143,6 +177,75 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         </>
                       )}
                     </Link>
+
+                    {/* Current Bot Sub-navigation */}
+                    {!collapsed && isBotSection && currentBot && (
+                      <ul className="mt-2 ml-8 space-y-1 border-l-2 border-gray-200 pl-3">
+                        <li className="text-xs font-semibold text-gray-900 mb-2 px-2">
+                          {currentBot.name}
+                        </li>
+                        <li>
+                          <Link
+                            href={`/bots/${currentBot.id}`}
+                            className={`
+                              flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors
+                              ${pathname === `/bots/${currentBot.id}`
+                                ? 'bg-primary-50 text-primary-700'
+                                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                              }
+                            `}
+                          >
+                            <HomeIcon className="w-4 h-4" />
+                            <span>Overview</span>
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            href={`/bots/${currentBot.id}/console`}
+                            className={`
+                              flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors
+                              ${pathname?.startsWith(`/bots/${currentBot.id}/console`)
+                                ? 'bg-primary-50 text-primary-700'
+                                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                              }
+                            `}
+                          >
+                            <CommandLineIcon className="w-4 h-4" />
+                            <span>Console</span>
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            href={`/bots/${currentBot.id}/analytics`}
+                            className={`
+                              flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors
+                              ${pathname?.startsWith(`/bots/${currentBot.id}/analytics`)
+                                ? 'bg-primary-50 text-primary-700'
+                                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                              }
+                            `}
+                          >
+                            <ChartBarIcon className="w-4 h-4" />
+                            <span>Analytics</span>
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            href={`/bots/${currentBot.id}/config`}
+                            className={`
+                              flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors
+                              ${pathname?.startsWith(`/bots/${currentBot.id}/config`)
+                                ? 'bg-primary-50 text-primary-700'
+                                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                              }
+                            `}
+                          >
+                            <WrenchScrewdriverIcon className="w-4 h-4" />
+                            <span>Configuration</span>
+                          </Link>
+                        </li>
+                      </ul>
+                    )}
                   </li>
                 );
               })}
