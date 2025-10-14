@@ -233,11 +233,52 @@ export default function BotConfigPage() {
     }
   };
 
-  const handleInstallModule = (moduleId: string) => {
-    setModules(prev => prev.map(m =>
-      m.id === moduleId ? { ...m, installed: true, enabled: true } : m
-    ));
-    toast.success('Module installed successfully!');
+  const handleInstallModule = async (moduleId: string) => {
+    try {
+      // Map module ID to backend config field
+      let configUpdate: any = {};
+
+      switch (moduleId) {
+        case 'welcome':
+          configUpdate = { welcomeEnabled: true };
+          break;
+        case 'tickets':
+          configUpdate = { ticketCategories: [] };
+          break;
+        case 'commands':
+          configUpdate = { embedV2Commands: {} };
+          break;
+        case 'status':
+          configUpdate = { statusRotation: { enabled: true, messages: [] } };
+          break;
+        case 'moderation':
+          configUpdate = { autoModeration: { enabled: true } };
+          break;
+        case 'leveling':
+          configUpdate = { leveling: { enabled: true } };
+          break;
+        case 'logs':
+          configUpdate = { serverLogs: { enabled: true } };
+          break;
+        default:
+          toast.error('Module installation not yet implemented');
+          return;
+      }
+
+      // Update backend
+      await botsAPI.update(botId, { config: { ...bot.config, ...configUpdate } });
+
+      // Update local state
+      setModules(prev => prev.map(m =>
+        m.id === moduleId ? { ...m, installed: true, enabled: true } : m
+      ));
+      setBot({ ...bot, config: { ...bot.config, ...configUpdate } });
+
+      toast.success('Module installed successfully!');
+    } catch (error: any) {
+      console.error('Error installing module:', error);
+      toast.error('Failed to install module');
+    }
   };
 
   const handleUninstallModule = (moduleId: string) => {
