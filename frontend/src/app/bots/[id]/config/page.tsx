@@ -281,11 +281,55 @@ export default function BotConfigPage() {
     }
   };
 
-  const handleUninstallModule = (moduleId: string) => {
-    setModules(prev => prev.map(m =>
-      m.id === moduleId ? { ...m, installed: false, enabled: false } : m
-    ));
-    toast.success('Module uninstalled');
+  const handleUninstallModule = async (moduleId: string) => {
+    try {
+      // Map module ID to backend config field to remove/disable
+      let configUpdate: any = {};
+
+      switch (moduleId) {
+        case 'welcome':
+          configUpdate = { welcomeEnabled: false };
+          break;
+        case 'tickets':
+          configUpdate = { ticketCategories: null };
+          break;
+        case 'commands':
+          configUpdate = { embedV2Commands: null };
+          break;
+        case 'status':
+          configUpdate = { statusRotation: null };
+          break;
+        case 'moderation':
+          configUpdate = { autoModeration: null };
+          break;
+        case 'leveling':
+          configUpdate = { leveling: null };
+          break;
+        case 'logs':
+          configUpdate = { serverLogs: null };
+          break;
+        case 'collab':
+          toast.error('Cannot uninstall core module');
+          return;
+        default:
+          toast.error('Module uninstallation not yet implemented');
+          return;
+      }
+
+      // Update backend
+      await botsAPI.update(botId, { config: { ...bot.config, ...configUpdate } });
+
+      // Update local state
+      setModules(prev => prev.map(m =>
+        m.id === moduleId ? { ...m, installed: false, enabled: false } : m
+      ));
+      setBot({ ...bot, config: { ...bot.config, ...configUpdate } });
+
+      toast.success('Module uninstalled');
+    } catch (error: any) {
+      console.error('Error uninstalling module:', error);
+      toast.error('Failed to uninstall module');
+    }
   };
 
   const handleToggleModule = (moduleId: string) => {
