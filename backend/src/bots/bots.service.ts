@@ -122,6 +122,7 @@ export class BotsService {
         clientId: tokenValidation.application?.id,
         prefix: data.prefix || '!',
         status: BotStatus.OFFLINE,
+        isActive: true, // Bot is active by default
       },
       include: {
         config: true,
