@@ -559,36 +559,36 @@ export default function HomePage() {
       )}
 
       {/* Features Grid */}
-      <section id="features" className="py-20 bg-gray-50">
+      <section id="features" className="py-12 sm:py-16 md:py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+          <div className="text-center mb-8 sm:mb-12 md:mb-16">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 sm:mb-4 px-4">
               Everything you need, nothing you don't
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto px-4">
               Powerful features designed to make bot development a breeze
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
             {features.map((feature, index) => (
               <div
                 key={feature.title}
-                className={`group relative bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${
+                className={`group relative bg-white rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-8 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${
                   index === activeFeature ? 'ring-2 ring-discord-500 shadow-lg' : ''
                 }`}
                 style={{ animationDelay: `${index * 100}ms` }}
                 onMouseEnter={() => setActiveFeature(index)}
               >
-                <div className={`inline-flex p-3 rounded-xl bg-gradient-to-br ${feature.color} mb-6 ${
+                <div className={`inline-flex p-2 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-br ${feature.color} mb-4 sm:mb-6 ${
                   index === activeFeature ? 'scale-110' : ''
                 } transition-transform`}>
-                  <feature.icon className="w-6 h-6 text-white" />
+                  <feature.icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">{feature.title}</h3>
-                <p className="text-gray-600">{feature.description}</p>
+                <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 mb-2 sm:mb-3">{feature.title}</h3>
+                <p className="text-sm sm:text-base text-gray-600">{feature.description}</p>
                 {index === activeFeature && (
                   <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
-                    <div className="w-16 h-1 bg-gradient-to-r from-discord-500 to-discord-600 rounded-full"></div>
+                    <div className="w-12 sm:w-16 h-1 bg-gradient-to-r from-discord-500 to-discord-600 rounded-full"></div>
                   </div>
                 )}
               </div>
