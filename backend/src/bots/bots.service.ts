@@ -408,14 +408,8 @@ export class BotsService {
       },
     });
 
-    // If bot is running, restart it to apply new config
-    if (bot.status === BotStatus.ONLINE) {
-      // Queue a restart job to apply the new configuration
-      await this.queueService.addJob('restart-bot', {
-        botId,
-        reason: 'Configuration updated',
-      });
-    }
+    // Config updated - user needs to manually restart bot to apply changes
+    // No automatic restart to avoid disrupting running bots
 
     return config;
   }
