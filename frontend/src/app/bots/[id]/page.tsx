@@ -140,12 +140,65 @@ export default function BotDetailPage() {
     }
   };
 
+  // Parse ANSI color codes to Tailwind classes
+  const parseAnsiColors = (text: string) => {
+    // Remove ANSI codes and return plain text with inline styles
+    const ansiRegex = /\x1b\[([0-9;]+)m/g;
+    const parts: { text: string; color: string }[] = [];
+    let lastIndex = 0;
+    let currentColor = 'text-gray-300';
+
+    const colorMap: Record<string, string> = {
+      '0': 'text-gray-300',     // Reset
+      '30': 'text-gray-900',    // Black
+      '31': 'text-red-400',     // Red
+      '32': 'text-green-400',   // Green
+      '33': 'text-yellow-400',  // Yellow
+      '34': 'text-blue-400',    // Blue
+      '35': 'text-purple-400',  // Magenta
+      '36': 'text-cyan-400',    // Cyan
+      '37': 'text-gray-300',    // White
+      '90': 'text-gray-500',    // Bright Black (Gray)
+      '91': 'text-red-300',     // Bright Red
+      '92': 'text-green-300',   // Bright Green
+      '93': 'text-yellow-300',  // Bright Yellow
+      '94': 'text-blue-300',    // Bright Blue
+      '95': 'text-purple-300',  // Bright Magenta
+      '96': 'text-cyan-300',    // Bright Cyan
+      '97': 'text-white',       // Bright White
+    };
+
+    let match;
+    while ((match = ansiRegex.exec(text)) !== null) {
+      // Add text before this code
+      if (match.index > lastIndex) {
+        const textPart = text.substring(lastIndex, match.index);
+        parts.push({ text: textPart, color: currentColor });
+      }
+
+      // Update color based on code
+      const code = match[1].split(';')[0]; // Take first code
+      currentColor = colorMap[code] || currentColor;
+
+      lastIndex = match.index + match[0].length;
+    }
+
+    // Add remaining text
+    if (lastIndex < text.length) {
+      parts.push({ text: text.substring(lastIndex), color: currentColor });
+    }
+
+    return parts.length > 0 ? parts : [{ text, color: 'text-gray-300' }];
+  };
+
   // Calcul de l'uptime réel basé sur startedAt
   const calculateRealUptime = () => {
     if (!bot?.startedAt || bot.status !== 'ONLINE') return 0;
     const startTime = new Date(bot.startedAt).getTime();
     const currentTime = Date.now();
-    return Math.floor((currentTime - startTime) / 1000); // uptime en secondes
+    const uptimeSeconds = Math.floor((currentTime - startTime) / 1000);
+    // Prevent negative uptime (clock sync issues)
+    return Math.max(0, uptimeSeconds);
   };
 
   // Simulation des stats temps réel avec uptime réel
