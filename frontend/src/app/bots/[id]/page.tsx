@@ -237,8 +237,14 @@ export default function BotDetailPage() {
 
   if (!user || !bot) return null;
 
-  const botAvatar = bot.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${bot.name}`;
-  const botBanner = bot.banner || 'https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?w=1200&h=300&fit=crop';
+  // Use Discord CDN for avatar if clientId exists
+  const botAvatar = bot.clientId
+    ? `https://cdn.discordapp.com/avatars/${bot.clientId}/${bot.avatar || 'default'}.png?size=256`
+    : `https://api.dicebear.com/7.x/bottts/svg?seed=${bot.name}`;
+
+  const botBanner = bot.banner
+    ? `https://cdn.discordapp.com/banners/${bot.clientId}/${bot.banner}.png?size=1024`
+    : 'https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?w=1200&h=300&fit=crop';
 
   return (
     <DashboardLayout>
