@@ -346,8 +346,8 @@ export class SimpleQueueService implements IQueueService {
 
       // Handle process exit
       botProcess.on('exit', async (code) => {
-        console.log(`[Bot ${botId}] Process exited with code ${code}`);
-        console.log(`🗂️ Removing bot ${botId} from running processes list`);
+        console.log(`[Bot "${bot.name}"] Process exited with code ${code}`);
+        console.log(`🗂️ Removing bot "${bot.name}" from running processes list`);
         this.runningBots.delete(botId);
         await this.redisService.removeRunningBot(botId);
         await this.redisService.deleteBotMetadata(botId);
@@ -359,7 +359,7 @@ export class SimpleQueueService implements IQueueService {
         // If crash, save crash state for recovery
         if (wasCrash) {
           const crashCount = (savedState?.metadata?.crashCount || 0) + 1;
-          console.log(`💥 Bot "${botName}" crashed unexpectedly (crash count: ${crashCount}) - marking for recovery`);
+          console.log(`💥 Bot "${bot.name}" crashed unexpectedly (crash count: ${crashCount}) - marking for recovery`);
 
           await this.redisService.saveBotState(botId, {
             status: 'OFFLINE',
