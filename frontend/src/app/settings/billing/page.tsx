@@ -200,7 +200,7 @@ export default function BillingPage() {
                 className={`p-6 text-center ${pkg.popular ? 'border-2 border-primary-500 shadow-lg' : ''}`}
               >
                 {pkg.popular && (
-                  <Badge variant="primary" className="mb-3">
+                  <Badge variant="info" className="mb-3">
                     Most Popular
                   </Badge>
                 )}
