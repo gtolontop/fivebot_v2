@@ -134,14 +134,14 @@ export default function CreateBotPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+
           {/* Main Form */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Bot Configuration</h2>
-                <p className="text-gray-600">Enter your bot details to get started</p>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 lg:p-8">
+              <div className="mb-4 sm:mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Bot Configuration</h2>
+                <p className="text-sm sm:text-base text-gray-600">Enter your bot details to get started</p>
               </div>
 
               {error && (
