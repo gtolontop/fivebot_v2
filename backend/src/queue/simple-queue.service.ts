@@ -471,8 +471,15 @@ export class SimpleQueueService implements IQueueService {
       await new Promise(resolve => setTimeout(resolve, 3000));
 
       if (this.runningBots.has(botId)) {
-        // Update bot status to online
-        await this.updateBotStatusSafe(botId, BotStatus.ONLINE);
+        // Update bot status to online AND set startedAt to NOW (when bot actually started)
+        await this.prisma.bot.update({
+          where: { id: botId },
+          data: {
+            status: BotStatus.ONLINE,
+            startedAt: new Date(), // Set REAL start time when bot is actually online
+            updatedAt: new Date()
+          }
+        });
 
         // Confirm bot state in Redis (bot is really online)
         // Reset crash count on successful start
