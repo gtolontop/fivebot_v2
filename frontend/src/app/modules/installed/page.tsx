@@ -185,7 +185,7 @@ export default function InstalledModulesPage() {
                           {module.category}
                         </span>
                         <Badge
-                          variant={module.enabled ? 'success' : 'neutral'}
+                          variant={module.enabled ? 'success' : 'secondary'}
                           size="sm"
                         >
                           {module.enabled ? 'Enabled' : 'Disabled'}
