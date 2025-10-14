@@ -79,7 +79,7 @@ export default function CollabConfigPage() {
         </div>
 
         {/* Collaborator Management Component */}
-        <CollaboratorManagement botId={botId} />
+        <CollaboratorManagement botId={botId} isOwner={bot.ownerId === user.id} />
       </div>
     </DashboardLayout>
   );
