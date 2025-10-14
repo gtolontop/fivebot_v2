@@ -7,13 +7,14 @@ import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
 import dynamic from 'next/dynamic';
 import Cookies from 'js-cookie';
-import Header from '@/components/Header';
-
-// Dynamic imports to avoid SSR issues
-const Chart = dynamic(() => import('react-chartjs-2').then((mod) => mod.Chart), {
-  ssr: false,
-  loading: () => <div className="h-64 bg-gray-100 rounded-lg animate-pulse"></div>
-});
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { StatCard, Card, Badge } from '@/components/ui';
+import {
+  BoltIcon,
+  ChatBubbleLeftRightIcon,
+  UsersIcon,
+  ChartBarIcon,
+} from '@heroicons/react/24/outline';
 
 const Line = dynamic(() => import('react-chartjs-2').then((mod) => mod.Line), {
   ssr: false,
@@ -21,11 +22,6 @@ const Line = dynamic(() => import('react-chartjs-2').then((mod) => mod.Line), {
 });
 
 const Bar = dynamic(() => import('react-chartjs-2').then((mod) => mod.Bar), {
-  ssr: false,
-  loading: () => <div className="h-64 bg-gray-100 rounded-lg animate-pulse"></div>
-});
-
-const Doughnut = dynamic(() => import('react-chartjs-2').then((mod) => mod.Doughnut), {
   ssr: false,
   loading: () => <div className="h-64 bg-gray-100 rounded-lg animate-pulse"></div>
 });
@@ -89,7 +85,6 @@ export default function AnalyticsPage() {
     }
   }, [user, botId, timeRange]);
 
-  // Register Chart.js components
   useEffect(() => {
     import('chart.js').then((ChartJS) => {
       ChartJS.Chart.register(
@@ -122,39 +117,33 @@ export default function AnalyticsPage() {
 
   const fetchRealAnalyticsData = async () => {
     const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
-    
+
     try {
-      // Fetch real metrics from backend
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/bots/${botId}/metrics`, {
         headers: {
           'Authorization': `Bearer ${Cookies.get('token') || ''}`,
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (response.ok) {
         const metrics = await response.json();
-        console.log('Real metrics data:', metrics);
-        
-        // Process real metrics data
         const recentMetrics = metrics.slice(-days);
-        
+
         if (recentMetrics.length > 0) {
-          // Calculate real analytics from metrics
           const userActivity = recentMetrics.map((metric: any) => metric.usersCount || 0);
           const serverGrowth = recentMetrics.map((metric: any) => metric.guildsCount || 0);
           const errorRate = recentMetrics.map((metric: any) => metric.errorsCount || 0);
           const responseTime = recentMetrics.map((metric: any) => metric.avgResponseTime || 45);
-          
-          // Calculate command usage based on real data
+
           const totalCommands = recentMetrics.reduce((sum: number, metric: any) => sum + (metric.commandsUsed || 0), 0);
           const commandUsage = {
-            '/help': Math.floor(totalCommands * 0.25), // 25% help commands
-            '/ping': Math.floor(totalCommands * 0.20), // 20% ping commands  
-            '/stats': Math.floor(totalCommands * 0.15), // 15% stats commands
-            '/kick': Math.floor(totalCommands * 0.10), // 10% moderation
-            '/ban': Math.floor(totalCommands * 0.08),  // 8% moderation
-            '/welcome': Math.floor(totalCommands * 0.22), // 22% other commands
+            '/help': Math.floor(totalCommands * 0.25),
+            '/ping': Math.floor(totalCommands * 0.20),
+            '/stats': Math.floor(totalCommands * 0.15),
+            '/kick': Math.floor(totalCommands * 0.10),
+            '/ban': Math.floor(totalCommands * 0.08),
+            '/welcome': Math.floor(totalCommands * 0.22),
           };
 
           const topCommands = Object.entries(commandUsage)
@@ -162,12 +151,11 @@ export default function AnalyticsPage() {
             .slice(0, 5)
             .map(([command, usage]) => ({ command, usage }));
 
-          // Latest day's stats
           const latestMetric = recentMetrics[recentMetrics.length - 1];
           const dailyStats = {
             messages: latestMetric?.messagesProcessed || 0,
             commands: latestMetric?.commandsUsed || 0,
-            newMembers: Math.floor((latestMetric?.usersCount || 0) * 0.02), // Estimate 2% daily growth
+            newMembers: Math.floor((latestMetric?.usersCount || 0) * 0.02),
             activeUsers: latestMetric?.usersCount || 0,
           };
 
@@ -181,7 +169,6 @@ export default function AnalyticsPage() {
             dailyStats
           });
         } else {
-          // No metrics data available, show placeholder
           setAnalyticsData({
             commandUsage: {},
             userActivity: Array(days).fill(0),
@@ -197,41 +184,9 @@ export default function AnalyticsPage() {
             }
           });
         }
-      } else {
-        console.error('Failed to fetch metrics:', response.status);
-        // Fallback to basic data
-        setAnalyticsData({
-          commandUsage: {},
-          userActivity: Array(days).fill(0),
-          serverGrowth: Array(days).fill(0),
-          errorRate: Array(days).fill(0),
-          responseTime: Array(days).fill(0),
-          topCommands: [],
-          dailyStats: {
-            messages: 0,
-            commands: 0,
-            newMembers: 0,
-            activeUsers: 0,
-          }
-        });
       }
     } catch (error) {
       console.error('Error fetching analytics:', error);
-      // Fallback to empty data
-      setAnalyticsData({
-        commandUsage: {},
-        userActivity: Array(days).fill(0),
-        serverGrowth: Array(days).fill(0),
-        errorRate: Array(days).fill(0),
-        responseTime: Array(days).fill(0),
-        topCommands: [],
-        dailyStats: {
-          messages: 0,
-          commands: 0,
-          newMembers: 0,
-          activeUsers: 0,
-        }
-      });
     }
   };
 
@@ -261,270 +216,227 @@ export default function AnalyticsPage() {
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
-        <div className="flex items-center space-x-3">
-          <div className="w-6 h-6 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-gray-600">Loading analytics...</span>
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading analytics...</p>
+          </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
-  if (!user || !bot) {
-    return null;
-  }
+  if (!user || !bot) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <Header
-        title={`${bot.name} - Analytics`}
-        subtitle="Detailed performance insights and statistics"
-        icon={
-          <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-blue-600 rounded-lg flex items-center justify-center">
-            <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
-            </svg>
-          </div>
-        }
-        backButton={{
-          label: "Back to Dashboard",
-          href: `/bots/${botId}`
-        }}
-        actions={
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
-            <select
-              value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value as any)}
-              className="border border-gray-300 rounded-md px-2 sm:px-3 py-1.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto"
-            >
-              <option value="7d">Last 7 days</option>
-              <option value="30d">Last 30 days</option>
-              <option value="90d">Last 90 days</option>
-            </select>
-            <span className={`inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-              bot.status === 'ONLINE'
-                ? 'bg-green-100 text-green-800'
-                : 'bg-gray-100 text-gray-800'
-            }`}>
-              <div className="w-1.5 h-1.5 bg-current rounded-full mr-1.5"></div>
-              {bot.status}
-            </span>
-          </div>
-        }
-      />
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6">
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-600">Messages Today</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900">{analyticsData.dailyStats.messages.toLocaleString()}</p>
-              </div>
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <span className="text-blue-600 text-lg sm:text-xl">💬</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-600">Commands Used</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900">{analyticsData.dailyStats.commands.toLocaleString()}</p>
-              </div>
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <span className="text-green-600 text-lg sm:text-xl">⚡</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-600">New Members</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900">{analyticsData.dailyStats.newMembers}</p>
-              </div>
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <span className="text-purple-600 text-lg sm:text-xl">👥</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-600">Active Users</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900">{analyticsData.dailyStats.activeUsers}</p>
-              </div>
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <span className="text-orange-600 text-lg sm:text-xl">🔥</span>
-              </div>
-            </div>
-          </div>
+    <DashboardLayout>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">{bot.name} - Analytics</h1>
+          <p className="text-gray-600 mt-1">Detailed performance insights and statistics</p>
         </div>
-
-        {/* Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-
-          {/* User Activity Chart */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">User Activity</h3>
-            <div className="h-48 sm:h-56 lg:h-64">
-              {chartReady && (
-                <Line
-                  data={{
-                    labels: getDateLabels(),
-                    datasets: [
-                      {
-                        label: 'Active Users',
-                        data: analyticsData.userActivity,
-                        borderColor: 'rgb(59, 130, 246)',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        tension: 0.4,
-                      },
-                    ],
-                  }}
-                  options={chartOptions}
-                />
-              )}
-            </div>
-          </div>
-
-          {/* Command Usage Chart */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Top Commands</h3>
-            <div className="h-48 sm:h-56 lg:h-64">
-              {chartReady && (
-                <Bar
-                  data={{
-                    labels: analyticsData.topCommands.map(cmd => cmd.command),
-                    datasets: [
-                      {
-                        label: 'Usage Count',
-                        data: analyticsData.topCommands.map(cmd => cmd.usage),
-                        backgroundColor: [
-                          'rgba(59, 130, 246, 0.8)',
-                          'rgba(16, 185, 129, 0.8)',
-                          'rgba(245, 158, 11, 0.8)',
-                          'rgba(239, 68, 68, 0.8)',
-                          'rgba(139, 92, 246, 0.8)',
-                        ],
-                      },
-                    ],
-                  }}
-                  options={chartOptions}
-                />
-              )}
-            </div>
-          </div>
-
-          {/* Response Time Chart */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Response Time</h3>
-            <div className="h-48 sm:h-56 lg:h-64">
-              {chartReady && (
-                <Line
-                  data={{
-                    labels: getDateLabels(),
-                    datasets: [
-                      {
-                        label: 'Response Time (ms)',
-                        data: analyticsData.responseTime,
-                        borderColor: 'rgb(16, 185, 129)',
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                        tension: 0.4,
-                      },
-                    ],
-                  }}
-                  options={chartOptions}
-                />
-              )}
-            </div>
-          </div>
-
-          {/* Error Rate Chart */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Error Rate</h3>
-            <div className="h-48 sm:h-56 lg:h-64">
-              {chartReady && (
-                <Line
-                  data={{
-                    labels: getDateLabels(),
-                    datasets: [
-                      {
-                        label: 'Error Rate (%)',
-                        data: analyticsData.errorRate,
-                        borderColor: 'rgb(239, 68, 68)',
-                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                        tension: 0.4,
-                      },
-                    ],
-                  }}
-                  options={chartOptions}
-                />
-              )}
-            </div>
-          </div>
+        <div className="flex items-center gap-4">
+          <select
+            value={timeRange}
+            onChange={(e) => setTimeRange(e.target.value as any)}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+          >
+            <option value="7d">Last 7 days</option>
+            <option value="30d">Last 30 days</option>
+            <option value="90d">Last 90 days</option>
+          </select>
+          <Badge status={bot.status as any}>
+            {bot.status}
+          </Badge>
         </div>
+      </div>
 
-        {/* Command Usage Table */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Command Usage Details</h3>
-          <div className="overflow-x-auto -mx-4 sm:mx-0">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Command
-                  </th>
-                  <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Usage Count
-                  </th>
-                  <th className="hidden sm:table-cell px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Percentage
-                  </th>
-                  <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Trend
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {analyticsData.topCommands.map((cmd, index) => {
-                  const total = analyticsData.topCommands.reduce((sum, c) => sum + c.usage, 0);
-                  const percentage = ((cmd.usage / total) * 100).toFixed(1);
-                  return (
-                    <tr key={cmd.command}>
-                      <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
-                        <code className="bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">{cmd.command}</code>
-                      </td>
-                      <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
-                        {cmd.usage.toLocaleString()}
-                      </td>
-                      <td className="hidden sm:table-cell px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
-                        {percentage}%
-                      </td>
-                      <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
-                        <span className={`inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          index < 2 ? 'bg-green-100 text-green-800' :
-                          index < 4 ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          <span className="hidden sm:inline">{index < 2 ? '📈 High' : index < 4 ? '📊 Medium' : '📉 Low'}</span>
-                          <span className="sm:hidden">{index < 2 ? '📈' : index < 4 ? '📊' : '📉'}</span>
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <StatCard
+          label="Messages Today"
+          value={analyticsData.dailyStats.messages.toLocaleString()}
+          icon={<ChatBubbleLeftRightIcon className="w-6 h-6" />}
+          color="blue"
+        />
+        <StatCard
+          label="Commands Used"
+          value={analyticsData.dailyStats.commands.toLocaleString()}
+          icon={<BoltIcon className="w-6 h-6" />}
+          color="green"
+        />
+        <StatCard
+          label="New Members"
+          value={analyticsData.dailyStats.newMembers}
+          icon={<UsersIcon className="w-6 h-6" />}
+          color="purple"
+        />
+        <StatCard
+          label="Active Users"
+          value={analyticsData.dailyStats.activeUsers}
+          icon={<ChartBarIcon className="w-6 h-6" />}
+          color="orange"
+        />
+      </div>
+
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+
+        {/* User Activity Chart */}
+        <Card>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">User Activity</h3>
+          <div className="h-64">
+            {chartReady && (
+              <Line
+                data={{
+                  labels: getDateLabels(),
+                  datasets: [
+                    {
+                      label: 'Active Users',
+                      data: analyticsData.userActivity,
+                      borderColor: 'rgb(59, 130, 246)',
+                      backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                      tension: 0.4,
+                    },
+                  ],
+                }}
+                options={chartOptions}
+              />
+            )}
           </div>
+        </Card>
+
+        {/* Command Usage Chart */}
+        <Card>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Commands</h3>
+          <div className="h-64">
+            {chartReady && (
+              <Bar
+                data={{
+                  labels: analyticsData.topCommands.map(cmd => cmd.command),
+                  datasets: [
+                    {
+                      label: 'Usage Count',
+                      data: analyticsData.topCommands.map(cmd => cmd.usage),
+                      backgroundColor: [
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(245, 158, 11, 0.8)',
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(139, 92, 246, 0.8)',
+                      ],
+                    },
+                  ],
+                }}
+                options={chartOptions}
+              />
+            )}
+          </div>
+        </Card>
+
+        {/* Response Time Chart */}
+        <Card>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Response Time</h3>
+          <div className="h-64">
+            {chartReady && (
+              <Line
+                data={{
+                  labels: getDateLabels(),
+                  datasets: [
+                    {
+                      label: 'Response Time (ms)',
+                      data: analyticsData.responseTime,
+                      borderColor: 'rgb(16, 185, 129)',
+                      backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                      tension: 0.4,
+                    },
+                  ],
+                }}
+                options={chartOptions}
+              />
+            )}
+          </div>
+        </Card>
+
+        {/* Error Rate Chart */}
+        <Card>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Error Rate</h3>
+          <div className="h-64">
+            {chartReady && (
+              <Line
+                data={{
+                  labels: getDateLabels(),
+                  datasets: [
+                    {
+                      label: 'Error Rate',
+                      data: analyticsData.errorRate,
+                      borderColor: 'rgb(239, 68, 68)',
+                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                      tension: 0.4,
+                    },
+                  ],
+                }}
+                options={chartOptions}
+              />
+            )}
+          </div>
+        </Card>
+      </div>
+
+      {/* Command Usage Table */}
+      <Card>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Command Usage Details</h3>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Command
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Usage Count
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Percentage
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Trend
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {analyticsData.topCommands.map((cmd, index) => {
+                const total = analyticsData.topCommands.reduce((sum, c) => sum + c.usage, 0);
+                const percentage = total > 0 ? ((cmd.usage / total) * 100).toFixed(1) : '0';
+                return (
+                  <tr key={cmd.command}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <code className="bg-gray-100 px-2 py-1 rounded text-xs">{cmd.command}</code>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {cmd.usage.toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {percentage}%
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        index < 2 ? 'bg-green-100 text-green-800' :
+                        index < 4 ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {index < 2 ? '📈 High' : index < 4 ? '📊 Medium' : '📉 Low'}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
-      </main>
-    </div>
+      </Card>
+    </DashboardLayout>
   );
 }
