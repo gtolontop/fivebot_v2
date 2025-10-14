@@ -34,20 +34,61 @@ export class BotRecoveryService implements OnApplicationBootstrap {
     this.logger.log('🔄 Starting bot recovery process...');
 
     try {
-      // Get all saved bot states from Redis
-      const botStates = await this.redisService.getAllBotStates();
-      this.logger.log(`📊 Found ${botStates.size} bot states in Redis`);
-
       let recovered = 0;
       let skipped = 0;
       let failed = 0;
 
+      // PHASE 1: Get all bots that were ONLINE in the database
+      const botsMarkedOnline = await this.prisma.bot.findMany({
+        where: {
+          status: BotStatus.ONLINE,
+          isActive: true
+        },
+        select: {
+          id: true,
+          name: true,
+          status: true,
+          ownerId: true,
+          owner: { select: { username: true } }
+        }
+      });
+
+      this.logger.log(`📊 Found ${botsMarkedOnline.length} bots marked as ONLINE in database`);
+
+      // PHASE 2: Get all saved bot states from Redis
+      const botStates = await this.redisService.getAllBotStates();
+      this.logger.log(`📊 Found ${botStates.size} bot states in Redis`);
+
+      // Create a set of all bot IDs that need recovery consideration
+      const botsToConsider = new Set<string>();
+
+      // Add bots that were ONLINE in DB
+      for (const bot of botsMarkedOnline) {
+        botsToConsider.add(bot.id);
+      }
+
+      // Add bots from Redis that might have crashed
       for (const [botId, state] of botStates.entries()) {
+        if (state.userAction === 'crash' || (state.userAction === 'start' && state.status === 'ONLINE')) {
+          botsToConsider.add(botId);
+        }
+      }
+
+      this.logger.log(`🔍 Considering ${botsToConsider.size} bots for recovery`);
+
+      // PHASE 3: Process each bot
+      for (const botId of botsToConsider) {
         try {
           // Get bot from database
           const bot = await this.prisma.bot.findUnique({
             where: { id: botId },
-            select: { id: true, name: true, status: true, isActive: true }
+            select: {
+              id: true,
+              name: true,
+              status: true,
+              isActive: true,
+              owner: { select: { username: true } }
+            }
           });
 
           if (!bot) {
@@ -58,17 +99,25 @@ export class BotRecoveryService implements OnApplicationBootstrap {
           }
 
           if (!bot.isActive) {
-            this.logger.log(`⏸️ Bot ${bot.name} is suspended, skipping recovery`);
+            this.logger.log(`⏸️ Bot "${bot.name}" is suspended, skipping recovery`);
             await this.redisService.deleteBotState(botId);
+            // Mark as offline
+            await this.prisma.bot.update({
+              where: { id: botId },
+              data: { status: BotStatus.OFFLINE }
+            });
             skipped++;
             continue;
           }
 
-          // Decision logic based on saved state
-          const shouldRecover = this.shouldRecoverBot(state);
+          // Get Redis state if exists
+          const redisState = botStates.get(botId);
+
+          // Decide if we should recover
+          const shouldRecover = this.shouldRecoverBotOnBootstrap(bot, redisState);
 
           if (shouldRecover) {
-            this.logger.log(`🔁 Recovering bot ${bot.name} (${botId}) - Last action: ${state.userAction}`);
+            this.logger.log(`🔁 Recovering bot "${bot.name}" (owner: ${bot.owner.username}) - Status: ${bot.status}`);
 
             // Ensure bot is marked as OFFLINE first
             await this.prisma.bot.update({
@@ -77,7 +126,7 @@ export class BotRecoveryService implements OnApplicationBootstrap {
             });
 
             // Wait a bit to ensure clean state
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, 500));
 
             // Queue start job
             await this.queueService.addJob('start-bot', { botId });
@@ -87,16 +136,24 @@ export class BotRecoveryService implements OnApplicationBootstrap {
               status: 'ONLINE',
               userAction: 'system',
               timestamp: new Date(),
-              metadata: { recovered: true, previousAction: state.userAction }
+              metadata: { recovered: true, recoveredFromBootstrap: true }
             });
 
             recovered++;
-            this.logger.log(`✅ Bot ${bot.name} queued for recovery`);
+            this.logger.log(`✅ Bot "${bot.name}" queued for recovery`);
           } else {
-            this.logger.log(`⏭️ Skipping recovery for bot ${bot.name} - Last action: ${state.userAction}`);
+            this.logger.log(`⏭️ Skipping recovery for bot "${bot.name}" - Not eligible for auto-recovery`);
 
-            // Clean up state for intentionally stopped bots
-            if (state.userAction === 'stop') {
+            // Mark as offline if it was online but shouldn't be recovered
+            if (bot.status === BotStatus.ONLINE) {
+              await this.prisma.bot.update({
+                where: { id: botId },
+                data: { status: BotStatus.OFFLINE }
+              });
+            }
+
+            // Clean up Redis state
+            if (redisState?.userAction === 'stop') {
               await this.redisService.deleteBotState(botId);
             }
 
@@ -109,7 +166,7 @@ export class BotRecoveryService implements OnApplicationBootstrap {
         }
 
         // Small delay between recoveries to avoid overload
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
 
       this.logger.log(`✅ Recovery complete: ${recovered} recovered, ${skipped} skipped, ${failed} failed`);
@@ -119,6 +176,37 @@ export class BotRecoveryService implements OnApplicationBootstrap {
     } finally {
       this.recoveryInProgress = false;
     }
+  }
+
+  private shouldRecoverBotOnBootstrap(
+    bot: { status: BotStatus },
+    redisState?: {
+      status: 'ONLINE' | 'OFFLINE';
+      userAction: 'start' | 'stop' | 'crash' | 'system';
+      timestamp: Date;
+      metadata?: any;
+    }
+  ): boolean {
+    // If bot was ONLINE in DB, recover it (backend restart scenario)
+    if (bot.status === BotStatus.ONLINE) {
+      // Check Redis state to see if it was intentionally stopped
+      if (redisState?.userAction === 'stop') {
+        return false; // User stopped it, don't recover
+      }
+      return true; // Recover
+    }
+
+    // If Redis says it crashed, recover it
+    if (redisState?.userAction === 'crash') {
+      return true;
+    }
+
+    // If Redis says it was started and ONLINE, recover it
+    if (redisState?.userAction === 'start' && redisState.status === 'ONLINE') {
+      return true;
+    }
+
+    return false;
   }
 
   private shouldRecoverBot(state: {
