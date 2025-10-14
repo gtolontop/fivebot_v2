@@ -367,15 +367,15 @@ export default function DashboardPage() {
             </div>
             
             {bots.length === 0 ? (
-              <div className="text-center py-8">
-                <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="text-center py-6 sm:py-8">
+                <svg className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m0 0v6m0-6V9a2 2 0 012-2h2m0 0V4a1 1 0 011-1h2a1 1 0 011 1v3m-6 0h6" />
                 </svg>
-                <h4 className="mt-2 text-lg font-medium text-gray-900">No bots yet</h4>
-                <p className="mt-1 text-sm text-gray-500">Get started by creating your first Discord bot.</p>
+                <h4 className="mt-2 text-base sm:text-lg font-medium text-gray-900">No bots yet</h4>
+                <p className="mt-1 text-xs sm:text-sm text-gray-500">Get started by creating your first Discord bot.</p>
                 <button
                   onClick={() => router.push('/bots/create')}
-                  className="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                  className="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd"/>
