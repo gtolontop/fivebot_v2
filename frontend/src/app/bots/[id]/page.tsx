@@ -109,6 +109,40 @@ export default function BotDetailPage() {
     return () => clearInterval(metricsInterval);
   }, [bot?.status, botId]);
 
+  // Polling for logs
+  useEffect(() => {
+    if (!bot || bot.status !== 'ONLINE') {
+      setLogs([]);
+      return;
+    }
+
+    const pollLogs = async () => {
+      try {
+        const token = Cookies.get('token');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/bots/${botId}/logs/live`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.logs && data.logs.length > 0) {
+            setLogs(data.logs.slice(-50)); // Keep last 50 logs
+          }
+        }
+      } catch (error) {
+        console.log('Could not fetch bot logs:', error);
+      }
+    };
+
+    pollLogs();
+    const interval = setInterval(pollLogs, 3000);
+
+    return () => clearInterval(interval);
+  }, [bot?.status, botId]);
+
   // Auto-refresh status
   useEffect(() => {
     if (!bot) return;
