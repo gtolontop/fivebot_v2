@@ -353,37 +353,57 @@ export class MetricsService {
   }
 
   private startNetworkTracking() {
-    // Track Discord WebSocket network usage
-    // Discord.js doesn't expose raw bytes, so we'll estimate based on events
-    let messagesSent = 0;
-    let messagesReceived = 0;
+    // Track ALL network traffic from the process using Node.js internals
+    let bytesReceived = 0;
+    let bytesSent = 0;
 
-    // Track outgoing messages
-    this.client.on('messageCreate', (message) => {
-      if (message.author.id === this.client.user?.id) {
-        messagesSent++;
-      } else {
-        messagesReceived++;
+    // Hook into Node.js http/https modules to track all network I/O
+    const http = require('http');
+    const https = require('https');
+    const net = require('net');
+
+    // Patch Socket to track all bytes
+    const originalSocketWrite = net.Socket.prototype.write;
+    const originalSocketOn = net.Socket.prototype.on;
+
+    net.Socket.prototype.write = function(...args: any[]) {
+      const data = args[0];
+      if (data) {
+        const bytes = Buffer.isBuffer(data) ? data.length : Buffer.byteLength(data.toString());
+        bytesSent += bytes;
       }
-    });
+      return originalSocketWrite.apply(this, args);
+    };
+
+    net.Socket.prototype.on = function(event: string, listener: any) {
+      if (event === 'data') {
+        const wrappedListener = (chunk: Buffer) => {
+          bytesReceived += chunk.length;
+          return listener(chunk);
+        };
+        return originalSocketOn.call(this, event, wrappedListener);
+      }
+      return originalSocketOn.call(this, event, listener);
+    };
 
     // Calculate network speed every 5 seconds
     setInterval(() => {
       const now = Date.now();
       const timeDiff = (now - this.networkStats.lastCheck) / 1000; // seconds
 
-      // Estimate: average Discord message ~1KB, events ~0.5KB
-      const estimatedReceived = messagesReceived * 1; // KB
-      const estimatedSent = messagesSent * 1; // KB
+      if (timeDiff > 0) {
+        // Convert bytes to KB and calculate speed
+        const receivedKB = bytesReceived / 1024;
+        const sentKB = bytesSent / 1024;
 
-      // Calculate speed (KB/s)
-      this.networkStats.downloadSpeed = estimatedReceived / timeDiff;
-      this.networkStats.uploadSpeed = estimatedSent / timeDiff;
+        this.networkStats.downloadSpeed = receivedKB / timeDiff;
+        this.networkStats.uploadSpeed = sentKB / timeDiff;
 
-      // Reset counters
-      this.networkStats.lastCheck = now;
-      messagesSent = 0;
-      messagesReceived = 0;
+        // Reset counters
+        this.networkStats.lastCheck = now;
+        bytesReceived = 0;
+        bytesSent = 0;
+      }
     }, 5000);
   }
 
