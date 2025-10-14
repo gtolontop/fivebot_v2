@@ -185,12 +185,12 @@ export class SimpleQueueService implements IQueueService {
         // Resynchronize status to ONLINE instead of failing silently
         await this.updateBotStatusSafe(botId, BotStatus.ONLINE);
 
-        // Ensure Redis state is correct
+        // Ensure Redis state is correct and reset crash count
         await this.redisService.saveBotState(botId, {
           status: 'ONLINE',
           userAction: 'start',
           timestamp: new Date(),
-          metadata: { confirmed: true, resynchronized: true }
+          metadata: { confirmed: true, resynchronized: true, crashCount: 0 }
         });
 
         return;
@@ -457,11 +457,12 @@ export class SimpleQueueService implements IQueueService {
         await this.updateBotStatusSafe(botId, BotStatus.ONLINE);
 
         // Confirm bot state in Redis (bot is really online)
+        // Reset crash count on successful start
         await this.redisService.saveBotState(botId, {
           status: 'ONLINE',
           userAction: 'start',
           timestamp: new Date(),
-          metadata: { confirmed: true }
+          metadata: { confirmed: true, crashCount: 0 }
         });
 
         console.log(`✅ Bot "${bot.name}" (owner: ${bot.owner.username}) started successfully`);
