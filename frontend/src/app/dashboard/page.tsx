@@ -420,39 +420,39 @@ export default function DashboardPage() {
           </div>
 
           {/* Quick Stats */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Stats</h3>
-            <div className="space-y-4">
+          <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 p-4 sm:p-5 md:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Quick Stats</h3>
+            <div className="space-y-3 sm:space-y-4">
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <span className="text-gray-600">Credits</span>
-                <span className="font-semibold text-gray-900">{user.credits}</span>
+                <span className="text-xs sm:text-sm text-gray-600">Credits</span>
+                <span className="text-sm sm:text-base font-semibold text-gray-900">{user.credits}</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <span className="text-gray-600">Messages Today</span>
-                <span className="font-semibold text-gray-900">{stats.todayMessages.toLocaleString()}</span>
+                <span className="text-xs sm:text-sm text-gray-600">Messages Today</span>
+                <span className="text-sm sm:text-base font-semibold text-gray-900">{stats.todayMessages.toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <span className="text-gray-600">Avg Response Time</span>
-                <span className="font-semibold text-green-600">{stats.avgResponseTime || 45}ms</span>
+                <span className="text-xs sm:text-sm text-gray-600">Avg Response Time</span>
+                <span className="text-sm sm:text-base font-semibold text-green-600">{stats.avgResponseTime || 45}ms</span>
               </div>
               <div className="flex justify-between items-center py-2">
-                <span className="text-gray-600">Uptime</span>
-                <span className="font-semibold text-green-600">{stats.uptime || 99.8}%</span>
+                <span className="text-xs sm:text-sm text-gray-600">Uptime</span>
+                <span className="text-sm sm:text-base font-semibold text-green-600">{stats.uptime || 99.8}%</span>
               </div>
             </div>
 
-            <div className="mt-6 pt-4 border-t border-gray-100">
-              <h4 className="font-medium text-gray-900 mb-3">Quick Actions</h4>
+            <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-gray-100">
+              <h4 className="text-sm sm:text-base font-medium text-gray-900 mb-2 sm:mb-3">Quick Actions</h4>
               <div className="space-y-2">
                 <button
                   onClick={() => router.push('/bots')}
-                  className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="w-full text-left px-3 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                 >
                   Manage All Bots
                 </button>
                 <button
                   onClick={() => router.push('/bots/create')}
-                  className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="w-full text-left px-3 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                 >
                   Create New Bot
                 </button>
