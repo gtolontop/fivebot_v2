@@ -716,32 +716,32 @@ export default function HomePage() {
       </section>
 
       {/* Testimonials */}
-      <section id="testimonials" className="py-20 bg-white">
+      <section id="testimonials" className="py-12 sm:py-16 md:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+          <div className="text-center mb-8 sm:mb-12 md:mb-16">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 sm:mb-4 px-4">
               Loved by communities worldwide
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto px-4">
               See what Discord server owners are saying about FiveBot
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
             {testimonials.map((testimonial) => (
-              <div key={testimonial.name} className="bg-gray-50 rounded-2xl p-8">
-                <div className="flex items-center mb-4">
+              <div key={testimonial.name} className="bg-gray-50 rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-8">
+                <div className="flex items-center mb-3 sm:mb-4">
                   {[...Array(testimonial.rating)].map((_, i) => (
-                    <StarIcon key={i} className="w-5 h-5 text-yellow-400 fill-current" />
+                    <StarIcon key={i} className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400 fill-current" />
                   ))}
                 </div>
-                <p className="text-gray-700 mb-6">"{testimonial.content}"</p>
+                <p className="text-sm sm:text-base text-gray-700 mb-4 sm:mb-6">"{testimonial.content}"</p>
                 <div className="flex items-center">
-                  <div className="w-12 h-12 bg-discord-500 rounded-full flex items-center justify-center text-white font-semibold mr-4">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-discord-500 rounded-full flex items-center justify-center text-white text-sm sm:text-base font-semibold mr-3 sm:mr-4">
                     {testimonial.avatar}
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">{testimonial.name}</p>
-                    <p className="text-sm text-gray-600">{testimonial.role}, {testimonial.company}</p>
+                    <p className="text-sm sm:text-base font-semibold text-gray-900">{testimonial.name}</p>
+                    <p className="text-xs sm:text-sm text-gray-600">{testimonial.role}, {testimonial.company}</p>
                   </div>
                 </div>
               </div>
@@ -751,17 +751,17 @@ export default function HomePage() {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-12 sm:py-16 md:py-20 bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+          <div className="text-center mb-8 sm:mb-12 md:mb-16">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 sm:mb-4 px-4">
               Frequently Asked Questions
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-base sm:text-lg md:text-xl text-gray-600 px-4">
               Everything you need to know about FiveBot
             </p>
           </div>
-          <div className="space-y-8">
+          <div className="space-y-4 sm:space-y-6 md:space-y-8">
             {[
               {
                 q: "How quickly can I deploy a bot?",
@@ -780,9 +780,9 @@ export default function HomePage() {
                 a: "Yes! We support all major bot frameworks. Just upload your code, and we'll handle the containerization and deployment automatically."
               },
             ].map((faq, index) => (
-              <div key={index} className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{faq.q}</h3>
-                <p className="text-gray-600">{faq.a}</p>
+              <div key={index} className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-shadow">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">{faq.q}</h3>
+                <p className="text-sm sm:text-base text-gray-600">{faq.a}</p>
               </div>
             ))}
           </div>
