@@ -8,6 +8,8 @@ export interface ProcessMetrics {
   uptime: number; // Seconds
   guildsCount: number;
   usersCount: number;
+  networkDownload: number; // KB/s
+  networkUpload: number; // KB/s
 }
 
 @Injectable()
@@ -53,6 +55,8 @@ export class BotProcessMetricsService {
         uptime: parsed.uptime || 0,
         guildsCount: parsed.guildsCount || 0,
         usersCount: parsed.usersCount || 0,
+        networkDownload: parsed.networkDownload || 0,
+        networkUpload: parsed.networkUpload || 0,
       };
     } catch (error) {
       console.error(`Failed to get metrics for bot ${botId}:`, error);
@@ -93,6 +97,8 @@ export class BotProcessMetricsService {
             uptime: parsed.uptime || 0,
             guildsCount: parsed.guildsCount || 0,
             usersCount: parsed.usersCount || 0,
+            networkDownload: parsed.networkDownload || 0,
+            networkUpload: parsed.networkUpload || 0,
           });
         }
       }
