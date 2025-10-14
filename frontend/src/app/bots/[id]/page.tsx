@@ -67,7 +67,9 @@ export default function BotDetailPage() {
     eventCount: 0,
     messageCount: 0,
     commandCount: 0,
-    responseTime: 0
+    responseTime: 0,
+    networkDownload: 0,
+    networkUpload: 0
   });
   const consoleRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<'console' | 'performance' | 'settings'>('console');
@@ -230,6 +232,8 @@ export default function BotDetailPage() {
               ...prev,
               cpuUsage: data.metrics.cpuUsage || 0,
               memoryUsage: data.metrics.memoryUsage || 0,
+              networkDownload: data.metrics.networkDownload || 0,
+              networkUpload: data.metrics.networkUpload || 0,
               uptime: calculateRealUptime(), // Use calculated uptime for accuracy
             }));
           }
@@ -664,6 +668,21 @@ export default function BotDetailPage() {
                   <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Uptime</div>
                   <div className="mt-1 text-xs sm:text-sm text-gray-900 font-medium">
                     {bot.status === 'ONLINE' ? formatUptime(realTimeStats.uptime) : 'Offline'}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                  <div>
+                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Network ⬇</div>
+                    <div className="mt-1 text-xs sm:text-sm text-gray-900 font-medium">
+                      {bot.status === 'ONLINE' ? `${realTimeStats.networkDownload.toFixed(1)} KB/s` : '0 KB/s'}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Network ⬆</div>
+                    <div className="mt-1 text-xs sm:text-sm text-gray-900 font-medium">
+                      {bot.status === 'ONLINE' ? `${realTimeStats.networkUpload.toFixed(1)} KB/s` : '0 KB/s'}
+                    </div>
                   </div>
                 </div>
               </div>
