@@ -281,11 +281,12 @@ export default function BotDetailPage() {
 
               {/* Action Buttons */}
               <div className="flex items-center space-x-3 pb-2">
-                {bot.status === 'OFFLINE' && (
+                {(bot.status === 'OFFLINE' || bot.status === 'ERROR') && (
                   <Button
                     variant="success"
                     onClick={handleStart}
-                    loading={actionLoading === 'start' || bot.status === 'STARTING'}
+                    loading={actionLoading === 'start'}
+                    disabled={actionLoading !== null}
                     icon={<PlayIcon className="w-4 h-4" />}
                   >
                     Start Bot
@@ -298,6 +299,7 @@ export default function BotDetailPage() {
                       variant="secondary"
                       onClick={handleRestart}
                       loading={actionLoading === 'restart'}
+                      disabled={actionLoading !== null}
                       icon={<ArrowPathIcon className="w-4 h-4" />}
                     >
                       Restart
@@ -306,6 +308,7 @@ export default function BotDetailPage() {
                       variant="danger"
                       onClick={handleStop}
                       loading={actionLoading === 'stop'}
+                      disabled={actionLoading !== null}
                       icon={<StopIcon className="w-4 h-4" />}
                     >
                       Stop
@@ -316,6 +319,12 @@ export default function BotDetailPage() {
                 {bot.status === 'STARTING' && (
                   <Button variant="secondary" disabled loading>
                     Starting...
+                  </Button>
+                )}
+
+                {bot.status === 'STOPPING' && (
+                  <Button variant="secondary" disabled loading>
+                    Stopping...
                   </Button>
                 )}
               </div>
