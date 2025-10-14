@@ -83,7 +83,7 @@ export default function CommandsConfigPage() {
           config={bot.config || {}}
           updateConfig={async (updates: any) => {
             try {
-              await botsAPI.update(botId, { config: { ...bot.config, ...updates } });
+              await botsAPI.updateConfig(botId, updates);
               setBot({ ...bot, config: { ...bot.config, ...updates } });
               toast.success('Configuration updated successfully!');
             } catch (error: any) {
