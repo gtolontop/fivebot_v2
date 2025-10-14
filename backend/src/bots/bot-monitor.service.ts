@@ -64,49 +64,61 @@ export class BotMonitorService {
 
     try {
       console.log('💓 Heartbeat check starting...');
-      
+
       // Quick check for obvious mismatches
       const allBots = await this.prisma.bot.findMany({
-        select: { id: true, name: true, status: true }
+        select: { id: true, name: true, status: true, owner: { select: { username: true } } }
       });
 
       let corrections = 0;
-      
+
       // Get running bots list once from Redis (shared across all processes)
       const queueService = this.botsService.queueService as any;
       const runningBots = await queueService?.getRunningBots?.() ?? [];
-      console.log(`💓 Running bots in queue: [${runningBots.join(', ')}]`);
+
+      // Enhanced log with bot names
+      const runningBotNames = allBots
+        .filter(b => runningBots.includes(b.id))
+        .map(b => `${b.name} (${b.id.substring(0, 8)})`)
+        .join(', ');
+      console.log(`💓 Running bots in queue: ${runningBots.length > 0 ? runningBotNames : 'none'}`);
 
       for (const bot of allBots) {
         // Get running status from queue service
         const isProcessRunning = runningBots.includes(bot.id);
 
-        // Quick correction for obvious mismatches
+        // DON'T be too aggressive - only correct if bot is ONLINE but not running
+        // Give a grace period by not correcting immediately
         if (bot.status === 'ONLINE' && !isProcessRunning) {
-          console.log(`💓 Heartbeat correcting bot ${bot.id} (${bot.name}): ONLINE → OFFLINE (not in running list)`);
-          try {
-            await this.updateBotWithRetry(bot.id, { 
-              status: 'OFFLINE',
-              updatedAt: new Date()
-            });
-            corrections++;
-          } catch (error) {
-            console.error(`❌ Failed to correct bot ${bot.id} status in heartbeat check:`, error);
-          }
+          console.log(`💓 Heartbeat detected mismatch for "${bot.name}" (owner: ${bot.owner.username}): ONLINE in DB but not in running queue`);
+          // Don't correct immediately - let the deeper status check handle it
+          // This prevents false positives during reconnections
         } else if (bot.status === 'ERROR' && !isProcessRunning) {
-          console.log(`💓 Heartbeat correcting bot ${bot.id} (${bot.name}): ERROR → OFFLINE`);
+          console.log(`💓 Heartbeat correcting bot "${bot.name}" (owner: ${bot.owner.username}): ERROR → OFFLINE`);
           try {
-            await this.updateBotWithRetry(bot.id, { 
+            await this.updateBotWithRetry(bot.id, {
               status: 'OFFLINE',
               updatedAt: new Date()
             });
             corrections++;
           } catch (error) {
-            console.error(`❌ Failed to correct bot ${bot.id} status in heartbeat check:`, error);
+            console.error(`❌ Failed to correct bot "${bot.name}" status in heartbeat check:`, error);
+          }
+        } else if (bot.status === 'OFFLINE' && isProcessRunning) {
+          // Process is running but DB says OFFLINE - resync to ONLINE
+          console.log(`💓 Heartbeat correcting bot "${bot.name}" (owner: ${bot.owner.username}): OFFLINE → ONLINE (process is running)`);
+          try {
+            await this.updateBotWithRetry(bot.id, {
+              status: 'ONLINE',
+              updatedAt: new Date()
+            });
+            corrections++;
+          } catch (error) {
+            console.error(`❌ Failed to correct bot "${bot.name}" status in heartbeat check:`, error);
           }
         }
       }
-      
+
       if (corrections > 0) {
         console.log(`💓 Heartbeat made ${corrections} corrections`);
       }
