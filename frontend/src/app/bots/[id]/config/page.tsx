@@ -813,31 +813,31 @@ export default function BotConfigPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center space-x-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-4 sm:py-6 gap-3 sm:gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
               <button
                 onClick={() => router.push(`/bots/${botId}`)}
                 className="inline-flex items-center text-gray-500 hover:text-gray-700 transition-colors"
               >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
-                Back to Bot
+                <span className="text-sm sm:text-base">Back to Bot</span>
               </button>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">{bot.name}</h1>
-                <p className="text-gray-600 mt-1">Bot Configuration & Management</p>
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">{bot.name}</h1>
+                <p className="text-xs sm:text-sm text-gray-600 mt-0.5 sm:mt-1">Bot Configuration & Management</p>
               </div>
             </div>
-            
-            <div className="flex items-center space-x-4">
+
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 lg:gap-4 w-full sm:w-auto">
               {/* Bot Status Badge */}
-              <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(bot.status)}`}>
-                {bot.status === 'ONLINE' && <CheckCircleIcon className="w-4 h-4 mr-1" />}
-                {bot.status === 'ERROR' && <ExclamationTriangleIcon className="w-4 h-4 mr-1" />}
-                {(bot.status === 'STARTING' || bot.status === 'STOPPING' || bot.status === 'RESTARTING' || bot.status === 'OFFLINE') && <ClockIcon className="w-4 h-4 mr-1" />}
-                {bot.status === 'ONLINE' ? 'Online' : 
+              <div className={`inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${getStatusColor(bot.status)}`}>
+                {bot.status === 'ONLINE' && <CheckCircleIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />}
+                {bot.status === 'ERROR' && <ExclamationTriangleIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />}
+                {(bot.status === 'STARTING' || bot.status === 'STOPPING' || bot.status === 'RESTARTING' || bot.status === 'OFFLINE') && <ClockIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />}
+                {bot.status === 'ONLINE' ? 'Online' :
                  bot.status === 'STARTING' ? 'Starting...' :
                  bot.status === 'STOPPING' ? 'Stopping...' :
                  bot.status === 'RESTARTING' ? 'Restarting...' :
@@ -848,43 +848,45 @@ export default function BotConfigPage() {
               {bot.status === 'OFFLINE' && (
                 <button
                   onClick={startBot}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+                  className="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
                 >
-                  <PlayIcon className="w-4 h-4 mr-1" />
-                  Start Bot
+                  <PlayIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                  <span className="hidden sm:inline">Start Bot</span>
+                  <span className="sm:hidden">Start</span>
                 </button>
               )}
-              
+
               {bot.status === 'ONLINE' && (
                 <>
                   <button
                     onClick={restartBot}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                    className="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
                   >
-                    <ArrowPathIcon className="w-4 h-4 mr-1" />
+                    <ArrowPathIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                     Restart
                   </button>
                   <button
                     onClick={stopBot}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                    className="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
                   >
-                    <StopIcon className="w-4 h-4 mr-1" />
+                    <StopIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                     Stop
                   </button>
                 </>
               )}
 
               {/* Auto-save indicator */}
-              <div className="flex items-center text-sm text-gray-500">
+              <div className="flex items-center text-xs sm:text-sm text-gray-500">
                 {isSaving ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600 mr-2"></div>
-                    <span>Saving...</span>
+                    <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-indigo-600 mr-1.5 sm:mr-2"></div>
+                    <span className="hidden sm:inline">Saving...</span>
                   </>
                 ) : lastSaved ? (
                   <>
-                    <CheckCircleIcon className="w-4 h-4 text-green-500 mr-2" />
-                    <span>All changes saved</span>
+                    <CheckCircleIcon className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mr-1.5 sm:mr-2" />
+                    <span className="hidden sm:inline">All changes saved</span>
+                    <span className="sm:hidden">Saved</span>
                   </>
                 ) : null}
               </div>
@@ -893,28 +895,28 @@ export default function BotConfigPage() {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="flex flex-col lg:flex-row gap-6">
+      <main className="max-w-7xl mx-auto py-4 sm:py-6 px-3 sm:px-4 lg:px-8">
+        <div className="py-4 sm:py-6">
+          <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
             {/* Sidebar Navigation */}
             <div className="lg:w-80">
-              <nav className="space-y-2">
+              <nav className="space-y-1 sm:space-y-2">
                 {tabs.map((tab) => {
                   const IconComponent = tab.icon;
                   return (
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`w-full flex items-start px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+                      className={`w-full flex items-start px-3 sm:px-4 py-2.5 sm:py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
                         activeTab === tab.id
                           ? 'bg-indigo-50 text-indigo-700 border-l-4 border-indigo-500'
                           : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                       }`}
                     >
-                      <IconComponent className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" />
+                      <IconComponent className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 mt-0.5 flex-shrink-0" />
                       <div className="text-left">
-                        <div className="font-medium">{tab.name}</div>
-                        <div className="text-xs text-gray-500 mt-0.5">{tab.description}</div>
+                        <div className="font-medium text-sm sm:text-base">{tab.name}</div>
+                        <div className="text-xs text-gray-500 mt-0.5 hidden sm:block">{tab.description}</div>
                       </div>
                     </button>
                   );
@@ -927,18 +929,18 @@ export default function BotConfigPage() {
               <div className="bg-white shadow-sm rounded-lg border border-gray-200">
                 {/* General Tab */}
                 {activeTab === 'general' && (
-                  <div className="p-6">
-                    <div className="mb-6">
-                      <h2 className="text-2xl font-bold text-gray-900 mb-2">General Information</h2>
-                      <p className="text-gray-600">Bot information and connected Discord servers</p>
+                  <div className="p-4 sm:p-6">
+                    <div className="mb-4 sm:mb-6">
+                      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">General Information</h2>
+                      <p className="text-sm sm:text-base text-gray-600">Bot information and connected Discord servers</p>
                     </div>
 
-                    <div className="space-y-6">
+                    <div className="space-y-4 sm:space-y-6">
                       {/* Bot Information */}
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Bot Information</h3>
-                        <div className="bg-gray-50 rounded-lg p-4">
-                          <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Bot Information</h3>
+                        <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                             <div>
                               <dt className="text-sm font-medium text-gray-500">Bot Name</dt>
                               <dd className="text-sm text-gray-900 mt-1">{bot.name}</dd>
@@ -977,52 +979,52 @@ export default function BotConfigPage() {
 
                       {/* Discord Servers */}
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Connected Discord Servers</h3>
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Connected Discord Servers</h3>
                         {guildsLoading ? (
-                          <div className="flex items-center justify-center p-8">
-                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600 mr-3"></div>
-                            <span className="text-gray-600">Loading Discord servers...</span>
+                          <div className="flex items-center justify-center p-6 sm:p-8">
+                            <div className="animate-spin rounded-full h-5 w-5 sm:h-6 sm:w-6 border-b-2 border-indigo-600 mr-2 sm:mr-3"></div>
+                            <span className="text-sm sm:text-base text-gray-600">Loading Discord servers...</span>
                           </div>
                         ) : guilds.length > 0 ? (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
                             {guilds.map((guild) => (
-                              <div key={guild.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
-                                <div className="flex items-center space-x-3">
+                              <div key={guild.id} className="border border-gray-200 rounded-lg p-3 sm:p-4 hover:shadow-sm transition-shadow">
+                                <div className="flex items-center space-x-2 sm:space-x-3">
                                   {guild.icon ? (
-                                    <img 
+                                    <img
                                       src={`https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`}
                                       alt={guild.name}
-                                      className="w-12 h-12 rounded-full"
+                                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex-shrink-0"
                                     />
                                   ) : (
-                                    <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center">
-                                      <ServerIcon className="w-6 h-6 text-gray-600" />
+                                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
+                                      <ServerIcon className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
                                     </div>
                                   )}
-                                  <div className="flex-1">
-                                    <h4 className="font-medium text-gray-900">{guild.name}</h4>
-                                    <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="font-medium text-sm sm:text-base text-gray-900 truncate">{guild.name}</h4>
+                                    <div className="flex flex-wrap items-center gap-x-2 sm:gap-x-4 text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1">
                                       <span>{guild.memberCount?.toLocaleString()} members</span>
-                                      <span>{guild.channels.length} channels</span>
-                                      <span>{guild.roles.length} roles</span>
+                                      <span className="hidden sm:inline">{guild.channels.length} channels</span>
+                                      <span className="hidden sm:inline">{guild.roles.length} roles</span>
                                     </div>
                                   </div>
-                                  <div className="flex items-center space-x-1 text-green-600">
-                                    <CheckCircleIcon className="w-4 h-4" />
-                                    <span className="text-xs font-medium">Connected</span>
+                                  <div className="flex items-center space-x-1 text-green-600 flex-shrink-0">
+                                    <CheckCircleIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                                    <span className="text-xs font-medium hidden sm:inline">Connected</span>
                                   </div>
                                 </div>
                               </div>
                             ))}
                           </div>
                         ) : (
-                          <div className="text-center p-8 bg-gray-50 rounded-lg">
-                            <ServerIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                            <h3 className="text-lg font-medium text-gray-900 mb-2">No Discord Servers</h3>
-                            <p className="text-gray-600 mb-4">Your bot hasn't been invited to any servers yet.</p>
+                          <div className="text-center p-6 sm:p-8 bg-gray-50 rounded-lg">
+                            <ServerIcon className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
+                            <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No Discord Servers</h3>
+                            <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4">Your bot hasn't been invited to any servers yet.</p>
                             <button
                               onClick={() => router.push(`/bots/${botId}`)}
-                              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                              className="inline-flex items-center px-3 sm:px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
                             >
                               Generate Invite Link
                             </button>
@@ -1032,33 +1034,33 @@ export default function BotConfigPage() {
 
                       {/* Quick Actions */}
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Setup</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Quick Setup</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                           <button
                             onClick={() => setActiveTab('welcome')}
-                            className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors"
+                            className="p-3 sm:p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors"
                           >
-                            <HandRaisedIcon className="w-8 h-8 text-indigo-600 mb-2" />
-                            <h4 className="font-medium text-gray-900">Welcome Messages</h4>
-                            <p className="text-sm text-gray-600 mt-1">Greet new members automatically</p>
+                            <HandRaisedIcon className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-600 mb-2" />
+                            <h4 className="font-medium text-sm sm:text-base text-gray-900">Welcome Messages</h4>
+                            <p className="text-xs sm:text-sm text-gray-600 mt-1">Greet new members automatically</p>
                           </button>
-                          
+
                           <button
                             onClick={() => setActiveTab('commands')}
-                            className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors"
+                            className="p-3 sm:p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors"
                           >
-                            <ChatBubbleLeftRightIcon className="w-8 h-8 text-purple-600 mb-2" />
-                            <h4 className="font-medium text-gray-900">Custom Commands</h4>
-                            <p className="text-sm text-gray-600 mt-1">Create custom slash commands</p>
+                            <ChatBubbleLeftRightIcon className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600 mb-2" />
+                            <h4 className="font-medium text-sm sm:text-base text-gray-900">Custom Commands</h4>
+                            <p className="text-xs sm:text-sm text-gray-600 mt-1">Create custom slash commands</p>
                           </button>
-                          
+
                           <button
                             onClick={() => setActiveTab('moderation')}
-                            className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors"
+                            className="p-3 sm:p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors"
                           >
-                            <ShieldCheckIcon className="w-8 h-8 text-green-600 mb-2" />
-                            <h4 className="font-medium text-gray-900">Moderation</h4>
-                            <p className="text-sm text-gray-600 mt-1">Enable automatic moderation</p>
+                            <ShieldCheckIcon className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 mb-2" />
+                            <h4 className="font-medium text-sm sm:text-base text-gray-900">Moderation</h4>
+                            <p className="text-xs sm:text-sm text-gray-600 mt-1">Enable automatic moderation</p>
                           </button>
                         </div>
                       </div>
