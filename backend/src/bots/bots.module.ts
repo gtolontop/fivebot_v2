@@ -9,6 +9,7 @@ import { BotMonitorService } from './bot-monitor.service';
 import { BotLogsService } from './bot-logs.service';
 import { ConsoleBufferService } from './console-buffer.service';
 import { BotRealtimeMetricsService } from './bot-realtime-metrics.service';
+import { BotProcessMetricsService } from './bot-process-metrics.service';
 import { TicketService } from './ticket.service';
 import { CollaboratorsService } from './collaborators.service';
 import { EncryptionService } from '../common/encryption/encryption.service';
@@ -19,7 +20,7 @@ import { UsersModule } from '../users/users.module';
 @Module({
   imports: [QueueModule, UsersModule, DiscordModule],
   controllers: [BotsController, TicketMessagesController],
-  providers: [BotsService, BotRecoveryService, BotMetricsService, SetupMetricsService, BotMonitorService, BotLogsService, ConsoleBufferService, BotRealtimeMetricsService, TicketService, CollaboratorsService, EncryptionService],
-  exports: [BotsService, BotRecoveryService, BotLogsService, ConsoleBufferService, BotMetricsService, CollaboratorsService],
+  providers: [BotsService, BotRecoveryService, BotMetricsService, SetupMetricsService, BotMonitorService, BotLogsService, ConsoleBufferService, BotRealtimeMetricsService, BotProcessMetricsService, TicketService, CollaboratorsService, EncryptionService],
+  exports: [BotsService, BotRecoveryService, BotLogsService, ConsoleBufferService, BotMetricsService, BotProcessMetricsService, CollaboratorsService],
 })
 export class BotsModule {}
