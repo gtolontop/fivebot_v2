@@ -228,7 +228,7 @@ export default function ModulesPage() {
             <SearchInput
               placeholder="Search modules..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={setSearchQuery}
             />
           </div>
           <div className="flex gap-2 overflow-x-auto pb-2">
