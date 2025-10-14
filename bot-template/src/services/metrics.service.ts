@@ -342,6 +342,54 @@ export class MetricsService {
     await this.sendMetrics();
   }
 
+  private async sendProcessMetrics() {
+    try {
+      // Get process CPU and memory usage
+      const cpuUsage = process.cpuUsage();
+      const memoryUsage = process.memoryUsage();
+
+      // Calculate CPU percentage (approximate)
+      const cpuPercent = Math.min(100, ((cpuUsage.user + cpuUsage.system) / 1000000) % 100);
+
+      // Calculate memory percentage (RSS / total available memory estimate)
+      const totalMemoryMB = 512; // Estimate - could be adjusted
+      const usedMemoryMB = Math.round(memoryUsage.rss / 1024 / 1024);
+      const memoryPercent = Math.min(100, (usedMemoryMB / totalMemoryMB) * 100);
+
+      // Get Discord stats
+      const guildsCount = this.client.guilds.cache.size;
+      const usersCount = this.client.guilds.cache.reduce((acc, guild) => acc + guild.memberCount, 0);
+
+      // Get uptime
+      const uptime = Math.floor(process.uptime());
+
+      const processMetrics = {
+        cpuUsage: Math.round(cpuPercent),
+        memoryUsage: Math.round(memoryPercent),
+        memoryMB: usedMemoryMB,
+        uptime,
+        guildsCount,
+        usersCount,
+      };
+
+      // Send to backend
+      const response = await fetch(`${this.backendUrl}/api/bots/${this.botId}/metrics/process`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bot ${this.botId}`,
+        },
+        body: JSON.stringify(processMetrics),
+      });
+
+      if (!response.ok) {
+        console.error(`[Metrics] Failed to send process metrics: ${response.status}`);
+      }
+    } catch (error) {
+      // Silently fail - don't spam console with errors
+    }
+  }
+
   public destroy() {
     if (this.sendInterval) {
       clearInterval(this.sendInterval);
