@@ -99,36 +99,37 @@ export default function CreateBotPage() {
       />
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+
         {/* Progress Steps */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between max-w-md mx-auto">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex items-center justify-between max-w-md mx-auto px-2 sm:px-0">
             <div className="flex items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+              <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium ${
                 currentStep >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
               }`}>
                 1
               </div>
-              <span className="ml-2 text-sm font-medium text-gray-900">Setup</span>
+              <span className="ml-1 sm:ml-2 text-xs sm:text-sm font-medium text-gray-900">Setup</span>
             </div>
-            <div className="flex-1 h-px bg-gray-200 mx-4"></div>
+            <div className="flex-1 h-px bg-gray-200 mx-2 sm:mx-4"></div>
             <div className="flex items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+              <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium ${
                 currentStep >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
               }`}>
                 2
               </div>
-              <span className="ml-2 text-sm font-medium text-gray-900">Configure</span>
+              <span className="ml-1 sm:ml-2 text-xs sm:text-sm font-medium text-gray-900 hidden xs:inline">Configure</span>
+              <span className="ml-1 sm:ml-2 text-xs sm:text-sm font-medium text-gray-900 xs:hidden">Config</span>
             </div>
-            <div className="flex-1 h-px bg-gray-200 mx-4"></div>
+            <div className="flex-1 h-px bg-gray-200 mx-2 sm:mx-4"></div>
             <div className="flex items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+              <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium ${
                 currentStep >= 3 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
               }`}>
                 3
               </div>
-              <span className="ml-2 text-sm font-medium text-gray-900">Deploy</span>
+              <span className="ml-1 sm:ml-2 text-xs sm:text-sm font-medium text-gray-900">Deploy</span>
             </div>
           </div>
         </div>
