@@ -316,9 +316,9 @@ export default function DashboardPage() {
           </div>
 
           {/* Bot Status Distribution */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Bot Status</h3>
-            <div className="h-64">
+          <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 p-4 sm:p-5 md:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Bot Status</h3>
+            <div className="h-48 sm:h-56 md:h-64">
               {chartReady && Object.keys(stats.botStatusDistribution).length > 0 && (
                 <Doughnut
                   data={{
