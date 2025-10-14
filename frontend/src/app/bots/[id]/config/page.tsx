@@ -266,7 +266,7 @@ export default function BotConfigPage() {
       }
 
       // Update backend
-      await botsAPI.update(botId, { config: { ...bot.config, ...configUpdate } });
+      await botsAPI.updateConfig(botId, configUpdate);
 
       // Update local state
       setModules(prev => prev.map(m =>
@@ -317,7 +317,7 @@ export default function BotConfigPage() {
       }
 
       // Update backend
-      await botsAPI.update(botId, { config: { ...bot.config, ...configUpdate } });
+      await botsAPI.updateConfig(botId, configUpdate);
 
       // Update local state
       setModules(prev => prev.map(m =>
@@ -392,7 +392,7 @@ export default function BotConfigPage() {
       }
 
       // Update backend
-      await botsAPI.update(botId, { config: { ...bot.config, ...configUpdate } });
+      await botsAPI.updateConfig(botId, configUpdate);
 
       // Update local state
       setModules(prev => prev.map(m =>
