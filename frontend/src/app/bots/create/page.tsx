@@ -158,10 +158,10 @@ export default function CreateBotPage() {
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-8">
-                <div className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
+                <div className="space-y-4 sm:space-y-6">
                   <div>
-                    <label htmlFor="name" className="block text-sm font-semibold text-gray-900 mb-3">
+                    <label htmlFor="name" className="block text-xs sm:text-sm font-semibold text-gray-900 mb-2 sm:mb-3">
                       Bot Name
                     </label>
                     <input
@@ -171,16 +171,16 @@ export default function CreateBotPage() {
                       value={formData.name}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                      className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm sm:text-base"
                       placeholder="My Awesome Bot"
                     />
-                    <p className="text-sm text-gray-500 mt-2">
+                    <p className="text-xs sm:text-sm text-gray-500 mt-1.5 sm:mt-2">
                       Choose a unique name to identify your bot
                     </p>
                   </div>
 
                   <div>
-                    <label htmlFor="token" className="block text-sm font-semibold text-gray-900 mb-3">
+                    <label htmlFor="token" className="block text-xs sm:text-sm font-semibold text-gray-900 mb-2 sm:mb-3">
                       Discord Bot Token
                     </label>
                     <input
@@ -190,10 +190,10 @@ export default function CreateBotPage() {
                       value={formData.token}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors font-mono text-sm"
+                      className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors font-mono text-xs sm:text-sm"
                       placeholder="MTxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                     />
-                    <p className="text-sm text-gray-500 mt-2">
+                    <p className="text-xs sm:text-sm text-gray-500 mt-1.5 sm:mt-2">
                       Get your token from the Discord Developer Portal
                     </p>
                   </div>
