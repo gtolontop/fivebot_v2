@@ -201,17 +201,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         </li>
                         <li>
                           <Link
-                            href={`/bots/${currentBot.id}/console`}
+                            href={`/bots/${currentBot.id}/invite`}
                             className={`
                               flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors
-                              ${pathname?.startsWith(`/bots/${currentBot.id}/console`)
+                              ${pathname?.startsWith(`/bots/${currentBot.id}/invite`)
                                 ? 'bg-primary-50 text-primary-700'
                                 : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                               }
                             `}
                           >
-                            <CommandLineIcon className="w-4 h-4" />
-                            <span>Console</span>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            <span>Invite Link</span>
                           </Link>
                         </li>
                         <li>
