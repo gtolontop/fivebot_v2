@@ -291,19 +291,19 @@ export default function AnalyticsPage() {
           href: `/bots/${botId}`
         }}
         actions={
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
             <select
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value as any)}
-              className="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border border-gray-300 rounded-md px-2 sm:px-3 py-1.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto"
             >
               <option value="7d">Last 7 days</option>
               <option value="30d">Last 30 days</option>
               <option value="90d">Last 90 days</option>
             </select>
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-              bot.status === 'ONLINE' 
-                ? 'bg-green-100 text-green-800' 
+            <span className={`inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+              bot.status === 'ONLINE'
+                ? 'bg-green-100 text-green-800'
                 : 'bg-gray-100 text-gray-800'
             }`}>
               <div className="w-1.5 h-1.5 bg-current rounded-full mr-1.5"></div>
@@ -314,66 +314,66 @@ export default function AnalyticsPage() {
       />
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6">
+
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Messages Today</p>
-                <p className="text-2xl font-bold text-gray-900">{analyticsData.dailyStats.messages.toLocaleString()}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Messages Today</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{analyticsData.dailyStats.messages.toLocaleString()}</p>
               </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <span className="text-blue-600 text-xl">💬</span>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <span className="text-blue-600 text-lg sm:text-xl">💬</span>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Commands Used</p>
-                <p className="text-2xl font-bold text-gray-900">{analyticsData.dailyStats.commands.toLocaleString()}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Commands Used</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{analyticsData.dailyStats.commands.toLocaleString()}</p>
               </div>
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <span className="text-green-600 text-xl">⚡</span>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <span className="text-green-600 text-lg sm:text-xl">⚡</span>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">New Members</p>
-                <p className="text-2xl font-bold text-gray-900">{analyticsData.dailyStats.newMembers}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600">New Members</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{analyticsData.dailyStats.newMembers}</p>
               </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <span className="text-purple-600 text-xl">👥</span>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <span className="text-purple-600 text-lg sm:text-xl">👥</span>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Active Users</p>
-                <p className="text-2xl font-bold text-gray-900">{analyticsData.dailyStats.activeUsers}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Active Users</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{analyticsData.dailyStats.activeUsers}</p>
               </div>
-              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                <span className="text-orange-600 text-xl">🔥</span>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <span className="text-orange-600 text-lg sm:text-xl">🔥</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+
           {/* User Activity Chart */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">User Activity</h3>
-            <div className="h-64">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">User Activity</h3>
+            <div className="h-48 sm:h-56 lg:h-64">
               {chartReady && (
                 <Line
                   data={{
@@ -395,9 +395,9 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Command Usage Chart */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Commands</h3>
-            <div className="h-64">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Top Commands</h3>
+            <div className="h-48 sm:h-56 lg:h-64">
               {chartReady && (
                 <Bar
                   data={{
@@ -423,9 +423,9 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Response Time Chart */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Response Time</h3>
-            <div className="h-64">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Response Time</h3>
+            <div className="h-48 sm:h-56 lg:h-64">
               {chartReady && (
                 <Line
                   data={{
@@ -447,9 +447,9 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Error Rate Chart */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Error Rate</h3>
-            <div className="h-64">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Error Rate</h3>
+            <div className="h-48 sm:h-56 lg:h-64">
               {chartReady && (
                 <Line
                   data={{
@@ -472,22 +472,22 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Command Usage Table */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Command Usage Details</h3>
-          <div className="overflow-x-auto">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Command Usage Details</h3>
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Command
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Usage Count
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="hidden sm:table-cell px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Percentage
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Trend
                   </th>
                 </tr>
@@ -498,22 +498,23 @@ export default function AnalyticsPage() {
                   const percentage = ((cmd.usage / total) * 100).toFixed(1);
                   return (
                     <tr key={cmd.command}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        <code className="bg-gray-100 px-2 py-1 rounded">{cmd.command}</code>
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
+                        <code className="bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">{cmd.command}</code>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                         {cmd.usage.toLocaleString()}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="hidden sm:table-cell px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                         {percentage}%
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          index < 2 ? 'bg-green-100 text-green-800' : 
-                          index < 4 ? 'bg-yellow-100 text-yellow-800' : 
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                        <span className={`inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          index < 2 ? 'bg-green-100 text-green-800' :
+                          index < 4 ? 'bg-yellow-100 text-yellow-800' :
                           'bg-gray-100 text-gray-800'
                         }`}>
-                          {index < 2 ? '📈 High' : index < 4 ? '📊 Medium' : '📉 Low'}
+                          <span className="hidden sm:inline">{index < 2 ? '📈 High' : index < 4 ? '📊 Medium' : '📉 Low'}</span>
+                          <span className="sm:hidden">{index < 2 ? '📈' : index < 4 ? '📊' : '📉'}</span>
                         </span>
                       </td>
                     </tr>
