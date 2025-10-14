@@ -239,18 +239,29 @@ export class SimpleQueueService implements IQueueService {
 
       // Handle process errors
       botProcess.on('error', async (error) => {
-        console.error(`[Bot ${botId}] Process error:`, error);
+        console.error(`[Bot "${bot.name}"] Process error:`, error);
         this.runningBots.delete(botId);
         await this.redisService.removeRunningBot(botId);
         await this.redisService.deleteBotMetadata(botId);
 
-        // Mark as crash for recovery
+        // Get previous crash count
+        const previousState = await this.redisService.getBotState(botId);
+        const crashCount = (previousState?.metadata?.crashCount || 0) + 1;
+
+        // Mark as crash for recovery with incremented crash count
         await this.redisService.saveBotState(botId, {
           status: 'OFFLINE',
           userAction: 'crash',
           timestamp: new Date(),
-          metadata: { error: error.message, shouldRecover: true }
+          metadata: {
+            error: error.message,
+            shouldRecover: true,
+            crashCount,
+            lastCrashTime: new Date().toISOString()
+          }
         });
+
+        console.error(`💥 Bot "${bot.name}" crashed (crash count: ${crashCount})`);
 
         // Update bot status to error
         await this.updateBotStatusSafe(botId, BotStatus.ERROR);
@@ -347,12 +358,19 @@ export class SimpleQueueService implements IQueueService {
 
         // If crash, save crash state for recovery
         if (wasCrash) {
-          console.log(`💥 Bot ${botId} crashed unexpectedly - marking for recovery`);
+          const crashCount = (savedState?.metadata?.crashCount || 0) + 1;
+          console.log(`💥 Bot "${botName}" crashed unexpectedly (crash count: ${crashCount}) - marking for recovery`);
+
           await this.redisService.saveBotState(botId, {
             status: 'OFFLINE',
             userAction: 'crash',
             timestamp: new Date(),
-            metadata: { exitCode: code, shouldRecover: true }
+            metadata: {
+              exitCode: code,
+              shouldRecover: true,
+              crashCount,
+              lastCrashTime: new Date().toISOString()
+            }
           });
         }
         
