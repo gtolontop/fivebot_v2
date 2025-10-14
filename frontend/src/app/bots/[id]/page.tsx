@@ -42,6 +42,7 @@ export default function BotDetailPage() {
   const [botLoading, setBotLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [guilds, setGuilds] = useState<any[]>([]);
+  const [logs, setLogs] = useState<string[]>([]);
   const [realTimeStats, setRealTimeStats] = useState({
     cpuUsage: 0,
     memoryUsage: 0,
