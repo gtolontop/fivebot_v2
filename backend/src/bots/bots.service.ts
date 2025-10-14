@@ -503,7 +503,12 @@ export class BotsService {
       throw new NotFoundException('Bot not found');
     }
 
-    const ownerUsername = bot.owner?.username || 'unknown';
+    // Get owner username for logging
+    const owner = await this.prisma.user.findUnique({
+      where: { id: bot.ownerId },
+      select: { username: true }
+    });
+    const ownerUsername = owner?.username || 'unknown';
 
     // Get running bots from queue
     const runningBots = await this.queueService.getRunningBots?.() ?? [];
