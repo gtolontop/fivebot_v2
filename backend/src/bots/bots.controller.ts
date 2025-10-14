@@ -1213,8 +1213,9 @@ export class BotsController {
     @Param('id') id: string,
     @Body() processMetrics: any,
   ) {
-    // Store process metrics in Redis (requires BotProcessMetricsService injection)
-    // For now, we'll add this to the controller constructor later
+    // Store process metrics in Redis
+    await this.botProcessMetricsService.storeProcessMetrics(id, processMetrics);
+
     return {
       success: true,
       message: 'Process metrics received',
@@ -1232,9 +1233,21 @@ export class BotsController {
       throw new NotFoundException('Bot not found');
     }
 
-    // Get process metrics from Redis (requires BotProcessMetricsService injection)
-    // For now, return null - we'll add the service later
-    return null;
+    // Get process metrics from Redis
+    const metrics = await this.botProcessMetricsService.getProcessMetrics(id);
+
+    return {
+      botId: id,
+      botName: bot.name,
+      metrics: metrics || {
+        cpuUsage: 0,
+        memoryUsage: 0,
+        memoryMB: 0,
+        uptime: 0,
+        guildsCount: 0,
+        usersCount: 0,
+      },
+    };
   }
 
   @Get(':id/analytics/:period')
