@@ -147,7 +147,7 @@ export default function InstalledModulesPage() {
         <SearchInput
           placeholder="Search installed modules..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={setSearchQuery}
         />
 
         {/* Stats */}
