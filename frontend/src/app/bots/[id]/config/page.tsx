@@ -173,7 +173,58 @@ export default function BotConfigPage() {
   const fetchBot = async () => {
     try {
       const response = await botsAPI.getById(botId);
-      setBot(response.data);
+      const botData = response.data;
+      setBot(botData);
+
+      // Map backend config to module states
+      const config = botData.config || {};
+      const updatedModules = AVAILABLE_MODULES.map(module => {
+        let installed = false;
+        let enabled = false;
+
+        // Map backend config fields to module states
+        switch (module.id) {
+          case 'welcome':
+            installed = !!config.welcomeEnabled;
+            enabled = config.welcomeEnabled === true;
+            break;
+          case 'tickets':
+            installed = !!config.ticketCategories || !!config.ticketTranscriptChannelId;
+            enabled = !!config.ticketCategories;
+            break;
+          case 'commands':
+            installed = !!config.embedV2Commands;
+            enabled = Object.keys(config.embedV2Commands || {}).some((key: string) => config.embedV2Commands[key]?.enabled);
+            break;
+          case 'collab':
+            installed = true; // Always available
+            enabled = true;
+            break;
+          case 'status':
+            installed = !!config.statusRotation;
+            enabled = config.statusRotation?.enabled === true;
+            break;
+          case 'moderation':
+            installed = !!config.autoModeration;
+            enabled = config.autoModeration?.enabled === true;
+            break;
+          case 'leveling':
+            installed = !!config.leveling;
+            enabled = config.leveling?.enabled === true;
+            break;
+          case 'logs':
+            installed = !!config.serverLogs;
+            enabled = config.serverLogs?.enabled === true;
+            break;
+          default:
+            // Keep default state for modules not yet implemented
+            break;
+        }
+
+        return { ...module, installed, enabled };
+      });
+
+      setModules(updatedModules);
     } catch (error: any) {
       console.error('Error fetching bot:', error);
       toast.error('Failed to load bot details');
