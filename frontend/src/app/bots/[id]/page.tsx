@@ -471,6 +471,29 @@ export default function BotDetailPage() {
           />
         </div>
 
+        {/* Console Preview */}
+        {bot.status === 'ONLINE' && logs.length > 0 && (
+          <Card>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className={designTokens.typography.h2}>Console</h2>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push(`/bots/${botId}/console`)}
+              >
+                View Full Console
+              </Button>
+            </div>
+            <div className="bg-gray-900 rounded-lg p-4 h-64 overflow-y-auto font-mono text-xs">
+              {logs.map((log, index) => (
+                <div key={index} className="py-0.5 text-gray-300">
+                  {log}
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
         {/* Main Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Servers List */}
