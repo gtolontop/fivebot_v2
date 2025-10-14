@@ -332,12 +332,79 @@ export default function BotConfigPage() {
     }
   };
 
-  const handleToggleModule = (moduleId: string) => {
-    setModules(prev => prev.map(m =>
-      m.id === moduleId ? { ...m, enabled: !m.enabled } : m
-    ));
+  const handleToggleModule = async (moduleId: string) => {
     const module = modules.find(m => m.id === moduleId);
-    toast.success(`${module?.name} ${module?.enabled ? 'disabled' : 'enabled'}`);
+    if (!module) return;
+
+    try {
+      const newEnabledState = !module.enabled;
+      let configUpdate: any = {};
+
+      // Map module ID to backend config field
+      switch (moduleId) {
+        case 'welcome':
+          configUpdate = { welcomeEnabled: newEnabledState };
+          break;
+        case 'tickets':
+          // Tickets enabled/disabled based on presence of categories
+          if (!newEnabledState) {
+            configUpdate = { ticketCategories: null };
+          }
+          break;
+        case 'status':
+          configUpdate = {
+            statusRotation: {
+              ...(bot.config?.statusRotation || {}),
+              enabled: newEnabledState
+            }
+          };
+          break;
+        case 'moderation':
+          configUpdate = {
+            autoModeration: {
+              ...(bot.config?.autoModeration || {}),
+              enabled: newEnabledState
+            }
+          };
+          break;
+        case 'leveling':
+          configUpdate = {
+            leveling: {
+              ...(bot.config?.leveling || {}),
+              enabled: newEnabledState
+            }
+          };
+          break;
+        case 'logs':
+          configUpdate = {
+            serverLogs: {
+              ...(bot.config?.serverLogs || {}),
+              enabled: newEnabledState
+            }
+          };
+          break;
+        case 'collab':
+          // Collab always enabled
+          return;
+        default:
+          toast.error('Module toggle not yet implemented');
+          return;
+      }
+
+      // Update backend
+      await botsAPI.update(botId, { config: { ...bot.config, ...configUpdate } });
+
+      // Update local state
+      setModules(prev => prev.map(m =>
+        m.id === moduleId ? { ...m, enabled: newEnabledState } : m
+      ));
+      setBot({ ...bot, config: { ...bot.config, ...configUpdate } });
+
+      toast.success(`${module.name} ${newEnabledState ? 'enabled' : 'disabled'}`);
+    } catch (error: any) {
+      console.error('Error toggling module:', error);
+      toast.error('Failed to toggle module');
+    }
   };
 
   const handleConfigureModule = (moduleId: string) => {
