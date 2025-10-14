@@ -348,8 +348,8 @@ export class SimpleQueueService implements IQueueService {
       });
 
       // Handle process exit
-      botProcess.on('exit', async (code) => {
-        console.log(`[Bot "${bot.name}"] Process exited with code ${code}`);
+      botProcess.on('exit', async (code, signal) => {
+        console.log(`[Bot "${bot.name}"] Process exited with code ${code}, signal ${signal}`);
         console.log(`🗂️ Removing bot "${bot.name}" from running processes list`);
         this.runningBots.delete(botId);
         await this.redisService.removeRunningBot(botId);
@@ -357,7 +357,14 @@ export class SimpleQueueService implements IQueueService {
 
         // Check if this was a crash or intentional stop
         const savedState = await this.redisService.getBotState(botId);
-        const wasCrash = !savedState || (savedState.userAction === 'start' && savedState.status === 'ONLINE');
+
+        // Don't mark as crash if:
+        // 1. Exit code is null/0 (graceful shutdown)
+        // 2. Signal is SIGINT or SIGTERM (intentional shutdown)
+        // 3. User action was 'stop' in Redis
+        const wasGracefulShutdown = code === 0 || code === null || signal === 'SIGINT' || signal === 'SIGTERM';
+        const wasIntentionalStop = savedState?.userAction === 'stop';
+        const wasCrash = !wasGracefulShutdown && !wasIntentionalStop && savedState?.userAction === 'start' && savedState?.status === 'ONLINE';
 
         // If crash, save crash state for recovery
         if (wasCrash) {
@@ -375,8 +382,10 @@ export class SimpleQueueService implements IQueueService {
               lastCrashTime: new Date().toISOString()
             }
           });
+        } else {
+          console.log(`✅ Bot "${bot.name}" stopped gracefully (exit code: ${code}, signal: ${signal})`);
         }
-        
+
         // Add Pterodactyl-style server offline message
         try {
           await this.botLogsService.addLog(
