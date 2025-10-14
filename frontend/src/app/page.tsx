@@ -598,64 +598,64 @@ export default function HomePage() {
       </section>
 
       {/* How it works */}
-      <section id="how-it-works" className="py-20 bg-white relative overflow-hidden">
+      <section id="how-it-works" className="py-12 sm:py-16 md:py-20 bg-white relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-discord-50 to-transparent opacity-50"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+          <div className="text-center mb-8 sm:mb-12 md:mb-16">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 sm:mb-4 px-4">
               Get started in 3 simple steps
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto px-4">
               No complex setup. No infrastructure headaches. Just bots.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10 md:gap-8 relative">
             {/* Animated connection line */}
-            <div className="hidden md:block absolute top-20 left-1/4 right-1/4 h-0.5 bg-gradient-to-r from-discord-200 via-discord-400 to-discord-200">
+            <div className="hidden md:block absolute top-16 md:top-20 left-1/4 right-1/4 h-0.5 bg-gradient-to-r from-discord-200 via-discord-400 to-discord-200">
               <div className="absolute inset-0 bg-gradient-to-r from-discord-400 to-discord-600 animate-pulse"></div>
             </div>
-            
+
             <div className="text-center relative">
               <div className="relative inline-block">
-                <div className="w-20 h-20 bg-gradient-to-br from-discord-400 to-discord-600 text-white rounded-full flex items-center justify-center mb-6 shadow-lg transform hover:scale-110 transition-transform cursor-pointer">
-                  <UserGroupIcon className="w-10 h-10" />
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-discord-400 to-discord-600 text-white rounded-full flex items-center justify-center mb-4 sm:mb-6 shadow-lg transform hover:scale-110 transition-transform cursor-pointer mx-auto">
+                  <UserGroupIcon className="w-8 h-8 sm:w-10 sm:h-10" />
                 </div>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">Connect Discord</h3>
-              <p className="text-gray-600">Sign in with Discord and authorize FiveBot to manage your bots</p>
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-3 px-4">Connect Discord</h3>
+              <p className="text-sm sm:text-base text-gray-600 px-4">Sign in with Discord and authorize FiveBot to manage your bots</p>
             </div>
             <div className="text-center relative">
               <div className="relative inline-block">
-                <div className="w-20 h-20 bg-gradient-to-br from-discord-400 to-discord-600 text-white rounded-full flex items-center justify-center mb-6 shadow-lg transform hover:scale-110 transition-transform cursor-pointer">
-                  <CpuChipIcon className="w-10 h-10" />
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-discord-400 to-discord-600 text-white rounded-full flex items-center justify-center mb-4 sm:mb-6 shadow-lg transform hover:scale-110 transition-transform cursor-pointer mx-auto">
+                  <CpuChipIcon className="w-8 h-8 sm:w-10 sm:h-10" />
                 </div>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">Configure Bot</h3>
-              <p className="text-gray-600">Use our visual builder or import your existing bot code</p>
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-3 px-4">Configure Bot</h3>
+              <p className="text-sm sm:text-base text-gray-600 px-4">Use our visual builder or import your existing bot code</p>
             </div>
             <div className="text-center relative">
-              <div className="w-20 h-20 bg-gradient-to-br from-discord-400 to-discord-600 text-white rounded-full flex items-center justify-center mb-6 mx-auto shadow-lg transform hover:scale-110 transition-transform cursor-pointer">
-                <RocketLaunchIcon className="w-10 h-10" />
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-discord-400 to-discord-600 text-white rounded-full flex items-center justify-center mb-4 sm:mb-6 mx-auto shadow-lg transform hover:scale-110 transition-transform cursor-pointer">
+                <RocketLaunchIcon className="w-8 h-8 sm:w-10 sm:h-10" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">Deploy & Scale</h3>
-              <p className="text-gray-600">Hit deploy and watch your bot come to life instantly</p>
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-3 px-4">Deploy & Scale</h3>
+              <p className="text-sm sm:text-base text-gray-600 px-4">Hit deploy and watch your bot come to life instantly</p>
             </div>
           </div>        </div>
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="py-20 bg-gray-50">
+      <section id="pricing" className="py-12 sm:py-16 md:py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+          <div className="text-center mb-8 sm:mb-12 md:mb-16">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 sm:mb-4 px-4">
               Simple pricing, powerful features
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto px-4">
               Choose the perfect plan for your needs. Always flexible to scale.
             </p>
           </div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto">
             {pricingPlans.map((plan) => (
               <div
                 key={plan.name}
