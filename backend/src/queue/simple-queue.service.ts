@@ -161,6 +161,7 @@ export class SimpleQueueService implements IQueueService {
 
   private async handleStartBot(data: JobData): Promise<void> {
     const botId = data.botId;
+    let botName = botId; // Fallback to botId if we can't get bot info
 
     try {
       // Get bot info from database
@@ -172,6 +173,8 @@ export class SimpleQueueService implements IQueueService {
       if (!bot) {
         throw new Error('Bot not found');
       }
+
+      botName = bot.name; // Update botName for error logging
 
       console.log(`🚀 Starting bot "${bot.name}" (owner: ${bot.owner.username})`);
 
