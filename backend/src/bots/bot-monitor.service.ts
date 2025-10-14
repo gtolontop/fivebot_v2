@@ -127,33 +127,34 @@ export class BotMonitorService {
     }
   }
 
-  // Deep status check every 30 seconds (less frequent but more thorough)
-  @Cron('*/30 * * * * *')
+  // Deep status check every 60 seconds (less frequent to avoid false positives)
+  @Cron('*/60 * * * * *')
   async checkAllBotsStatus() {
     // Only run status check in the API process, not in workers
     if (process.env.PROCESS_TYPE === 'worker') {
       return;
     }
 
-    // Add small random delay to prevent exact simultaneity
-    const randomDelay = Math.random() * 3000; // 0-3 seconds
-    await new Promise(resolve => setTimeout(resolve, randomDelay));
-
     console.log('🔍 Starting periodic bot status check...');
-    
+
     try {
       const botsMarkedOnline = await this.prisma.bot.findMany({
-        where: { 
+        where: {
           status: 'ONLINE'
         },
         select: {
           id: true,
           name: true,
-          tokenEncrypted: true
+          tokenEncrypted: true,
+          owner: { select: { username: true } }
         }
       });
 
       console.log(`📊 Checking ${botsMarkedOnline.length} bots marked as ONLINE`);
+
+      // Get running bots from queue
+      const queueService = this.botsService.queueService as any;
+      const runningBots = await queueService?.getRunningBots?.() ?? [];
 
       let stillOnline = 0;
       let foundOffline = 0;
@@ -161,23 +162,34 @@ export class BotMonitorService {
       // Process bots with small delays to reduce concurrent updates
       for (const bot of botsMarkedOnline) {
         try {
-          const isReallyOnline = await this.verifyBotIsOnline(bot.tokenEncrypted);
-          
-          if (!isReallyOnline) {
-            // Bot is not really online, update status using the safe method
+          // First check: is the process actually running?
+          const isProcessRunning = runningBots.includes(bot.id);
+
+          if (!isProcessRunning) {
+            // Process not running - definitely offline
             await this.botsService.updateStatus(bot.id, 'OFFLINE');
             foundOffline++;
-            console.log(`❌ Bot "${bot.name}" was marked ONLINE but is actually OFFLINE - status corrected`);
+            console.log(`❌ Bot "${bot.name}" (owner: ${bot.owner.username}) was marked ONLINE but process not running - status corrected`);
           } else {
-            stillOnline++;
+            // Process is running - verify Discord connection with double check
+            const isReallyOnline = await this.verifyBotIsOnlineWithRetry(bot.tokenEncrypted);
+
+            if (!isReallyOnline) {
+              // Double-check failed - bot is offline
+              await this.botsService.updateStatus(bot.id, 'OFFLINE');
+              foundOffline++;
+              console.log(`❌ Bot "${bot.name}" (owner: ${bot.owner.username}) process running but Discord connection failed - status corrected`);
+            } else {
+              stillOnline++;
+            }
           }
         } catch (error) {
           console.log(`⚠️ Could not verify bot "${bot.name}": ${error.message}`);
           // Don't change status if we can't verify - might be temporary network issue
         }
-        
+
         // Add small delay between checks to reduce database load
-        await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 200));
+        await new Promise(resolve => setTimeout(resolve, 200 + Math.random() * 300));
       }
 
       if (foundOffline > 0 || stillOnline > 0) {
@@ -187,6 +199,26 @@ export class BotMonitorService {
     } catch (error) {
       console.error('❌ Error in periodic bot status check:', error);
     }
+  }
+
+  // Verify bot is online with retry to avoid false negatives
+  private async verifyBotIsOnlineWithRetry(tokenEncrypted: string, retries: number = 2): Promise<boolean> {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const result = await this.verifyBotIsOnline(tokenEncrypted);
+        if (result) {
+          return true; // If any check succeeds, bot is online
+        }
+
+        // Wait a bit before retry
+        if (i < retries - 1) {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      } catch (error) {
+        // Ignore error and retry
+      }
+    }
+    return false; // All retries failed
   }
 
   // Manual check for a specific bot
