@@ -79,7 +79,19 @@ export default function StatusConfigPage() {
         </div>
 
         {/* Status Rotation Config Component */}
-        <StatusRotationConfig botId={botId} bot={bot} />
+        <StatusRotationConfig
+          config={bot.config || {}}
+          updateConfig={async (updates: any) => {
+            try {
+              await botsAPI.update(botId, { config: { ...bot.config, ...updates } });
+              setBot({ ...bot, config: { ...bot.config, ...updates } });
+              toast.success('Status rotation updated successfully!');
+            } catch (error: any) {
+              console.error('Error updating config:', error);
+              toast.error('Failed to update status rotation');
+            }
+          }}
+        />
       </div>
     </DashboardLayout>
   );
