@@ -503,13 +503,15 @@ export class BotsService {
       throw new NotFoundException('Bot not found');
     }
 
+    const ownerUsername = bot.owner?.username || 'unknown';
+
     // Get running bots from queue
     const runningBots = await this.queueService.getRunningBots?.() ?? [];
     const isProcessRunning = runningBots.includes(botId);
 
     // If process is already running, just resynchronize the status
     if (isProcessRunning) {
-      console.log(`✅ Bot "${bot.name}" (owner: ${bot.owner.username}) process is already running - resynchronizing status to ONLINE`);
+      console.log(`✅ Bot "${bot.name}" (owner: ${ownerUsername}) process is already running - resynchronizing status to ONLINE`);
 
       // Update status to ONLINE
       await this.updateStatus(botId, BotStatus.ONLINE);
@@ -545,7 +547,7 @@ export class BotsService {
       'System'
     );
 
-    console.log(`🚀 Starting bot "${bot.name}" (owner: ${bot.owner.username}) - requested by user ${ownerId}`);
+    console.log(`🚀 Starting bot "${bot.name}" (owner: ${ownerUsername}) - requested by user ${ownerId}`);
 
     await this.updateStatus(botId, BotStatus.STARTING);
 
@@ -566,10 +568,10 @@ export class BotsService {
         jobId: `start-${Date.now()}`,
         jobType: 'START_BOT',
         status: 'PROCESSING',
-        message: `🚀 Starting bot "${bot.name}" (requested by ${bot.owner.username})`,
+        message: `🚀 Starting bot "${bot.name}" (requested by ${ownerUsername})`,
         metadata: JSON.stringify({
           requestedBy: ownerId,
-          requesterUsername: bot.owner.username,
+          requesterUsername: ownerUsername,
           timestamp: new Date().toISOString()
         })
       }
