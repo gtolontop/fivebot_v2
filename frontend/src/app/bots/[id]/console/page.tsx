@@ -173,7 +173,9 @@ export default function ConsolePage() {
                 </svg>
               </button>
               <h1 className={designTokens.typography.h1}>{bot.name} - Console</h1>
-              <Badge status={bot.status} dot />
+              <Badge status={bot.status} dot>
+                {bot.status}
+              </Badge>
             </div>
             <p className={designTokens.typography.body + ' text-gray-500'}>
               Real-time bot console and logs
