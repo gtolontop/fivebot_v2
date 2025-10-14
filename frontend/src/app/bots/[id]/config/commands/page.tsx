@@ -79,7 +79,19 @@ export default function CommandsConfigPage() {
         </div>
 
         {/* Commands Config Component */}
-        <V2CommandsConfig botId={botId} bot={bot} />
+        <V2CommandsConfig
+          config={bot.config || {}}
+          updateConfig={async (updates: any) => {
+            try {
+              await botsAPI.update(botId, { config: { ...bot.config, ...updates } });
+              setBot({ ...bot, config: { ...bot.config, ...updates } });
+              toast.success('Configuration updated successfully!');
+            } catch (error: any) {
+              console.error('Error updating config:', error);
+              toast.error('Failed to update configuration');
+            }
+          }}
+        />
       </div>
     </DashboardLayout>
   );
