@@ -36,6 +36,15 @@ export class MetricsService {
   private sendInterval: NodeJS.Timeout | null = null;
   private commandStartTimes: Map<string, number> = new Map();
 
+  // Network tracking
+  private networkStats = {
+    lastCheck: Date.now(),
+    lastBytesReceived: 0,
+    lastBytesSent: 0,
+    downloadSpeed: 0, // KB/s
+    uploadSpeed: 0,   // KB/s
+  };
+
   constructor(
     private client: Client,
     private prisma: PrismaClient,
@@ -44,6 +53,7 @@ export class MetricsService {
   ) {
     this.setupEventListeners();
     this.startPeriodicSending();
+    this.startNetworkTracking();
   }
 
   private setupEventListeners() {
@@ -342,6 +352,41 @@ export class MetricsService {
     await this.sendMetrics();
   }
 
+  private startNetworkTracking() {
+    // Track Discord WebSocket network usage
+    // Discord.js doesn't expose raw bytes, so we'll estimate based on events
+    let messagesSent = 0;
+    let messagesReceived = 0;
+
+    // Track outgoing messages
+    this.client.on('messageCreate', (message) => {
+      if (message.author.id === this.client.user?.id) {
+        messagesSent++;
+      } else {
+        messagesReceived++;
+      }
+    });
+
+    // Calculate network speed every 5 seconds
+    setInterval(() => {
+      const now = Date.now();
+      const timeDiff = (now - this.networkStats.lastCheck) / 1000; // seconds
+
+      // Estimate: average Discord message ~1KB, events ~0.5KB
+      const estimatedReceived = messagesReceived * 1; // KB
+      const estimatedSent = messagesSent * 1; // KB
+
+      // Calculate speed (KB/s)
+      this.networkStats.downloadSpeed = estimatedReceived / timeDiff;
+      this.networkStats.uploadSpeed = estimatedSent / timeDiff;
+
+      // Reset counters
+      this.networkStats.lastCheck = now;
+      messagesSent = 0;
+      messagesReceived = 0;
+    }, 5000);
+  }
+
   private async sendProcessMetrics() {
     try {
       // Get process CPU and memory usage
@@ -370,6 +415,8 @@ export class MetricsService {
         uptime,
         guildsCount,
         usersCount,
+        networkDownload: Math.round(this.networkStats.downloadSpeed * 10) / 10, // Round to 1 decimal
+        networkUpload: Math.round(this.networkStats.uploadSpeed * 10) / 10,
       };
 
       // Send to backend
