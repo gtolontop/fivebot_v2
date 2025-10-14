@@ -79,7 +79,23 @@ export default function TicketsConfigPage() {
         </div>
 
         {/* Ticket System Config Component */}
-        <TicketSystemConfig botId={botId} bot={bot} />
+        <TicketSystemConfig
+          botId={botId}
+          guilds={bot.guilds || []}
+          config={bot.config || {}}
+          updateConfig={async (updates: any) => {
+            try {
+              await botsAPI.update(botId, { config: { ...bot.config, ...updates } });
+              setBot({ ...bot, config: { ...bot.config, ...updates } });
+              toast.success('Ticket system updated successfully!');
+            } catch (error: any) {
+              console.error('Error updating config:', error);
+              toast.error('Failed to update ticket system');
+            }
+          }}
+          textChannels={bot.guilds?.[0]?.channels?.filter((ch: any) => ch.type === 0) || []}
+          allRoles={bot.guilds?.[0]?.roles || []}
+        />
       </div>
     </DashboardLayout>
   );
