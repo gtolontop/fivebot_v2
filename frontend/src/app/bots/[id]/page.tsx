@@ -276,52 +276,37 @@ export default function BotDetailPage() {
     ? `https://cdn.discordapp.com/avatars/${bot.clientId}/${bot.avatar || 'default'}.png?size=256`
     : `https://api.dicebear.com/7.x/bottts/svg?seed=${bot.name}`;
 
-  const botBanner = bot.banner
-    ? `https://cdn.discordapp.com/banners/${bot.clientId}/${bot.banner}.png?size=1024`
-    : 'https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?w=1200&h=300&fit=crop';
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Banner + Avatar Header */}
-        <div className="relative">
-          {/* Banner */}
-          <div
-            className="h-48 rounded-xl bg-cover bg-center relative overflow-hidden"
-            style={{ backgroundImage: `url(${botBanner})` }}
-          >
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            {/* Avatar */}
+            <div className="relative">
+              <img
+                src={botAvatar}
+                alt={bot.name}
+                className="w-20 h-20 rounded-xl border-2 border-gray-200 bg-white"
+              />
+              <div className="absolute -bottom-1 -right-1">
+                <Badge status={bot.status as any} dot size="sm">
+                  {bot.status}
+                </Badge>
+              </div>
+            </div>
+
+            {/* Bot Name & Info */}
+            <div>
+              <h1 className={designTokens.typography.h1 + ' text-gray-900'}>{bot.name}</h1>
+              <p className="text-gray-500 text-sm">
+                Created {new Date(bot.createdAt).toLocaleDateString()}
+              </p>
+            </div>
           </div>
 
-          {/* Avatar + Info */}
-          <div className="relative px-6 -mt-20">
-            <div className="flex items-end justify-between">
-              <div className="flex items-end space-x-6">
-                {/* Avatar */}
-                <div className="relative">
-                  <img
-                    src={botAvatar}
-                    alt={bot.name}
-                    className="w-32 h-32 rounded-2xl border-4 border-white bg-white shadow-xl"
-                  />
-                  <div className="absolute -bottom-2 -right-2">
-                    <Badge status={bot.status as any} dot size="md">
-                      {bot.status}
-                    </Badge>
-                  </div>
-                </div>
-
-                {/* Bot Name & Info */}
-                <div className="pb-2">
-                  <h1 className={designTokens.typography.display + ' text-gray-900'}>{bot.name}</h1>
-                  <p className="text-gray-500 mt-1">
-                    Created {new Date(bot.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-center space-x-3 pb-2">
+          {/* Action Buttons */}
+          <div className="flex items-center space-x-3">
                 {(bot.status === 'OFFLINE' || bot.status === 'ERROR') && (
                   <Button
                     variant="success"
@@ -369,8 +354,6 @@ export default function BotDetailPage() {
                   </Button>
                 )}
               </div>
-            </div>
-          </div>
         </div>
 
         {/* Quick Navigation */}
@@ -378,10 +361,10 @@ export default function BotDetailPage() {
           <Button
             variant="outline"
             fullWidth
-            onClick={() => router.push(`/bots/${botId}/console`)}
-            icon={<CommandLineIcon className="w-5 h-5" />}
+            onClick={() => router.push(`/bots/${botId}/invite`)}
+            icon={<LinkIcon className="w-5 h-5" />}
           >
-            Console
+            Invite Link
           </Button>
           <Button
             variant="outline"
