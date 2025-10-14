@@ -503,22 +503,38 @@ export class BotsService {
       throw new NotFoundException('Bot not found');
     }
 
-    // Check if bot is actually running, not just marked as ONLINE
-    if (bot.status === BotStatus.ONLINE) {
-      // Verify if the bot process is actually running
-      const isActuallyRunning = this.queueService['runningBots']?.has(botId);
+    // Get running bots from queue
+    const runningBots = await this.queueService.getRunningBots?.() ?? [];
+    const isProcessRunning = runningBots.includes(botId);
 
-      if (isActuallyRunning) {
-        throw new BadRequestException('Bot is already running');
-      } else {
-        // Bot is marked as ONLINE but process is not running - allow restart
-        console.log(`⚠️ Bot ${bot.name} is marked as ONLINE but process not found - allowing restart`);
-      }
+    // If process is already running, just resynchronize the status
+    if (isProcessRunning) {
+      console.log(`✅ Bot "${bot.name}" (owner: ${bot.owner.username}) process is already running - resynchronizing status to ONLINE`);
+
+      // Update status to ONLINE
+      await this.updateStatus(botId, BotStatus.ONLINE);
+
+      // Return updated bot
+      return this.findOne(botId, ownerId);
     }
 
-    // Don't allow starting if already in STARTING state
+    // Check if bot is marked as ONLINE but process is not running
+    if (bot.status === BotStatus.ONLINE && !isProcessRunning) {
+      console.log(`⚠️ Bot "${bot.name}" is marked as ONLINE but process not found - allowing restart`);
+    }
+
+    // If already in STARTING state, check if it's stuck
     if (bot.status === BotStatus.STARTING) {
-      throw new BadRequestException('Bot is already starting');
+      // Check how long it's been in STARTING state
+      const timeSinceUpdate = Date.now() - bot.updatedAt.getTime();
+
+      if (timeSinceUpdate < 30000) {
+        // Less than 30 seconds - probably still starting
+        throw new BadRequestException('Bot is already starting, please wait...');
+      } else {
+        // Stuck in STARTING for more than 30 seconds - allow restart
+        console.log(`⚠️ Bot "${bot.name}" stuck in STARTING state for ${timeSinceUpdate}ms - allowing restart`);
+      }
     }
 
     // Only add the starting log after validation checks pass
