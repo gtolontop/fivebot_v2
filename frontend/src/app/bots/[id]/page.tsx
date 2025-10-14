@@ -211,20 +211,50 @@ export default function BotDetailPage() {
     // Initialiser l'uptime réel
     setRealTimeStats(prev => ({ ...prev, uptime: calculateRealUptime() }));
 
-    const statsInterval = setInterval(() => {
-      setRealTimeStats(prev => ({
-        cpuUsage: Math.max(0, Math.min(100, prev.cpuUsage + (Math.random() - 0.5) * 10)),
-        memoryUsage: Math.max(0, Math.min(100, prev.memoryUsage + (Math.random() - 0.5) * 5)),
-        uptime: calculateRealUptime(), // Calculer l'uptime réel à chaque tick
-        eventCount: prev.eventCount + Math.floor(Math.random() * 3),
-        messageCount: prev.messageCount + Math.floor(Math.random() * 5),
-        commandCount: prev.commandCount + (Math.random() < 0.3 ? 1 : 0),
-        responseTime: Math.max(10, Math.min(500, prev.responseTime + (Math.random() - 0.5) * 20))
-      }));
-    }, 1000); // Update every second for real-time uptime
+    // Fetch real metrics from backend
+    const fetchMetrics = async () => {
+      try {
+        const token = Cookies.get('token');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/bots/${botId}/metrics/process`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
 
-    return () => clearInterval(statsInterval);
-  }, [bot?.status, bot?.startedAt]);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.metrics) {
+            setRealTimeStats(prev => ({
+              ...prev,
+              cpuUsage: data.metrics.cpuUsage || 0,
+              memoryUsage: data.metrics.memoryUsage || 0,
+              uptime: calculateRealUptime(), // Use calculated uptime for accuracy
+            }));
+          }
+        }
+      } catch (error) {
+        // Silently fail - keep old values
+      }
+    };
+
+    // Fetch metrics every 10 seconds
+    const metricsInterval = setInterval(fetchMetrics, 10000);
+    fetchMetrics(); // Initial fetch
+
+    // Update uptime every second for smooth display
+    const uptimeInterval = setInterval(() => {
+      setRealTimeStats(prev => ({
+        ...prev,
+        uptime: calculateRealUptime(),
+      }));
+    }, 1000);
+
+    return () => {
+      clearInterval(metricsInterval);
+      clearInterval(uptimeInterval);
+    };
+  }, [bot?.status, bot?.startedAt, botId]);
 
   // Auto-refresh du statut
   useEffect(() => {
