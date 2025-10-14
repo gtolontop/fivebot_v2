@@ -614,8 +614,10 @@ export default function BotDetailPage() {
               <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">Information</h3>
               <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Address</div>
-                  <div className="mt-1 text-xs sm:text-sm text-gray-900 font-mono break-all">{bot.clientId || 'Not Connected'}</div>
+                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Servers</div>
+                  <div className="mt-1 text-xs sm:text-sm text-gray-900 font-semibold">
+                    {bot.status === 'ONLINE' ? (realTimeStats.cpuUsage > 0 ? `${guilds.length} servers` : 'Loading...') : 'Offline'}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
