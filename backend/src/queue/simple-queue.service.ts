@@ -358,16 +358,38 @@ export class SimpleQueueService implements IQueueService {
         // Check if this was a crash or intentional stop
         const savedState = await this.redisService.getBotState(botId);
 
-        // Don't mark as crash if:
-        // 1. Exit code is null/0 (graceful shutdown)
-        // 2. Signal is SIGINT or SIGTERM (intentional shutdown)
-        // 3. User action was 'stop' in Redis
+        // Detect shutdown type:
+        // 1. Graceful shutdown (SIGINT/SIGTERM or exit code 0/null) = Backend restart scenario
+        // 2. Intentional user stop (Redis state = 'stop')
+        // 3. Crash (any other case with bad exit code)
         const wasGracefulShutdown = code === 0 || code === null || signal === 'SIGINT' || signal === 'SIGTERM';
-        const wasIntentionalStop = savedState?.userAction === 'stop';
-        const wasCrash = !wasGracefulShutdown && !wasIntentionalStop && savedState?.userAction === 'start' && savedState?.status === 'ONLINE';
+        const wasUserStop = savedState?.userAction === 'stop';
 
-        // If crash, save crash state for recovery
-        if (wasCrash) {
+        if (wasUserStop) {
+          // User stopped the bot - mark as OFFLINE
+          console.log(`🛑 Bot "${bot.name}" stopped by user`);
+
+          await this.updateBotStatusSafe(botId, BotStatus.OFFLINE);
+          await this.redisService.deleteBotState(botId);
+        } else if (wasGracefulShutdown) {
+          // Graceful shutdown (probably backend restart) - DON'T change DB status
+          // Keep status as ONLINE so recovery will restart it
+          console.log(`✅ Bot "${bot.name}" stopped gracefully (backend restart) - keeping ONLINE status for auto-recovery`);
+
+          // Don't update database status - let it stay ONLINE for recovery
+          // Just log it
+          try {
+            await this.botLogsService.addLog(
+              botId,
+              LogLevel.INFO,
+              'Bot stopped due to backend restart - will auto-restart',
+              'System'
+            );
+          } catch (logError) {
+            console.error('Failed to add restart log:', logError);
+          }
+        } else {
+          // Crash - mark for recovery
           const crashCount = (savedState?.metadata?.crashCount || 0) + 1;
           console.log(`💥 Bot "${bot.name}" crashed unexpectedly (crash count: ${crashCount}) - marking for recovery`);
 
@@ -377,53 +399,37 @@ export class SimpleQueueService implements IQueueService {
             timestamp: new Date(),
             metadata: {
               exitCode: code,
+              signal: signal,
               shouldRecover: true,
               crashCount,
               lastCrashTime: new Date().toISOString()
             }
           });
-        } else {
-          console.log(`✅ Bot "${bot.name}" stopped gracefully (exit code: ${code}, signal: ${signal})`);
+
+          // Mark as offline in database
+          await this.updateBotStatusSafe(botId, BotStatus.OFFLINE);
+
+          // Add crash log
+          try {
+            await this.botLogsService.addLog(
+              botId,
+              LogLevel.ERROR,
+              `Bot crashed (exit code: ${code}, signal: ${signal})`,
+              'System'
+            );
+          } catch (logError) {
+            console.error('Failed to add crash log:', logError);
+          }
         }
 
-        // Add Pterodactyl-style server offline message
+        // Clear console buffer since bot is offline
         try {
-          await this.botLogsService.addLog(
-            botId,
-            LogLevel.INFO,
-            'Server marked as offline...',
-            'System'
-          );
-          
-          // Clear console buffer since bot is offline
           const consoleBufferService = this.botLogsService['consoleBufferService'];
           if (consoleBufferService) {
             consoleBufferService.onBotOffline(botId);
           }
-        } catch (logError) {
-          console.error('Failed to add offline log:', logError);
-        }
-        
-        // Use the safe update method to handle concurrency issues
-        try {
-          await this.updateBotStatusSafe(botId, BotStatus.OFFLINE);
-          console.log(`[Bot ${botId}] ✅ Status FORCE updated to OFFLINE after process exit`);
-        } catch (dbError) {
-          console.error(`[Bot ${botId}] ❌ Failed to update bot status:`, dbError);
-          // Retry once more
-          try {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            await this.prisma.bot.update({
-              where: { id: botId },
-              data: { 
-                status: BotStatus.OFFLINE,
-                updatedAt: new Date()
-              },
-            });
-            console.log(`[Bot ${botId}] ✅ Status updated to OFFLINE on retry`);
-          } catch (retryError) {
-            console.error(`[Bot ${botId}] ❌ Failed to update bot status on retry:`, retryError);
-          }
+        } catch (error) {
+          console.error('Failed to clear console buffer:', error);
         }
       });
 
