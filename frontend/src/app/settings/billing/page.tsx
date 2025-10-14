@@ -255,7 +255,7 @@ export default function BillingPage() {
                     variant={
                       transaction.status === 'completed' ? 'success' :
                       transaction.status === 'pending' ? 'warning' :
-                      'danger'
+                      'error'
                     }
                   >
                     {transaction.status}
