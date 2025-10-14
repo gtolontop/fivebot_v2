@@ -365,23 +365,23 @@ export default function BotDetailPage() {
         }
       />
 
-      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <main className="max-w-7xl mx-auto py-4 sm:py-6 px-3 sm:px-4 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Console - Left Side (2/3 width) */}
           <div className="lg:col-span-2">
-            <div className="bg-white shadow-sm rounded-lg p-6 h-full">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-4">
-                  <h3 className="text-lg font-medium text-gray-900">Console</h3>
+            <div className="bg-white shadow-sm rounded-lg p-4 sm:p-6 h-full">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
+                <div className="flex items-center space-x-3 sm:space-x-4">
+                  <h3 className="text-base sm:text-lg font-medium text-gray-900">Console</h3>
                   {bot.status === 'ONLINE' && wsConnection ? (
                     <div className="flex items-center text-green-600">
-                      <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse mr-2"></div>
-                      <span className="text-sm">Connected</span>
+                      <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse mr-1.5 sm:mr-2"></div>
+                      <span className="text-xs sm:text-sm">Connected</span>
                     </div>
                   ) : (
                     <div className="flex items-center text-gray-400">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full mr-2"></div>
-                      <span className="text-sm">Disconnected</span>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full mr-1.5 sm:mr-2"></div>
+                      <span className="text-xs sm:text-sm">Disconnected</span>
                     </div>
                   )}
                 </div>
@@ -393,17 +393,18 @@ export default function BotDetailPage() {
                         consoleRef.current.scrollTop = consoleRef.current.scrollHeight;
                       }
                     }}
-                    className="px-3 py-1 text-xs font-medium text-yellow-700 bg-yellow-100 rounded-md hover:bg-yellow-200 transition-colors"
+                    className="px-2 sm:px-3 py-1 text-xs font-medium text-yellow-700 bg-yellow-100 rounded-md hover:bg-yellow-200 transition-colors whitespace-nowrap"
                   >
-                    Auto-scroll paused • Click to resume
+                    <span className="hidden sm:inline">Auto-scroll paused • Click to resume</span>
+                    <span className="sm:hidden">Resume scroll</span>
                   </button>
                 )}
               </div>
 
-              <div 
+              <div
                 ref={consoleRef}
                 onScroll={handleConsoleScroll}
-                className="bg-gray-900 text-gray-100 p-4 rounded-lg h-[600px] overflow-y-auto font-mono text-sm"
+                className="bg-gray-900 text-gray-100 p-3 sm:p-4 rounded-lg h-[400px] sm:h-[500px] lg:h-[600px] overflow-y-auto font-mono text-xs sm:text-sm"
                 style={{ scrollbarGutter: 'stable' }}
               >
                 {logs.length === 0 ? (
@@ -448,20 +449,20 @@ export default function BotDetailPage() {
           </div>
 
           {/* Controls and Stats - Right Side (1/3 width) */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Control Buttons */}
-            <div className="bg-white shadow-sm rounded-lg p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Control Panel</h3>
-              <div className="space-y-3">
+            <div className="bg-white shadow-sm rounded-lg p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">Control Panel</h3>
+              <div className="space-y-2 sm:space-y-3">
                 <button
                   onClick={handleStart}
                   disabled={bot.status !== 'OFFLINE' || actionLoading !== null}
-                  className="w-full inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  className="w-full inline-flex items-center justify-center px-3 sm:px-4 py-2.5 sm:py-3 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   {(actionLoading === 'start' || bot.status === 'STARTING') ? (
-                    <ArrowPathIcon className="w-5 h-5 mr-2 animate-spin" />
+                    <ArrowPathIcon className="w-4 sm:w-5 h-4 sm:h-5 mr-2 animate-spin" />
                   ) : (
-                    <PlayIcon className="w-5 h-5 mr-2" />
+                    <PlayIcon className="w-4 sm:w-5 h-4 sm:h-5 mr-2" />
                   )}
                   {bot.status === 'STARTING' ? 'Starting...' : 'Start'}
                 </button>
@@ -469,12 +470,12 @@ export default function BotDetailPage() {
                 <button
                   onClick={handleRestart}
                   disabled={bot.status !== 'ONLINE' || actionLoading !== null}
-                  className="w-full inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-md text-gray-700 bg-yellow-500 hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  className="w-full inline-flex items-center justify-center px-3 sm:px-4 py-2.5 sm:py-3 border border-transparent text-sm font-medium rounded-md text-gray-700 bg-yellow-500 hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   {actionLoading === 'restart' ? (
-                    <ArrowPathIcon className="w-5 h-5 mr-2 animate-spin" />
+                    <ArrowPathIcon className="w-4 sm:w-5 h-4 sm:h-5 mr-2 animate-spin" />
                   ) : (
-                    <ArrowPathIcon className="w-5 h-5 mr-2" />
+                    <ArrowPathIcon className="w-4 sm:w-5 h-4 sm:h-5 mr-2" />
                   )}
                   Restart
                 </button>
@@ -482,63 +483,63 @@ export default function BotDetailPage() {
                 <button
                   onClick={handleStop}
                   disabled={bot.status !== 'ONLINE' || actionLoading !== null}
-                  className="w-full inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  className="w-full inline-flex items-center justify-center px-3 sm:px-4 py-2.5 sm:py-3 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   {actionLoading === 'stop' ? (
-                    <ArrowPathIcon className="w-5 h-5 mr-2 animate-spin" />
+                    <ArrowPathIcon className="w-4 sm:w-5 h-4 sm:h-5 mr-2 animate-spin" />
                   ) : (
-                    <StopIcon className="w-5 h-5 mr-2" />
+                    <StopIcon className="w-4 sm:w-5 h-4 sm:h-5 mr-2" />
                   )}
                   {actionLoading === 'stop' && bot.status === 'STOPPING' ? 'Kill' : 'Stop'}
                 </button>
               </div>
 
-              <div className="mt-6 pt-6 border-t border-gray-200 space-y-3">
+              <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200 space-y-2 sm:space-y-3">
                 <button
                   onClick={() => router.push(`/bots/${botId}/config`)}
-                  className="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all"
+                  className="w-full inline-flex items-center justify-center px-3 sm:px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all"
                 >
-                  <CogIcon className="w-4 h-4 mr-2" />
+                  <CogIcon className="w-4 h-4 mr-1.5 sm:mr-2" />
                   Settings
                 </button>
 
                 <button
                   onClick={generateInviteLink}
-                  className="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all"
+                  className="w-full inline-flex items-center justify-center px-3 sm:px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all"
                 >
-                  <LinkIcon className="w-4 h-4 mr-2" />
+                  <LinkIcon className="w-4 h-4 mr-1.5 sm:mr-2" />
                   Invite Link
                 </button>
 
                 <button
                   onClick={() => router.push(`/bots/${botId}/analytics`)}
-                  className="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all"
+                  className="w-full inline-flex items-center justify-center px-3 sm:px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all"
                 >
-                  <ChartBarIcon className="w-4 h-4 mr-2" />
+                  <ChartBarIcon className="w-4 h-4 mr-1.5 sm:mr-2" />
                   Analytics
                 </button>
               </div>
             </div>
 
             {/* Bot Information */}
-            <div className="bg-white shadow-sm rounded-lg p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Information</h3>
-              <div className="space-y-4">
+            <div className="bg-white shadow-sm rounded-lg p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">Information</h3>
+              <div className="space-y-3 sm:space-y-4">
                 <div>
                   <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Address</div>
-                  <div className="mt-1 text-sm text-gray-900 font-mono">{bot.clientId || 'Not Connected'}</div>
+                  <div className="mt-1 text-xs sm:text-sm text-gray-900 font-mono break-all">{bot.clientId || 'Not Connected'}</div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">CPU Load</div>
                     <div className="mt-1">
                       <div className="flex items-baseline">
-                        <span className="text-2xl font-semibold text-gray-900">{realTimeStats.cpuUsage.toFixed(0)}</span>
-                        <span className="ml-1 text-sm text-gray-600">%</span>
+                        <span className="text-lg sm:text-2xl font-semibold text-gray-900">{realTimeStats.cpuUsage.toFixed(0)}</span>
+                        <span className="ml-1 text-xs sm:text-sm text-gray-600">%</span>
                       </div>
                       <div className="mt-1 w-full bg-gray-200 rounded-full h-1.5">
-                        <div 
+                        <div
                           className={`h-1.5 rounded-full transition-all duration-500 ${
                             realTimeStats.cpuUsage > 80 ? 'bg-red-500' :
                             realTimeStats.cpuUsage > 60 ? 'bg-yellow-500' : 'bg-green-500'
@@ -553,11 +554,11 @@ export default function BotDetailPage() {
                     <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Memory</div>
                     <div className="mt-1">
                       <div className="flex items-baseline">
-                        <span className="text-2xl font-semibold text-gray-900">{realTimeStats.memoryUsage.toFixed(0)}</span>
-                        <span className="ml-1 text-sm text-gray-600">%</span>
+                        <span className="text-lg sm:text-2xl font-semibold text-gray-900">{realTimeStats.memoryUsage.toFixed(0)}</span>
+                        <span className="ml-1 text-xs sm:text-sm text-gray-600">%</span>
                       </div>
                       <div className="mt-1 w-full bg-gray-200 rounded-full h-1.5">
-                        <div 
+                        <div
                           className={`h-1.5 rounded-full transition-all duration-500 ${
                             realTimeStats.memoryUsage > 80 ? 'bg-red-500' :
                             realTimeStats.memoryUsage > 60 ? 'bg-yellow-500' : 'bg-blue-500'
@@ -571,50 +572,50 @@ export default function BotDetailPage() {
 
                 <div>
                   <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Uptime</div>
-                  <div className="mt-1 text-sm text-gray-900 font-medium">
+                  <div className="mt-1 text-xs sm:text-sm text-gray-900 font-medium">
                     {bot.status === 'ONLINE' ? formatUptime(realTimeStats.uptime) : 'Offline'}
                   </div>
                 </div>
 
                 <div>
                   <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Disk</div>
-                  <div className="mt-1 text-sm text-gray-900">0 MB / 1024 MB</div>
+                  <div className="mt-1 text-xs sm:text-sm text-gray-900">0 MB / 1024 MB</div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Network ⬇</div>
-                    <div className="mt-1 text-sm text-gray-900">0 KB/s</div>
+                    <div className="mt-1 text-xs sm:text-sm text-gray-900">0 KB/s</div>
                   </div>
                   <div>
                     <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Network ⬆</div>
-                    <div className="mt-1 text-sm text-gray-900">0 KB/s</div>
+                    <div className="mt-1 text-xs sm:text-sm text-gray-900">0 KB/s</div>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Quick Stats */}
-            <div className="bg-white shadow-sm rounded-lg p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Stats</h3>
-              <div className="space-y-3">
+            <div className="bg-white shadow-sm rounded-lg p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">Quick Stats</h3>
+              <div className="space-y-2.5 sm:space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Servers</span>
-                  <span className="text-sm font-medium text-gray-900">{guilds.length}</span>
+                  <span className="text-xs sm:text-sm text-gray-600">Servers</span>
+                  <span className="text-xs sm:text-sm font-medium text-gray-900">{guilds.length}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Total Users</span>
-                  <span className="text-sm font-medium text-gray-900">
+                  <span className="text-xs sm:text-sm text-gray-600">Total Users</span>
+                  <span className="text-xs sm:text-sm font-medium text-gray-900">
                     {guilds.reduce((acc, guild) => acc + (guild.memberCount || 0), 0).toLocaleString()}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Messages</span>
-                  <span className="text-sm font-medium text-gray-900">{realTimeStats.messageCount.toLocaleString()}</span>
+                  <span className="text-xs sm:text-sm text-gray-600">Messages</span>
+                  <span className="text-xs sm:text-sm font-medium text-gray-900">{realTimeStats.messageCount.toLocaleString()}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Commands</span>
-                  <span className="text-sm font-medium text-gray-900">{realTimeStats.commandCount.toLocaleString()}</span>
+                  <span className="text-xs sm:text-sm text-gray-600">Commands</span>
+                  <span className="text-xs sm:text-sm font-medium text-gray-900">{realTimeStats.commandCount.toLocaleString()}</span>
                 </div>
               </div>
             </div>
