@@ -82,15 +82,15 @@ export default function CreateBotPage() {
           href: "/bots"
         }}
         actions={
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             <button
               onClick={() => router.push('/dashboard')}
-              className="text-gray-700 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-lg transition-colors text-sm font-medium"
+              className="text-gray-700 hover:text-gray-900 hover:bg-gray-100 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg transition-colors text-xs sm:text-sm font-medium"
             >
               Dashboard
             </button>
-            <div className="flex items-center space-x-2 text-sm text-gray-500">
-              <span className="px-2 py-1 bg-purple-100 text-purple-600 rounded-full text-xs font-medium">
+            <div className="flex items-center space-x-2 text-xs sm:text-sm text-gray-500">
+              <span className="px-2 py-1 bg-purple-100 text-purple-600 rounded-full text-xs font-medium whitespace-nowrap">
                 {user.credits} Credits
               </span>
             </div>
