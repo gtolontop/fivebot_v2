@@ -465,34 +465,38 @@ export default function BotDetailPage() {
                 ) : (
                   logs.slice(-200).map((log, index) => {
                     const logMatch = log.match(/\[(\d{2}:\d{2}:\d{2})\] \[([^\]]+)\]: (.*)/);
-                    
+
                     if (logMatch) {
                       const [, time, prefix, message] = logMatch;
-                      
+
                       let prefixColor = 'text-gray-400';
                       if (prefix.includes('bot@')) prefixColor = 'text-blue-400';
                       else if (prefix.includes('container@')) prefixColor = 'text-yellow-400';
                       else if (prefix.includes('system@')) prefixColor = 'text-green-400';
-                      
-                      let messageColor = 'text-gray-300';
-                      if (message.toLowerCase().includes('error')) messageColor = 'text-red-400';
-                      else if (message.toLowerCase().includes('warning')) messageColor = 'text-yellow-400';
-                      else if (message.toLowerCase().includes('success') || message.includes('✅')) messageColor = 'text-green-400';
-                      else if (message.toLowerCase().includes('starting')) messageColor = 'text-yellow-400';
-                      else if (message.toLowerCase().includes('stopping')) messageColor = 'text-orange-400';
-                      
+
+                      // Parse ANSI colors in the message
+                      const messageParts = parseAnsiColors(message);
+
                       return (
                         <div key={index} className="py-0.5 hover:bg-gray-800 -mx-2 px-2 rounded transition-colors">
                           <span className="text-gray-500">[{time}]</span>
                           <span className={`${prefixColor} ml-2`}>[{prefix}]:</span>
-                          <span className={`${messageColor} ml-2`}>{message}</span>
+                          <span className="ml-2">
+                            {messageParts.map((part, i) => (
+                              <span key={i} className={part.color}>{part.text}</span>
+                            ))}
+                          </span>
                         </div>
                       );
                     }
-                    
+
+                    // For logs without standard format, parse ANSI colors
+                    const parts = parseAnsiColors(log);
                     return (
-                      <div key={index} className="text-gray-400 py-0.5">
-                        {log}
+                      <div key={index} className="py-0.5">
+                        {parts.map((part, i) => (
+                          <span key={i} className={part.color}>{part.text}</span>
+                        ))}
                       </div>
                     );
                   })
