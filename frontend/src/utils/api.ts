@@ -238,13 +238,14 @@ export const utilsAPI = {
 
 export const usersAPI = {
   me: () => api.get('/users/me'),
-  updateMe: (data: { username?: string; email?: string }) => 
+  updateMe: (data: { username?: string; email?: string }) =>
     api.patch('/users/me', data),
-  getAll: (page = 1, limit = 10) => 
+  getMyGuilds: () => api.get('/users/me/guilds'),
+  getAll: (page = 1, limit = 10) =>
     api.get(`/users?page=${page}&limit=${limit}`),
   getById: (id: string) => api.get(`/users/${id}`),
   update: (id: string, data: any) => api.patch(`/users/${id}`, data),
-  addCredits: (id: string, data: { amount: number; reason: string }) => 
+  addCredits: (id: string, data: { amount: number; reason: string }) =>
     api.post(`/users/${id}/credits`, data),
 };
 
