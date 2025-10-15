@@ -50,7 +50,9 @@
       "Bash(del vercel.json)",
       "Bash(git push:*)",
       "Bash(del \"c:\\Users\\teamr\\Desktop\\fivebot_v2\\frontend\\src\\app\\dashboard\\page.OLD.tsx\")",
-      "Bash(netstat:*)"
+      "Bash(netstat:*)",
+      "Bash(npx nest g:*)",
+      "Bash(npx nest g service:*)"
     ],
     "deny": [],
     "ask": [],
