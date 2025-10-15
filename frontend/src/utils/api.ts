@@ -127,6 +127,7 @@ export const botsAPI = {
   getMetrics: (id: string) => api.get(`/bots/${id}/metrics`),
   setupMetrics: () => api.post('/bots/setup/metrics'),
   refreshAssets: (id: string) => api.post(`/bots/${id}/refresh-assets`),
+  refreshAllAssets: () => api.post('/bots/refresh-all-assets'),
 
   // Tickets
   getTickets: (botId: string) => 
