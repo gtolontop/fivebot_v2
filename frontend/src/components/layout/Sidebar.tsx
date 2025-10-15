@@ -45,7 +45,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const pathname = usePathname();
   const [currentBot, setCurrentBot] = useState<any>(null);
-  const [botsExpanded, setBotsExpanded] = useState(false);
+  const [botsExpanded, setBotsExpanded] = useState(true); // Déplié par défaut
   const [allBots, setAllBots] = useState<any[]>([]);
 
   // Extract bot ID from pathname
@@ -57,9 +57,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     fetchAllBots();
   }, []);
 
-  // Fetch current bot if on a bot page
+  // Auto-expand when on bot page
   useEffect(() => {
     if (botId && botId !== 'create') {
+      setBotsExpanded(true);
       fetchBot(botId);
     } else {
       setCurrentBot(null);
