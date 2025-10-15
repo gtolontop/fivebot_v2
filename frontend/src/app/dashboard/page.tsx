@@ -6,17 +6,15 @@ import { useEffect, useState } from 'react';
 import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { StatCard, Card, Badge, Avatar, Button } from '@/components/ui';
+import { Badge, Avatar } from '@/components/ui';
 import {
   CubeIcon,
   CheckCircleIcon,
-  BoltIcon,
-  UsersIcon,
   PlusIcon,
-  Cog6ToothIcon,
   ClockIcon,
   ServerIcon,
-  CommandLineIcon,
+  ArrowTrendingUpIcon,
+  SparklesIcon,
 } from '@heroicons/react/24/outline';
 import PendingInvitations from '@/components/PendingInvitations';
 import Link from 'next/link';
