@@ -120,10 +120,12 @@ export class BotMetricsService {
       await this.prisma.$executeRaw`
         INSERT INTO bot_metrics (
           id, bot_id, date, commands_used, messages_processed,
-          guilds_count, users_count, uptime_seconds, avg_response_time_ms, errors_count
+          guilds_count, users_count, uptime_seconds, avg_response_time_ms, errors_count,
+          created_at, updated_at
         ) VALUES (
           ${uuid}, ${botId}, ${today}, ${commandsUsed}, ${messagesProcessed},
-          ${guildsCount}, ${usersCount}, ${uptimeSeconds}, ${avgResponseTime}, ${errorsCount}
+          ${guildsCount}, ${usersCount}, ${uptimeSeconds}, ${avgResponseTime}, ${errorsCount},
+          CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
         ) ON CONFLICT (bot_id, date) DO UPDATE SET
           commands_used = ${commandsUsed},
           messages_processed = ${messagesProcessed},
