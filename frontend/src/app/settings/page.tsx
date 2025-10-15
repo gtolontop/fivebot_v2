@@ -231,11 +231,11 @@ export default function SettingsPage() {
                         <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                           <span className="text-sm font-semibold text-gray-700">Account Created</span>
                           <span className="text-sm text-gray-900">
-                            {new Date(user.createdAt).toLocaleDateString('en-US', {
+                            {user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', {
                               year: 'numeric',
                               month: 'long',
                               day: 'numeric'
-                            })}
+                            }) : 'N/A'}
                           </span>
                         </div>
                         <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
