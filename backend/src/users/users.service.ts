@@ -7,6 +7,9 @@ interface CreateUserDto {
   username: string;
   email?: string;
   avatar?: string;
+  discordAccessToken?: string;
+  discordRefreshToken?: string;
+  discordTokenExpiry?: Date;
 }
 
 interface UpdateUserDto {
@@ -15,6 +18,9 @@ interface UpdateUserDto {
   avatar?: string;
   role?: UserRole;
   credits?: number;
+  discordAccessToken?: string;
+  discordRefreshToken?: string;
+  discordTokenExpiry?: Date;
 }
 
 @Injectable()
