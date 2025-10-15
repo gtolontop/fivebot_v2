@@ -48,7 +48,8 @@
       "Bash(tasklist)",
       "Read(//tmp/scp35119/opt/fivebot/backend/**)",
       "Bash(del vercel.json)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(del \"c:\\Users\\teamr\\Desktop\\fivebot_v2\\frontend\\src\\app\\dashboard\\page.OLD.tsx\")"
     ],
     "deny": [],
     "ask": [],
