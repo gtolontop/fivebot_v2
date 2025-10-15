@@ -106,6 +106,40 @@ export default function BotDetailPage() {
     return () => clearInterval(metricsInterval);
   }, [bot?.status, botId]);
 
+  // Polling for logs - ALWAYS active
+  useEffect(() => {
+    if (!bot) return;
+
+    const pollLogs = async () => {
+      try {
+        const token = Cookies.get('token');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/bots/${botId}/logs/live`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.logs && data.logs.length > 0) {
+            setLogs(data.logs.slice(-100)); // Keep last 100 logs
+          }
+        }
+      } catch (error) {
+        // Silent fail
+      }
+    };
+
+    // Initial fetch
+    pollLogs();
+
+    // Poll every 2 seconds
+    const logsInterval = setInterval(pollLogs, 2000);
+
+    return () => clearInterval(logsInterval);
+  }, [bot?.id, botId]);
+
   // Auto-refresh status
   useEffect(() => {
     if (!bot) return;
@@ -471,6 +505,68 @@ export default function BotDetailPage() {
               <p className="text-sm font-semibold text-gray-900">Memory</p>
               <p className="text-xs text-gray-500">RAM usage</p>
             </div>
+          </div>
+        </div>
+
+        {/* Console - ALWAYS VISIBLE */}
+        <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl border border-gray-700 overflow-hidden">
+          <div className="px-6 py-4 bg-gray-800/50 border-b border-gray-700 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              </div>
+              <span className="text-gray-400 font-mono text-sm">Console</span>
+            </div>
+            <div className="flex items-center gap-2">
+              {bot.status === 'ONLINE' ? (
+                <div className="flex items-center gap-2 px-3 py-1 bg-success-900/30 border border-success-500/30 rounded-lg">
+                  <div className="w-2 h-2 bg-success-500 rounded-full animate-pulse"></div>
+                  <span className="text-success-400 text-xs font-semibold">LIVE</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 px-3 py-1 bg-gray-700/30 border border-gray-600/30 rounded-lg">
+                  <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+                  <span className="text-gray-400 text-xs font-semibold">OFFLINE</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="relative">
+            <div className="h-96 overflow-y-auto font-mono text-sm p-4 space-y-1 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
+              {logs.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                  {bot.status === 'ONLINE' ? (
+                    <>
+                      <svg className="w-12 h-12 mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <p>Waiting for logs...</p>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-12 h-12 mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                      </svg>
+                      <p>Bot is offline</p>
+                      <p className="text-xs mt-1">Start the bot to see console logs</p>
+                    </>
+                  )}
+                </div>
+              ) : (
+                logs.map((log, index) => (
+                  <div key={index} className="flex gap-3 hover:bg-gray-800/50 px-2 py-0.5 rounded transition-colors">
+                    <span className="text-gray-600 select-none">{String(index + 1).padStart(3, '0')}</span>
+                    <span className="text-gray-300 flex-1 break-all">{log}</span>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Gradient overlay at bottom */}
+            <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-gray-900 to-transparent pointer-events-none"></div>
           </div>
         </div>
 
