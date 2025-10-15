@@ -211,30 +211,32 @@ export default function DashboardPage() {
   return (
     <DashboardLayout>
       <div className="max-w-7xl mx-auto">
-        {/* Hero Section with User Info */}
-        <div className="mb-8 flex items-start justify-between">
+        {/* Hero Section */}
+        <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-purple-600 rounded-2xl flex items-center justify-center text-2xl font-bold text-white shadow-lg">
-              {user.username[0].toUpperCase()}
+            <div className="relative">
+              <div className="w-14 h-14 bg-gradient-to-br from-primary-400 to-primary-600 rounded-xl flex items-center justify-center text-xl font-bold text-white shadow-lg">
+                {user.username[0].toUpperCase()}
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold text-gray-900">
                 Welcome back, {user.username}
               </h1>
-              <p className="text-gray-600 mt-1">
-                {user.email} • {user.credits} credits available
+              <p className="text-sm text-gray-600 mt-0.5">
+                {user.credits} credits • {user.email}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/bots/create"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors shadow-sm"
-            >
-              <PlusIcon className="w-5 h-5" />
-              Create Bot
-            </Link>
-          </div>
+          <Link
+            href="/bots/create"
+            className="group relative inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold rounded-xl hover:from-primary-600 hover:to-primary-700 transition-all shadow-lg shadow-primary-200 hover:shadow-xl hover:shadow-primary-300 hover:-translate-y-0.5"
+          >
+            <div className="absolute inset-0 bg-white/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <PlusIcon className="w-5 h-5 relative z-10" />
+            <span className="relative z-10">Create Bot</span>
+          </Link>
         </div>
 
         {/* Pending Invitations */}
