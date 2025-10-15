@@ -173,28 +173,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                 return (
                   <li key={item.href}>
-                    <button
-                      onClick={() => {
-                        if (isBotSection && allBots.length > 3) {
-                          setBotsExpanded(!botsExpanded);
-                        }
-                      }}
+                    <div
                       className={`
-                        w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                        flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
                         ${active
                           ? 'bg-primary-50 text-primary-700'
                           : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                         }
                         ${collapsed ? 'justify-center' : ''}
-                        ${isBotSection && allBots.length > 3 ? 'cursor-pointer' : 'cursor-default'}
                       `}
-                      title={collapsed ? item.label : undefined}
                     >
-                      <Link href={item.href} className="flex items-center gap-3 flex-1">
+                      <Link href={item.href} className="flex items-center gap-3 flex-1" title={collapsed ? item.label : undefined}>
                         <item.icon className="w-5 h-5 flex-shrink-0" />
                         {!collapsed && (
                           <>
-                            <span className="flex-1 text-left">{item.label}</span>
+                            <span className="flex-1">{item.label}</span>
                             {item.badge && (
                               <span className="px-2 py-0.5 text-xs font-medium bg-primary-100 text-primary-700 rounded-full">
                                 {item.badge}
@@ -206,15 +199,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                       {/* Expand chevron for All Bots - only if > 3 bots */}
                       {!collapsed && isBotSection && allBots.length > 3 && (
-                        <div className="flex-shrink-0">
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setBotsExpanded(!botsExpanded);
+                          }}
+                          className="flex-shrink-0 p-1 -mr-1"
+                        >
                           {botsExpanded ? (
                             <ChevronUpIcon className="w-4 h-4" />
                           ) : (
                             <ChevronDownIcon className="w-4 h-4" />
                           )}
-                        </div>
+                        </button>
                       )}
-                    </button>
+                    </div>
 
                     {/* Bots List */}
                     {!collapsed && isBotSection && botsExpanded && allBots.length > 0 && (
