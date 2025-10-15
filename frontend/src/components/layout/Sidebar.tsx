@@ -46,10 +46,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const pathname = usePathname();
   const [currentBot, setCurrentBot] = useState<any>(null);
   const [botsExpanded, setBotsExpanded] = useState(false);
+  const [allBots, setAllBots] = useState<any[]>([]);
 
   // Extract bot ID from pathname
   const botIdMatch = pathname?.match(/\/bots\/([^\/]+)/);
   const botId = botIdMatch ? botIdMatch[1] : null;
+
+  // Fetch all bots for sidebar
+  useEffect(() => {
+    fetchAllBots();
+  }, []);
 
   // Fetch current bot if on a bot page
   useEffect(() => {
@@ -59,6 +65,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
       setCurrentBot(null);
     }
   }, [botId]);
+
+  const fetchAllBots = async () => {
+    try {
+      const response = await botsAPI.getAll();
+      setAllBots(response.data || []);
+    } catch (error) {
+      console.error('Error fetching bots:', error);
+    }
+  };
 
   const fetchBot = async (id: string) => {
     try {
@@ -157,30 +172,82 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                 return (
                   <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      className={`
-                        flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
-                        ${active
-                          ? 'bg-primary-50 text-primary-700'
-                          : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                        }
-                        ${collapsed ? 'justify-center' : ''}
-                      `}
-                      title={collapsed ? item.label : undefined}
-                    >
-                      <item.icon className="w-5 h-5 flex-shrink-0" />
-                      {!collapsed && (
-                        <>
-                          <span className="flex-1">{item.label}</span>
-                          {item.badge && (
-                            <span className="px-2 py-0.5 text-xs font-medium bg-primary-100 text-primary-700 rounded-full">
-                              {item.badge}
-                            </span>
+                    <div className="flex items-center">
+                      <Link
+                        href={item.href}
+                        className={`
+                          flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex-1
+                          ${active
+                            ? 'bg-primary-50 text-primary-700'
+                            : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                          }
+                          ${collapsed ? 'justify-center' : ''}
+                        `}
+                        title={collapsed ? item.label : undefined}
+                      >
+                        <item.icon className="w-5 h-5 flex-shrink-0" />
+                        {!collapsed && (
+                          <>
+                            <span className="flex-1">{item.label}</span>
+                            {item.badge && (
+                              <span className="px-2 py-0.5 text-xs font-medium bg-primary-100 text-primary-700 rounded-full">
+                                {item.badge}
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </Link>
+
+                      {/* Expand button for All Bots */}
+                      {!collapsed && isBotSection && allBots.length > 0 && (
+                        <button
+                          onClick={() => setBotsExpanded(!botsExpanded)}
+                          className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
+                          {botsExpanded ? (
+                            <ChevronUpIcon className="w-4 h-4" />
+                          ) : (
+                            <ChevronDownIcon className="w-4 h-4" />
                           )}
-                        </>
+                        </button>
                       )}
-                    </Link>
+                    </div>
+
+                    {/* Bots List */}
+                    {!collapsed && isBotSection && botsExpanded && allBots.length > 0 && (
+                      <ul className="mt-2 ml-6 space-y-1">
+                        {allBots.slice(0, 3).map((bot) => (
+                          <li key={bot.id}>
+                            <Link
+                              href={`/bots/${bot.id}`}
+                              className={`
+                                flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
+                                ${pathname === `/bots/${bot.id}`
+                                  ? 'bg-primary-50 text-primary-700'
+                                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                }
+                              `}
+                            >
+                              {bot.avatar ? (
+                                <img
+                                  src={bot.avatar}
+                                  alt={bot.name}
+                                  className="w-5 h-5 rounded-md flex-shrink-0"
+                                />
+                              ) : (
+                                <div className="w-5 h-5 bg-gradient-to-br from-primary-400 to-primary-600 rounded-md flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                  {bot.name[0].toUpperCase()}
+                                </div>
+                              )}
+                              <span className="truncate flex-1">{bot.name}</span>
+                              {bot.status === 'ONLINE' && (
+                                <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+                              )}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
 
                     {/* Current Bot Sub-navigation */}
                     {!collapsed && isBotSection && currentBot && (

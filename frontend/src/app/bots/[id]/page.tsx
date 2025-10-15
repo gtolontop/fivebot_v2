@@ -505,7 +505,6 @@ export default function BotDetailPage() {
                 Analytics
               </Link>
             </div>
-          </div>
         </div>
 
         {/* Stats Grid - Compact */}
