@@ -114,9 +114,15 @@ export class BotsService {
     const encryptedToken = this.encryptionService.encrypt(data.token);
 
     // Build avatar URL from Discord CDN
-    const avatarUrl = tokenValidation.user?.avatar
-      ? `https://cdn.discordapp.com/avatars/${tokenValidation.user.id}/${tokenValidation.user.avatar}.png?size=256`
-      : null;
+    // Priority: user avatar > application icon > null
+    let avatarUrl = null;
+    if (tokenValidation.user?.avatar) {
+      // Bot has a user avatar
+      avatarUrl = `https://cdn.discordapp.com/avatars/${tokenValidation.user.id}/${tokenValidation.user.avatar}.png?size=256`;
+    } else if (tokenValidation.application?.icon) {
+      // Fallback to application icon
+      avatarUrl = `https://cdn.discordapp.com/app-icons/${tokenValidation.application.id}/${tokenValidation.application.icon}.png?size=256`;
+    }
 
     // Build banner URL from Discord CDN
     const bannerUrl = tokenValidation.user?.banner
