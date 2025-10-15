@@ -122,9 +122,6 @@ export default function BotServersPage() {
 
   if (!user || !bot) return null;
 
-  // Les guilds retournés sont ceux où le bot est déjà présent
-  const serversWithBot = guilds;
-
   return (
     <DashboardLayout>
       <div className="max-w-[1600px] mx-auto space-y-6">
