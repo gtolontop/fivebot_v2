@@ -269,4 +269,16 @@ export const cacheAPI = {
   cleanup: () => api.delete('/cache/cleanup'),
 };
 
+export const notificationsAPI = {
+  getAll: (unreadOnly = false) =>
+    api.get('/notifications', { params: { unreadOnly: unreadOnly.toString() } }),
+  getUnreadCount: () => api.get('/notifications/unread-count'),
+  markAsRead: (id: string) => api.post(`/notifications/${id}/read`),
+  markAllAsRead: () => api.post('/notifications/read-all'),
+  delete: (id: string) => api.delete(`/notifications/${id}`),
+  deleteAll: () => api.delete('/notifications'),
+  create: (data: { type: string; title: string; message: string; metadata?: any }) =>
+    api.post('/notifications/create', data),
+};
+
 export default api;
