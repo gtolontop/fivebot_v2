@@ -225,7 +225,7 @@ export default function DashboardPage() {
         </div>
 
         {/* System Overview */}
-        <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-glass p-6">
+        <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-lg font-bold text-gray-900">System Overview</h2>
@@ -319,7 +319,7 @@ export default function DashboardPage() {
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Activity Feed - 2 cols */}
-          <div className="lg:col-span-2 bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-glass overflow-hidden">
+          <div className="lg:col-span-2 bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200/50 flex items-center justify-between bg-gradient-to-r from-gray-50/50 to-white/50">
               <div>
                 <h2 className="text-lg font-bold text-gray-900">Your Activity</h2>
@@ -397,7 +397,7 @@ export default function DashboardPage() {
           {/* Quick Actions - 1 col */}
           <div className="space-y-6">
             {/* Quick Actions Card */}
-            <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-glass overflow-hidden">
+            <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-gray-50/50 to-white/50">
                 <h2 className="text-lg font-bold text-gray-900">Quick Actions</h2>
                 <p className="text-xs text-gray-500 mt-0.5">Fast access to key features</p>
@@ -475,7 +475,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Analytics Section */}
-        <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-glass p-6">
+        <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-lg font-bold text-gray-900">Analytics</h2>
