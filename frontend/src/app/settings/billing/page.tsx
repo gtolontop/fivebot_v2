@@ -3,283 +3,415 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import toast from 'react-hot-toast';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Button } from '@/components/ui/Button';
-import { Card, PanelCard, StatCard } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { designTokens } from '@/styles/design-tokens';
+import { creditsAPI } from '@/utils/api';
+import toast from 'react-hot-toast';
+import {
+  CreditCardIcon,
+  ClockIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
+  SparklesIcon,
+  CheckIcon,
+  UserCircleIcon,
+} from '@heroicons/react/24/outline';
 
-interface Transaction {
+interface CreditHistory {
   id: string;
-  type: 'purchase' | 'spend' | 'refund';
   amount: number;
-  description: string;
-  date: Date;
-  status: 'completed' | 'pending' | 'failed';
+  reason: string;
+  type: 'PURCHASE' | 'BONUS' | 'SPEND' | 'REFUND' | 'ADMIN_ADJUSTMENT';
+  createdAt: string;
+  metadata?: string;
 }
 
-const MOCK_TRANSACTIONS: Transaction[] = [
-  {
-    id: '1',
-    type: 'purchase',
-    amount: 1000,
-    description: 'Credits Package - Starter',
-    date: new Date('2024-02-15'),
-    status: 'completed',
-  },
-  {
-    id: '2',
-    type: 'spend',
-    amount: -10,
-    description: 'Bot Creation - MyBot',
-    date: new Date('2024-02-14'),
-    status: 'completed',
-  },
-  {
-    id: '3',
-    type: 'spend',
-    amount: -50,
-    description: 'Module Purchase - Music Player Pro',
-    date: new Date('2024-02-10'),
-    status: 'completed',
-  },
-  {
-    id: '4',
-    type: 'purchase',
-    amount: 500,
-    description: 'Credits Package - Basic',
-    date: new Date('2024-01-20'),
-    status: 'completed',
-  },
-];
+interface CreditStats {
+  totalPurchased: number;
+  totalSpent: number;
+  totalBonus: number;
+  currentBalance: number;
+}
 
-const CREDIT_PACKAGES = [
-  {
-    id: 'basic',
-    name: 'Basic',
-    credits: 500,
-    price: 5,
-    popular: false,
-  },
+const creditPackages = [
   {
     id: 'starter',
     name: 'Starter',
-    credits: 1000,
-    price: 9,
-    popular: true,
-    bonus: 100,
+    credits: 100,
+    price: 5,
+    popular: false,
+    features: ['100 Credits', 'Basic Support', 'Valid for 6 months'],
   },
   {
     id: 'pro',
-    name: 'Pro',
-    credits: 2500,
+    name: 'Professional',
+    credits: 500,
     price: 20,
-    popular: false,
-    bonus: 500,
+    popular: true,
+    bonus: 50,
+    features: ['500 Credits', '+50 Bonus Credits', 'Priority Support', 'Valid for 1 year'],
   },
   {
     id: 'enterprise',
     name: 'Enterprise',
-    credits: 10000,
+    credits: 2000,
     price: 75,
     popular: false,
-    bonus: 2500,
+    bonus: 300,
+    features: ['2000 Credits', '+300 Bonus Credits', '24/7 Premium Support', 'Never Expires'],
   },
 ];
 
 export default function BillingPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading, refreshUser } = useAuth();
   const router = useRouter();
-  const [transactions, setTransactions] = useState<Transaction[]>(MOCK_TRANSACTIONS);
+  const [history, setHistory] = useState<CreditHistory[]>([]);
+  const [stats, setStats] = useState<CreditStats | null>(null);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!loading && !user) {
       router.push('/auth/login');
     }
-  }, [user, authLoading, router]);
+  }, [user, loading, router]);
 
-  const handlePurchase = (packageId: string) => {
-    toast.success('Redirecting to payment...');
-  };
+  useEffect(() => {
+    if (user) {
+      fetchCreditData();
+    }
+  }, [user]);
 
-  const getTransactionIcon = (type: string) => {
-    switch (type) {
-      case 'purchase':
-        return (
-          <svg className="w-5 h-5 text-success-500" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd"/>
-          </svg>
-        );
-      case 'spend':
-        return (
-          <svg className="w-5 h-5 text-danger-500" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clipRule="evenodd"/>
-          </svg>
-        );
-      case 'refund':
-        return (
-          <svg className="w-5 h-5 text-warning-500" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd"/>
-          </svg>
-        );
-      default:
-        return null;
+  const fetchCreditData = async () => {
+    try {
+      setIsLoadingHistory(true);
+      const [historyRes, statsRes] = await Promise.all([
+        creditsAPI.getMyHistory(1, 20),
+        creditsAPI.getStats(),
+      ]);
+
+      setHistory(historyRes.data.history || historyRes.data || []);
+      setStats(statsRes.data);
+    } catch (error: any) {
+      console.error('Error fetching credit data:', error);
+      toast.error('Failed to load billing data');
+    } finally {
+      setIsLoadingHistory(false);
     }
   };
 
-  if (authLoading) {
+  const handlePurchase = async (packageId: string) => {
+    setSelectedPackage(packageId);
+    toast.error('Payment integration coming soon!');
+    setTimeout(() => setSelectedPackage(null), 1000);
+  };
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'PURCHASE':
+        return <ArrowUpIcon className="w-4 h-4 text-success-600" />;
+      case 'SPEND':
+        return <ArrowDownIcon className="w-4 h-4 text-danger-600" />;
+      case 'BONUS':
+        return <SparklesIcon className="w-4 h-4 text-purple-600" />;
+      case 'REFUND':
+        return <ArrowUpIcon className="w-4 h-4 text-blue-600" />;
+      default:
+        return <ClockIcon className="w-4 h-4 text-gray-600" />;
+    }
+  };
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'PURCHASE':
+        return 'text-success-600 bg-success-50';
+      case 'SPEND':
+        return 'text-danger-600 bg-danger-50';
+      case 'BONUS':
+        return 'text-purple-600 bg-purple-50';
+      case 'REFUND':
+        return 'text-blue-600 bg-blue-50';
+      default:
+        return 'text-gray-600 bg-gray-50';
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(date);
+  };
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex items-center space-x-3">
-          <div className="w-6 h-6 border-4 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-gray-600">Loading...</span>
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-primary-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600 font-medium">Loading billing...</p>
+          </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className={designTokens.typography.h1}>Billing & Credits</h1>
-          <p className={designTokens.typography.body + ' text-gray-500'}>
-            Manage your credits and purchase history
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900">Billing & Credits</h1>
+          <p className="text-sm text-gray-500 mt-1">Manage your credits and purchase history</p>
         </div>
 
-        {/* Credit Balance */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <StatCard
-            label="Current Balance"
-            value={user.credits.toLocaleString()}
-            icon={
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/>
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clipRule="evenodd"/>
-              </svg>
-            }
-            color="purple"
-          />
-
-          <StatCard
-            label="Total Spent"
-            value="60"
-            icon={
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/>
-              </svg>
-            }
-            color="red"
-          />
-
-          <StatCard
-            label="Total Purchased"
-            value="1,500"
-            icon={
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd"/>
-              </svg>
-            }
-            color="green"
-          />
-        </div>
-
-        {/* Credit Packages */}
-        <PanelCard title="Buy Credits" subtitle="Choose a package to add credits to your account">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {CREDIT_PACKAGES.map(pkg => (
-              <Card
-                key={pkg.id}
-                className={`p-6 text-center ${pkg.popular ? 'border-2 border-primary-500 shadow-lg' : ''}`}
-              >
-                {pkg.popular && (
-                  <Badge variant="info" className="mb-3">
-                    Most Popular
-                  </Badge>
-                )}
-                <h3 className={designTokens.typography.h3 + ' mb-2'}>{pkg.name}</h3>
-                <div className="mb-4">
-                  <div className="text-3xl font-bold text-gray-900">${pkg.price}</div>
-                  <div className="text-sm text-gray-500">
-                    {pkg.credits.toLocaleString()} credits
-                    {pkg.bonus && (
-                      <span className="text-success-600 font-medium"> +{pkg.bonus}</span>
-                    )}
-                  </div>
-                </div>
-                <Button
-                  variant={pkg.popular ? 'primary' : 'outline'}
-                  size="sm"
-                  fullWidth
-                  onClick={() => handlePurchase(pkg.id)}
-                >
-                  Purchase
-                </Button>
-              </Card>
-            ))}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Sidebar Navigation */}
+          <div className="space-y-2">
+            <button
+              onClick={() => router.push('/settings')}
+              className="w-full text-left px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <UserCircleIcon className="w-5 h-5" />
+                <span>Profile</span>
+              </div>
+            </button>
+            <button className="w-full text-left px-4 py-2 rounded-lg bg-primary-50 text-primary-600 font-medium">
+              <div className="flex items-center gap-2">
+                <CreditCardIcon className="w-5 h-5" />
+                <span>Billing</span>
+              </div>
+            </button>
           </div>
-        </PanelCard>
 
-        {/* Transaction History */}
-        <PanelCard title="Transaction History" subtitle="View your recent transactions">
-          <div className="space-y-3">
-            {transactions.map(transaction => (
-              <div
-                key={transaction.id}
-                className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-center space-x-4 flex-1">
-                  <div className="flex-shrink-0">
-                    {getTransactionIcon(transaction.type)}
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-medium text-gray-900">{transaction.description}</div>
-                    <div className="text-sm text-gray-500">
-                      {transaction.date.toLocaleDateString()} at {transaction.date.toLocaleTimeString()}
-                    </div>
-                  </div>
+          {/* Main Content */}
+          <div className="lg:col-span-3 space-y-6">
+            {/* Current Balance & Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl p-6 text-white shadow-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-semibold text-primary-100">Current Balance</span>
+                  <CreditCardIcon className="w-6 h-6 text-primary-200" />
                 </div>
+                <p className="text-4xl font-bold">{user.credits}</p>
+                <p className="text-xs text-primary-100 mt-1">Available Credits</p>
+              </div>
 
-                <div className="flex items-center space-x-4">
-                  <div className={`font-semibold ${transaction.amount > 0 ? 'text-success-600' : 'text-danger-600'}`}>
-                    {transaction.amount > 0 ? '+' : ''}{transaction.amount} credits
-                  </div>
-                  <Badge
-                    variant={
-                      transaction.status === 'completed' ? 'success' :
-                      transaction.status === 'pending' ? 'warning' :
-                      'error'
-                    }
+              <div className="bg-white rounded-2xl p-6 border border-gray-200">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-semibold text-gray-700">Total Purchased</span>
+                  <ArrowUpIcon className="w-5 h-5 text-success-600" />
+                </div>
+                <p className="text-3xl font-bold text-gray-900">{stats?.totalPurchased || 0}</p>
+                <p className="text-xs text-gray-500 mt-1">All time</p>
+              </div>
+
+              <div className="bg-white rounded-2xl p-6 border border-gray-200">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-semibold text-gray-700">Total Spent</span>
+                  <ArrowDownIcon className="w-5 h-5 text-danger-600" />
+                </div>
+                <p className="text-3xl font-bold text-gray-900">{stats?.totalSpent || 0}</p>
+                <p className="text-xs text-gray-500 mt-1">All time</p>
+              </div>
+
+              <div className="bg-white rounded-2xl p-6 border border-gray-200">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-semibold text-gray-700">Bonus Credits</span>
+                  <SparklesIcon className="w-5 h-5 text-purple-600" />
+                </div>
+                <p className="text-3xl font-bold text-gray-900">{stats?.totalBonus || 0}</p>
+                <p className="text-xs text-gray-500 mt-1">All time</p>
+              </div>
+            </div>
+
+            {/* Credit Packages */}
+            <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 p-6">
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Purchase Credits</h2>
+                <p className="text-sm text-gray-500 mt-1">Choose a package that fits your needs</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {creditPackages.map((pkg) => (
+                  <div
+                    key={pkg.id}
+                    className={`relative rounded-2xl border-2 p-6 transition-all hover:shadow-xl ${
+                      pkg.popular
+                        ? 'border-primary-500 bg-gradient-to-br from-primary-50 to-blue-50 shadow-lg scale-105'
+                        : 'border-gray-200 bg-white hover:border-primary-300'
+                    }`}
                   >
-                    {transaction.status}
-                  </Badge>
+                    {pkg.popular && (
+                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                        <span className="px-4 py-1 bg-primary-500 text-white text-xs font-bold rounded-full shadow-lg">
+                          MOST POPULAR
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="text-center mb-6">
+                      <h3 className="text-xl font-bold text-gray-900 mb-2">{pkg.name}</h3>
+                      <div className="flex items-baseline justify-center gap-1">
+                        <span className="text-4xl font-bold text-primary-600">${pkg.price}</span>
+                      </div>
+                      <p className="text-sm text-gray-500 mt-1">One-time payment</p>
+                    </div>
+
+                    <div className="space-y-3 mb-6">
+                      {pkg.features.map((feature, index) => (
+                        <div key={index} className="flex items-center gap-3">
+                          <div className="w-5 h-5 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <CheckIcon className="w-3 h-3 text-primary-600" />
+                          </div>
+                          <span className="text-sm text-gray-700">{feature}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {pkg.bonus && (
+                      <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-xl">
+                        <div className="flex items-center gap-2">
+                          <SparklesIcon className="w-5 h-5 text-purple-600" />
+                          <span className="text-sm font-bold text-purple-900">
+                            +{pkg.bonus} Bonus Credits!
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    <button
+                      onClick={() => handlePurchase(pkg.id)}
+                      disabled={selectedPackage === pkg.id}
+                      className={`w-full py-3 rounded-xl font-bold transition-all ${
+                        pkg.popular
+                          ? 'bg-primary-500 text-white hover:bg-primary-600 shadow-lg hover:shadow-xl'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      {selectedPackage === pkg.id ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Processing...
+                        </span>
+                      ) : (
+                        'Purchase Now'
+                      )}
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 flex items-start gap-3 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+                <div>
+                  <p className="text-sm font-semibold text-blue-900">Payment Integration Coming Soon</p>
+                  <p className="text-xs text-blue-700 mt-1">
+                    We're integrating Stripe payment processing. You'll be able to purchase credits securely very soon!
+                  </p>
                 </div>
               </div>
-            ))}
-          </div>
-        </PanelCard>
+            </div>
 
-        {/* Payment Methods */}
-        <PanelCard
-          title="Payment Methods"
-          subtitle="Manage your payment methods"
-          action={
-            <Button variant="outline" size="sm">
-              Add Method
-            </Button>
-          }
-        >
-          <div className="text-center py-8 text-gray-500">
-            No payment methods added yet
+            {/* Transaction History */}
+            <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-gray-50/50 to-white/50">
+                <h2 className="text-xl font-bold text-gray-900">Transaction History</h2>
+                <p className="text-xs text-gray-500 mt-1">Your recent credit transactions</p>
+              </div>
+
+              <div className="p-6">
+                {isLoadingHistory ? (
+                  <div className="text-center py-12">
+                    <div className="w-12 h-12 border-4 border-primary-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-sm text-gray-600">Loading transactions...</p>
+                  </div>
+                ) : history.length === 0 ? (
+                  <div className="text-center py-12">
+                    <ClockIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-900 font-semibold">No transactions yet</p>
+                    <p className="text-gray-500 text-sm mt-1">Your transaction history will appear here</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {history.map((transaction) => (
+                      <div
+                        key={transaction.id}
+                        className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200 hover:border-primary-200 hover:shadow-md transition-all"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${getTypeColor(transaction.type)}`}>
+                            {getTypeIcon(transaction.type)}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900">{transaction.reason}</p>
+                            <p className="text-xs text-gray-500">{formatDate(transaction.createdAt)}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className={`text-lg font-bold ${
+                            transaction.type === 'SPEND' ? 'text-danger-600' : 'text-success-600'
+                          }`}>
+                            {transaction.type === 'SPEND' ? '-' : '+'}{Math.abs(transaction.amount)}
+                          </p>
+                          <p className="text-xs text-gray-500">{transaction.type}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Usage Information */}
+            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-200">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">How Credits Work</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="flex gap-3">
+                  <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span className="text-lg font-bold text-primary-600">1</span>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900 text-sm">Purchase Credits</p>
+                    <p className="text-xs text-gray-600 mt-1">
+                      Buy credit packages based on your usage needs
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span className="text-lg font-bold text-primary-600">2</span>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900 text-sm">Use for Bots</p>
+                    <p className="text-xs text-gray-600 mt-1">
+                      Credits are consumed when your bots are active
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span className="text-lg font-bold text-primary-600">3</span>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900 text-sm">Track Usage</p>
+                    <p className="text-xs text-gray-600 mt-1">
+                      Monitor your credit usage in real-time
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        </PanelCard>
+        </div>
       </div>
     </DashboardLayout>
   );
