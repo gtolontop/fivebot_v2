@@ -52,8 +52,32 @@ export default function SettingsBillingPage() {
             >
               Profile
             </button>
+            <button
+              onClick={() => router.push('/settings/account')}
+              className="w-full text-left px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors"
+            >
+              Account
+            </button>
+            <button
+              onClick={() => router.push('/settings/privacy')}
+              className="w-full text-left px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors"
+            >
+              Privacy
+            </button>
             <button className="w-full text-left px-4 py-2.5 rounded-lg bg-gray-800 text-white font-medium">
               Billing
+            </button>
+            <button
+              onClick={() => router.push('/settings/usage')}
+              className="w-full text-left px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors"
+            >
+              Usage
+            </button>
+            <button
+              onClick={() => router.push('/settings/connectors')}
+              className="w-full text-left px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors"
+            >
+              Connectors
             </button>
           </div>
 
