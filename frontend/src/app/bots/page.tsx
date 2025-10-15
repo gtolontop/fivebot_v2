@@ -31,6 +31,8 @@ interface Bot {
   isActive: boolean;
   createdAt: string;
   clientId?: string;
+  avatar?: string;
+  banner?: string;
 }
 
 export default function BotsPage() {
@@ -285,66 +287,87 @@ export default function BotsPage() {
             {filteredBots.map((bot) => (
               <div
                 key={bot.id}
-                className="group bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 p-6 hover:border-primary-300 hover:shadow-lg transition-all"
+                className="group bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 overflow-hidden hover:border-primary-300 hover:shadow-lg transition-all"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
+                {/* Banner */}
+                <div className="relative h-24 bg-gradient-to-br from-primary-400 to-primary-600 overflow-hidden">
+                  {bot.banner ? (
+                    <img src={bot.banner} alt={`${bot.name} banner`} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary-400 via-primary-500 to-primary-600"></div>
+                  )}
+                  <div className="absolute top-3 right-3">
+                    <span className={`px-2.5 py-1 text-xs font-semibold rounded-lg border backdrop-blur-sm ${getStatusColor(bot.status)}`}>
+                      {bot.status}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-6 pt-0">
+                  {/* Avatar & Info */}
+                  <div className="flex items-end gap-4 -mt-8 mb-4">
                     <div className="relative">
-                      <div className="w-14 h-14 bg-gradient-to-br from-primary-400 to-primary-600 rounded-xl flex items-center justify-center text-xl font-bold text-white shadow-sm">
-                        {bot.name[0].toUpperCase()}
-                      </div>
+                      {bot.avatar ? (
+                        <img
+                          src={bot.avatar}
+                          alt={bot.name}
+                          className="w-20 h-20 rounded-2xl border-4 border-white shadow-lg"
+                        />
+                      ) : (
+                        <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl border-4 border-white shadow-lg flex items-center justify-center text-2xl font-bold text-gray-600">
+                          {bot.name[0].toUpperCase()}
+                        </div>
+                      )}
                       {bot.status === 'ONLINE' && (
-                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-success-500 border-2 border-white rounded-full"></div>
+                        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-success-500 border-4 border-white rounded-full"></div>
                       )}
                     </div>
-                    <div>
+                    <div className="flex-1 pb-1">
                       <h3 className="text-lg font-bold text-gray-900">{bot.name}</h3>
                       <p className="text-xs text-gray-500">
-                        {new Date(bot.createdAt).toLocaleDateString()}
+                        Created {new Date(bot.createdAt).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
-                  <span className={`px-2.5 py-1 text-xs font-semibold rounded-lg border ${getStatusColor(bot.status)}`}>
-                    {bot.status}
-                  </span>
-                </div>
 
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center text-sm text-gray-600">
-                    <SignalIcon className="w-4 h-4 mr-2" />
-                    <span>{bot.status === 'ONLINE' ? 'Bot is online' : 'Bot is offline'}</span>
+                  {/* Actions */}
+                  <div className="flex gap-2">
+                    <Link
+                      href={`/bots/${bot.id}`}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-lg hover:bg-primary-700 transition-colors"
+                    >
+                      <Cog6ToothIcon className="w-4 h-4" />
+                      Manage
+                    </Link>
+                    <Link
+                      href={`/bots/${bot.id}/analytics`}
+                      className="flex items-center justify-center px-3 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                      title="Analytics"
+                    >
+                      <ChartBarIcon className="w-4 h-4 text-gray-600" />
+                    </Link>
+                    {bot.status === 'OFFLINE' ? (
+                      <button
+                        onClick={() => handleAction(bot.id, 'start')}
+                        className="flex items-center justify-center px-3 py-2.5 bg-success-600 text-white rounded-lg hover:bg-success-700 transition-colors group"
+                        title="Start bot"
+                      >
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd"/>
+                        </svg>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleAction(bot.id, 'stop')}
+                        className="flex items-center justify-center px-3 py-2.5 bg-danger-600 text-white rounded-lg hover:bg-danger-700 transition-colors group"
+                        title="Stop bot"
+                      >
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clipRule="evenodd"/>
+                        </svg>
+                      </button>
+                    )}
                   </div>
-                </div>
-
-                <div className="flex gap-2 pt-4 border-t border-gray-200">
-                  <Link
-                    href={`/bots/${bot.id}`}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-lg hover:bg-primary-700 transition-colors"
-                  >
-                    <Cog6ToothIcon className="w-4 h-4" />
-                    Manage
-                  </Link>
-                  <Link
-                    href={`/bots/${bot.id}/analytics`}
-                    className="flex items-center justify-center px-3 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    <ChartBarIcon className="w-4 h-4 text-gray-600" />
-                  </Link>
-                  {bot.status === 'OFFLINE' ? (
-                    <button
-                      onClick={() => handleAction(bot.id, 'start')}
-                      className="flex items-center justify-center px-3 py-2.5 bg-success-600 text-white rounded-lg hover:bg-success-700 transition-colors"
-                    >
-                      <PlayIcon className="w-4 h-4" />
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => handleAction(bot.id, 'stop')}
-                      className="flex items-center justify-center px-3 py-2.5 bg-danger-600 text-white rounded-lg hover:bg-danger-700 transition-colors"
-                    >
-                      <StopIcon className="w-4 h-4" />
-                    </button>
-                  )}
                 </div>
               </div>
             ))}
