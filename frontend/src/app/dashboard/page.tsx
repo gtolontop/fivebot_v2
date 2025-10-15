@@ -242,56 +242,59 @@ export default function DashboardPage() {
         {/* Pending Invitations */}
         <PendingInvitations onAccept={fetchDashboardData} />
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <CubeIcon className="w-5 h-5 text-blue-600" />
+        {/* System Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="group bg-white rounded-xl border border-gray-200 p-5 hover:border-primary-300 hover:shadow-md transition-all">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-11 h-11 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <CubeIcon className="w-6 h-6 text-blue-600" />
               </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalBots}</p>
-                <p className="text-xs text-gray-600">Total Bots</p>
-              </div>
+              <Link href="/bots" className="text-primary-500 hover:text-primary-600 transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
             </div>
+            <p className="text-3xl font-bold text-gray-900 mb-1">{stats.totalBots}</p>
+            <p className="text-sm text-gray-600">Total Bots</p>
           </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                <CheckCircleIcon className="w-5 h-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-green-600">{stats.activeBots}</p>
-                <p className="text-xs text-gray-600">Online Now</p>
+          <div className="group bg-white rounded-xl border border-gray-200 p-5 hover:border-green-300 hover:shadow-md transition-all">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-11 h-11 bg-gradient-to-br from-green-50 to-green-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform relative">
+                <CheckCircleIcon className="w-6 h-6 text-green-600" />
+                {stats.activeBots > 0 && <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></div>}
               </div>
             </div>
+            <p className="text-3xl font-bold text-green-600 mb-1">{stats.activeBots}</p>
+            <p className="text-sm text-gray-600">Online Now</p>
           </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+          <div className="group bg-white rounded-xl border border-gray-200 p-5 hover:border-purple-300 hover:shadow-md transition-all">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-11 h-11 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <svg className="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M10 3.5a1.5 1.5 0 013 0V4a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-.5a1.5 1.5 0 000 3h.5a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-.5a1.5 1.5 0 00-3 0v.5a1 1 0 01-1 1H6a1 1 0 01-1-1v-3a1 1 0 00-1-1h-.5a1.5 1.5 0 010-3H4a1 1 0 001-1V6a1 1 0 011-1h3a1 1 0 001-1v-.5z"/>
                 </svg>
               </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">-</p>
-                <p className="text-xs text-gray-600">Active Modules</p>
-              </div>
+              <Link href="/modules" className="text-primary-500 hover:text-primary-600 transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
             </div>
+            <p className="text-3xl font-bold text-gray-900 mb-1">-</p>
+            <p className="text-sm text-gray-600">Active Modules</p>
           </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                <ArrowTrendingUpIcon className="w-5 h-5 text-orange-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{uptimePercent}%</p>
-                <p className="text-xs text-gray-600">Avg Uptime</p>
+          <div className="group bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl p-5 text-white shadow-lg hover:shadow-xl transition-all">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <ArrowTrendingUpIcon className="w-6 h-6 text-white" />
               </div>
             </div>
+            <p className="text-3xl font-bold mb-1">{uptimePercent}%</p>
+            <p className="text-sm text-primary-100">System Uptime</p>
           </div>
         </div>
 
