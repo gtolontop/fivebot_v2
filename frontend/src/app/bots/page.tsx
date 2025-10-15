@@ -88,20 +88,46 @@ export default function BotsPage() {
     try {
       switch (action) {
         case 'start':
+          // Optimistic update - set status to STARTING immediately
+          setBots(prevBots =>
+            prevBots.map(bot =>
+              bot.id === botId ? { ...bot, status: 'STARTING' } : bot
+            )
+          );
+
           await botsAPI.start(botId);
-          toast.success('Bot started successfully');
-          await fetchBots();
+          toast.success('Bot is starting...');
+
+          // Poll for status update
+          pollBotStatus(botId);
           break;
+
         case 'stop':
+          // Optimistic update
+          setBots(prevBots =>
+            prevBots.map(bot =>
+              bot.id === botId ? { ...bot, status: 'STOPPING' } : bot
+            )
+          );
+
           await botsAPI.stop(botId);
-          toast.success('Bot stopped successfully');
-          await fetchBots();
+          toast.success('Bot stopped');
+
+          // Update to OFFLINE after a short delay
+          setTimeout(() => {
+            setBots(prevBots =>
+              prevBots.map(bot =>
+                bot.id === botId ? { ...bot, status: 'OFFLINE' } : bot
+              )
+            );
+          }, 1000);
           break;
+
         case 'delete':
           if (confirm('Are you sure you want to delete this bot? This action cannot be undone.')) {
             await botsAPI.delete(botId);
             toast.success('Bot deleted successfully');
-            await fetchBots();
+            setBots(prevBots => prevBots.filter(bot => bot.id !== botId));
           }
           break;
       }
@@ -109,7 +135,43 @@ export default function BotsPage() {
       const errorMessage = error.response?.data?.message || error.message || 'Action failed';
       toast.error(errorMessage);
       console.error(`Error executing ${action}:`, error);
+      // Revert optimistic update on error
+      await fetchBots();
     }
+  };
+
+  const pollBotStatus = (botId: string) => {
+    let attempts = 0;
+    const maxAttempts = 20; // 20 seconds max
+
+    const interval = setInterval(async () => {
+      attempts++;
+
+      try {
+        const response = await botsAPI.getStatus(botId);
+        const status = response.data.status;
+
+        // Update bot status
+        setBots(prevBots =>
+          prevBots.map(bot =>
+            bot.id === botId ? { ...bot, status } : bot
+          )
+        );
+
+        // Stop polling if bot is ONLINE or ERROR, or max attempts reached
+        if (status === 'ONLINE' || status === 'ERROR' || attempts >= maxAttempts) {
+          clearInterval(interval);
+          if (status === 'ONLINE') {
+            toast.success('Bot is now online!');
+          }
+        }
+      } catch (error) {
+        console.error('Error polling bot status:', error);
+        if (attempts >= maxAttempts) {
+          clearInterval(interval);
+        }
+      }
+    }, 1000); // Check every second
   };
 
   const getStatusColor = (status: string) => {
