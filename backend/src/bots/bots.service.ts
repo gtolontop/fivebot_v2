@@ -270,6 +270,9 @@ export class BotsService {
       }
     });
 
+    // REFRESH ASSETS IMMEDIATELY BEFORE RETURNING
+    await this.refreshAllBotsAssetsSync(bots);
+
     // Auto-sync any bots that might be out of sync (but don't await to avoid slowing the response)
     this.autoSyncBotsInBackground(bots);
 
