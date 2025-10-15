@@ -624,6 +624,19 @@ export default function BotDetailPage() {
               <span className="text-gray-400 font-mono text-sm">Console</span>
             </div>
             <div className="flex items-center gap-2">
+              {!autoScroll && (
+                <button
+                  onClick={() => {
+                    setAutoScroll(true);
+                    if (consoleRef.current) {
+                      consoleRef.current.scrollTop = consoleRef.current.scrollHeight;
+                    }
+                  }}
+                  className="px-2 py-1 text-xs font-medium text-yellow-700 bg-yellow-100 rounded-md hover:bg-yellow-200 transition-colors mr-2"
+                >
+                  Resume scroll
+                </button>
+              )}
               {bot.status === 'ONLINE' ? (
                 <div className="flex items-center gap-2 px-3 py-1 bg-success-900/30 border border-success-500/30 rounded-lg">
                   <div className="w-2 h-2 bg-success-500 rounded-full animate-pulse"></div>
@@ -639,7 +652,11 @@ export default function BotDetailPage() {
           </div>
 
           <div className="relative">
-            <div className="h-96 overflow-y-auto font-mono text-sm p-4 space-y-1 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
+            <div
+              ref={consoleRef}
+              onScroll={handleConsoleScroll}
+              className="h-96 overflow-y-auto font-mono text-sm p-4 space-y-0.5 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900"
+            >
               {logs.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-gray-500">
                   {bot.status === 'ONLINE' ? (
@@ -660,12 +677,41 @@ export default function BotDetailPage() {
                   )}
                 </div>
               ) : (
-                logs.map((log, index) => (
-                  <div key={index} className="flex gap-3 hover:bg-gray-800/50 px-2 py-0.5 rounded transition-colors">
-                    <span className="text-gray-600 select-none">{String(index + 1).padStart(3, '0')}</span>
-                    <span className="text-gray-300 flex-1 break-all">{log}</span>
-                  </div>
-                ))
+                logs.slice(-200).map((log, index) => {
+                  const logMatch = log.match(/\[(\d{2}:\d{2}:\d{2})\] \[([^\]]+)\]: (.*)/);
+
+                  if (logMatch) {
+                    const [, time, prefix, message] = logMatch;
+
+                    let prefixColor = 'text-gray-400';
+                    if (prefix.includes('bot@')) prefixColor = 'text-blue-400';
+                    else if (prefix.includes('container@')) prefixColor = 'text-yellow-400';
+                    else if (prefix.includes('system@')) prefixColor = 'text-green-400';
+
+                    const messageParts = parseAnsiColors(message);
+
+                    return (
+                      <div key={index} className="py-0.5 hover:bg-gray-800/50 -mx-2 px-2 rounded transition-colors">
+                        <span className="text-gray-500">[{time}]</span>
+                        <span className={`${prefixColor} ml-2`}>[{prefix}]:</span>
+                        <span className="ml-2">
+                          {messageParts.map((part, i) => (
+                            <span key={i} className={part.color}>{part.text}</span>
+                          ))}
+                        </span>
+                      </div>
+                    );
+                  }
+
+                  const parts = parseAnsiColors(log);
+                  return (
+                    <div key={index} className="py-0.5 hover:bg-gray-800/50 -mx-2 px-2 rounded transition-colors">
+                      {parts.map((part, i) => (
+                        <span key={i} className={part.color}>{part.text}</span>
+                      ))}
+                    </div>
+                  );
+                })
               )}
             </div>
 
