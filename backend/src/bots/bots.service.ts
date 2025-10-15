@@ -118,15 +118,15 @@ export class BotsService {
     let avatarUrl = null;
     if (tokenValidation.user?.avatar) {
       // Bot has a user avatar
-      avatarUrl = `https://cdn.discordapp.com/avatars/${tokenValidation.user.id}/${tokenValidation.user.avatar}.png?size=256`;
+      avatarUrl = `https://cdn.discordapp.com/avatars/${tokenValidation.user.id}/${tokenValidation.user.avatar}.webp?size=256`;
     } else if (tokenValidation.application?.icon) {
       // Fallback to application icon
-      avatarUrl = `https://cdn.discordapp.com/app-icons/${tokenValidation.application.id}/${tokenValidation.application.icon}.png?size=256`;
+      avatarUrl = `https://cdn.discordapp.com/app-icons/${tokenValidation.application.id}/${tokenValidation.application.icon}.webp?size=256`;
     }
 
     // Build banner URL from Discord CDN
     const bannerUrl = tokenValidation.user?.banner
-      ? `https://cdn.discordapp.com/banners/${tokenValidation.user.id}/${tokenValidation.user.banner}.png?size=512`
+      ? `https://cdn.discordapp.com/banners/${tokenValidation.user.id}/${tokenValidation.user.banner}.webp?size=512`
       : null;
 
     // Create bot record
@@ -1236,15 +1236,15 @@ export class BotsService {
     let avatarUrl = null;
     if (tokenValidation.user?.avatar) {
       // Bot has a user avatar
-      avatarUrl = `https://cdn.discordapp.com/avatars/${tokenValidation.user.id}/${tokenValidation.user.avatar}.png?size=256`;
+      avatarUrl = `https://cdn.discordapp.com/avatars/${tokenValidation.user.id}/${tokenValidation.user.avatar}.webp?size=256`;
     } else if (tokenValidation.application?.icon) {
       // Fallback to application icon
-      avatarUrl = `https://cdn.discordapp.com/app-icons/${tokenValidation.application.id}/${tokenValidation.application.icon}.png?size=256`;
+      avatarUrl = `https://cdn.discordapp.com/app-icons/${tokenValidation.application.id}/${tokenValidation.application.icon}.webp?size=256`;
     }
 
     // Build banner URL from Discord CDN
     const bannerUrl = tokenValidation.user?.banner
-      ? `https://cdn.discordapp.com/banners/${tokenValidation.user.id}/${tokenValidation.user.banner}.png?size=512`
+      ? `https://cdn.discordapp.com/banners/${tokenValidation.user.id}/${tokenValidation.user.banner}.webp?size=512`
       : null;
 
     // Update bot with new avatar and banner
