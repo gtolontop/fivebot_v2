@@ -136,6 +136,24 @@ export class DiscordService {
         };
       }
 
+      // Get full user data including banner by fetching specific user endpoint
+      let fullUser = user;
+      try {
+        const fullUserResponse = await axios.get<DiscordUser>(
+          `${this.baseURL}/users/${user.id}`,
+          {
+            headers: {
+              Authorization: `Bot ${token}`,
+            },
+            timeout: 10000,
+          },
+        );
+        fullUser = fullUserResponse.data;
+        console.log('Discord API: Full user data with banner obtained');
+      } catch (bannerError) {
+        console.log('Discord API: Could not fetch banner, using basic user data');
+      }
+
       // Get application info
       const appResponse = await axios.get<DiscordApplication>(
         `${this.baseURL}/applications/@me`,
@@ -149,7 +167,7 @@ export class DiscordService {
 
       return {
         isValid: true,
-        user,
+        user: fullUser,
         application: appResponse.data,
       };
     } catch (error) {
