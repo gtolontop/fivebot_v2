@@ -172,21 +172,27 @@ export default function BillingPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Sidebar Navigation */}
-          <div className="space-y-2">
+          <div className="space-y-1">
             <button
               onClick={() => router.push('/settings')}
-              className="w-full text-left px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors"
+              className="w-full text-left px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors"
             >
-              <div className="flex items-center gap-2">
-                <UserCircleIcon className="w-5 h-5" />
-                <span>Profile</span>
-              </div>
+              Profile
             </button>
-            <button className="w-full text-left px-4 py-2 rounded-lg bg-primary-50 text-primary-600 font-medium">
-              <div className="flex items-center gap-2">
-                <CreditCardIcon className="w-5 h-5" />
-                <span>Billing</span>
-              </div>
+            <button className="w-full text-left px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors">
+              Account
+            </button>
+            <button className="w-full text-left px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors">
+              Privacy
+            </button>
+            <button className="w-full text-left px-4 py-2.5 rounded-lg bg-gray-800 text-white font-medium">
+              Billing
+            </button>
+            <button className="w-full text-left px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors">
+              Usage
+            </button>
+            <button className="w-full text-left px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors">
+              Connectors
             </button>
           </div>
 
