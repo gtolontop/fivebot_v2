@@ -7,8 +7,7 @@ import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
 import Cookies from 'js-cookie';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Card, StatCard, Badge, Button } from '@/components/ui';
-import { designTokens } from '@/styles/design-tokens';
+import Link from 'next/link';
 import {
   PlayIcon,
   StopIcon,
@@ -16,7 +15,11 @@ import {
   LinkIcon,
   ChartBarIcon,
   Cog6ToothIcon,
-  CommandLineIcon,
+  ServerIcon,
+  ClockIcon,
+  CpuChipIcon,
+  SignalIcon,
+  ArrowTrendingUpIcon,
 } from '@heroicons/react/24/outline';
 
 interface Bot {
@@ -42,13 +45,10 @@ export default function BotDetailPage() {
   const [botLoading, setBotLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [guilds, setGuilds] = useState<any[]>([]);
-  const [logs, setLogs] = useState<string[]>([]);
   const [realTimeStats, setRealTimeStats] = useState({
     cpuUsage: 0,
     memoryUsage: 0,
     uptime: 0,
-    networkDownload: 0,
-    networkUpload: 0,
   });
 
   useEffect(() => {
@@ -70,8 +70,6 @@ export default function BotDetailPage() {
         cpuUsage: 0,
         memoryUsage: 0,
         uptime: 0,
-        networkDownload: 0,
-        networkUpload: 0,
       });
       return;
     }
@@ -93,8 +91,6 @@ export default function BotDetailPage() {
               cpuUsage: data.metrics.cpuUsage || 0,
               memoryUsage: data.metrics.memoryUsage || 0,
               uptime: data.metrics.uptime || 0,
-              networkDownload: data.metrics.networkDownload || 0,
-              networkUpload: data.metrics.networkUpload || 0,
             });
           }
         }
@@ -107,40 +103,6 @@ export default function BotDetailPage() {
     const metricsInterval = setInterval(fetchMetrics, 3000);
 
     return () => clearInterval(metricsInterval);
-  }, [bot?.status, botId]);
-
-  // Polling for logs
-  useEffect(() => {
-    if (!bot || bot.status !== 'ONLINE') {
-      setLogs([]);
-      return;
-    }
-
-    const pollLogs = async () => {
-      try {
-        const token = Cookies.get('token');
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/bots/${botId}/logs/live`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.logs && data.logs.length > 0) {
-            setLogs(data.logs.slice(-50)); // Keep last 50 logs
-          }
-        }
-      } catch (error) {
-        console.log('Could not fetch bot logs:', error);
-      }
-    };
-
-    pollLogs();
-    const interval = setInterval(pollLogs, 3000);
-
-    return () => clearInterval(interval);
   }, [bot?.status, botId]);
 
   // Auto-refresh status
@@ -167,7 +129,6 @@ export default function BotDetailPage() {
           const guildsResponse = await botsAPI.getGuilds(botId);
           setGuilds(guildsResponse.data || []);
         } catch (error) {
-          console.log('Could not fetch guilds data:', error);
           setGuilds([]);
         }
       } else {
@@ -184,43 +145,80 @@ export default function BotDetailPage() {
 
   const handleStart = async () => {
     setActionLoading('start');
+    setBot(prev => prev ? { ...prev, status: 'STARTING' } : null);
 
     try {
       await botsAPI.start(botId);
       toast.success('Bot is starting...');
-      await fetchBot();
+      pollBotStatus();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Error starting bot');
+      await fetchBot();
+    } finally {
       setActionLoading(null);
     }
   };
 
   const handleStop = async () => {
     setActionLoading('stop');
+    setBot(prev => prev ? { ...prev, status: 'STOPPING' } : null);
 
     try {
       await botsAPI.stop(botId);
-      toast.success('Bot stopped successfully');
-      await fetchBot();
+      toast.success('Bot stopped');
+      setTimeout(() => {
+        setBot(prev => prev ? { ...prev, status: 'OFFLINE' } : null);
+        setActionLoading(null);
+      }, 1000);
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Error stopping bot');
-    } finally {
+      await fetchBot();
       setActionLoading(null);
     }
   };
 
   const handleRestart = async () => {
     setActionLoading('restart');
+    setBot(prev => prev ? { ...prev, status: 'STARTING' } : null);
 
     try {
       await botsAPI.start(botId, { force: true });
       toast.success('Bot restarting...');
-      await fetchBot();
+      pollBotStatus();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Error restarting bot');
+      await fetchBot();
     } finally {
       setActionLoading(null);
     }
+  };
+
+  const pollBotStatus = () => {
+    let attempts = 0;
+    const maxAttempts = 20;
+
+    const interval = setInterval(async () => {
+      attempts++;
+
+      try {
+        const response = await botsAPI.getStatus(botId);
+        const status = response.data.status;
+
+        setBot(prev => prev ? { ...prev, status } : null);
+
+        if (status === 'ONLINE' || status === 'ERROR' || attempts >= maxAttempts) {
+          clearInterval(interval);
+          if (status === 'ONLINE') {
+            toast.success('Bot is now online!');
+            fetchBot(); // Refresh to get guilds
+          }
+        }
+      } catch (error) {
+        if (attempts >= maxAttempts) {
+          clearInterval(interval);
+        }
+      }
+    }, 1000);
   };
 
   const generateInviteLink = async () => {
@@ -250,10 +248,20 @@ export default function BotDetailPage() {
     return parts.length > 0 ? parts.join(' ') : '< 1m';
   };
 
-  const formatBytes = (bytes: number) => {
-    if (bytes < 1024) return `${bytes.toFixed(1)} B/s`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB/s`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB/s`;
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'ONLINE':
+        return 'text-success-600 bg-success-50 border-success-200';
+      case 'OFFLINE':
+        return 'text-gray-600 bg-gray-50 border-gray-200';
+      case 'STARTING':
+      case 'STOPPING':
+        return 'text-warning-600 bg-warning-50 border-warning-200';
+      case 'ERROR':
+        return 'text-danger-600 bg-danger-50 border-danger-200';
+      default:
+        return 'text-gray-600 bg-gray-50 border-gray-200';
+    }
   };
 
   if (loading || botLoading) {
@@ -261,8 +269,8 @@ export default function BotDetailPage() {
       <DashboardLayout>
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
-            <div className="w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading bot details...</p>
+            <div className="w-16 h-16 border-4 border-primary-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600 font-medium">Loading bot details...</p>
           </div>
         </div>
       </DashboardLayout>
@@ -271,271 +279,259 @@ export default function BotDetailPage() {
 
   if (!user || !bot) return null;
 
-  // Use Discord CDN for avatar if clientId exists
-  const botAvatar = bot.clientId
-    ? `https://cdn.discordapp.com/avatars/${bot.clientId}/${bot.avatar || 'default'}.png?size=256`
-    : `https://api.dicebear.com/7.x/bottts/svg?seed=${bot.name}`;
-
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            {/* Avatar */}
-            <div className="relative">
-              <img
-                src={botAvatar}
-                alt={bot.name}
-                className="w-20 h-20 rounded-xl border-2 border-gray-200 bg-white"
-              />
-              <div className="absolute -bottom-1 -right-1">
-                <Badge status={bot.status as any} dot size="sm">
+      <div className="max-w-[1600px] mx-auto space-y-6">
+        {/* Header with Banner */}
+        <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 overflow-hidden">
+          {/* Banner */}
+          <div className="relative h-32 bg-gradient-to-br from-primary-400 to-primary-600 overflow-hidden">
+            {bot.banner ? (
+              <img src={bot.banner} alt={`${bot.name} banner`} className="w-full h-full object-cover" />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-primary-400 via-primary-500 to-primary-600"></div>
+            )}
+          </div>
+
+          {/* Header Content */}
+          <div className="p-6 pt-0">
+            <div className="flex items-end justify-between -mt-12 mb-6">
+              {/* Avatar & Name */}
+              <div className="flex items-end gap-4">
+                <div className="relative">
+                  {bot.avatar ? (
+                    <img
+                      src={bot.avatar}
+                      alt={bot.name}
+                      className="w-24 h-24 rounded-2xl border-4 border-white shadow-lg"
+                    />
+                  ) : (
+                    <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl border-4 border-white shadow-lg flex items-center justify-center text-3xl font-bold text-gray-600">
+                      {bot.name[0].toUpperCase()}
+                    </div>
+                  )}
+                  {bot.status === 'ONLINE' && (
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-success-500 border-4 border-white rounded-full"></div>
+                  )}
+                </div>
+
+                <div className="pb-2">
+                  <h1 className="text-2xl font-bold text-gray-900">{bot.name}</h1>
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    Created {new Date(bot.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+
+              {/* Status Badge */}
+              <div className="pb-2">
+                <span className={`px-3 py-1.5 text-sm font-semibold rounded-lg border ${getStatusColor(bot.status)}`}>
                   {bot.status}
-                </Badge>
+                </span>
               </div>
             </div>
 
-            {/* Bot Name & Info */}
-            <div>
-              <h1 className={designTokens.typography.h1 + ' text-gray-900'}>{bot.name}</h1>
-              <p className="text-gray-500 text-sm">
-                Created {new Date(bot.createdAt).toLocaleDateString()}
+            {/* Action Buttons */}
+            <div className="flex items-center gap-3">
+              {(bot.status === 'OFFLINE' || bot.status === 'ERROR') && (
+                <button
+                  onClick={handleStart}
+                  disabled={actionLoading !== null}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-success-600 text-white font-semibold rounded-lg hover:bg-success-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <PlayIcon className="w-5 h-5" />
+                  Start Bot
+                </button>
+              )}
+
+              {bot.status === 'ONLINE' && (
+                <>
+                  <button
+                    onClick={handleRestart}
+                    disabled={actionLoading !== null}
+                    className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  >
+                    <ArrowPathIcon className="w-5 h-5" />
+                    Restart
+                  </button>
+                  <button
+                    onClick={handleStop}
+                    disabled={actionLoading !== null}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-danger-600 text-white font-semibold rounded-lg hover:bg-danger-700 transition-colors disabled:opacity-50"
+                  >
+                    <StopIcon className="w-5 h-5" />
+                    Stop
+                  </button>
+                </>
+              )}
+
+              {(bot.status === 'STARTING' || bot.status === 'STOPPING') && (
+                <button
+                  disabled
+                  className="flex items-center gap-2 px-6 py-2.5 bg-warning-600 text-white font-semibold rounded-lg opacity-75 cursor-not-allowed"
+                >
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  {bot.status === 'STARTING' ? 'Starting...' : 'Stopping...'}
+                </button>
+              )}
+
+              <button
+                onClick={generateInviteLink}
+                className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors ml-auto"
+              >
+                <LinkIcon className="w-5 h-5" />
+                Invite Link
+              </button>
+
+              <Link
+                href={`/bots/${botId}/config`}
+                className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors"
+              >
+                <Cog6ToothIcon className="w-5 h-5" />
+                Config
+              </Link>
+
+              <Link
+                href={`/bots/${botId}/analytics`}
+                className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <ChartBarIcon className="w-5 h-5" />
+                Analytics
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Servers */}
+          <div className="group bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-5 border border-blue-100 hover:border-blue-300 transition-all hover:shadow-lg">
+            <div className="flex items-start justify-between mb-4">
+              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                <ServerIcon className="w-6 h-6 text-blue-600" />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-3xl font-bold text-blue-600">
+                {bot.status === 'ONLINE' ? guilds.length : 0}
+              </div>
+              <p className="text-sm font-semibold text-gray-900">Servers</p>
+              <p className="text-xs text-gray-500">
+                {bot.status === 'ONLINE' ? 'Connected' : 'Offline'}
               </p>
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center space-x-3">
-                {(bot.status === 'OFFLINE' || bot.status === 'ERROR') && (
-                  <Button
-                    variant="success"
-                    onClick={handleStart}
-                    loading={actionLoading === 'start'}
-                    disabled={actionLoading !== null}
-                    icon={<PlayIcon className="w-4 h-4" />}
-                  >
-                    Start Bot
-                  </Button>
-                )}
-
-                {bot.status === 'ONLINE' && (
-                  <>
-                    <Button
-                      variant="secondary"
-                      onClick={handleRestart}
-                      loading={actionLoading === 'restart'}
-                      disabled={actionLoading !== null}
-                      icon={<ArrowPathIcon className="w-4 h-4" />}
-                    >
-                      Restart
-                    </Button>
-                    <Button
-                      variant="danger"
-                      onClick={handleStop}
-                      loading={actionLoading === 'stop'}
-                      disabled={actionLoading !== null}
-                      icon={<StopIcon className="w-4 h-4" />}
-                    >
-                      Stop
-                    </Button>
-                  </>
-                )}
-
-                {bot.status === 'STARTING' && (
-                  <Button variant="secondary" disabled loading>
-                    Starting...
-                  </Button>
-                )}
-
-                {bot.status === 'STOPPING' && (
-                  <Button variant="secondary" disabled loading>
-                    Stopping...
-                  </Button>
-                )}
+          {/* Uptime */}
+          <div className="group bg-gradient-to-br from-success-50 to-green-50 rounded-xl p-5 border border-success-100 hover:border-success-300 transition-all hover:shadow-lg">
+            <div className="flex items-start justify-between mb-4">
+              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                <ClockIcon className="w-6 h-6 text-success-600" />
               </div>
-        </div>
-
-        {/* Quick Navigation */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Button
-            variant="outline"
-            fullWidth
-            onClick={() => router.push(`/bots/${botId}/invite`)}
-            icon={<LinkIcon className="w-5 h-5" />}
-          >
-            Invite Link
-          </Button>
-          <Button
-            variant="outline"
-            fullWidth
-            onClick={() => router.push(`/bots/${botId}/analytics`)}
-            icon={<ChartBarIcon className="w-5 h-5" />}
-          >
-            Analytics
-          </Button>
-          <Button
-            variant="outline"
-            fullWidth
-            onClick={() => router.push(`/bots/${botId}/config`)}
-            icon={<Cog6ToothIcon className="w-5 h-5" />}
-          >
-            Configuration
-          </Button>
-          <Button
-            variant="outline"
-            fullWidth
-            onClick={generateInviteLink}
-            icon={<LinkIcon className="w-5 h-5" />}
-          >
-            Invite Link
-          </Button>
-        </div>
-
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <StatCard
-            label="Servers"
-            value={bot.status === 'ONLINE' ? guilds.length : 0}
-            icon={
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
-              </svg>
-            }
-            color="blue"
-          />
-
-          <StatCard
-            label="Uptime"
-            value={bot.status === 'ONLINE' ? formatUptime(realTimeStats.uptime) : 'Offline'}
-            icon={
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd"/>
-              </svg>
-            }
-            color="green"
-          />
-
-          <StatCard
-            label="CPU Usage"
-            value={bot.status === 'ONLINE' ? `${realTimeStats.cpuUsage.toFixed(1)}%` : '0%'}
-            icon={
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M13 7H7v6h6V7z"/>
-                <path fillRule="evenodd" d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z" clipRule="evenodd"/>
-              </svg>
-            }
-            color="orange"
-          />
-
-          <StatCard
-            label="Memory"
-            value={bot.status === 'ONLINE' ? `${realTimeStats.memoryUsage.toFixed(1)}%` : '0%'}
-            icon={
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z"/>
-                <path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z"/>
-                <path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z"/>
-              </svg>
-            }
-            color="purple"
-          />
-
-          <StatCard
-            label="Network"
-            value={bot.status === 'ONLINE' ? formatBytes(realTimeStats.networkDownload) : '0 B/s'}
-            sublabel={bot.status === 'ONLINE' ? `↑ ${formatBytes(realTimeStats.networkUpload)}` : undefined}
-            icon={
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clipRule="evenodd"/>
-              </svg>
-            }
-            color="green"
-          />
-        </div>
-
-        {/* Console Preview */}
-        {bot.status === 'ONLINE' && logs.length > 0 && (
-          <Card>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className={designTokens.typography.h2}>Console</h2>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => router.push(`/bots/${botId}/console`)}
-              >
-                View Full Console
-              </Button>
             </div>
-            <div className="bg-gray-900 rounded-lg p-4 h-64 overflow-y-auto font-mono text-xs">
-              {logs.map((log, index) => (
-                <div key={index} className="py-0.5 text-gray-300">
-                  {log}
+            <div className="space-y-1">
+              <div className="text-3xl font-bold text-success-600">
+                {bot.status === 'ONLINE' ? formatUptime(realTimeStats.uptime) : '—'}
+              </div>
+              <p className="text-sm font-semibold text-gray-900">Uptime</p>
+              <p className="text-xs text-gray-500">
+                {bot.status === 'ONLINE' ? 'Running' : 'Not running'}
+              </p>
+            </div>
+          </div>
+
+          {/* CPU */}
+          <div className="group bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-5 border border-orange-100 hover:border-orange-300 transition-all hover:shadow-lg">
+            <div className="flex items-start justify-between mb-4">
+              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                <CpuChipIcon className="w-6 h-6 text-orange-600" />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-3xl font-bold text-orange-600">
+                {bot.status === 'ONLINE' ? `${realTimeStats.cpuUsage.toFixed(1)}%` : '0%'}
+              </div>
+              <p className="text-sm font-semibold text-gray-900">CPU Usage</p>
+              <p className="text-xs text-gray-500">System resources</p>
+            </div>
+          </div>
+
+          {/* Memory */}
+          <div className="group bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-5 border border-purple-100 hover:border-purple-300 transition-all hover:shadow-lg">
+            <div className="flex items-start justify-between mb-4">
+              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                <SignalIcon className="w-6 h-6 text-purple-600" />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-3xl font-bold text-purple-600">
+                {bot.status === 'ONLINE' ? `${realTimeStats.memoryUsage.toFixed(1)}%` : '0%'}
+              </div>
+              <p className="text-sm font-semibold text-gray-900">Memory</p>
+              <p className="text-xs text-gray-500">RAM usage</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Servers List */}
+        {bot.status === 'ONLINE' && guilds.length > 0 && (
+          <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">Connected Servers</h2>
+                <p className="text-xs text-gray-500 mt-0.5">{guilds.length} servers total</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {guilds.slice(0, 6).map((guild) => (
+                <div
+                  key={guild.id}
+                  className="flex items-center gap-3 p-4 border border-gray-200 rounded-xl hover:border-primary-300 hover:bg-primary-50/30 transition-all"
+                >
+                  <div className="w-12 h-12 bg-gradient-to-br from-primary-400 to-primary-600 rounded-xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                    {guild.name[0].toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-900 truncate">{guild.name}</p>
+                    <p className="text-xs text-gray-500">
+                      {guild.memberCount.toLocaleString()} members
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
-          </Card>
+
+            {guilds.length > 6 && (
+              <div className="mt-4 text-center">
+                <button className="text-sm text-primary-600 hover:text-primary-700 font-medium">
+                  View all {guilds.length} servers →
+                </button>
+              </div>
+            )}
+          </div>
         )}
 
-        {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Servers List */}
-          <div className="lg:col-span-2">
-            <Card>
-              <h2 className={designTokens.typography.h2 + ' mb-4'}>
-                Servers ({guilds.length})
-              </h2>
+        {/* Bot Info */}
+        <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 p-6">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Bot Information</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Prefix</span>
+              <p className="text-lg font-bold text-gray-900 mt-1 font-mono">{bot.prefix}</p>
+            </div>
 
-              {guilds.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  {bot.status === 'ONLINE' ? 'No servers found' : 'Bot is offline'}
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {guilds.map((guild) => (
-                    <div
-                      key={guild.id}
-                      className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">
-                          {guild.name[0]}
-                        </div>
-                        <div>
-                          <p className="font-semibold text-gray-900">{guild.name}</p>
-                          <p className="text-sm text-gray-500">{guild.memberCount.toLocaleString()} members</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Card>
-          </div>
-
-          {/* Bot Information */}
-          <div className="space-y-6">
-            <Card>
-              <h2 className={designTokens.typography.h2 + ' mb-4'}>Information</h2>
-              <div className="space-y-4">
-                <div>
-                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Prefix</span>
-                  <p className="text-base font-semibold text-gray-900 mt-1 font-mono">{bot.prefix}</p>
-                </div>
-
-                {bot.clientId && (
-                  <div>
-                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Client ID</span>
-                    <p className="text-sm font-mono text-gray-900 mt-1 break-all">{bot.clientId}</p>
-                  </div>
-                )}
-
-                <div>
-                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Bot ID</span>
-                  <p className="text-sm font-mono text-gray-900 mt-1 break-all">{bot.id}</p>
-                </div>
+            {bot.clientId && (
+              <div>
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Client ID</span>
+                <p className="text-sm font-mono text-gray-900 mt-1 break-all">{bot.clientId}</p>
               </div>
-            </Card>
+            )}
+
+            <div>
+              <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Bot ID</span>
+              <p className="text-sm font-mono text-gray-900 mt-1 break-all">{bot.id}</p>
+            </div>
           </div>
         </div>
       </div>
