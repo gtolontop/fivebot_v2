@@ -108,6 +108,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (href === '/dashboard') {
       return pathname === href;
     }
+    // Exact match for /bots to avoid activating it when on /bots/create
+    if (href === '/bots') {
+      return pathname === '/bots';
+    }
     return pathname?.startsWith(href) ?? false;
   };
 
