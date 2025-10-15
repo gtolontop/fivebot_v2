@@ -290,47 +290,62 @@ export default function DashboardPage() {
           <div className="group bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl p-5 text-white shadow-lg hover:shadow-xl transition-all">
             <div className="flex items-center justify-between mb-3">
               <div className="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                <ArrowTrendingUpIcon className="w-6 h-6 text-white" />
+                <SparklesIcon className="w-6 h-6 text-white" />
               </div>
+              <Link href="/settings/billing" className="text-white/80 hover:text-white transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
             </div>
-            <p className="text-3xl font-bold mb-1">{uptimePercent}%</p>
-            <p className="text-sm text-primary-100">System Uptime</p>
+            <p className="text-3xl font-bold mb-1">{user.credits}</p>
+            <p className="text-sm text-primary-100">Credits Available</p>
           </div>
         </div>
 
-        {/* Main Content Grid */}
+        {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          {/* Recent Activity - 2 cols */}
-          <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm">
-            <div className="p-5 border-b border-gray-200 flex items-center justify-between">
+          {/* Activity Feed - 2 cols */}
+          <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="px-6 py-5 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-gray-50 to-white">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
-                <p className="text-xs text-gray-500 mt-0.5">Latest updates from your bots</p>
+                <h2 className="text-lg font-semibold text-gray-900">Activity Feed</h2>
+                <p className="text-xs text-gray-500 mt-0.5">Live updates from your bots</p>
               </div>
-              <Link href="/bots" className="text-sm font-medium text-primary-600 hover:text-primary-700">
-                View all →
+              <Link href="/bots" className="text-sm font-medium text-primary-500 hover:text-primary-600 transition-colors flex items-center gap-1">
+                View all
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
               </Link>
             </div>
-            <div className="p-5">
+            <div className="p-6">
               {recentActivity.length === 0 ? (
-                <div className="text-center py-12">
-                  <ClockIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500 text-sm">No recent activity</p>
-                  <p className="text-gray-400 text-xs mt-1">Your bot events will appear here</p>
+                <div className="text-center py-16">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <ClockIcon className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <p className="text-gray-900 font-medium">No activity yet</p>
+                  <p className="text-gray-500 text-sm mt-1">Bot events will appear here</p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {recentActivity.slice(0, 6).map((event) => (
+                <div className="space-y-4">
+                  {recentActivity.slice(0, 6).map((event, index) => (
                     <div
                       key={event.id}
-                      className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                      className="group flex items-start gap-4 p-4 rounded-xl border border-gray-100 hover:border-primary-200 hover:bg-primary-50/30 transition-all animate-fade-in"
+                      style={{ animationDelay: `${index * 50}ms` }}
                     >
-                      <div className="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                        {getActivityIcon(event.type)}
+                      <div className="relative flex-shrink-0">
+                        <div className="w-10 h-10 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                          {getActivityIcon(event.type)}
+                        </div>
+                        {index === 0 && <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white animate-pulse"></div>}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-gray-900 font-medium">{event.message}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">
+                        <p className="text-sm font-medium text-gray-900">{event.message}</p>
+                        <p className="text-xs text-gray-500 mt-1 flex items-center gap-1.5">
+                          <ClockIcon className="w-3.5 h-3.5" />
                           {formatRelativeTime(event.timestamp)}
                         </p>
                       </div>
@@ -341,98 +356,67 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Quick Links - 1 col */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-            <div className="p-5 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Quick Links</h2>
-              <p className="text-xs text-gray-500 mt-0.5">Manage your platform</p>
-            </div>
-            <div className="p-4 space-y-2">
-              <Link
-                href="/bots"
-                className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
-              >
-                <div className="w-9 h-9 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <CubeIcon className="w-5 h-5 text-blue-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-gray-900">All Bots</p>
-                  <p className="text-xs text-gray-500">Manage your bots</p>
-                </div>
-                <svg className="w-4 h-4 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-
-              <Link
-                href="/bots/create"
-                className="flex items-center gap-3 p-3 rounded-lg bg-primary-50 hover:bg-primary-100 transition-colors group"
-              >
-                <div className="w-9 h-9 bg-primary-600 rounded-lg flex items-center justify-center">
-                  <PlusIcon className="w-5 h-5 text-white" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-gray-900">Create Bot</p>
-                  <p className="text-xs text-gray-500">Add new bot</p>
-                </div>
-                <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-
-              <Link
-                href="/modules"
-                className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
-              >
-                <div className="w-9 h-9 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M10 3.5a1.5 1.5 0 013 0V4a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-.5a1.5 1.5 0 000 3h.5a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-.5a1.5 1.5 0 00-3 0v.5a1 1 0 01-1 1H6a1 1 0 01-1-1v-3a1 1 0 00-1-1h-.5a1.5 1.5 0 010-3H4a1 1 0 001-1V6a1 1 0 011-1h3a1 1 0 001-1v-.5z"/>
+          {/* Quick Actions - 1 col */}
+          <div className="space-y-6">
+            {/* Primary Actions */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+                <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
+                <p className="text-xs text-gray-500 mt-0.5">Fast access to key features</p>
+              </div>
+              <div className="p-4 space-y-3">
+                <Link
+                  href="/bots"
+                  className="group flex items-center gap-3 p-4 rounded-xl border border-gray-200 hover:border-primary-300 hover:bg-primary-50/50 transition-all"
+                >
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <CubeIcon className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-gray-900">Manage Bots</p>
+                    <p className="text-xs text-gray-500">View and control</p>
+                  </div>
+                  <svg className="w-5 h-5 text-gray-400 group-hover:text-primary-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-gray-900">Modules</p>
-                  <p className="text-xs text-gray-500">Browse features</p>
-                </div>
-                <svg className="w-4 h-4 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
+                </Link>
 
-              <Link
-                href="/modules/installed"
-                className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
-              >
-                <div className="w-9 h-9 bg-green-100 rounded-lg flex items-center justify-center">
-                  <CheckCircleIcon className="w-5 h-5 text-green-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-gray-900">Installed</p>
-                  <p className="text-xs text-gray-500">Your modules</p>
-                </div>
-                <svg className="w-4 h-4 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-
-              <Link
-                href="/settings"
-                className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
-              >
-                <div className="w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <Link
+                  href="/modules"
+                  className="group flex items-center gap-3 p-4 rounded-xl border border-gray-200 hover:border-purple-300 hover:bg-purple-50/50 transition-all"
+                >
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <svg className="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M10 3.5a1.5 1.5 0 013 0V4a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-.5a1.5 1.5 0 000 3h.5a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-.5a1.5 1.5 0 00-3 0v.5a1 1 0 01-1 1H6a1 1 0 01-1-1v-3a1 1 0 00-1-1h-.5a1.5 1.5 0 010-3H4a1 1 0 001-1V6a1 1 0 011-1h3a1 1 0 001-1v-.5z"/>
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-gray-900">Browse Modules</p>
+                    <p className="text-xs text-gray-500">Add features</p>
+                  </div>
+                  <svg className="w-5 h-5 text-gray-400 group-hover:text-purple-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-gray-900">Settings</p>
-                  <p className="text-xs text-gray-500">Account options</p>
-                </div>
-                <svg className="w-4 h-4 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
+                </Link>
+
+                <Link
+                  href="/modules/installed"
+                  className="group flex items-center gap-3 p-4 rounded-xl border border-gray-200 hover:border-green-300 hover:bg-green-50/50 transition-all"
+                >
+                  <div className="w-10 h-10 bg-gradient-to-br from-green-50 to-green-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <CheckCircleIcon className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-gray-900">Installed</p>
+                    <p className="text-xs text-gray-500">Your modules</p>
+                  </div>
+                  <svg className="w-5 h-5 text-gray-400 group-hover:text-green-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              </div>
             </div>
+
           </div>
         </div>
 
