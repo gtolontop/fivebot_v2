@@ -282,9 +282,6 @@ export class BotsService {
   // Background sync without blocking the main request
   private async autoSyncBotsInBackground(bots: any[]): Promise<void> {
     setImmediate(async () => {
-      // Refresh assets for all bots in background
-      this.refreshAllBotsAssetsInBackground(bots);
-
       for (const bot of bots) {
         try {
           // Only sync if status seems potentially wrong
@@ -1266,6 +1263,74 @@ export class BotsService {
       avatar: avatarUrl,
       banner: bannerUrl,
     };
+  }
+
+  // Refresh assets for multiple bots SYNCHRONOUSLY (blocks until done)
+  private async refreshAllBotsAssetsSync(bots: any[]): Promise<void> {
+    try {
+      console.log(`🔄 Refreshing assets for ${bots.length} bots...`);
+
+      // Process bots in batches to avoid overwhelming Discord API
+      const batchSize = 5;
+      for (let i = 0; i < bots.length; i += batchSize) {
+        const batch = bots.slice(i, i + batchSize);
+
+        await Promise.all(
+          batch.map(async (bot) => {
+            try {
+              // Decrypt token
+              const token = this.encryptionService.decrypt(bot.tokenEncrypted);
+
+              // Validate and get Discord data
+              const tokenValidation = await this.discordService.validateBotToken(token);
+
+              if (!tokenValidation.isValid || !tokenValidation.user) {
+                return;
+              }
+
+              // Build avatar URL - Priority: user avatar > application icon > null
+              let avatarUrl = null;
+              if (tokenValidation.user.avatar) {
+                avatarUrl = `https://cdn.discordapp.com/avatars/${tokenValidation.user.id}/${tokenValidation.user.avatar}.webp?size=256`;
+              } else if (tokenValidation.application?.icon) {
+                avatarUrl = `https://cdn.discordapp.com/app-icons/${tokenValidation.application.id}/${tokenValidation.application.icon}.webp?size=256`;
+              }
+
+              // Build banner URL
+              const bannerUrl = tokenValidation.user.banner
+                ? `https://cdn.discordapp.com/banners/${tokenValidation.user.id}/${tokenValidation.user.banner}.webp?size=512`
+                : null;
+
+              // Update bot in database
+              await this.prisma.bot.update({
+                where: { id: bot.id },
+                data: {
+                  avatar: avatarUrl,
+                  banner: bannerUrl,
+                },
+              });
+
+              // Update bot object in memory so it's returned with fresh data
+              bot.avatar = avatarUrl;
+              bot.banner = bannerUrl;
+
+              console.log(`✅ Refreshed ${bot.name}: avatar=${!!avatarUrl}, banner=${!!bannerUrl}`);
+            } catch (error) {
+              console.error(`❌ Failed to refresh assets for bot ${bot.id}:`, error.message);
+            }
+          })
+        );
+
+        // Small delay between batches to respect rate limits
+        if (i + batchSize < bots.length) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+
+      console.log(`✨ Assets refresh completed for all bots`);
+    } catch (error) {
+      console.error('Error in refreshAllBotsAssetsSync:', error);
+    }
   }
 
   // Refresh assets for multiple bots in background without blocking
