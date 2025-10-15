@@ -66,6 +66,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   }, [botId]);
 
+  // Auto-expand when on /bots or /bots/[id] pages
+  useEffect(() => {
+    if (pathname === '/bots' || (botId && botId !== 'create')) {
+      setBotsExpanded(true);
+    }
+  }, [pathname, botId]);
+
   const fetchAllBots = async () => {
     try {
       const response = await botsAPI.getAll();
