@@ -359,8 +359,7 @@ export default function DashboardPage() {
                   {recentActivity.map((event, index) => (
                     <div
                       key={event.id}
-                      className="group flex items-start gap-4 p-4 rounded-xl border border-gray-100 hover:border-primary-200 hover:bg-primary-50/30 transition-all animate-slide-up cursor-pointer"
-                      style={{ animationDelay: `${index * 50}ms` }}
+                      className="group flex items-start gap-4 p-4 rounded-xl border border-gray-100 hover:border-primary-200 hover:bg-primary-50/30 transition-all cursor-pointer"
                     >
                       <div className="relative flex-shrink-0">
                         <div className="w-11 h-11 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
