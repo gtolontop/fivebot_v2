@@ -87,6 +87,18 @@ export class BotMonitorService {
         // Get running status from queue service
         const isProcessRunning = runningBots.includes(bot.id);
 
+        // Check if user intentionally stopped the bot
+        const redisService = (queueService as any)?.redisService;
+        let userAction = null;
+        if (redisService) {
+          try {
+            const botState = await redisService.getBotState(bot.id);
+            userAction = botState?.userAction;
+          } catch (e) {
+            // Ignore Redis errors
+          }
+        }
+
         // DON'T be too aggressive - only correct if bot is ONLINE but not running
         // Give a grace period by not correcting immediately
         if (bot.status === 'ONLINE' && !isProcessRunning) {
@@ -105,16 +117,21 @@ export class BotMonitorService {
             console.error(`❌ Failed to correct bot "${bot.name}" status in heartbeat check:`, error);
           }
         } else if (bot.status === 'OFFLINE' && isProcessRunning) {
-          // Process is running but DB says OFFLINE - resync to ONLINE
-          console.log(`💓 Heartbeat correcting bot "${bot.name}" (owner: ${bot.owner.username}): OFFLINE → ONLINE (process is running)`);
-          try {
-            await this.updateBotWithRetry(bot.id, {
-              status: 'ONLINE',
-              updatedAt: new Date()
-            });
-            corrections++;
-          } catch (error) {
-            console.error(`❌ Failed to correct bot "${bot.name}" status in heartbeat check:`, error);
+          // Only auto-correct to ONLINE if user didn't intentionally stop the bot
+          if (userAction === 'stop') {
+            console.log(`💓 Heartbeat skipping correction for "${bot.name}": user intentionally stopped the bot`);
+          } else {
+            // Process is running but DB says OFFLINE - resync to ONLINE
+            console.log(`💓 Heartbeat correcting bot "${bot.name}" (owner: ${bot.owner.username}): OFFLINE → ONLINE (process is running)`);
+            try {
+              await this.updateBotWithRetry(bot.id, {
+                status: 'ONLINE',
+                updatedAt: new Date()
+              });
+              corrections++;
+            } catch (error) {
+              console.error(`❌ Failed to correct bot "${bot.name}" status in heartbeat check:`, error);
+            }
           }
         }
       }
