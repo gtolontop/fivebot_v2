@@ -8,6 +8,18 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        primary: {
+          50: '#f0f2ff',
+          100: '#e6eaff',
+          200: '#d0d9ff',
+          300: '#aab9ff',
+          400: '#7e8eff',
+          500: '#5865f2',
+          600: '#4752c4',
+          700: '#3c459e',
+          800: '#343a80',
+          900: '#2f3367',
+        },
         discord: {
           50: '#f0f2ff',
           100: '#e6eaff',
