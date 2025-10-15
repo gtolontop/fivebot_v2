@@ -1,0 +1,261 @@
+'use client';
+
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { BellIcon, CheckIcon, TrashIcon } from '@heroicons/react/24/outline';
+
+interface Notification {
+  id: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  title: string;
+  message: string;
+  timestamp: Date;
+  read: boolean;
+}
+
+export default function NotificationsPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const [notifications, setNotifications] = useState<Notification[]>([
+    {
+      id: '1',
+      type: 'success',
+      title: 'Bot Started Successfully',
+      message: 'Your bot "MyBot" is now online and running',
+      timestamp: new Date(Date.now() - 2 * 60 * 1000),
+      read: false,
+    },
+    {
+      id: '2',
+      type: 'info',
+      title: 'Module Installed',
+      message: 'Welcome System module added successfully',
+      timestamp: new Date(Date.now() - 60 * 60 * 1000),
+      read: false,
+    },
+    {
+      id: '3',
+      type: 'success',
+      title: 'Credits Added',
+      message: '1000 credits added to your account',
+      timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000),
+      read: true,
+    },
+    {
+      id: '4',
+      type: 'warning',
+      title: 'High Memory Usage',
+      message: 'Bot memory usage reached 85%. Consider optimizing.',
+      timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000),
+      read: true,
+    },
+    {
+      id: '5',
+      type: 'error',
+      title: 'Connection Lost',
+      message: 'Temporary disconnection from Discord API. Reconnected successfully.',
+      timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
+      read: true,
+    },
+  ]);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/auth/login');
+    }
+  }, [user, loading, router]);
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-primary-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600 font-medium">Loading notifications...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!user) return null;
+
+  const markAsRead = (id: string) => {
+    setNotifications(prev =>
+      prev.map(n => (n.id === id ? { ...n, read: true } : n))
+    );
+  };
+
+  const markAllAsRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
+
+  const deleteNotification = (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
+
+  const clearAll = () => {
+    setNotifications([]);
+  };
+
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'error':
+        return (
+          <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+            <span className="text-xl">🔴</span>
+          </div>
+        );
+      case 'warning':
+        return (
+          <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center">
+            <span className="text-xl">⚠️</span>
+          </div>
+        );
+      case 'success':
+        return (
+          <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+            <span className="text-xl">✅</span>
+          </div>
+        );
+      case 'info':
+        return (
+          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+            <span className="text-xl">ℹ️</span>
+          </div>
+        );
+      default:
+        return (
+          <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+            <BellIcon className="w-5 h-5 text-gray-600" />
+          </div>
+        );
+    }
+  };
+
+  const getNotificationBg = (type: string, read: boolean) => {
+    const baseClasses = read ? 'bg-white' : 'bg-blue-50/50';
+    return baseClasses;
+  };
+
+  const getTimeSince = (timestamp: Date) => {
+    const seconds = Math.floor((new Date().getTime() - timestamp.getTime()) / 1000);
+
+    if (seconds < 60) return 'Just now';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days} day${days > 1 ? 's' : ''} ago`;
+    return timestamp.toLocaleDateString();
+  };
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  return (
+    <DashboardLayout>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Notifications</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              {unreadCount > 0
+                ? `You have ${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`
+                : 'All caught up!'}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {unreadCount > 0 && (
+              <button
+                onClick={markAllAsRead}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+              >
+                <CheckIcon className="w-4 h-4" />
+                Mark all as read
+              </button>
+            )}
+            {notifications.length > 0 && (
+              <button
+                onClick={clearAll}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+              >
+                <TrashIcon className="w-4 h-4" />
+                Clear all
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 overflow-hidden">
+          {notifications.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <BellIcon className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No notifications</h3>
+              <p className="text-sm text-gray-500">You're all caught up! Check back later for updates.</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-200">
+              {notifications.map((notification) => (
+                <div
+                  key={notification.id}
+                  className={`p-6 hover:bg-gray-50 transition-colors ${getNotificationBg(
+                    notification.type,
+                    notification.read
+                  )}`}
+                >
+                  <div className="flex items-start gap-4">
+                    {getNotificationIcon(notification.type)}
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="text-sm font-semibold text-gray-900">
+                              {notification.title}
+                            </h3>
+                            {!notification.read && (
+                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-600 mb-2">{notification.message}</p>
+                          <p className="text-xs text-gray-400">
+                            {getTimeSince(notification.timestamp)}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {!notification.read && (
+                            <button
+                              onClick={() => markAsRead(notification.id)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Mark as read"
+                            >
+                              <CheckIcon className="w-4 h-4" />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => deleteNotification(notification.id)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete"
+                          >
+                            <TrashIcon className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </DashboardLayout>
+  );
+}
