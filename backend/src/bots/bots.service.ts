@@ -260,6 +260,9 @@ export class BotsService {
       orderBy: { createdAt: 'desc' },
     });
 
+    // Include tokenEncrypted for background refresh
+    // (not exposed to client, only used internally)
+
     // Parse JSON fields in configs
     bots.forEach(bot => {
       if (bot.config) {
