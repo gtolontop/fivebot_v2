@@ -19,6 +19,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 interface UpdateUserDto {
   username?: string;
   email?: string;
+  avatar?: string;
   role?: UserRole;
 }
 
@@ -39,8 +40,8 @@ export class UsersController {
 
   @Patch('me')
   async updateMe(@Req() req: any, @Body() updateData: UpdateUserDto) {
-    // Users can only update their own username and email
-    const allowedFields = { username: updateData.username, email: updateData.email };
+    // Users can only update their own avatar (username/email are synced from Discord)
+    const allowedFields = { avatar: updateData.avatar };
     return this.usersService.update(req.user.id, allowedFields);
   }
 
