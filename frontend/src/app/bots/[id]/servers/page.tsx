@@ -3,7 +3,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { botsAPI } from '@/utils/api';
+import { botsAPI, usersAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import {
@@ -35,7 +35,8 @@ export default function BotServersPage() {
   const botId = params.id as string;
 
   const [bot, setBot] = useState<Bot | null>(null);
-  const [guilds, setGuilds] = useState<Guild[]>([]);
+  const [botGuilds, setBotGuilds] = useState<Guild[]>([]);
+  const [userGuilds, setUserGuilds] = useState<Guild[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviteLink, setInviteLink] = useState<string>('');
 
@@ -68,10 +69,17 @@ export default function BotServersPage() {
 
   const fetchGuilds = async () => {
     try {
-      const response = await botsAPI.getGuilds(botId);
-      setGuilds(response.data || []);
+      // Fetch both bot guilds and user guilds in parallel
+      const [botGuildsResponse, userGuildsResponse] = await Promise.all([
+        botsAPI.getGuilds(botId),
+        usersAPI.getMyGuilds(),
+      ]);
+
+      setBotGuilds(botGuildsResponse.data || []);
+      setUserGuilds(userGuildsResponse.data || []);
     } catch (error: any) {
       console.error('Error fetching guilds:', error);
+      toast.error('Failed to load servers');
     } finally {
       setLoading(false);
     }
