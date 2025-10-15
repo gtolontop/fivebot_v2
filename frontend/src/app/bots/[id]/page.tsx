@@ -395,54 +395,47 @@ export default function BotDetailPage() {
   return (
     <DashboardLayout>
       <div className="max-w-[1600px] mx-auto space-y-6">
-        {/* Header with Banner */}
-        <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 overflow-hidden">
-          {/* Banner */}
-          <div className="relative h-32 bg-gradient-to-br from-primary-400 to-primary-600 overflow-hidden">
-            {bot.banner ? (
-              <img src={bot.banner} alt={`${bot.name} banner`} className="w-full h-full object-cover" />
-            ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-primary-400 via-primary-500 to-primary-600"></div>
-            )}
-          </div>
-
-          {/* Header Content */}
-          <div className="p-6 pt-0">
-            <div className="flex items-end justify-between -mt-12 mb-6">
-              {/* Avatar & Name */}
-              <div className="flex items-end gap-4">
-                <div className="relative">
-                  {bot.avatar ? (
-                    <img
-                      src={bot.avatar}
-                      alt={bot.name}
-                      className="w-24 h-24 rounded-2xl border-4 border-white shadow-lg"
-                    />
-                  ) : (
-                    <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl border-4 border-white shadow-lg flex items-center justify-center text-3xl font-bold text-gray-600">
-                      {bot.name[0].toUpperCase()}
-                    </div>
-                  )}
-                  {bot.status === 'ONLINE' && (
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-success-500 border-4 border-white rounded-full"></div>
-                  )}
-                </div>
-
-                <div className="pb-2">
-                  <h1 className="text-2xl font-bold text-gray-900">{bot.name}</h1>
-                  <p className="text-sm text-gray-500 mt-0.5">
-                    Created {new Date(bot.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
+        {/* Header */}
+        <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 p-6">
+          <div className="flex items-center justify-between mb-6">
+            {/* Avatar & Info */}
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                {bot.avatar ? (
+                  <img
+                    src={bot.avatar}
+                    alt={bot.name}
+                    className="w-16 h-16 rounded-xl shadow-md"
+                  />
+                ) : (
+                  <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl shadow-md flex items-center justify-center text-2xl font-bold text-gray-600">
+                    {bot.name[0].toUpperCase()}
+                  </div>
+                )}
+                {bot.status === 'ONLINE' && (
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-success-500 border-3 border-white rounded-full"></div>
+                )}
               </div>
 
-              {/* Status Badge */}
-              <div className="pb-2">
-                <span className={`px-3 py-1.5 text-sm font-semibold rounded-lg border ${getStatusColor(bot.status)}`}>
-                  {bot.status}
-                </span>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">{bot.name}</h1>
+                <div className="flex items-center gap-3 mt-1 text-xs text-gray-500 font-mono">
+                  {bot.clientId && (
+                    <span>Client: {bot.clientId}</span>
+                  )}
+                  <span>•</span>
+                  <span>Bot: {bot.id}</span>
+                </div>
               </div>
             </div>
+
+            {/* Status Badge */}
+            <div>
+              <span className={`px-3 py-1.5 text-sm font-semibold rounded-lg border ${getStatusColor(bot.status)}`}>
+                {bot.status}
+              </span>
+            </div>
+          </div>
 
             {/* Action Buttons */}
             <div className="flex items-center gap-3">
