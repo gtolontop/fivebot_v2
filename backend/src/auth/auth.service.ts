@@ -32,6 +32,9 @@ export class AuthService {
         username: discordUser.username,
         email: discordUser.email,
         avatar: discordUser.avatar,
+        discordAccessToken: discordUser.discordAccessToken,
+        discordRefreshToken: discordUser.discordRefreshToken,
+        discordTokenExpiry: discordUser.discordTokenExpiry,
       });
     } else {
       // Update user info if changed
@@ -39,6 +42,9 @@ export class AuthService {
         username: discordUser.username,
         email: discordUser.email,
         avatar: discordUser.avatar,
+        discordAccessToken: discordUser.discordAccessToken,
+        discordRefreshToken: discordUser.discordRefreshToken,
+        discordTokenExpiry: discordUser.discordTokenExpiry,
       });
     }
 
