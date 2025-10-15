@@ -124,7 +124,13 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarCollapsed = false }) => {
               </div>
 
               <div className="px-4 py-2 border-t border-gray-100">
-                <button className="w-full text-center text-sm text-primary-600 hover:text-primary-700 font-medium">
+                <button
+                  onClick={() => {
+                    router.push('/profile/notifications');
+                    setNotificationsOpen(false);
+                  }}
+                  className="w-full text-center text-sm text-primary-600 hover:text-primary-700 font-medium"
+                >
                   View all notifications
                 </button>
               </div>
