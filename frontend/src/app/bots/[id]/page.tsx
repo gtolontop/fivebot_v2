@@ -114,6 +114,53 @@ export default function BotDetailPage() {
     return () => clearInterval(metricsInterval);
   }, [bot?.status, botId]);
 
+  // Parse ANSI color codes to Tailwind classes
+  const parseAnsiColors = (text: string) => {
+    const ansiRegex = /\x1b\[([0-9;]+)m/g;
+    const parts: { text: string; color: string }[] = [];
+    let lastIndex = 0;
+    let currentColor = 'text-gray-300';
+
+    const colorMap: Record<string, string> = {
+      '0': 'text-gray-300',
+      '30': 'text-gray-900',
+      '31': 'text-red-400',
+      '32': 'text-green-400',
+      '33': 'text-yellow-400',
+      '34': 'text-blue-400',
+      '35': 'text-purple-400',
+      '36': 'text-cyan-400',
+      '37': 'text-gray-300',
+      '90': 'text-gray-500',
+      '91': 'text-red-300',
+      '92': 'text-green-300',
+      '93': 'text-yellow-300',
+      '94': 'text-blue-300',
+      '95': 'text-purple-300',
+      '96': 'text-cyan-300',
+      '97': 'text-white',
+    };
+
+    let match;
+    while ((match = ansiRegex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        const textPart = text.substring(lastIndex, match.index);
+        parts.push({ text: textPart, color: currentColor });
+      }
+
+      const code = match[1].split(';')[0];
+      currentColor = colorMap[code] || currentColor;
+
+      lastIndex = match.index + match[0].length;
+    }
+
+    if (lastIndex < text.length) {
+      parts.push({ text: text.substring(lastIndex), color: currentColor });
+    }
+
+    return parts.length > 0 ? parts : [{ text, color: 'text-gray-300' }];
+  };
+
   // Polling for logs - ALWAYS active
   useEffect(() => {
     if (!bot) return;
@@ -131,7 +178,7 @@ export default function BotDetailPage() {
         if (response.ok) {
           const data = await response.json();
           if (data.logs && data.logs.length > 0) {
-            setLogs(data.logs.slice(-100)); // Keep last 100 logs
+            setLogs(data.logs);
           }
         }
       } catch (error) {
@@ -147,6 +194,23 @@ export default function BotDetailPage() {
 
     return () => clearInterval(logsInterval);
   }, [bot?.id, botId]);
+
+  // Auto-scroll console when new logs arrive
+  useEffect(() => {
+    if (consoleRef.current && autoScroll) {
+      const element = consoleRef.current;
+      element.scrollTop = element.scrollHeight;
+    }
+  }, [logs, autoScroll]);
+
+  // Handle scroll to detect if user scrolled up
+  const handleConsoleScroll = () => {
+    if (consoleRef.current) {
+      const element = consoleRef.current;
+      const isAtBottom = element.scrollHeight - element.clientHeight <= element.scrollTop + 10;
+      setAutoScroll(isAtBottom);
+    }
+  };
 
   // Auto-refresh status
   useEffect(() => {
