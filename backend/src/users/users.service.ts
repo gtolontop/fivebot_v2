@@ -156,4 +156,44 @@ export class UsersService {
       totalPages: Math.ceil(total / limit),
     };
   }
+
+  async getUserGuilds(userId: string): Promise<any[]> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        discordAccessToken: true,
+        discordTokenExpiry: true,
+      },
+    });
+
+    if (!user || !user.discordAccessToken) {
+      throw new NotFoundException('Discord token not found. Please re-authenticate.');
+    }
+
+    // Check if token is expired
+    if (user.discordTokenExpiry && new Date() > user.discordTokenExpiry) {
+      throw new Error('Discord token expired. Please re-authenticate.');
+    }
+
+    // Fetch guilds from Discord API
+    try {
+      const response = await fetch('https://discord.com/api/v10/users/@me/guilds', {
+        headers: {
+          Authorization: `Bearer ${user.discordAccessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Discord API error: ${response.statusText}`);
+      }
+
+      const guilds = await response.json();
+
+      // Filter guilds where user has MANAGE_GUILD permission (0x00000020)
+      return guilds.filter((guild: any) => (guild.permissions & 0x00000020) === 0x00000020);
+    } catch (error) {
+      console.error('Error fetching user guilds from Discord:', error);
+      throw error;
+    }
+  }
 }
