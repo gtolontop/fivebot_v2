@@ -124,6 +124,7 @@ export class AuthController {
         avatar: req.user.avatar,
         role: req.user.role,
         credits: req.user.credits,
+        createdAt: req.user.createdAt,
       },
     };
   }
