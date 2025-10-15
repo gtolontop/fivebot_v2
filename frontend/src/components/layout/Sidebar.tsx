@@ -233,36 +233,91 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     {/* Bots List - Always show if on a bot page OR if expanded manually */}
                     {!collapsed && isBotSection && (botsExpanded || (botId && botId !== 'create')) && allBots.length > 0 && (
                       <ul className="mt-2 ml-6 space-y-1">
-                        {allBots.slice(0, 3).map((bot) => (
-                          <li key={bot.id}>
-                            <Link
-                              href={`/bots/${bot.id}`}
-                              className={`
-                                flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
-                                ${pathname === `/bots/${bot.id}` || pathname?.startsWith(`/bots/${bot.id}/`)
-                                  ? 'bg-primary-50 text-primary-700'
-                                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                                }
-                              `}
-                            >
-                              {bot.avatar ? (
-                                <img
-                                  src={bot.avatar}
-                                  alt={bot.name}
-                                  className="w-5 h-5 rounded-md flex-shrink-0"
-                                />
-                              ) : (
-                                <div className="w-5 h-5 bg-gradient-to-br from-primary-400 to-primary-600 rounded-md flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                                  {bot.name[0].toUpperCase()}
-                                </div>
+                        {allBots.slice(0, 3).map((bot) => {
+                          const isBotActive = pathname === `/bots/${bot.id}` || pathname?.startsWith(`/bots/${bot.id}/`);
+
+                          return (
+                            <li key={bot.id}>
+                              <Link
+                                href={`/bots/${bot.id}`}
+                                className={`
+                                  flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
+                                  ${isBotActive
+                                    ? 'bg-primary-50 text-primary-700'
+                                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                  }
+                                `}
+                              >
+                                {bot.avatar ? (
+                                  <img
+                                    src={bot.avatar}
+                                    alt={bot.name}
+                                    className="w-5 h-5 rounded-md flex-shrink-0"
+                                  />
+                                ) : (
+                                  <div className="w-5 h-5 bg-gradient-to-br from-primary-400 to-primary-600 rounded-md flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                    {bot.name[0].toUpperCase()}
+                                  </div>
+                                )}
+                                <span className="truncate flex-1">{bot.name}</span>
+                                {bot.status === 'ONLINE' && (
+                                  <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+                                )}
+                              </Link>
+
+                              {/* Sub-navigation for active bot */}
+                              {isBotActive && (
+                                <ul className="mt-1 ml-7 space-y-1 border-l-2 border-gray-200 pl-3">
+                                  <li>
+                                    <Link
+                                      href={`/bots/${bot.id}`}
+                                      className={`
+                                        flex items-center gap-2 px-2 py-1 rounded-lg text-xs font-medium transition-colors
+                                        ${pathname === `/bots/${bot.id}`
+                                          ? 'bg-primary-50 text-primary-700'
+                                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                        }
+                                      `}
+                                    >
+                                      <HomeIcon className="w-3.5 h-3.5" />
+                                      <span>Overview</span>
+                                    </Link>
+                                  </li>
+                                  <li>
+                                    <Link
+                                      href={`/bots/${bot.id}/analytics`}
+                                      className={`
+                                        flex items-center gap-2 px-2 py-1 rounded-lg text-xs font-medium transition-colors
+                                        ${pathname?.startsWith(`/bots/${bot.id}/analytics`)
+                                          ? 'bg-primary-50 text-primary-700'
+                                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                        }
+                                      `}
+                                    >
+                                      <ChartBarIcon className="w-3.5 h-3.5" />
+                                      <span>Analytics</span>
+                                    </Link>
+                                  </li>
+                                  <li>
+                                    <Link
+                                      href={`/bots/${bot.id}/config`}
+                                      className={`
+                                        flex items-center gap-2 px-2 py-1 rounded-lg text-xs font-medium transition-colors
+                                        ${pathname?.startsWith(`/bots/${bot.id}/config`)
+                                          ? 'bg-primary-50 text-primary-700'
+                                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                        }
+                                      `}
+                                    >
+                                      <WrenchScrewdriverIcon className="w-3.5 h-3.5" />
+                                      <span>Configuration</span>
+                                    </Link>
+                                  </li>
+                                </ul>
                               )}
-                              <span className="truncate flex-1">{bot.name}</span>
-                              {bot.status === 'ONLINE' && (
-                                <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
-                              )}
-                            </Link>
-                          </li>
-                        ))}
+                            </li>
+                          );
+                        })}
                       </ul>
                     )}
                   </li>
