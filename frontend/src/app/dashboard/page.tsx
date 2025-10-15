@@ -265,77 +265,57 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-          {/* Bots Overview */}
-          <Link href="/bots" className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg hover:border-primary-300 transition-all group">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                <CubeIcon className="w-6 h-6 text-blue-600" />
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <CubeIcon className="w-5 h-5 text-blue-600" />
               </div>
-              <svg className="w-5 h-5 text-gray-400 group-hover:text-primary-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-gray-600">Total Bots</p>
-              <p className="text-3xl font-bold text-gray-900">{stats.totalBots}</p>
-              <p className="text-sm text-gray-500">{stats.activeBots} online</p>
-            </div>
-          </Link>
-
-          {/* Create Bot */}
-          <Link href="/bots/create" className="bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl p-6 text-white hover:shadow-xl hover:scale-105 transition-all group">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                <PlusIcon className="w-6 h-6 text-white" />
+              <div>
+                <p className="text-2xl font-bold text-gray-900">{stats.totalBots}</p>
+                <p className="text-xs text-gray-600">Total Bots</p>
               </div>
-              <svg className="w-5 h-5 text-white/80 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
             </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-purple-100">Create Bot</p>
-              <p className="text-2xl font-bold">New Bot</p>
-              <p className="text-sm text-purple-100">Start building now</p>
-            </div>
-          </Link>
+          </div>
 
-          {/* Modules */}
-          <Link href="/modules" className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg hover:border-primary-300 transition-all group">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                <svg className="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <CheckCircleIcon className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-green-600">{stats.activeBots}</p>
+                <p className="text-xs text-gray-600">Online Now</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M10 3.5a1.5 1.5 0 013 0V4a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-.5a1.5 1.5 0 000 3h.5a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-.5a1.5 1.5 0 00-3 0v.5a1 1 0 01-1 1H6a1 1 0 01-1-1v-3a1 1 0 00-1-1h-.5a1.5 1.5 0 010-3H4a1 1 0 001-1V6a1 1 0 011-1h3a1 1 0 001-1v-.5z"/>
                 </svg>
               </div>
-              <svg className="w-5 h-5 text-gray-400 group-hover:text-primary-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-gray-600">Browse</p>
-              <p className="text-2xl font-bold text-gray-900">Modules</p>
-              <p className="text-sm text-gray-500">Add new features</p>
-            </div>
-          </Link>
-
-          {/* Credits */}
-          <Link href="/settings/billing" className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg hover:border-primary-300 transition-all group">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                <SparklesIcon className="w-6 h-6 text-green-600" />
+              <div>
+                <p className="text-2xl font-bold text-gray-900">-</p>
+                <p className="text-xs text-gray-600">Active Modules</p>
               </div>
-              <svg className="w-5 h-5 text-gray-400 group-hover:text-primary-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
             </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-gray-600">Available</p>
-              <p className="text-3xl font-bold text-gray-900">{user.credits}</p>
-              <p className="text-sm text-gray-500">Credits balance</p>
+          </div>
+
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                <ArrowTrendingUpIcon className="w-5 h-5 text-orange-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">{uptimePercent}%</p>
+                <p className="text-xs text-gray-600">Avg Uptime</p>
+              </div>
             </div>
-          </Link>
+          </div>
         </div>
 
         {/* Main Content Grid */}
