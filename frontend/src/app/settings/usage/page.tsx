@@ -65,6 +65,12 @@ export default function UsagePage() {
             >
               Billing
             </button>
+            <button
+              onClick={() => router.push('/profile/notifications')}
+              className="w-full text-left px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors"
+            >
+              Notifications
+            </button>
             <button className="w-full text-left px-4 py-2.5 rounded-lg bg-gray-800 text-white font-medium">
               Usage
             </button>

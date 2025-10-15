@@ -66,6 +66,12 @@ export default function ConnectorsPage() {
               Billing
             </button>
             <button
+              onClick={() => router.push('/profile/notifications')}
+              className="w-full text-left px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors"
+            >
+              Notifications
+            </button>
+            <button
               onClick={() => router.push('/settings/usage')}
               className="w-full text-left px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors"
             >
