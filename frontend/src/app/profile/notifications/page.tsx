@@ -166,102 +166,158 @@ export default function NotificationsPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Notifications</h1>
-            <p className="text-sm text-gray-500 mt-1">
-              {unreadCount > 0
-                ? `You have ${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`
-                : 'All caught up!'}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {unreadCount > 0 && (
-              <button
-                onClick={markAllAsRead}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
-              >
-                <CheckIcon className="w-4 h-4" />
-                Mark all as read
-              </button>
-            )}
-            {notifications.length > 0 && (
-              <button
-                onClick={clearAll}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-              >
-                <TrashIcon className="w-4 h-4" />
-                Clear all
-              </button>
-            )}
-          </div>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
         </div>
 
-        <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 overflow-hidden">
-          {notifications.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <BellIcon className="w-8 h-8 text-gray-400" />
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Sidebar Navigation */}
+          <div className="space-y-1">
+            <button
+              onClick={() => router.push('/settings')}
+              className="w-full text-left px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors"
+            >
+              Profile
+            </button>
+            <button
+              onClick={() => router.push('/settings/account')}
+              className="w-full text-left px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors"
+            >
+              Account
+            </button>
+            <button
+              onClick={() => router.push('/settings/privacy')}
+              className="w-full text-left px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors"
+            >
+              Privacy
+            </button>
+            <button
+              onClick={() => router.push('/settings/billing')}
+              className="w-full text-left px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors"
+            >
+              Billing
+            </button>
+            <button className="w-full text-left px-4 py-2.5 rounded-lg bg-gray-800 text-white font-medium">
+              Notifications
+            </button>
+            <button
+              onClick={() => router.push('/settings/usage')}
+              className="w-full text-left px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors"
+            >
+              Usage
+            </button>
+            <button
+              onClick={() => router.push('/settings/connectors')}
+              className="w-full text-left px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors"
+            >
+              Connectors
+            </button>
+          </div>
+
+          {/* Main Content */}
+          <div className="lg:col-span-3 space-y-6">
+            {/* Header with Actions */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Notifications</h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  {unreadCount > 0
+                    ? `You have ${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`
+                    : 'All caught up!'}
+                </p>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No notifications</h3>
-              <p className="text-sm text-gray-500">You're all caught up! Check back later for updates.</p>
+
+              <div className="flex items-center gap-3">
+                {unreadCount > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                  >
+                    <CheckIcon className="w-4 h-4" />
+                    Mark all read
+                  </button>
+                )}
+                {notifications.length > 0 && (
+                  <button
+                    onClick={clearAll}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                    Clear all
+                  </button>
+                )}
+              </div>
             </div>
-          ) : (
-            <div className="divide-y divide-gray-200">
-              {notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className={`p-6 hover:bg-gray-50 transition-colors ${getNotificationBg(
-                    notification.type,
-                    notification.read
-                  )}`}
-                >
-                  <div className="flex items-start gap-4">
-                    {getNotificationIcon(notification.type)}
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="text-sm font-semibold text-gray-900">
-                              {notification.title}
-                            </h3>
-                            {!notification.read && (
-                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                            )}
+            {/* Notifications List */}
+            <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 overflow-hidden">
+              {notifications.length === 0 ? (
+                <div className="text-center py-16">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <BellIcon className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No notifications</h3>
+                  <p className="text-sm text-gray-500">
+                    You're all caught up! Check back later for updates.
+                  </p>
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-200">
+                  {notifications.map((notification) => (
+                    <div
+                      key={notification.id}
+                      className={`p-6 hover:bg-gray-50 transition-colors ${getNotificationBg(
+                        notification.type,
+                        notification.read
+                      )}`}
+                    >
+                      <div className="flex items-start gap-4">
+                        {getNotificationIcon(notification.type)}
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h3 className="text-sm font-semibold text-gray-900">
+                                  {notification.title}
+                                </h3>
+                                {!notification.read && (
+                                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-600 mb-2">{notification.message}</p>
+                              <p className="text-xs text-gray-400">
+                                {getTimeSince(notification.timestamp)}
+                              </p>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              {!notification.read && (
+                                <button
+                                  onClick={() => markAsRead(notification.id)}
+                                  className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                  title="Mark as read"
+                                >
+                                  <CheckIcon className="w-4 h-4" />
+                                </button>
+                              )}
+                              <button
+                                onClick={() => deleteNotification(notification.id)}
+                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                title="Delete"
+                              >
+                                <TrashIcon className="w-4 h-4" />
+                              </button>
+                            </div>
                           </div>
-                          <p className="text-sm text-gray-600 mb-2">{notification.message}</p>
-                          <p className="text-xs text-gray-400">
-                            {getTimeSince(notification.timestamp)}
-                          </p>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          {!notification.read && (
-                            <button
-                              onClick={() => markAsRead(notification.id)}
-                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                              title="Mark as read"
-                            >
-                              <CheckIcon className="w-4 h-4" />
-                            </button>
-                          )}
-                          <button
-                            onClick={() => deleteNotification(notification.id)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Delete"
-                          >
-                            <TrashIcon className="w-4 h-4" />
-                          </button>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
     </DashboardLayout>
