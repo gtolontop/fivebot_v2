@@ -8,19 +8,22 @@ datasource db {
 }
 
 model User {
-  id             String             @id @default(uuid())
-  discordId      String             @unique @map("discord_id")
-  username       String
-  email          String?
-  avatar         String?
-  role           UserRole           @default(USER)
-  credits        Int                @default(100)
-  createdAt      DateTime           @default(now()) @map("created_at")
-  updatedAt      DateTime           @updatedAt @map("updated_at")
-  auditLogs      AuditLog[]
-  bots           Bot[]
-  creditsHistory CreditsHistory[]
-  collaborations BotCollaborator[]
+  id                   String             @id @default(uuid())
+  discordId            String             @unique @map("discord_id")
+  username             String
+  email                String?
+  avatar               String?
+  role                 UserRole           @default(USER)
+  credits              Int                @default(100)
+  discordAccessToken   String?            @map("discord_access_token") @db.Text
+  discordRefreshToken  String?            @map("discord_refresh_token") @db.Text
+  discordTokenExpiry   DateTime?          @map("discord_token_expiry")
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
+  auditLogs            AuditLog[]
+  bots                 Bot[]
+  creditsHistory       CreditsHistory[]
+  collaborations       BotCollaborator[]
 
   @@map("users")
 }
