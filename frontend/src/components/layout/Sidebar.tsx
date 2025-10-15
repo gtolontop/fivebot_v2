@@ -222,7 +222,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               href={`/bots/${bot.id}`}
                               className={`
                                 flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
-                                ${pathname === `/bots/${bot.id}`
+                                ${pathname === `/bots/${bot.id}` || pathname?.startsWith(`/bots/${bot.id}/`)
                                   ? 'bg-primary-50 text-primary-700'
                                   : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                                 }
@@ -246,77 +246,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             </Link>
                           </li>
                         ))}
-                      </ul>
-                    )}
-
-                    {/* Current Bot Sub-navigation */}
-                    {!collapsed && isBotSection && currentBot && (
-                      <ul className="mt-2 ml-8 space-y-1 border-l-2 border-gray-200 pl-3">
-                        <li className="text-xs font-semibold text-gray-900 mb-2 px-2">
-                          {currentBot.name}
-                        </li>
-                        <li>
-                          <Link
-                            href={`/bots/${currentBot.id}`}
-                            className={`
-                              flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors
-                              ${pathname === `/bots/${currentBot.id}`
-                                ? 'bg-primary-50 text-primary-700'
-                                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                              }
-                            `}
-                          >
-                            <HomeIcon className="w-4 h-4" />
-                            <span>Overview</span>
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            href={`/bots/${currentBot.id}/invite`}
-                            className={`
-                              flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors
-                              ${pathname?.startsWith(`/bots/${currentBot.id}/invite`)
-                                ? 'bg-primary-50 text-primary-700'
-                                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                              }
-                            `}
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
-                            <span>Invite Link</span>
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            href={`/bots/${currentBot.id}/analytics`}
-                            className={`
-                              flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors
-                              ${pathname?.startsWith(`/bots/${currentBot.id}/analytics`)
-                                ? 'bg-primary-50 text-primary-700'
-                                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                              }
-                            `}
-                          >
-                            <ChartBarIcon className="w-4 h-4" />
-                            <span>Analytics</span>
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            href={`/bots/${currentBot.id}/config`}
-                            className={`
-                              flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors
-                              ${pathname?.startsWith(`/bots/${currentBot.id}/config`)
-                                ? 'bg-primary-50 text-primary-700'
-                                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                              }
-                            `}
-                          >
-                            <WrenchScrewdriverIcon className="w-4 h-4" />
-                            <span>Configuration</span>
-                          </Link>
-                        </li>
                       </ul>
                     )}
                   </li>
