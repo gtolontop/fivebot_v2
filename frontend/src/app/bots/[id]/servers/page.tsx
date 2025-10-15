@@ -235,12 +235,61 @@ export default function BotServersPage() {
               {bot.name} is not in any servers yet. Invite it to get started!
             </p>
             <button
-              onClick={handleInviteToNewServer}
+              onClick={() => handleInviteToServer()}
               className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors"
             >
               <PlusCircleIcon className="w-5 h-5" />
               Invite to Server
             </button>
+          </div>
+        )}
+
+        {/* Available Servers */}
+        {serversWithoutBot.length > 0 && (
+          <div>
+            <div className="mb-4">
+              <h2 className="text-lg font-bold text-gray-900">Available Servers</h2>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Click on a server to invite {bot.name}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {serversWithoutBot.map((guild) => (
+                <button
+                  key={guild.id}
+                  onClick={() => handleInviteToServer(guild.id)}
+                  className="bg-gradient-to-br from-gray-50 to-slate-50 hover:from-gray-100 hover:to-slate-100 rounded-xl p-5 border border-gray-200 hover:border-gray-300 shadow-sm transition-all text-left group"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="relative flex-shrink-0">
+                      <img
+                        src={getGuildIcon(guild)}
+                        alt={guild.name}
+                        className="w-16 h-16 rounded-xl opacity-75 group-hover:opacity-100 transition-opacity"
+                      />
+                      <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <PlusCircleIcon className="w-4 h-4 text-white" />
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-gray-900 truncate group-hover:text-primary-600 transition-colors">
+                        {guild.name}
+                      </h3>
+                      <p className="text-sm text-gray-600 mt-0.5">
+                        {guild.memberCount?.toLocaleString() || 0} members
+                      </p>
+                      <div className="flex items-center gap-1 mt-1">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-600 group-hover:bg-blue-100 group-hover:text-blue-700 rounded-md text-xs font-semibold transition-colors">
+                          <PlusCircleIcon className="w-3 h-3" />
+                          Click to invite
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
