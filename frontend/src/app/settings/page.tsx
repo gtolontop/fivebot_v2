@@ -8,21 +8,12 @@ import { usersAPI, utilsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
 import {
   UserCircleIcon,
-  ShieldCheckIcon,
-  ChartBarIcon,
-  LinkIcon,
   PhotoIcon,
-  CreditCardIcon,
 } from '@heroicons/react/24/outline';
-import Image from 'next/image';
-
-type TabType = 'account' | 'privacy' | 'usage' | 'connectors';
 
 export default function SettingsPage() {
   const { user, loading, refreshUser } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState<TabType>('account');
   const [isUploading, setIsUploading] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
@@ -85,13 +76,6 @@ export default function SettingsPage() {
   }
 
   if (!user) return null;
-
-  const tabs = [
-    { id: 'account' as const, name: 'Account', icon: UserCircleIcon },
-    { id: 'privacy' as const, name: 'Privacy', icon: ShieldCheckIcon },
-    { id: 'usage' as const, name: 'Usage', icon: ChartBarIcon },
-    { id: 'connectors' as const, name: 'Connectors', icon: LinkIcon, badge: 'Soon' },
-  ];
 
   return (
     <DashboardLayout>
