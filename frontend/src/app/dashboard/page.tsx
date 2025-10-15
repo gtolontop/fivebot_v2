@@ -210,139 +210,247 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         {/* Hero Section */}
-        <div className="mb-8">
+        <div className="mb-10">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
             Welcome back, {user.username} 👋
           </h1>
           <p className="text-lg text-gray-600">
-            Manage your Discord bots and get started
+            Here's an overview of your FiveBot platform
           </p>
         </div>
 
         {/* Pending Invitations */}
         <PendingInvitations onAccept={fetchDashboardData} />
 
-        {/* Quick Stats - Compact */}
-        <div className="flex items-center gap-6 mb-8 text-sm">
-          <div className="flex items-center gap-2">
-            <CubeIcon className="w-5 h-5 text-gray-400" />
-            <span className="text-gray-600">
-              <span className="font-semibold text-gray-900">{stats.totalBots}</span> bots
-            </span>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+          {/* Bots Overview */}
+          <Link href="/bots" className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg hover:border-primary-300 transition-all group">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <CubeIcon className="w-6 h-6 text-blue-600" />
+              </div>
+              <svg className="w-5 h-5 text-gray-400 group-hover:text-primary-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-gray-600">Total Bots</p>
+              <p className="text-3xl font-bold text-gray-900">{stats.totalBots}</p>
+              <p className="text-sm text-gray-500">{stats.activeBots} online</p>
+            </div>
+          </Link>
+
+          {/* Create Bot */}
+          <Link href="/bots/create" className="bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl p-6 text-white hover:shadow-xl hover:scale-105 transition-all group">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <PlusIcon className="w-6 h-6 text-white" />
+              </div>
+              <svg className="w-5 h-5 text-white/80 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-purple-100">Create Bot</p>
+              <p className="text-2xl font-bold">New Bot</p>
+              <p className="text-sm text-purple-100">Start building now</p>
+            </div>
+          </Link>
+
+          {/* Modules */}
+          <Link href="/modules" className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg hover:border-primary-300 transition-all group">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <svg className="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10 3.5a1.5 1.5 0 013 0V4a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-.5a1.5 1.5 0 000 3h.5a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-.5a1.5 1.5 0 00-3 0v.5a1 1 0 01-1 1H6a1 1 0 01-1-1v-3a1 1 0 00-1-1h-.5a1.5 1.5 0 010-3H4a1 1 0 001-1V6a1 1 0 011-1h3a1 1 0 001-1v-.5z"/>
+                </svg>
+              </div>
+              <svg className="w-5 h-5 text-gray-400 group-hover:text-primary-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-gray-600">Browse</p>
+              <p className="text-2xl font-bold text-gray-900">Modules</p>
+              <p className="text-sm text-gray-500">Add new features</p>
+            </div>
+          </Link>
+
+          {/* Credits */}
+          <Link href="/settings/billing" className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg hover:border-primary-300 transition-all group">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <SparklesIcon className="w-6 h-6 text-green-600" />
+              </div>
+              <svg className="w-5 h-5 text-gray-400 group-hover:text-primary-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-gray-600">Available</p>
+              <p className="text-3xl font-bold text-gray-900">{user.credits}</p>
+              <p className="text-sm text-gray-500">Credits balance</p>
+            </div>
+          </Link>
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Recent Activity */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">Recent Activity</h2>
+              <p className="text-sm text-gray-500 mt-1">Latest updates from your bots</p>
+            </div>
+            <div className="p-6">
+              {recentActivity.length === 0 ? (
+                <div className="text-center py-8">
+                  <ClockIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500">No recent activity</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {recentActivity.slice(0, 5).map((event) => (
+                    <div
+                      key={event.id}
+                      className="flex items-start gap-3 pb-4 border-b border-gray-100 last:border-0 last:pb-0"
+                    >
+                      <div className="flex-shrink-0 w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center">
+                        {getActivityIcon(event.type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-gray-900 font-medium">{event.message}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {formatRelativeTime(event.timestamp)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <CheckCircleIcon className="w-5 h-5 text-green-500" />
-            <span className="text-gray-600">
-              <span className="font-semibold text-green-600">{stats.activeBots}</span> online
-            </span>
+
+          {/* Quick Actions */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">Quick Actions</h2>
+              <p className="text-sm text-gray-500 mt-1">Common tasks and shortcuts</p>
+            </div>
+            <div className="p-6 space-y-3">
+              <Link
+                href="/bots/create"
+                className="flex items-center gap-4 p-4 bg-primary-50 border border-primary-200 rounded-lg hover:bg-primary-100 transition-colors group"
+              >
+                <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
+                  <PlusIcon className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-gray-900 group-hover:text-primary-700">Create New Bot</p>
+                  <p className="text-xs text-gray-600">Add a Discord bot to your account</p>
+                </div>
+                <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+
+              <Link
+                href="/modules"
+                className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors group"
+              >
+                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 3.5a1.5 1.5 0 013 0V4a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-.5a1.5 1.5 0 000 3h.5a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-.5a1.5 1.5 0 00-3 0v.5a1 1 0 01-1 1H6a1 1 0 01-1-1v-3a1 1 0 00-1-1h-.5a1.5 1.5 0 010-3H4a1 1 0 001-1V6a1 1 0 011-1h3a1 1 0 001-1v-.5z"/>
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-gray-900">Browse Modules</p>
+                  <p className="text-xs text-gray-600">Discover features to add to your bots</p>
+                </div>
+                <svg className="w-5 h-5 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+
+              <Link
+                href="/modules/installed"
+                className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors group"
+              >
+                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                  <CheckCircleIcon className="w-5 h-5 text-green-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-gray-900">Installed Modules</p>
+                  <p className="text-xs text-gray-600">Manage your active modules</p>
+                </div>
+                <svg className="w-5 h-5 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+
+              <Link
+                href="/settings"
+                className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors group"
+              >
+                <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-gray-900">Account Settings</p>
+                  <p className="text-xs text-gray-600">Update your profile and preferences</p>
+                </div>
+                <svg className="w-5 h-5 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
           </div>
         </div>
 
-        {/* Main Content - Single Column */}
-        {bots.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-12 text-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <CubeIcon className="w-10 h-10 text-white" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">Create your first bot</h2>
-            <p className="text-gray-600 mb-8 max-w-md mx-auto">
-              Get started by creating a Discord bot. It only takes a few minutes to set up and you'll be ready to go.
-            </p>
-            <div className="flex items-center justify-center gap-4">
-              <Link
-                href="/bots/create"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-colors shadow-lg shadow-primary-200"
-              >
-                <PlusIcon className="w-5 h-5" />
-                Create Bot
-              </Link>
-              <Link
-                href="/modules"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-white text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors border border-gray-300"
-              >
-                Browse Modules
-              </Link>
-            </div>
-
-            {/* Getting Started Steps */}
-            <div className="mt-12 pt-8 border-t border-gray-200">
-              <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wider">How it works</h3>
-              <div className="grid grid-cols-3 gap-8 text-left">
-                <div>
-                  <div className="w-8 h-8 bg-primary-600 text-white rounded-lg flex items-center justify-center text-sm font-bold mb-3">1</div>
-                  <h4 className="font-medium text-gray-900 mb-1">Create Application</h4>
-                  <p className="text-sm text-gray-600">Visit Discord Developer Portal and create a new bot application</p>
-                </div>
-                <div>
-                  <div className="w-8 h-8 bg-primary-600 text-white rounded-lg flex items-center justify-center text-sm font-bold mb-3">2</div>
-                  <h4 className="font-medium text-gray-900 mb-1">Add to FiveBot</h4>
-                  <p className="text-sm text-gray-600">Paste your bot token and give it a name</p>
-                </div>
-                <div>
-                  <div className="w-8 h-8 bg-primary-600 text-white rounded-lg flex items-center justify-center text-sm font-bold mb-3">3</div>
-                  <h4 className="font-medium text-gray-900 mb-1">Install Modules</h4>
-                  <p className="text-sm text-gray-600">Browse and add features to customize your bot</p>
+        {/* Getting Started for new users */}
+        {bots.length === 0 && (
+          <div className="mt-6 bg-gradient-to-br from-blue-50 to-primary-50 rounded-xl border border-primary-200 p-8">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-12 h-12 bg-primary-600 rounded-xl flex items-center justify-center">
+                <ServerIcon className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Get Started with FiveBot</h3>
+                <p className="text-gray-700 mb-6">
+                  Welcome! Create your first bot in just a few minutes and start adding features from our module library.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-6 h-6 bg-primary-600 text-white rounded-full flex items-center justify-center text-xs font-bold">1</div>
+                    <div>
+                      <p className="font-semibold text-gray-900">Create Bot Token</p>
+                      <p className="text-gray-600">Visit Discord Developer Portal</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-6 h-6 bg-primary-600 text-white rounded-full flex items-center justify-center text-xs font-bold">2</div>
+                    <div>
+                      <p className="font-semibold text-gray-900">Add to FiveBot</p>
+                      <p className="text-gray-600">Paste your bot token here</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-6 h-6 bg-primary-600 text-white rounded-full flex items-center justify-center text-xs font-bold">3</div>
+                    <div>
+                      <p className="font-semibold text-gray-900">Install Modules</p>
+                      <p className="text-gray-600">Customize with features</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        ) : (
-          <>
-            {/* Header with actions */}
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Your Bots</h2>
-              <div className="flex items-center gap-3">
-                <Link
-                  href="/modules"
-                  className="inline-flex items-center gap-2 px-4 py-2 text-gray-700 font-medium rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  Browse Modules
-                </Link>
-                <Link
-                  href="/bots/create"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors"
-                >
-                  <PlusIcon className="w-5 h-5" />
-                  Create Bot
-                </Link>
-              </div>
-            </div>
-
-            {/* Bots List */}
-            <div className="space-y-3">
-              {bots.map((bot) => (
-                <Link
-                  key={bot.id}
-                  href={`/bots/${bot.id}`}
-                  className="flex items-center gap-4 p-5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-primary-300 hover:shadow-md transition-all group"
-                >
-                  <Avatar
-                    fallback={bot.name[0]}
-                    size="lg"
-                    status={bot.status as any}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">
-                      {bot.name}
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      Created {new Date(bot.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <Badge status={bot.status as any}>
-                      {bot.status}
-                    </Badge>
-                    <svg className="w-5 h-5 text-gray-400 group-hover:text-primary-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </>
         )}
       </div>
     </DashboardLayout>
