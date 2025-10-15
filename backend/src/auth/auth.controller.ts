@@ -20,7 +20,7 @@ export class AuthController {
     console.log('Discord Auth - Client ID:', clientId);
     console.log('Discord Auth - Redirect URI:', redirectUri);
     
-    const discordAuthUrl = `https://discord.com/oauth2/authorize?response_type=code&client_id=${clientId}&scope=identify%20email&redirect_uri=${encodeURIComponent(redirectUri)}`;
+    const discordAuthUrl = `https://discord.com/oauth2/authorize?response_type=code&client_id=${clientId}&scope=identify%20email%20guilds&redirect_uri=${encodeURIComponent(redirectUri)}`;
     
     console.log('Discord Auth URL:', discordAuthUrl);
     res.redirect(discordAuthUrl);
