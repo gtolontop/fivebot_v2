@@ -46,9 +46,15 @@ export class CreditsController {
   }
 
   @Get('stats')
+  async getStats(@Req() req: any) {
+    // Return user-specific stats for regular users, global stats for admins
+    return this.creditsService.getUserCreditStats(req.user.id);
+  }
+
+  @Get('stats/global')
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @UseGuards(RolesGuard)
-  async getStats() {
+  async getGlobalStats() {
     return this.creditsService.getCreditStats();
   }
 
