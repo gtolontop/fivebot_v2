@@ -92,12 +92,20 @@ export default function BotServersPage() {
     return `https://api.dicebear.com/7.x/initials/svg?seed=${guild.name}`;
   };
 
-  const handleInviteToNewServer = () => {
+  const handleInviteToServer = (guildId?: string) => {
     if (inviteLink) {
-      window.open(inviteLink, '_blank');
+      const url = guildId
+        ? `${inviteLink}&guild_id=${guildId}&disable_guild_select=true`
+        : inviteLink;
+      window.open(url, '_blank');
       toast.success('Opening Discord invite page...');
     }
   };
+
+  // Separate servers into two categories
+  const botGuildIds = new Set(botGuilds.map(g => g.id));
+  const serversWithBot = botGuilds;
+  const serversWithoutBot = userGuilds.filter(g => !botGuildIds.has(g.id));
 
   if (authLoading || loading) {
     return (
