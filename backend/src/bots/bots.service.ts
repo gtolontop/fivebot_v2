@@ -113,6 +113,16 @@ export class BotsService {
     // Encrypt the token
     const encryptedToken = this.encryptionService.encrypt(data.token);
 
+    // Build avatar URL from Discord CDN
+    const avatarUrl = tokenValidation.user?.avatar
+      ? `https://cdn.discordapp.com/avatars/${tokenValidation.user.id}/${tokenValidation.user.avatar}.png?size=256`
+      : null;
+
+    // Build banner URL from Discord CDN
+    const bannerUrl = tokenValidation.user?.banner
+      ? `https://cdn.discordapp.com/banners/${tokenValidation.user.id}/${tokenValidation.user.banner}.png?size=512`
+      : null;
+
     // Create bot record
     const bot = await this.prisma.bot.create({
       data: {
@@ -120,6 +130,8 @@ export class BotsService {
         name: data.name,
         tokenEncrypted: encryptedToken,
         clientId: tokenValidation.application?.id,
+        avatar: avatarUrl,
+        banner: bannerUrl,
         prefix: data.prefix || '!',
         status: BotStatus.OFFLINE,
         isActive: true, // Bot is active by default
