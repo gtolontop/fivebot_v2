@@ -112,50 +112,49 @@ export default function CreateBotPage() {
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-8">
-                  <div className="space-y-6">
-                    <Input
-                      label="Bot Name"
-                      type="text"
-                      id="name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      required
-                      placeholder="My Awesome Bot"
-                      helperText="Choose a unique name to identify your bot"
-                    />
+                  <div className="space-y-8">
+                    <div>
+                      <label htmlFor="name" className="block text-sm font-semibold text-gray-900 mb-2">
+                        Bot Name
+                      </label>
+                      <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        required
+                        placeholder="My Awesome Bot"
+                        className="w-full px-4 py-3.5 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                      />
+                      <p className="mt-2 text-sm text-gray-500">Choose a unique name to identify your bot</p>
+                    </div>
 
-                    <Input
-                      label="Discord Bot Token"
-                      type="password"
-                      id="token"
-                      name="token"
-                      value={formData.token}
-                      onChange={handleChange}
-                      required
-                      placeholder="MTxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                      helperText="Get your token from the Discord Developer Portal"
-                      className="font-mono"
-                    />
-                  </div>
-
-                  {/* Features Preview */}
-                  <div className="bg-gradient-to-br from-primary-50 to-purple-50 rounded-xl p-6 border border-primary-100">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">What's included</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      {[
-                        { name: 'Slash Commands', icon: '⚡' },
-                        { name: 'Welcome Messages', icon: '👋' },
-                        { name: 'Auto Roles', icon: '🎭' },
-                        { name: 'Moderation Tools', icon: '🛡️' },
-                        { name: 'Real-time Analytics', icon: '📊' },
-                        { name: '24/7 Hosting', icon: '🚀' }
-                      ].map((feature) => (
-                        <div key={feature.name} className="flex items-center space-x-3 bg-white rounded-lg p-3 border border-primary-100">
-                          <span className="text-2xl">{feature.icon}</span>
-                          <span className="text-sm font-medium text-gray-700">{feature.name}</span>
-                        </div>
-                      ))}
+                    <div>
+                      <label htmlFor="token" className="block text-sm font-semibold text-gray-900 mb-2">
+                        Discord Bot Token
+                      </label>
+                      <input
+                        type="password"
+                        id="token"
+                        name="token"
+                        value={formData.token}
+                        onChange={handleChange}
+                        required
+                        placeholder="MTxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                        className="w-full px-4 py-3.5 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors font-mono"
+                      />
+                      <p className="mt-2 text-sm text-gray-500">
+                        Get your token from the{' '}
+                        <a
+                          href="https://discord.com/developers/applications"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary-600 hover:text-primary-700 font-medium hover:underline"
+                        >
+                          Discord Developer Portal
+                        </a>
+                      </p>
                     </div>
                   </div>
 
