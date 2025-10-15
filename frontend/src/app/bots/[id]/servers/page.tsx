@@ -128,7 +128,7 @@ export default function BotServersPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
@@ -139,18 +139,6 @@ export default function BotServersPage() {
               </div>
             </div>
             <p className="text-sm font-medium text-gray-600">Active Servers</p>
-          </div>
-
-          <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-6 border border-blue-100">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
-                <PlusCircleIcon className="w-6 h-6 text-blue-600" />
-              </div>
-              <div className="text-3xl font-bold text-blue-600">
-                {serversWithoutBot.length}
-              </div>
-            </div>
-            <p className="text-sm font-medium text-gray-600">Available Servers</p>
           </div>
 
           <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100">
