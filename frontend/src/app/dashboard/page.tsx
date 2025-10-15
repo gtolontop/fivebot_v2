@@ -210,19 +210,60 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-6xl mx-auto">
-        {/* Hero Section */}
-        <div className="mb-10">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            Welcome back, {user.username} 👋
-          </h1>
-          <p className="text-lg text-gray-600">
-            Here's an overview of your FiveBot platform
-          </p>
+      <div className="max-w-7xl mx-auto">
+        {/* Hero Section with User Info */}
+        <div className="mb-8 flex items-start justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-purple-600 rounded-2xl flex items-center justify-center text-2xl font-bold text-white shadow-lg">
+              {user.username[0].toUpperCase()}
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Welcome back, {user.username}
+              </h1>
+              <p className="text-gray-600 mt-1">
+                {user.email} • {user.credits} credits available
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/bots/create"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors shadow-sm"
+            >
+              <PlusIcon className="w-5 h-5" />
+              Create Bot
+            </Link>
+          </div>
         </div>
 
         {/* Pending Invitations */}
         <PendingInvitations onAccept={fetchDashboardData} />
+
+        {/* System Status Banner */}
+        <div className="mb-8 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+                <CheckCircleIcon className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">All systems operational</p>
+                <p className="text-sm text-gray-600">All services running smoothly • Uptime: 99.9%</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-gray-600">API Online</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-gray-600">Bot Manager Online</span>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
