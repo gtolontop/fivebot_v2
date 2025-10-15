@@ -580,7 +580,12 @@ export class SimpleQueueService implements IQueueService {
       const botProcess = this.runningBots.get(botId);
 
       if (!botProcess) {
-        console.log(`⚠️ Bot "${botName}" is not running in process manager - updating status to OFFLINE`);
+        console.log(`⚠️ Bot "${botName}" is not running in process manager - cleaning up and updating status to OFFLINE`);
+        // Clean up Redis and local state anyway
+        this.runningBots.delete(botId);
+        await this.redisService.removeRunningBot(botId);
+        await this.redisService.deleteBotMetadata(botId);
+
         // Update status anyway
         await this.updateBotStatusSafe(botId, BotStatus.OFFLINE);
         return;
