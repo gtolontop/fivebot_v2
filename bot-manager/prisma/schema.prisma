@@ -1,0 +1,462 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   String             @id @default(uuid())
+  discordId            String             @unique @map("discord_id")
+  username             String
+  email                String?
+  avatar               String?
+  role                 UserRole           @default(USER)
+  credits              Int                @default(100)
+  discordAccessToken   String?            @map("discord_access_token") @db.Text
+  discordRefreshToken  String?            @map("discord_refresh_token") @db.Text
+  discordTokenExpiry   DateTime?          @map("discord_token_expiry")
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
+  auditLogs            AuditLog[]
+  bots                 Bot[]
+  creditsHistory       CreditsHistory[]
+  collaborations       BotCollaborator[]
+
+  @@map("users")
+}
+
+model Bot {
+  id             String             @id @default(uuid())
+  ownerId        String             @map("owner_id")
+  name           String
+  tokenEncrypted String             @map("token_encrypted") @db.Text
+  clientId       String?            @map("client_id")
+  avatar         String?
+  banner         String?
+  prefix         String             @default("!")
+  isActive       Boolean            @default(false) @map("is_active")
+  containerId    String?            @map("container_id")
+  instanceId     String?            @map("instance_id")
+  status         BotStatus          @default(OFFLINE)
+  startedAt      DateTime?          @map("started_at")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
+  auditLogs      AuditLog[]
+  config         BotConfig?
+  logs           BotLog[]
+  metrics        BotMetrics[]
+  owner          User               @relation(fields: [ownerId], references: [id], onDelete: Cascade, map: "bot_owner_fkey")
+  hosts          Host[]
+  jobLogs        JobLog[]
+  commands       BotCommand[]
+  collaborators  BotCollaborator[]
+
+  @@index([ownerId], map: "bots_owner_id_fkey")
+  @@map("bots")
+}
+
+model BotConfig {
+  id                        String   @id @default(uuid())
+  botId                     String   @unique @map("bot_id")
+  welcomeEnabled            Boolean  @default(false) @map("welcome_enabled")
+  welcomeChannelId          String?  @map("welcome_channel_id")
+  welcomeEmbedJson          String?  @map("welcome_embed_json") @db.Text
+  welcomeLogoUrl            String?  @map("welcome_logo_url")
+  moderationEnabled         Boolean  @default(false) @map("moderation_enabled")
+  autoRoleEnabled           Boolean  @default(false) @map("auto_role_enabled")
+  autoRoleId                String?  @map("auto_role_id")
+  autoRoleIds               String?  @map("auto_role_ids") @db.Text
+  loggingChannelId          String?  @map("logging_channel_id")
+  customCommands            String?  @map("custom_commands") @db.Text
+  ticketEnabled             Boolean  @default(false) @map("ticket_enabled")
+  ticketCategoryId          String?  @map("ticket_category_id")
+  ticketStaffRoleId         String?  @map("ticket_staff_role_id")
+  ticketTranscriptChannelId String?  @map("ticket_transcript_channel_id")
+  ticketData                String?  @map("ticket_data") @db.Text
+  statusRotation            String?  @map("status_rotation") @db.Text
+  embedV2Commands           String?  @map("embed_v2_commands") @db.Text
+  createdAt                 DateTime @default(now()) @map("created_at")
+  updatedAt                 DateTime @updatedAt @map("updated_at")
+  bot                       Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
+
+  @@map("bot_configs")
+}
+
+model CreditsHistory {
+  id        String     @id @default(uuid())
+  userId    String     @map("user_id")
+  amount    Int
+  reason    String
+  type      CreditType
+  metadata  String?    @db.Text
+  createdAt DateTime   @default(now()) @map("created_at")
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade, map: "credits_history_user_fkey")
+
+  @@index([userId], map: "credits_history_user_id_fkey")
+  @@map("credits_history")
+}
+
+model Host {
+  id          String     @id @default(uuid())
+  botId       String     @map("bot_id")
+  host        String
+  containerId String?    @map("container_id")
+  status      HostStatus @default(DOWN)
+  cpuLimit    String?    @map("cpu_limit")
+  memLimit    String?    @map("mem_limit")
+  startedAt   DateTime?  @map("started_at")
+  stoppedAt   DateTime?  @map("stopped_at")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  bot         Bot        @relation(fields: [botId], references: [id], onDelete: Cascade, map: "host_bot_fkey")
+
+  @@index([botId], map: "hosts_bot_id_fkey")
+  @@map("hosts")
+}
+
+model JobLog {
+  id        String    @id @default(uuid())
+  botId     String?   @map("bot_id")
+  jobId     String    @map("job_id")
+  jobType   String    @map("job_type")
+  status    JobStatus
+  message   String?   @db.Text
+  metadata  String?   @db.Text
+  createdAt DateTime  @default(now()) @map("created_at")
+  bot       Bot?      @relation(fields: [botId], references: [id], map: "job_log_bot_fkey")
+
+  @@index([botId], map: "job_logs_bot_id_fkey")
+  @@map("job_logs")
+}
+
+model BotLog {
+  id        String   @id @default(uuid())
+  botId     String   @map("bot_id")
+  level     LogLevel @default(INFO)
+  message   String   @db.Text
+  source    String?
+  metadata  String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  bot       Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
+
+  @@index([botId, createdAt])
+  @@map("bot_logs")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  botId     String?  @map("bot_id")
+  action    String
+  resource  String?
+  metadata  String?  @db.Text
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+  bot       Bot?     @relation(fields: [botId], references: [id], map: "audit_log_bot_fkey")
+  user      User?    @relation(fields: [userId], references: [id], map: "audit_log_user_fkey")
+
+  @@index([botId], map: "audit_logs_bot_id_fkey")
+  @@index([userId], map: "audit_logs_user_id_fkey")
+  @@map("audit_logs")
+}
+
+model BotMetrics {
+  id                String   @id @default(uuid())
+  botId             String   @map("bot_id")
+  date              DateTime @map("date") @db.Date
+  commandsUsed      Int      @default(0) @map("commands_used")
+  messagesProcessed Int      @default(0) @map("messages_processed")
+  guildsCount       Int      @default(0) @map("guilds_count")
+  usersCount        Int      @default(0) @map("users_count")
+  uptimeSeconds     Int      @default(0) @map("uptime_seconds")
+  avgResponseTime   Int      @default(0) @map("avg_response_time_ms")
+  errorsCount       Int      @default(0) @map("errors_count")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  bot               Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
+
+  @@unique([botId, date])
+  @@map("bot_metrics")
+}
+
+model SecurityKey {
+  id        String   @id @default(uuid())
+  purpose   String   @unique
+  keyMeta   String?  @map("key_meta") @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("security_keys")
+}
+
+enum LogLevel {
+  DEBUG
+  INFO
+  WARN
+  ERROR
+  SUCCESS
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum BotStatus {
+  OFFLINE
+  STARTING
+  ONLINE
+  ERROR
+  STOPPING
+}
+
+enum HostStatus {
+  UP
+  DOWN
+  STARTING
+  STOPPING
+  ERROR
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum CreditType {
+  PURCHASE
+  BONUS
+  SPEND
+  REFUND
+  ADMIN_ADJUSTMENT
+}
+
+model BotCommand {
+  id          String    @id @default(uuid())
+  botId       String    @map("bot_id")
+  bot         Bot       @relation(fields: [botId], references: [id], onDelete: Cascade)
+  action      String
+  data        Json?
+  status      String    @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  error       String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  processedAt DateTime? @map("processed_at")
+
+  @@index([botId, status])
+  @@map("bot_commands")
+}
+
+model BotCollaborator {
+  id            String               @id @default(uuid())
+  botId         String               @map("bot_id")
+  userId        String               @map("user_id")
+  invitedBy     String               @map("invited_by")
+  role          CollaboratorRole     @default(VIEWER)
+  permissions   String?              @db.Text // JSON des permissions granulaires
+  status        CollaboratorStatus   @default(PENDING)
+  invitedAt     DateTime             @default(now()) @map("invited_at")
+  acceptedAt    DateTime?            @map("accepted_at")
+  lastAccessAt  DateTime?            @map("last_access_at")
+  createdAt     DateTime             @default(now()) @map("created_at")
+  updatedAt     DateTime             @updatedAt @map("updated_at")
+  bot           Bot                  @relation(fields: [botId], references: [id], onDelete: Cascade)
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([botId, userId])
+  @@index([userId])
+  @@index([botId, status])
+  @@map("bot_collaborators")
+}
+
+enum CollaboratorRole {
+  VIEWER        // Voir seulement
+  MODERATOR     // Gérer modération, tickets, logs
+  DEVELOPER     // Gérer commandes, config avancée
+  ADMIN         // Tout sauf supprimer le bot
+}
+
+enum CollaboratorStatus {
+  PENDING       // Invitation envoyée
+  ACTIVE        // Acceptée et active
+  SUSPENDED     // Temporairement suspendu
+  REVOKED       // Accès révoqué
+}
+
+// Enums pour le système de tickets
+enum ContainerType {
+  CHANNEL
+  THREAD
+  HYBRID
+}
+
+enum TicketPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum AssignmentModel {
+  AUTO_ASSIGN
+  COLLABORATIVE
+  SOFT_CLAIM
+  STRICT_CLAIM
+  NO_ASSIGNMENT
+}
+
+enum TicketState {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+  RESOLVED
+  ARCHIVED
+}
+
+model Ticket {
+  id              String                @id @default(uuid())
+  guildId         String                @map("guild_id")
+  ticketNumber    Int                   @map("ticket_number")
+  channelId       String?               @map("channel_id")
+  threadId        String?               @map("thread_id")
+  creatorId       String                @map("creator_id")
+  assignedStaffId String?               @map("assigned_staff_id")
+  type            String
+  category        String?
+  priority        String                @default("medium")
+  state           String                @default("open")
+  activityState   String                @default("active") @map("activity_state")
+  containerType   String                @default("channel") @map("container_type")
+  lastActivity    DateTime              @default(now()) @map("last_activity")
+  feedbackRating  Int?                  @map("feedback_rating")
+  createdAt       DateTime              @default(now()) @map("created_at")
+  closedAt        DateTime?             @map("closed_at")
+  deletedAt       DateTime?             @map("deleted_at")
+  messages        TicketMessage[]
+  participants    TicketParticipant[]
+  logs            TicketLog[]
+
+  @@index([guildId])
+  @@index([creatorId])
+  @@index([state])
+  @@map("tickets")
+}
+
+model TicketMessage {
+  id            String   @id @default(uuid())
+  ticketId      String   @map("ticket_id")
+  userId        String   @map("user_id")
+  authorId      String   @map("author_id")
+  content       String   @db.Text
+  attachments   Json?
+  isStaff       Boolean  @default(false) @map("is_staff")
+  messageNumber Int      @default(1) @map("message_number")
+  createdAt     DateTime @default(now()) @map("created_at")
+  ticket        Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@map("ticket_messages")
+}
+
+model TicketConfig {
+  id                    String          @id @default(uuid())
+  guildId               String          @unique @map("guild_id")
+  botId                 String          @map("bot_id")
+  enabled               Boolean         @default(true)
+  containerType         ContainerType   @default(CHANNEL) @map("container_type")
+  categoryId            String?         @map("category_id")
+  supportCategoryId     String?         @map("support_category_id")
+  staffRoleId           String?         @map("staff_role_id")
+  staffRoles            Json?           @map("staff_roles")
+  transcriptChannelId   String?         @map("transcript_channel_id")
+  logChannelId          String?         @map("log_channel_id")
+  namingFormat          String?         @map("naming_format")
+  namingPattern         String?         @map("naming_pattern")
+  maxTickets            Int             @default(3) @map("max_tickets")
+  maxTicketsPerUser     Int             @default(3) @map("max_tickets_per_user")
+  cooldownMinutes       Int             @default(5) @map("cooldown_minutes")
+  warningHours          Int             @default(24) @map("warning_hours")
+  autoCloseHours        Int             @default(48) @map("auto_close_hours")
+  assignmentModel       AssignmentModel @default(COLLABORATIVE) @map("assignment_model")
+  allowedFileTypes      Json?           @map("allowed_file_types")
+  autoSaveTranscripts   Boolean         @default(false) @map("auto_save_transcripts")
+  sendTranscriptToUser  Boolean         @default(false) @map("send_transcript_to_user")
+  includeAttachments    Boolean         @default(true) @map("include_attachments")
+  categories            String?         @db.Text
+  panels                String?         @db.Text
+  createdAt             DateTime        @default(now()) @map("created_at")
+  updatedAt             DateTime        @updatedAt @map("updated_at")
+
+  @@index([botId])
+  @@index([guildId])
+  @@map("ticket_configs")
+}
+
+model TicketParticipant {
+  id         String    @id @default(uuid())
+  ticketId   String    @map("ticket_id")
+  userId     String    @map("user_id")
+  role       String    @default("OBSERVER")
+  addedAt    DateTime  @default(now()) @map("added_at")
+  removedAt  DateTime? @map("removed_at")
+  leftAt     DateTime? @map("left_at")
+  ticket     Ticket    @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@unique([ticketId, userId], map: "ticketId_userId")
+  @@index([ticketId])
+  @@map("ticket_participants")
+}
+
+model TicketLog {
+  id          String   @id @default(uuid())
+  ticketId    String   @map("ticket_id")
+  action      String
+  performedBy String   @map("performed_by")
+  details     String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  ticket      Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@map("ticket_logs")
+}
+
+// Modèles supplémentaires pour le système de tickets avancé
+model TicketCategory {
+  id        String   @id @default(uuid())
+  guildId   String   @map("guild_id")
+  botId     String   @map("bot_id")
+  name      String
+  emoji     String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([guildId])
+  @@index([botId])
+  @@map("ticket_categories")
+}
+
+model TicketPanel {
+  id        String   @id @default(uuid())
+  guildId   String   @map("guild_id")
+  botId     String   @map("bot_id")
+  channelId String   @map("channel_id")
+  messageId String?  @map("message_id")
+  type      String
+  active    Boolean  @default(true)
+  config    Json?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([guildId])
+  @@index([botId])
+  @@index([channelId])
+  @@map("ticket_panels")
+}
