@@ -238,7 +238,7 @@ export const utilsAPI = {
 
 export const usersAPI = {
   me: () => api.get('/users/me'),
-  updateMe: (data: { username?: string; email?: string }) =>
+  updateMe: (data: { username?: string; email?: string; avatar?: string }) =>
     api.patch('/users/me', data),
   getMyGuilds: () => api.get('/users/me/guilds'),
   getAll: (page = 1, limit = 10) =>
