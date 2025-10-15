@@ -715,65 +715,42 @@ export default function BotDetailPage() {
           </div>
         </div>
 
-        {/* Servers List */}
-        {bot.status === 'ONLINE' && guilds.length > 0 && (
+          {/* Servers List - Takes 1/3 */}
           <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-lg font-bold text-gray-900">Connected Servers</h2>
-                <p className="text-xs text-gray-500 mt-0.5">{guilds.length} servers total</p>
+            <div className="mb-4">
+              <h2 className="text-lg font-bold text-gray-900">Connected Servers</h2>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {bot.status === 'ONLINE' ? `${guilds.length} servers` : 'Offline'}
+              </p>
+            </div>
+
+            {bot.status === 'ONLINE' && guilds.length > 0 ? (
+              <div className="space-y-3 max-h-[500px] overflow-y-auto">
+                {guilds.map((guild) => (
+                  <div
+                    key={guild.id}
+                    className="flex items-center gap-3 p-3 border border-gray-200 rounded-xl hover:border-primary-300 hover:bg-primary-50/30 transition-all"
+                  >
+                    <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                      {guild.name[0].toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm text-gray-900 truncate">{guild.name}</p>
+                      <p className="text-xs text-gray-500">
+                        {guild.memberCount.toLocaleString()} members
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {guilds.slice(0, 6).map((guild) => (
-                <div
-                  key={guild.id}
-                  className="flex items-center gap-3 p-4 border border-gray-200 rounded-xl hover:border-primary-300 hover:bg-primary-50/30 transition-all"
-                >
-                  <div className="w-12 h-12 bg-gradient-to-br from-primary-400 to-primary-600 rounded-xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-                    {guild.name[0].toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 truncate">{guild.name}</p>
-                    <p className="text-xs text-gray-500">
-                      {guild.memberCount.toLocaleString()} members
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {guilds.length > 6 && (
-              <div className="mt-4 text-center">
-                <button className="text-sm text-primary-600 hover:text-primary-700 font-medium">
-                  View all {guilds.length} servers →
-                </button>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+                <ServerIcon className="w-12 h-12 mb-3 opacity-50" />
+                <p className="text-sm">
+                  {bot.status === 'ONLINE' ? 'No servers' : 'Bot is offline'}
+                </p>
               </div>
             )}
-          </div>
-        )}
-
-        {/* Bot Info */}
-        <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Bot Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Prefix</span>
-              <p className="text-lg font-bold text-gray-900 mt-1 font-mono">{bot.prefix}</p>
-            </div>
-
-            {bot.clientId && (
-              <div>
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Client ID</span>
-                <p className="text-sm font-mono text-gray-900 mt-1 break-all">{bot.clientId}</p>
-              </div>
-            )}
-
-            <div>
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Bot ID</span>
-              <p className="text-sm font-mono text-gray-900 mt-1 break-all">{bot.id}</p>
-            </div>
           </div>
         </div>
       </div>
