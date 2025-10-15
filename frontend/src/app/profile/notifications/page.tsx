@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { BellIcon, CheckIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { notificationsAPI } from '@/utils/api';
+import toast from 'react-hot-toast';
 
 interface Notification {
   id: string;
@@ -13,53 +15,14 @@ interface Notification {
   message: string;
   timestamp: Date;
   read: boolean;
+  metadata?: any;
 }
 
 export default function NotificationsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      type: 'success',
-      title: 'Bot Started Successfully',
-      message: 'Your bot "MyBot" is now online and running',
-      timestamp: new Date(Date.now() - 2 * 60 * 1000),
-      read: false,
-    },
-    {
-      id: '2',
-      type: 'info',
-      title: 'Module Installed',
-      message: 'Welcome System module added successfully',
-      timestamp: new Date(Date.now() - 60 * 60 * 1000),
-      read: false,
-    },
-    {
-      id: '3',
-      type: 'success',
-      title: 'Credits Added',
-      message: '1000 credits added to your account',
-      timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000),
-      read: true,
-    },
-    {
-      id: '4',
-      type: 'warning',
-      title: 'High Memory Usage',
-      message: 'Bot memory usage reached 85%. Consider optimizing.',
-      timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000),
-      read: true,
-    },
-    {
-      id: '5',
-      type: 'error',
-      title: 'Connection Lost',
-      message: 'Temporary disconnection from Discord API. Reconnected successfully.',
-      timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-      read: true,
-    },
-  ]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loadingNotifications, setLoadingNotifications] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -67,7 +30,30 @@ export default function NotificationsPage() {
     }
   }, [user, loading, router]);
 
-  if (loading) {
+  useEffect(() => {
+    if (user) {
+      fetchNotifications();
+    }
+  }, [user]);
+
+  const fetchNotifications = async () => {
+    try {
+      setLoadingNotifications(true);
+      const response = await notificationsAPI.getAll();
+      setNotifications(
+        response.data.notifications.map((n: any) => ({
+          ...n,
+          timestamp: new Date(n.timestamp),
+        }))
+      );
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error);
+    } finally {
+      setLoadingNotifications(false);
+    }
+  };
+
+  if (loading || loadingNotifications) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-96">
@@ -82,22 +68,44 @@ export default function NotificationsPage() {
 
   if (!user) return null;
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev =>
-      prev.map(n => (n.id === id ? { ...n, read: true } : n))
-    );
+  const markAsRead = async (id: string) => {
+    try {
+      await notificationsAPI.markAsRead(id);
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+      toast.success('Marked as read');
+    } catch (error) {
+      toast.error('Failed to mark as read');
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  const markAllAsRead = async () => {
+    try {
+      await notificationsAPI.markAllAsRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      toast.success('All notifications marked as read');
+    } catch (error) {
+      toast.error('Failed to mark all as read');
+    }
   };
 
-  const deleteNotification = (id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
+  const deleteNotification = async (id: string) => {
+    try {
+      await notificationsAPI.delete(id);
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      toast.success('Notification deleted');
+    } catch (error) {
+      toast.error('Failed to delete notification');
+    }
   };
 
-  const clearAll = () => {
-    setNotifications([]);
+  const clearAll = async () => {
+    try {
+      await notificationsAPI.deleteAll();
+      setNotifications([]);
+      toast.success('All notifications cleared');
+    } catch (error) {
+      toast.error('Failed to clear notifications');
+    }
   };
 
   const getNotificationIcon = (type: string) => {
@@ -153,7 +161,7 @@ export default function NotificationsPage() {
     return timestamp.toLocaleDateString();
   };
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
     <DashboardLayout>
