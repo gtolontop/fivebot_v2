@@ -182,6 +182,8 @@ export default function BotsPage() {
         return 'text-gray-600 bg-gray-50 border-gray-200';
       case 'STARTING':
         return 'text-warning-600 bg-warning-50 border-warning-200';
+      case 'STOPPING':
+        return 'text-warning-600 bg-warning-50 border-warning-200';
       case 'ERROR':
         return 'text-danger-600 bg-danger-50 border-danger-200';
       default:
