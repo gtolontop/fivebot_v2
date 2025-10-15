@@ -76,12 +76,19 @@ export class AuthController {
       const discordUser = await discordUserResponse.json();
       console.log('Discord user received:', discordUser.username);
 
+      // Calculate token expiry (Discord tokens expire in seconds)
+      const tokenExpiry = new Date();
+      tokenExpiry.setSeconds(tokenExpiry.getSeconds() + discordTokens.expires_in);
+
       // Validate and create/update user in our database
       const user = await this.authService.validateDiscordUser({
         id: discordUser.id,
         username: discordUser.username,
         email: discordUser.email,
         avatar: discordUser.avatar,
+        discordAccessToken: discordTokens.access_token,
+        discordRefreshToken: discordTokens.refresh_token,
+        discordTokenExpiry: tokenExpiry,
       });
 
       // Generate our JWT token
