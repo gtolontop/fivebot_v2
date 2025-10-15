@@ -44,6 +44,11 @@ export class UsersController {
     return this.usersService.update(req.user.id, allowedFields);
   }
 
+  @Get('me/guilds')
+  async getMyGuilds(@Req() req: any) {
+    return this.usersService.getUserGuilds(req.user.id);
+  }
+
   @Get()
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @UseGuards(RolesGuard)
