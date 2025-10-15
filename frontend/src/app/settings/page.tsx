@@ -131,38 +131,8 @@ export default function SettingsPage() {
           {/* Main Content */}
           <div className="lg:col-span-3">
             <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 overflow-hidden">
-              {/* Tabs */}
-              <div className="border-b border-gray-200/50">
-                <nav className="flex gap-1 p-2">
-                  {tabs.map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      disabled={tab.badge === 'Soon'}
-                      className={`relative flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all ${
-                        activeTab === tab.id
-                          ? 'bg-primary-500 text-white shadow-lg shadow-primary-200'
-                          : tab.badge === 'Soon'
-                          ? 'text-gray-400 cursor-not-allowed'
-                          : 'text-gray-600 hover:bg-gray-100'
-                      }`}
-                    >
-                      <tab.icon className="w-5 h-5" />
-                      <span>{tab.name}</span>
-                      {tab.badge && (
-                        <span className="absolute -top-1 -right-1 px-2 py-0.5 bg-purple-500 text-white text-xs rounded-full">
-                          {tab.badge}
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                </nav>
-              </div>
-
               <div className="p-6">
-                {/* Account Tab */}
-                {activeTab === 'account' && (
-                  <div className="space-y-6">
+                <div className="space-y-6">
                     {/* Avatar Section */}
                     <div className="bg-gradient-to-br from-primary-50 to-blue-50 rounded-xl p-6 border border-primary-100">
                       <h3 className="text-lg font-bold text-gray-900 mb-4">Profile Picture</h3>
