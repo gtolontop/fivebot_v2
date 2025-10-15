@@ -273,9 +273,11 @@ export default function BotServersPage() {
                       <h3 className="font-bold text-gray-900 truncate group-hover:text-primary-600 transition-colors">
                         {guild.name}
                       </h3>
-                      <p className="text-sm text-gray-600 mt-0.5">
-                        {guild.memberCount?.toLocaleString() || 0} members
-                      </p>
+                      {guild.memberCount && (
+                        <p className="text-sm text-gray-600 mt-0.5">
+                          {guild.memberCount.toLocaleString()} members
+                        </p>
+                      )}
                       <div className="flex items-center gap-1 mt-1">
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-600 group-hover:bg-blue-100 group-hover:text-blue-700 rounded-md text-xs font-semibold transition-colors">
                           <PlusCircleIcon className="w-3 h-3" />
