@@ -2,6 +2,13 @@
 echo Starting FiveBot Full Stack Application...
 echo.
 
+:: Kill existing processes on ports
+echo Cleaning up old processes...
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr :8000') do taskkill /F /PID %%a >nul 2>&1
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr :3000') do taskkill /F /PID %%a >nul 2>&1
+echo Done!
+echo.
+
 :: Start Backend
 echo [1/3] Starting Backend Server...
 cd /d "%~dp0\backend"
