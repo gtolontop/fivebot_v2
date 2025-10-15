@@ -25,7 +25,7 @@ async function bootstrap() {
     frontendUrl,
     'https://fivebot.lol',
     'https://www.fivebot.lol',
-    'http://localhost:3000'
+    ...(process.env.NODE_ENV === 'development' ? ['http://localhost:3000'] : [])
   ];
 
   app.enableCors({

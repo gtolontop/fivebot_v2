@@ -18,7 +18,8 @@ export default function LoginPage() {
 
   const handleDiscordLogin = () => {
     console.log('Redirecting to Discord auth...');
-    window.location.href = 'http://localhost:8000/api/auth/discord';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    window.location.href = `${apiUrl}/api/auth/discord`;
   };
 
   if (loading) {
