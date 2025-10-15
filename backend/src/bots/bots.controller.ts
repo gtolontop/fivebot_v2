@@ -1625,6 +1625,17 @@ export class BotsController {
     }));
   }
 
+  @Post(':id/refresh-assets')
+  @UseGuards(AuthGuard('jwt'))
+  async refreshBotAssets(@Param('id') id: string, @Req() req: any) {
+    await this.verifyBotAccess(id, req.user.id);
+    const assets = await this.botsService.refreshBotAssets(id, req.user.id);
+    return {
+      message: 'Bot assets refreshed successfully',
+      ...assets,
+    };
+  }
+
   private async verifyBotAccess(botId: string, userId: string) {
     const bot = await this.prisma.bot.findUnique({
       where: { id: botId },
