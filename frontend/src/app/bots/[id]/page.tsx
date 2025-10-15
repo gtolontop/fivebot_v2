@@ -50,6 +50,7 @@ export default function BotDetailPage() {
     memoryUsage: 0,
     uptime: 0,
   });
+  const [logs, setLogs] = useState<string[]>([]);
 
   useEffect(() => {
     if (!loading && !user) {
