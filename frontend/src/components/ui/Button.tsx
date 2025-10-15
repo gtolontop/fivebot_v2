@@ -24,10 +24,10 @@ export const Button: React.FC<ButtonProps> = ({
   const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed';
 
   const variantClasses = {
-    primary: 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500 shadow-sm disabled:bg-primary-300 disabled:hover:bg-primary-300',
+    primary: 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500 shadow-sm disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300',
     secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200 focus:ring-gray-500 disabled:bg-gray-50 disabled:text-gray-400 disabled:hover:bg-gray-50',
-    success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 shadow-sm disabled:bg-green-300 disabled:hover:bg-green-300',
-    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 shadow-sm disabled:bg-red-300 disabled:hover:bg-red-300',
+    success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 shadow-sm disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300',
+    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 shadow-sm disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300',
     ghost: 'bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-500 disabled:text-gray-400 disabled:hover:bg-transparent',
     outline: 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-primary-500 disabled:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200 disabled:hover:bg-gray-50',
   };
