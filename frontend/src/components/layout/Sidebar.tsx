@@ -182,7 +182,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         ${collapsed ? 'justify-center' : ''}
                       `}
                     >
-                      <Link href={item.href} className="flex items-center gap-3 flex-1" title={collapsed ? item.label : undefined}>
+                      <Link
+                        href={item.href}
+                        className="flex items-center gap-3 flex-1"
+                        title={collapsed ? item.label : undefined}
+                        onClick={() => {
+                          if (isBotSection) {
+                            setBotsExpanded(true);
+                          }
+                        }}
+                      >
                         <item.icon className="w-5 h-5 flex-shrink-0" />
                         {!collapsed && (
                           <>
