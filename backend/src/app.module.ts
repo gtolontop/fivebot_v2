@@ -16,6 +16,7 @@ import { QueueModule } from './queue/queue.module';
 import { TasksModule } from './tasks/tasks.module';
 import { UrlMetadataController } from './utils/url-metadata.controller';
 import { UploadController } from './utils/upload.controller';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { UploadController } from './utils/upload.controller';
     CreditsModule,
     QueueModule,
     TasksModule,
+    NotificationsModule,
   ],
   controllers: [UrlMetadataController, UploadController],
   providers: [AppService],

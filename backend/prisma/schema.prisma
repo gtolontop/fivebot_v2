@@ -24,6 +24,7 @@ model User {
   bots                 Bot[]
   creditsHistory       CreditsHistory[]
   collaborations       BotCollaborator[]
+  notifications        Notification[]
 
   @@map("users")
 }
@@ -459,4 +460,26 @@ model TicketPanel {
   @@index([botId])
   @@index([channelId])
   @@map("ticket_panels")
+}
+
+model Notification {
+  id        String             @id @default(uuid())
+  userId    String             @map("user_id")
+  type      NotificationType
+  title     String
+  message   String             @db.Text
+  read      Boolean            @default(false)
+  metadata  String?            @db.Text
+  createdAt DateTime           @default(now()) @map("created_at")
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
 }
