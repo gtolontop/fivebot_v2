@@ -154,14 +154,23 @@ export default function BotServersPage() {
           </div>
         </div>
 
-        {/* Servers with bot */}
-        {serversWithBot.length > 0 && (
+        {/* Active Servers */}
+        {serversWithBot.length > 0 ? (
           <div>
-            <div className="mb-4">
-              <h2 className="text-lg font-bold text-gray-900">Active Servers</h2>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Servers where {bot.name} is currently active
-              </p>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">Active Servers</h2>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Servers where {bot.name} is currently active
+                </p>
+              </div>
+              <button
+                onClick={handleInviteToNewServer}
+                className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors"
+              >
+                <PlusCircleIcon className="w-5 h-5" />
+                Invite to New Server
+              </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -200,71 +209,25 @@ export default function BotServersPage() {
               ))}
             </div>
           </div>
-        )}
-
-        {/* Servers without bot */}
-        {serversWithoutBot.length > 0 && (
-          <div>
-            <div className="mb-4">
-              <h2 className="text-lg font-bold text-gray-900">Available Servers</h2>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Click on a server to invite {bot.name}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {serversWithoutBot.map((guild) => (
-                <button
-                  key={guild.id}
-                  onClick={() => handleGuildClick(guild)}
-                  className="bg-white/60 backdrop-blur-sm rounded-xl p-5 border border-gray-200 hover:border-primary-300 hover:shadow-md transition-all text-left group"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="relative flex-shrink-0">
-                      <img
-                        src={getGuildIcon(guild)}
-                        alt={guild.name}
-                        className="w-16 h-16 rounded-xl grayscale group-hover:grayscale-0 transition-all"
-                      />
-                      <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-gray-300 group-hover:bg-primary-500 rounded-full border-2 border-white flex items-center justify-center transition-colors">
-                        <PlusCircleIcon className="w-4 h-4 text-white" />
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-gray-500 group-hover:text-gray-900 truncate transition-colors">
-                        {guild.name}
-                      </h3>
-                      <p className="text-sm text-gray-400 group-hover:text-gray-600 mt-0.5 transition-colors">
-                        {guild.memberCount?.toLocaleString() || 0} members
-                      </p>
-                      <div className="flex items-center gap-1 mt-1">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 group-hover:bg-primary-100 text-gray-600 group-hover:text-primary-700 rounded-md text-xs font-semibold transition-colors">
-                          <PlusCircleIcon className="w-3 h-3" />
-                          Click to invite
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Empty state */}
-        {guilds.length === 0 && (
+        ) : (
           <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 p-12 text-center">
-            <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
-              </svg>
+            <div className="w-20 h-20 bg-primary-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <PlusCircleIcon className="w-10 h-10 text-primary-500" />
             </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">No servers found</h3>
-            <p className="text-gray-500">
-              You need to be a server administrator to invite bots
+            <h3 className="text-lg font-bold text-gray-900 mb-2">No servers yet</h3>
+            <p className="text-gray-500 mb-4">
+              {bot.name} is not in any servers yet. Invite it to get started!
             </p>
+            <button
+              onClick={handleInviteToNewServer}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors"
+            >
+              <PlusCircleIcon className="w-5 h-5" />
+              Invite to Server
+            </button>
           </div>
         )}
+
       </div>
     </DashboardLayout>
   );
