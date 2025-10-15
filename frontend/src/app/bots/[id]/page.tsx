@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
 import Cookies from 'js-cookie';
@@ -53,6 +53,8 @@ export default function BotDetailPage() {
     networkUpload: 0,
   });
   const [logs, setLogs] = useState<string[]>([]);
+  const [autoScroll, setAutoScroll] = useState(true);
+  const consoleRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!loading && !user) {
