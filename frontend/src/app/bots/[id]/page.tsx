@@ -49,6 +49,8 @@ export default function BotDetailPage() {
     cpuUsage: 0,
     memoryUsage: 0,
     uptime: 0,
+    networkDownload: 0,
+    networkUpload: 0,
   });
   const [logs, setLogs] = useState<string[]>([]);
 
@@ -71,6 +73,8 @@ export default function BotDetailPage() {
         cpuUsage: 0,
         memoryUsage: 0,
         uptime: 0,
+        networkDownload: 0,
+        networkUpload: 0,
       });
       return;
     }
@@ -92,6 +96,8 @@ export default function BotDetailPage() {
               cpuUsage: data.metrics.cpuUsage || 0,
               memoryUsage: data.metrics.memoryUsage || 0,
               uptime: data.metrics.uptime || 0,
+              networkDownload: data.metrics.networkDownload || 0,
+              networkUpload: data.metrics.networkUpload || 0,
             });
           }
         }
@@ -281,6 +287,12 @@ export default function BotDetailPage() {
     if (minutes > 0) parts.push(`${minutes}m`);
 
     return parts.length > 0 ? parts.join(' ') : '< 1m';
+  };
+
+  const formatBytes = (bytes: number) => {
+    if (bytes < 1024) return `${bytes.toFixed(1)} B/s`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB/s`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB/s`;
   };
 
   const getStatusColor = (status: string) => {
