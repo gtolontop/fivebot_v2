@@ -657,10 +657,14 @@ export class SimpleQueueService implements IQueueService {
       // Ensure process is removed from running bots
       this.runningBots.delete(botId);
 
+      // Clean up Redis state
+      await this.redisService.removeRunningBot(botId);
+      await this.redisService.deleteBotMetadata(botId);
+
       // Force update bot status immediately - no safe retry needed here
       await this.prisma.bot.update({
         where: { id: botId },
-        data: { 
+        data: {
           status: BotStatus.OFFLINE,
           updatedAt: new Date()
         },
@@ -672,14 +676,16 @@ export class SimpleQueueService implements IQueueService {
       console.error(`❌ Failed to stop bot ${botId}:`, error);
       // Ensure cleanup even on error
       this.runningBots.delete(botId);
-      
+      await this.redisService.removeRunningBot(botId);
+      await this.redisService.deleteBotMetadata(botId);
+
       // Update status to offline anyway
       try {
         await this.updateBotStatusSafe(botId, BotStatus.OFFLINE);
       } catch (dbError) {
         console.error(`❌ Failed to update bot status after stop error:`, dbError);
       }
-      
+
       throw error;
     }
   }
