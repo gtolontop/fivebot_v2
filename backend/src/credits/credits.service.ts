@@ -199,4 +199,51 @@ export class CreditsService {
 
     return { credits: user?.credits || 0 };
   }
+
+  async getUserCreditStats(userId: string): Promise<{
+    totalPurchased: number;
+    totalSpent: number;
+    totalBonus: number;
+    currentBalance: number;
+  }> {
+    // Get current balance
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { credits: true },
+    });
+
+    // Get total purchased
+    const purchased = await this.prisma.creditsHistory.aggregate({
+      where: {
+        userId,
+        type: CreditType.PURCHASE,
+      },
+      _sum: { amount: true },
+    });
+
+    // Get total spent
+    const spent = await this.prisma.creditsHistory.aggregate({
+      where: {
+        userId,
+        type: CreditType.SPEND,
+      },
+      _sum: { amount: true },
+    });
+
+    // Get total bonus
+    const bonus = await this.prisma.creditsHistory.aggregate({
+      where: {
+        userId,
+        type: CreditType.BONUS,
+      },
+      _sum: { amount: true },
+    });
+
+    return {
+      totalPurchased: purchased._sum.amount || 0,
+      totalSpent: Math.abs(spent._sum.amount || 0),
+      totalBonus: bonus._sum.amount || 0,
+      currentBalance: user?.credits || 0,
+    };
+  }
 }
