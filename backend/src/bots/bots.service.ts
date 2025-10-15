@@ -1258,4 +1258,65 @@ export class BotsService {
       banner: bannerUrl,
     };
   }
+
+  // Refresh assets for multiple bots in background without blocking
+  private async refreshAllBotsAssetsInBackground(bots: any[]): Promise<void> {
+    try {
+      // Process bots in batches to avoid overwhelming Discord API
+      const batchSize = 5;
+      for (let i = 0; i < bots.length; i += batchSize) {
+        const batch = bots.slice(i, i + batchSize);
+
+        await Promise.all(
+          batch.map(async (bot) => {
+            try {
+              // Decrypt token
+              const token = this.encryptionService.decrypt(bot.tokenEncrypted);
+
+              // Validate and get Discord data
+              const tokenValidation = await this.discordService.validateBotToken(token);
+
+              if (!tokenValidation.isValid || !tokenValidation.user) {
+                return;
+              }
+
+              // Build avatar URL - Priority: user avatar > application icon > null
+              let avatarUrl = null;
+              if (tokenValidation.user.avatar) {
+                avatarUrl = `https://cdn.discordapp.com/avatars/${tokenValidation.user.id}/${tokenValidation.user.avatar}.webp?size=256`;
+              } else if (tokenValidation.application?.icon) {
+                avatarUrl = `https://cdn.discordapp.com/app-icons/${tokenValidation.application.id}/${tokenValidation.application.icon}.webp?size=256`;
+              }
+
+              // Build banner URL
+              const bannerUrl = tokenValidation.user.banner
+                ? `https://cdn.discordapp.com/banners/${tokenValidation.user.id}/${tokenValidation.user.banner}.webp?size=512`
+                : null;
+
+              // Only update if values changed
+              if (bot.avatar !== avatarUrl || bot.banner !== bannerUrl) {
+                await this.prisma.bot.update({
+                  where: { id: bot.id },
+                  data: {
+                    avatar: avatarUrl,
+                    banner: bannerUrl,
+                  },
+                });
+                console.log(`✅ Refreshed assets for bot ${bot.name}`);
+              }
+            } catch (error) {
+              console.error(`Failed to refresh assets for bot ${bot.id}:`, error.message);
+            }
+          })
+        );
+
+        // Small delay between batches to respect rate limits
+        if (i + batchSize < bots.length) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+    } catch (error) {
+      console.error('Error in refreshAllBotsAssetsInBackground:', error);
+    }
+  }
 }
