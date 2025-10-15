@@ -92,23 +92,11 @@ export default function SettingsPage() {
             <button className="w-full text-left px-4 py-2.5 rounded-lg bg-gray-800 text-white font-medium">
               Profile
             </button>
-            <button className="w-full text-left px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors">
-              Account
-            </button>
-            <button className="w-full text-left px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors">
-              Privacy
-            </button>
             <button
               onClick={() => router.push('/settings/billing')}
               className="w-full text-left px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors"
             >
               Billing
-            </button>
-            <button className="w-full text-left px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors">
-              Usage
-            </button>
-            <button className="w-full text-left px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors">
-              Connectors
             </button>
           </div>
 
