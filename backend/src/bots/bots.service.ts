@@ -1193,7 +1193,7 @@ export class BotsService {
   private async sendBotCommand(botId: string, command: any): Promise<void> {
     // Store command in database for bot to pick up
     console.log(`Sending command to bot ${botId}:`, command);
-    
+
     // @ts-ignore - botCommand will exist after prisma generate
     await this.prisma.botCommand?.create({
       data: {
@@ -1203,5 +1203,59 @@ export class BotsService {
         status: 'PENDING'
       }
     });
+  }
+
+  async refreshBotAssets(botId: string, ownerId?: string): Promise<{ avatar: string | null; banner: string | null }> {
+    // Find bot and verify ownership if ownerId is provided
+    const bot = await this.prisma.bot.findUnique({
+      where: { id: botId },
+      select: { id: true, ownerId: true, tokenEncrypted: true },
+    });
+
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    if (ownerId && bot.ownerId !== ownerId) {
+      throw new ForbiddenException('You do not have permission to access this bot');
+    }
+
+    // Decrypt token and validate with Discord
+    const token = this.encryptionService.decrypt(bot.tokenEncrypted);
+    const tokenValidation = await this.discordService.validateBotToken(token);
+
+    if (!tokenValidation.isValid) {
+      throw new BadRequestException('Bot token is invalid');
+    }
+
+    // Build avatar URL from Discord CDN
+    // Priority: user avatar > application icon > null
+    let avatarUrl = null;
+    if (tokenValidation.user?.avatar) {
+      // Bot has a user avatar
+      avatarUrl = `https://cdn.discordapp.com/avatars/${tokenValidation.user.id}/${tokenValidation.user.avatar}.png?size=256`;
+    } else if (tokenValidation.application?.icon) {
+      // Fallback to application icon
+      avatarUrl = `https://cdn.discordapp.com/app-icons/${tokenValidation.application.id}/${tokenValidation.application.icon}.png?size=256`;
+    }
+
+    // Build banner URL from Discord CDN
+    const bannerUrl = tokenValidation.user?.banner
+      ? `https://cdn.discordapp.com/banners/${tokenValidation.user.id}/${tokenValidation.user.banner}.png?size=512`
+      : null;
+
+    // Update bot with new avatar and banner
+    await this.prisma.bot.update({
+      where: { id: botId },
+      data: {
+        avatar: avatarUrl,
+        banner: bannerUrl,
+      },
+    });
+
+    return {
+      avatar: avatarUrl,
+      banner: bannerUrl,
+    };
   }
 }
