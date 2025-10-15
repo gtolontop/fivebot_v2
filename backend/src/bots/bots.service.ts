@@ -276,6 +276,9 @@ export class BotsService {
   // Background sync without blocking the main request
   private async autoSyncBotsInBackground(bots: any[]): Promise<void> {
     setImmediate(async () => {
+      // Refresh assets for all bots in background
+      this.refreshAllBotsAssetsInBackground(bots);
+
       for (const bot of bots) {
         try {
           // Only sync if status seems potentially wrong
