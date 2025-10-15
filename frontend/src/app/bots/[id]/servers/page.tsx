@@ -84,14 +84,10 @@ export default function BotServersPage() {
     return `https://api.dicebear.com/7.x/initials/svg?seed=${guild.name}`;
   };
 
-  const isBotInGuild = (guildId: string) => {
-    return bot?.guilds?.some((g: any) => g.id === guildId);
-  };
-
-  const handleGuildClick = (guild: Guild) => {
-    const botPresent = isBotInGuild(guild.id);
-    if (!botPresent && inviteLink) {
-      window.open(`${inviteLink}&guild_id=${guild.id}`, '_blank');
+  const handleInviteToNewServer = () => {
+    if (inviteLink) {
+      window.open(inviteLink, '_blank');
+      toast.success('Opening Discord invite page...');
     }
   };
 
@@ -110,9 +106,8 @@ export default function BotServersPage() {
 
   if (!user || !bot) return null;
 
-  // Séparer les serveurs où le bot est présent vs absent
-  const serversWithBot = guilds.filter(guild => isBotInGuild(guild.id));
-  const serversWithoutBot = guilds.filter(guild => !isBotInGuild(guild.id));
+  // Les guilds retournés sont ceux où le bot est déjà présent
+  const serversWithBot = guilds;
 
   return (
     <DashboardLayout>
