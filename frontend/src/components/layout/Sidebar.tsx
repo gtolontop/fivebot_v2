@@ -215,8 +215,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       )}
                     </div>
 
-                    {/* Bots List */}
-                    {!collapsed && isBotSection && botsExpanded && allBots.length > 0 && (
+                    {/* Bots List - Always show if on a bot page OR if expanded manually */}
+                    {!collapsed && isBotSection && (botsExpanded || (botId && botId !== 'create')) && allBots.length > 0 && (
                       <ul className="mt-2 ml-6 space-y-1">
                         {allBots.slice(0, 3).map((bot) => (
                           <li key={bot.id}>
