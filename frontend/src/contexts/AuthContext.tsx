@@ -14,6 +14,7 @@ interface User {
   avatar?: string;
   role: 'USER' | 'ADMIN' | 'SUPER_ADMIN';
   credits: number;
+  createdAt: string;
 }
 
 interface AuthContextType {
