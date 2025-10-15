@@ -270,8 +270,13 @@ export class BotsService {
       }
     });
 
-    // REFRESH ASSETS IMMEDIATELY BEFORE RETURNING
-    await this.refreshAllBotsAssetsSync(bots);
+    // REFRESH ASSETS ONLY IF NEEDED (not every time to avoid spamming Discord API)
+    // Only refresh if any bot is missing avatar or banner
+    const needsRefresh = bots.some(bot => !bot.avatar || !bot.banner);
+    if (needsRefresh) {
+      console.log('⚡ Some bots missing assets, refreshing...');
+      await this.refreshAllBotsAssetsSync(bots);
+    }
 
     // Auto-sync any bots that might be out of sync (but don't await to avoid slowing the response)
     this.autoSyncBotsInBackground(bots);
