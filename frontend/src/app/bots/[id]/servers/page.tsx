@@ -157,16 +157,16 @@ export default function BotServersPage() {
             <p className="text-sm font-medium text-gray-600">Active Servers</p>
           </div>
 
-          <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100">
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
-                <UserGroupIcon className="w-6 h-6 text-purple-600" />
+                <PlusCircleIcon className="w-6 h-6 text-blue-600" />
               </div>
-              <div className="text-3xl font-bold text-purple-600">
-                {guilds.reduce((sum, g) => sum + (g.memberCount || 0), 0).toLocaleString()}
+              <div className="text-3xl font-bold text-blue-600">
+                {serversWithoutBot.length}
               </div>
             </div>
-            <p className="text-sm font-medium text-gray-600">Total Members</p>
+            <p className="text-sm font-medium text-gray-600">Available Servers</p>
           </div>
         </div>
 
@@ -181,7 +181,7 @@ export default function BotServersPage() {
                 </p>
               </div>
               <button
-                onClick={handleInviteToNewServer}
+                onClick={() => handleInviteToServer()}
                 className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors"
               >
                 <PlusCircleIcon className="w-5 h-5" />
