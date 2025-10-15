@@ -210,234 +210,253 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">
-          Welcome back, {user.username}
-        </h1>
-        <p className="text-gray-600 mt-1">
-          Here's what's happening with your bots today.
-        </p>
+      {/* Hero Section */}
+      <div className="mb-10">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">
+              Welcome back, {user.username} 👋
+            </h1>
+            <p className="text-lg text-gray-600">
+              Manage your Discord bots and track their performance
+            </p>
+          </div>
+          <Link
+            href="/bots/create"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-colors shadow-lg shadow-primary-200"
+          >
+            <PlusIcon className="w-5 h-5" />
+            Create Bot
+          </Link>
+        </div>
       </div>
 
       {/* Pending Invitations */}
       <PendingInvitations onAccept={fetchDashboardData} />
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard
-          label="Total Bots"
-          value={stats.totalBots}
-          sublabel={`${stats.activeBots} online`}
-          icon={<CubeIcon className="w-6 h-6" />}
-          color="blue"
-        />
-        <StatCard
-          label="Online Now"
-          value={stats.activeBots}
-          sublabel={`${uptimePercent}% uptime`}
-          icon={<CheckCircleIcon className="w-6 h-6" />}
-          color="green"
-        />
-        <StatCard
-          label="Commands Today"
-          value={stats.todayCommands.toLocaleString()}
-          change={commandChange.value}
-          trend={commandChange.trend}
-          icon={<BoltIcon className="w-6 h-6" />}
-          color="orange"
-        />
-        <StatCard
-          label="Total Users"
-          value={stats.totalUsers.toLocaleString()}
-          sublabel="Across all servers"
-          icon={<UsersIcon className="w-6 h-6" />}
-          color="purple"
-        />
+      {/* Stats Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Total Bots Card */}
+        <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+              <CubeIcon className="w-6 h-6 text-blue-600" />
+            </div>
+            <Link href="/bots" className="text-sm font-medium text-primary-600 hover:text-primary-700">
+              View all →
+            </Link>
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-gray-600">Total Bots</p>
+            <p className="text-3xl font-bold text-gray-900">{stats.totalBots}</p>
+            <p className="text-sm text-gray-500">{stats.activeBots} currently online</p>
+          </div>
+        </div>
+
+        {/* Active Bots Card */}
+        <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+              <CheckCircleIcon className="w-6 h-6 text-green-600" />
+            </div>
+            <span className="text-xs font-semibold text-green-600 bg-green-100 px-2 py-1 rounded-full">
+              {uptimePercent}% uptime
+            </span>
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-gray-600">Active Now</p>
+            <p className="text-3xl font-bold text-gray-900">{stats.activeBots}</p>
+            <p className="text-sm text-gray-500">Running smoothly</p>
+          </div>
+        </div>
+
+        {/* Credits Card */}
+        <div className="bg-gradient-to-br from-purple-500 to-primary-600 rounded-xl p-6 shadow-lg text-white">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+              <SparklesIcon className="w-6 h-6 text-white" />
+            </div>
+            <Link href="/settings/billing" className="text-sm font-medium text-white hover:underline">
+              Add credits →
+            </Link>
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-purple-100">Available Credits</p>
+            <p className="text-3xl font-bold">{user.credits}</p>
+            <p className="text-sm text-purple-100">Ready to use</p>
+          </div>
+        </div>
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* Main Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Recent Bots - Takes 2 columns */}
+        <div className="lg:col-span-2">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">Your Bots</h2>
+                  <p className="text-sm text-gray-500 mt-1">Manage and monitor your Discord bots</p>
+                </div>
+                <Link href="/bots" className="text-sm font-medium text-primary-600 hover:text-primary-700">
+                  View all →
+                </Link>
+              </div>
+            </div>
 
-        {/* Recent Activity Feed - 8 cols */}
-        <div className="lg:col-span-8">
-          <Card>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
-              <Link href="/bots" className="text-sm font-medium text-primary-600 hover:text-primary-700">
-                View all bots →
+            <div className="p-6">
+              {bots.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CubeIcon className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No bots yet</h3>
+                  <p className="text-gray-600 mb-6 max-w-sm mx-auto">
+                    Create your first Discord bot and start building amazing features for your community
+                  </p>
+                  <Link
+                    href="/bots/create"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors"
+                  >
+                    <PlusIcon className="w-5 h-5" />
+                    Create Your First Bot
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {bots.slice(0, 5).map((bot) => (
+                    <Link
+                      key={bot.id}
+                      href={`/bots/${bot.id}`}
+                      className="flex items-center gap-4 p-4 border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-primary-300 transition-all group"
+                    >
+                      <div className="relative">
+                        <Avatar
+                          fallback={bot.name[0]}
+                          size="lg"
+                          status={bot.status as any}
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">
+                          {bot.name}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          Created {new Date(bot.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <Badge status={bot.status as any} size="sm">
+                        {bot.status}
+                      </Badge>
+                    </Link>
+                  ))}
+                  {bots.length > 5 && (
+                    <Link
+                      href="/bots"
+                      className="block text-center py-3 text-sm font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors"
+                    >
+                      View {bots.length - 5} more bots →
+                    </Link>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Actions & Info - Takes 1 column */}
+        <div className="space-y-6">
+          {/* Quick Actions */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+            <div className="space-y-3">
+              <Link
+                href="/bots/create"
+                className="flex items-center gap-3 p-3 bg-primary-50 border border-primary-200 rounded-lg hover:bg-primary-100 transition-colors group"
+              >
+                <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
+                  <PlusIcon className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-gray-900 group-hover:text-primary-700">Create Bot</p>
+                  <p className="text-xs text-gray-500">Add a new Discord bot</p>
+                </div>
+              </Link>
+
+              <Link
+                href="/modules"
+                className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors group"
+              >
+                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 3.5a1.5 1.5 0 013 0V4a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-.5a1.5 1.5 0 000 3h.5a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-.5a1.5 1.5 0 00-3 0v.5a1 1 0 01-1 1H6a1 1 0 01-1-1v-3a1 1 0 00-1-1h-.5a1.5 1.5 0 010-3H4a1 1 0 001-1V6a1 1 0 011-1h3a1 1 0 001-1v-.5z"/>
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-gray-900">Browse Modules</p>
+                  <p className="text-xs text-gray-500">Add features to your bots</p>
+                </div>
+              </Link>
+
+              <Link
+                href="/modules/installed"
+                className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors group"
+              >
+                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                  <CheckCircleIcon className="w-5 h-5 text-green-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-gray-900">Installed Modules</p>
+                  <p className="text-xs text-gray-500">Manage your modules</p>
+                </div>
               </Link>
             </div>
-
-            {recentActivity.length === 0 ? (
-              <div className="text-center py-12">
-                <ServerIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-600 mb-4">No recent activity</p>
-                <Button onClick={() => router.push('/bots/create')}>
-                  <PlusIcon className="w-4 h-4" />
-                  Create Your First Bot
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {recentActivity.map((event) => (
-                  <div
-                    key={event.id}
-                    className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                    onClick={() => event.botId && router.push(`/bots/${event.botId}`)}
-                  >
-                    <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                      {getActivityIcon(event.type)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-900">{event.message}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {formatRelativeTime(event.timestamp)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Card>
-        </div>
-
-        {/* Quick Actions & System Health - 4 cols */}
-        <div className="lg:col-span-4 space-y-6">
-
-          {/* Quick Links */}
-          <Card>
-            <h2 className="text-base font-semibold text-gray-900 mb-4">Quick Actions</h2>
-            <div className="space-y-2">
-              <Button
-                variant="outline"
-                fullWidth
-                onClick={() => router.push('/bots/create')}
-                icon={<PlusIcon className="w-4 h-4" />}
-              >
-                Create New Bot
-              </Button>
-              <Button
-                variant="outline"
-                fullWidth
-                onClick={() => router.push('/modules')}
-                icon={<svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 3.5a1.5 1.5 0 013 0V4a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-.5a1.5 1.5 0 000 3h.5a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-.5a1.5 1.5 0 00-3 0v.5a1 1 0 01-1 1H6a1 1 0 01-1-1v-3a1 1 0 00-1-1h-.5a1.5 1.5 0 010-3H4a1 1 0 001-1V6a1 1 0 011-1h3a1 1 0 001-1v-.5z"/></svg>}
-              >
-                Browse Modules
-              </Button>
-              <Button
-                variant="outline"
-                fullWidth
-                onClick={() => router.push('/settings')}
-                icon={<Cog6ToothIcon className="w-4 h-4" />}
-              >
-                Settings
-              </Button>
-            </div>
-          </Card>
-
-          {/* System Health */}
-          <Card>
-            <h2 className="text-base font-semibold text-gray-900 mb-4">System Health</h2>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">API Status</span>
-                <Badge status="ONLINE" dot>Operational</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Database</span>
-                <Badge status="ONLINE" dot>Operational</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Bot Manager</span>
-                <Badge status="ONLINE" dot>Operational</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Avg Response</span>
-                <span className="text-sm font-medium text-green-600">{stats.avgResponseTime || 45}ms</span>
-              </div>
-            </div>
-          </Card>
-
-          {/* Top Performing Bot */}
-          {stats.topBots.length > 0 && (
-            <Card>
-              <h2 className="text-base font-semibold text-gray-900 mb-4">Top Performing Bot</h2>
-              <div className="flex items-center gap-3 mb-4">
-                <Avatar
-                  fallback={stats.topBots[0].name[0]}
-                  size="lg"
-                  status="ONLINE"
-                />
-                <div>
-                  <h3 className="font-medium text-gray-900">{stats.topBots[0].name}</h3>
-                  <p className="text-xs text-gray-500">{stats.topBots[0].servers} servers</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <span className="text-gray-500">Users</span>
-                  <p className="font-medium text-gray-900">{stats.topBots[0].users.toLocaleString()}</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Servers</span>
-                  <p className="font-medium text-gray-900">{stats.topBots[0].servers}</p>
-                </div>
-              </div>
-            </Card>
-          )}
-        </div>
-      </div>
-
-      {/* My Bots - Quick Overview */}
-      <div className="mt-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">My Bots</h2>
-          <Link href="/bots" className="text-sm font-medium text-primary-600 hover:text-primary-700">
-            View all →
-          </Link>
-        </div>
-
-        {bots.length === 0 ? (
-          <Card>
-            <div className="text-center py-12">
-              <CubeIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No bots yet</h3>
-              <p className="text-gray-600 mb-6">Create your first Discord bot to get started</p>
-              <Button onClick={() => router.push('/bots/create')}>
-                <PlusIcon className="w-4 h-4" />
-                Create Your First Bot
-              </Button>
-            </div>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {bots.slice(0, 6).map((bot) => (
-              <Card
-                key={bot.id}
-                variant="interactive"
-                onClick={() => router.push(`/bots/${bot.id}`)}
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <Avatar
-                    fallback={bot.name[0]}
-                    size="md"
-                    status={bot.status as any}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-gray-900 truncate">{bot.name}</h3>
-                    <p className="text-xs text-gray-500">
-                      Created {new Date(bot.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <Badge status={bot.status as any} size="sm">
-                    {bot.status}
-                  </Badge>
-                </div>
-              </Card>
-            ))}
           </div>
-        )}
+
+          {/* Getting Started */}
+          {bots.length === 0 && (
+            <div className="bg-gradient-to-br from-blue-50 to-primary-50 rounded-xl border border-primary-200 p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <ArrowTrendingUpIcon className="w-5 h-5 text-primary-600" />
+                <h3 className="text-lg font-semibold text-gray-900">Getting Started</h3>
+              </div>
+              <div className="space-y-3 text-sm text-gray-700">
+                <div className="flex items-start gap-2">
+                  <span className="flex-shrink-0 w-5 h-5 bg-primary-600 text-white rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                  <p>Create your first bot from the Discord Developer Portal</p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="flex-shrink-0 w-5 h-5 bg-primary-600 text-white rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                  <p>Add your bot token to FiveBot</p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="flex-shrink-0 w-5 h-5 bg-primary-600 text-white rounded-full flex items-center justify-center text-xs font-bold">3</span>
+                  <p>Install modules and customize features</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Account Info */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Account</h3>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between py-2">
+                <span className="text-sm text-gray-600">Username</span>
+                <span className="text-sm font-medium text-gray-900">{user.username}</span>
+              </div>
+              <div className="flex items-center justify-between py-2">
+                <span className="text-sm text-gray-600">Email</span>
+                <span className="text-sm font-medium text-gray-900">{user.email}</span>
+              </div>
+              <div className="flex items-center justify-between py-2">
+                <span className="text-sm text-gray-600">Credits</span>
+                <span className="text-sm font-semibold text-primary-600">{user.credits}</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   );
