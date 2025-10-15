@@ -605,8 +605,10 @@ export default function BotDetailPage() {
           </div>
         </div>
 
-        {/* Console - ALWAYS VISIBLE */}
-        <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl border border-gray-700 overflow-hidden">
+        {/* Console + Servers Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Console - Takes 2/3 */}
+          <div className="lg:col-span-2 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl border border-gray-700 overflow-hidden">
           <div className="px-6 py-4 bg-gray-800/50 border-b border-gray-700 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
