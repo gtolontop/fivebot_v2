@@ -10,6 +10,9 @@ interface DiscordUser {
   username: string;
   email?: string;
   avatar?: string;
+  discordAccessToken?: string;
+  discordRefreshToken?: string;
+  discordTokenExpiry?: Date;
 }
 
 @Injectable()
