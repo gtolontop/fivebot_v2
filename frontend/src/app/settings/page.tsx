@@ -104,20 +104,27 @@ export default function SettingsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Sidebar Navigation */}
-          <div className="space-y-2">
-            <button
-              className="w-full text-left px-4 py-2 rounded-lg bg-primary-50 text-primary-600 font-medium"
-            >
+          <div className="space-y-1">
+            <button className="w-full text-left px-4 py-2.5 rounded-lg bg-gray-800 text-white font-medium">
               Profile
+            </button>
+            <button className="w-full text-left px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors">
+              Account
+            </button>
+            <button className="w-full text-left px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors">
+              Privacy
             </button>
             <button
               onClick={() => router.push('/settings/billing')}
-              className="w-full text-left px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors"
+              className="w-full text-left px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors"
             >
-              <div className="flex items-center gap-2">
-                <CreditCardIcon className="w-5 h-5" />
-                <span>Billing</span>
-              </div>
+              Billing
+            </button>
+            <button className="w-full text-left px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors">
+              Usage
+            </button>
+            <button className="w-full text-left px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition-colors">
+              Connectors
             </button>
           </div>
 
@@ -162,12 +169,10 @@ export default function SettingsPage() {
                       <div className="flex items-center gap-6">
                         <div className="relative">
                           {avatarPreview || user.avatar ? (
-                            <Image
+                            <img
                               src={avatarPreview || user.avatar || ''}
                               alt="Avatar"
-                              width={100}
-                              height={100}
-                              className="w-24 h-24 rounded-full border-4 border-white shadow-lg"
+                              className="w-24 h-24 rounded-full border-4 border-white shadow-lg object-cover"
                             />
                           ) : (
                             <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center border-4 border-white shadow-lg">
