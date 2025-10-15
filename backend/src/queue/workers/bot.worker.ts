@@ -71,7 +71,7 @@ export class BotWorker extends WorkerHost {
       await this.prisma.host.create({
         data: {
           botId,
-          host: 'localhost', // In production, this would be dynamic
+          host: this.configService.get('HOST_NAME') || 'localhost',
           containerId,
           status: HostStatus.STARTING,
           cpuLimit: '0.5',
