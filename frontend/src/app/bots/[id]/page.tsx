@@ -449,73 +449,99 @@ export default function BotDetailPage() {
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Stats Grid - Compact */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {/* Servers */}
-          <div className="group bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-5 border border-blue-100 hover:border-blue-300 transition-all hover:shadow-lg">
-            <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                <ServerIcon className="w-6 h-6 text-blue-600" />
+          <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-4 border border-blue-100">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                <ServerIcon className="w-5 h-5 text-blue-600" />
               </div>
-            </div>
-            <div className="space-y-1">
-              <div className="text-3xl font-bold text-blue-600">
-                {bot.status === 'ONLINE' ? guilds.length : 0}
+              <div>
+                <div className="text-2xl font-bold text-blue-600">
+                  {bot.status === 'ONLINE' ? guilds.length : 0}
+                </div>
+                <p className="text-xs font-medium text-gray-600">Servers</p>
               </div>
-              <p className="text-sm font-semibold text-gray-900">Servers</p>
-              <p className="text-xs text-gray-500">
-                {bot.status === 'ONLINE' ? 'Connected' : 'Offline'}
-              </p>
             </div>
           </div>
 
           {/* Uptime */}
-          <div className="group bg-gradient-to-br from-success-50 to-green-50 rounded-xl p-5 border border-success-100 hover:border-success-300 transition-all hover:shadow-lg">
-            <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                <ClockIcon className="w-6 h-6 text-success-600" />
+          <div className="bg-gradient-to-br from-success-50 to-green-50 rounded-xl p-4 border border-success-100">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                <ClockIcon className="w-5 h-5 text-success-600" />
               </div>
-            </div>
-            <div className="space-y-1">
-              <div className="text-3xl font-bold text-success-600">
-                {bot.status === 'ONLINE' ? formatUptime(realTimeStats.uptime) : '—'}
+              <div>
+                <div className="text-xl font-bold text-success-600">
+                  {bot.status === 'ONLINE' ? formatUptime(realTimeStats.uptime) : '—'}
+                </div>
+                <p className="text-xs font-medium text-gray-600">Uptime</p>
               </div>
-              <p className="text-sm font-semibold text-gray-900">Uptime</p>
-              <p className="text-xs text-gray-500">
-                {bot.status === 'ONLINE' ? 'Running' : 'Not running'}
-              </p>
             </div>
           </div>
 
           {/* CPU */}
-          <div className="group bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-5 border border-orange-100 hover:border-orange-300 transition-all hover:shadow-lg">
-            <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                <CpuChipIcon className="w-6 h-6 text-orange-600" />
+          <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-4 border border-orange-100">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                <CpuChipIcon className="w-5 h-5 text-orange-600" />
               </div>
-            </div>
-            <div className="space-y-1">
-              <div className="text-3xl font-bold text-orange-600">
-                {bot.status === 'ONLINE' ? `${realTimeStats.cpuUsage.toFixed(1)}%` : '0%'}
+              <div>
+                <div className="text-2xl font-bold text-orange-600">
+                  {bot.status === 'ONLINE' ? `${realTimeStats.cpuUsage.toFixed(1)}%` : '0%'}
+                </div>
+                <p className="text-xs font-medium text-gray-600">CPU</p>
               </div>
-              <p className="text-sm font-semibold text-gray-900">CPU Usage</p>
-              <p className="text-xs text-gray-500">System resources</p>
             </div>
           </div>
 
           {/* Memory */}
-          <div className="group bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-5 border border-purple-100 hover:border-purple-300 transition-all hover:shadow-lg">
-            <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                <SignalIcon className="w-6 h-6 text-purple-600" />
+          <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-100">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                <SignalIcon className="w-5 h-5 text-purple-600" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-purple-600">
+                  {bot.status === 'ONLINE' ? `${realTimeStats.memoryUsage.toFixed(1)}%` : '0%'}
+                </div>
+                <p className="text-xs font-medium text-gray-600">RAM</p>
               </div>
             </div>
-            <div className="space-y-1">
-              <div className="text-3xl font-bold text-purple-600">
-                {bot.status === 'ONLINE' ? `${realTimeStats.memoryUsage.toFixed(1)}%` : '0%'}
+          </div>
+
+          {/* Network Download */}
+          <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-100">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                </svg>
               </div>
-              <p className="text-sm font-semibold text-gray-900">Memory</p>
-              <p className="text-xs text-gray-500">RAM usage</p>
+              <div>
+                <div className="text-lg font-bold text-green-600">
+                  {bot.status === 'ONLINE' ? formatBytes(realTimeStats.networkDownload) : '—'}
+                </div>
+                <p className="text-xs font-medium text-gray-600">↓ Down</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Network Upload */}
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+              </div>
+              <div>
+                <div className="text-lg font-bold text-blue-600">
+                  {bot.status === 'ONLINE' ? formatBytes(realTimeStats.networkUpload) : '—'}
+                </div>
+                <p className="text-xs font-medium text-gray-600">↑ Up</p>
+              </div>
             </div>
           </div>
         </div>
