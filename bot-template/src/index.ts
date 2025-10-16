@@ -304,8 +304,8 @@ class ChildBot {
     process.on('beforeExit', async () => {
       if (!isShuttingDown) {
         isShuttingDown = true;
-        console.clear();
-        console.log('Server marked as offline');
+        process.stdout.write('\x1Bc'); // Clear screen
+        process.stdout.write('Server marked as offline\n');
 
         try {
           await this.prisma.bot.update({
