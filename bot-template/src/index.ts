@@ -318,7 +318,7 @@ class ChildBot {
   public async start() {
     try {
       console.log('Initializing bot...');
-      console.log('Validating token...');
+      console.log('├─ Validating token...');
 
       // Validate BOT_TOKEN exists
       const token = process.env.BOT_TOKEN;
@@ -331,21 +331,18 @@ class ChildBot {
         throw new Error('Invalid token format: token too short');
       }
 
-      //console.log(`Token length: ${token.length} characters`);
-
       // Connect to database
       await this.prisma.$connect();
-      console.log('Database succesfully connected');
+      console.log('├─ Database connected');
 
       // Update bot status
       await this.prisma.bot.update({
         where: { id: this.botId },
         data: { status: 'STARTING' }
       });
-      //console.log('✅ Bot status updated to STARTING');
+      console.log('└─ Configuration loaded');
 
       // Login to Discord
-      console.log('Attempting to login to Discord...');
       await this.client.login(token);
       console.log(`Bot started for bot ID: ${this.botId}`);
 
