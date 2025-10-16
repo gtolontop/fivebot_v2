@@ -630,7 +630,7 @@ export default function BotDetailPage() {
                 <div className="text-lg font-bold text-green-600">
                   {bot.status === 'ONLINE' ? formatBytes(realTimeStats.networkDownload) : '—'}
                 </div>
-                <p className="text-xs font-medium text-gray-600">Total ↓</p>
+                <p className="text-xs font-medium text-gray-600">↓ Download</p>
               </div>
             </div>
           </div>
