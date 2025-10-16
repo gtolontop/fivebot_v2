@@ -38,9 +38,7 @@ export class MetricsService {
   private commandStartTimes: Map<string, number> = new Map();
 
   // CPU tracking
-  private lastCpuUsage = process.cpuUsage();
   private lastCpuCheck = Date.now();
-  private cpuSamples: number[] = [];
 
   // Network tracking - cumulative totals for the session
   private networkStats = {
@@ -483,44 +481,29 @@ export class MetricsService {
 
   private async sendProcessMetrics() {
     try {
-      // Get current CPU usage and calculate percentage
+      // Get ABSOLUTE CPU usage since process started
       const now = Date.now();
-      const timeDeltaMs = now - this.lastCpuCheck; // Time in milliseconds
-      const currentCpuUsage = process.cpuUsage(this.lastCpuUsage);
+      const timeDeltaMs = now - this.lastCpuCheck;
+      const absoluteCpuUsage = process.cpuUsage(); // Total depuis le début
+      const processUptimeSeconds = process.uptime(); // Temps depuis le démarrage
 
-      // CPU percentage: (CPU microseconds used) / (elapsed microseconds) * 100
-      const cpuMicroseconds = currentCpuUsage.user + currentCpuUsage.system;
-      const elapsedMicroseconds = timeDeltaMs * 1000;
+      // CPU % = (Total CPU microseconds) / (Process uptime microseconds) * 100
+      const totalCpuMicroseconds = absoluteCpuUsage.user + absoluteCpuUsage.system;
+      const processUptimeMicroseconds = processUptimeSeconds * 1000000;
 
-      let cpuPercent = 0;
-      if (elapsedMicroseconds > 0) {
-        cpuPercent = Math.min(100, Math.max(0,
-          (cpuMicroseconds / elapsedMicroseconds) * 100
-        ));
-      }
+      const cpuPercent = Math.min(100, Math.max(0,
+        (totalCpuMicroseconds / processUptimeMicroseconds) * 100
+      ));
 
-      // Keep a rolling average of CPU samples to smooth out 0% readings
-      this.cpuSamples.push(cpuPercent);
-      if (this.cpuSamples.length > 6) { // Keep last 60 seconds (6 samples at 10s interval)
-        this.cpuSamples.shift();
-      }
+      // Debug
+      console.log('[Metrics] CPU:', {
+        percent: cpuPercent.toFixed(2) + '%',
+        totalCpuMs: (totalCpuMicroseconds / 1000).toFixed(0),
+        uptimeMs: (processUptimeMicroseconds / 1000).toFixed(0),
+        user: absoluteCpuUsage.user,
+        system: absoluteCpuUsage.system
+      });
 
-      // Use average CPU instead of instant reading
-      const avgCpuPercent = this.cpuSamples.reduce((a, b) => a + b, 0) / this.cpuSamples.length;
-
-      // Debug CPU calculation
-      if (cpuPercent > 0.1 || avgCpuPercent > 0.1 || Math.random() < 0.1) {
-        console.log('[Metrics] CPU Debug:', {
-          instant: cpuPercent.toFixed(2) + '%',
-          average: avgCpuPercent.toFixed(2) + '%',
-          samples: this.cpuSamples.length,
-          cpuMicroseconds,
-          timeDeltaMs
-        });
-      }
-
-      // Update tracking for next calculation
-      this.lastCpuUsage = process.cpuUsage();
       this.lastCpuCheck = now;
 
       // Get memory usage - use RSS (actual physical memory used)
@@ -538,7 +521,7 @@ export class MetricsService {
       const uptime = Math.floor(process.uptime());
 
       const processMetrics = {
-        cpuUsage: Math.round(avgCpuPercent * 10) / 10, // Use average, one decimal place
+        cpuUsage: Math.round(cpuPercent * 10) / 10,
         memoryUsage: Math.round(memoryPercent * 10) / 10,
         memoryMB: usedMemoryMB,
         uptime,
