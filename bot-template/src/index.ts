@@ -346,7 +346,7 @@ class ChildBot {
 
       // Login to Discord
       await this.client.login(token);
-      console.log(`Bot started for bot ID: ${this.botId}`);
+      //console.log(`Bot started for bot ID: ${this.botId}`);
 
     } catch (error) {
       console.error('Failed to start bot:', error);
