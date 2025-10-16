@@ -175,6 +175,10 @@ class ChildBot {
     // Core events
     this.client.once('ready', async () => {
       try {
+        // Clear console at the start (after bot is marked as STARTING)
+        console.log('[CLEAR_CONSOLE]');
+        await new Promise(resolve => setTimeout(resolve, 200));
+
         // Check if ticket system is enabled BEFORE calling ready
         // ticketEnabled is now a direct column in bot_configs, not in ticketData JSON
         const ticketEnabled = (this.config as any).ticketEnabled || false;
