@@ -53,7 +53,6 @@ export async function ready(client: Client, prisma: PrismaClient, botId: string,
       },
     });
 
-    console.log('Bot ready');
     
     // Restore ticket panels ONLY if ticket system is enabled
     if (ticketEnabled) {
