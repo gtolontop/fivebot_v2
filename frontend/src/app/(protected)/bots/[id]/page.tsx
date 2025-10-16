@@ -53,6 +53,7 @@ export default function BotDetailPage() {
   });
   const [logs, setLogs] = useState<string[]>([]);
   const [autoScroll, setAutoScroll] = useState(true);
+  const [liveUptime, setLiveUptime] = useState('0s');
   const consoleRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -66,6 +67,52 @@ export default function BotDetailPage() {
       fetchBot();
     }
   }, [user, botId]);
+
+  // Live uptime counter - updates every second
+  useEffect(() => {
+    if (!bot || bot.status !== 'ONLINE') {
+      setLiveUptime('0s');
+      return;
+    }
+
+    const updateUptime = () => {
+      if (!bot || bot.status !== 'ONLINE') {
+        setLiveUptime('0s');
+        return;
+      }
+
+      // Use startedAt if available, otherwise use current time (just started)
+      const startTime = bot.startedAt ? new Date(bot.startedAt).getTime() : Date.now();
+      const now = Date.now();
+      const diffMs = Math.max(0, now - startTime); // Ensure non-negative
+
+      const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+
+      // Format with proper padding
+      const d = String(days);
+      const h = String(hours).padStart(2, '0');
+      const m = String(minutes).padStart(2, '0');
+      const s = String(seconds).padStart(2, '0');
+
+      if (days > 0) {
+        setLiveUptime(`${d}d ${h}:${m}:${s}`);
+      } else if (hours > 0) {
+        setLiveUptime(`${hours}:${m}:${s}`);
+      } else if (minutes > 0) {
+        setLiveUptime(`${minutes}:${s}`);
+      } else {
+        setLiveUptime(`${seconds}s`);
+      }
+    };
+
+    updateUptime();
+    const interval = setInterval(updateUptime, 1000);
+
+    return () => clearInterval(interval);
+  }, [bot?.status, bot?.startedAt]);
 
   // Fetch metrics
   useEffect(() => {
@@ -529,8 +576,8 @@ export default function BotDetailPage() {
                 <ClockIcon className="w-5 h-5 text-success-600" />
               </div>
               <div>
-                <div className="text-xl font-bold text-success-600">
-                  {bot.status === 'ONLINE' ? formatUptime(realTimeStats.uptime) : '—'}
+                <div className="text-xl font-bold text-success-600 font-mono">
+                  {bot.status === 'ONLINE' ? liveUptime : '—'}
                 </div>
                 <p className="text-xs font-medium text-gray-600">Uptime</p>
               </div>
