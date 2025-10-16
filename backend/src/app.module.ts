@@ -14,7 +14,7 @@ import { BotsModule } from './bots/bots.module';
 import { CreditsModule } from './credits/credits.module';
 import { QueueModule } from './queue/queue.module';
 import { TasksModule } from './tasks/tasks.module';
-import { InternalModule } from './internal/internal.module';
+import { EventsModule } from './events/events.module';
 import { UrlMetadataController } from './utils/url-metadata.controller';
 import { UploadController } from './utils/upload.controller';
 import { NotificationsModule } from './notifications/notifications.module';
@@ -39,7 +39,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     CreditsModule,
     QueueModule,
     TasksModule,
-    InternalModule,
+    EventsModule,
     NotificationsModule,
   ],
   controllers: [UrlMetadataController, UploadController],
