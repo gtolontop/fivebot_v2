@@ -60,16 +60,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const botIdMatch = pathname?.match(/\/bots\/([^\/]+)/);
   const botId = botIdMatch ? botIdMatch[1] : null;
 
-  // Fetch bots on mount and poll every 5 seconds for status updates
+  // Fetch bots ONCE on mount - backend uses Redis cache
   useEffect(() => {
     fetchAllBots();
 
-    const interval = setInterval(() => {
-      fetchAllBots();
-    }, 5000);
+    // Listen for bot status updates via custom event
+    const handleBotOnline = (event: CustomEvent) => {
+      const { botId } = event.detail;
+      setAllBots((prevBots) =>
+        prevBots.map((bot) =>
+          bot.id === botId ? { ...bot, status: 'ONLINE' } : bot
+        )
+      );
+    };
 
-    return () => clearInterval(interval);
-  }, []);
+    window.addEventListener('bot-online' as any, handleBotOnline as any);
+
+    return () => {
+      window.removeEventListener('bot-online' as any, handleBotOnline as any);
+    };
+  }, []); // Empty deps - only run once per mount
 
   // Only expand when on /bots (All Bots page) - collapse for everything else
   useEffect(() => {
