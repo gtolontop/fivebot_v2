@@ -940,7 +940,7 @@ export class BotsController {
         const botName = bot.name;
 
         const prefix = source === 'Discord' ? `${COLORS.CYAN}discord@${botName}${COLORS.RESET}` :
-                       source === 'System' ? `${COLORS.YELLOW}container@fivebot${COLORS.RESET}` :
+                       source === 'System' ? `${COLORS.YELLOW}container@bot${COLORS.RESET}` :
                        source === 'Commands' ? `${COLORS.GREEN}cmd@${botName}${COLORS.RESET}` :
                        `${COLORS.BLUE}${source.toLowerCase()}@${botName}${COLORS.RESET}`;
 
