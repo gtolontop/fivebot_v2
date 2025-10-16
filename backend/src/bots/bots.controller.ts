@@ -903,6 +903,54 @@ export class BotsController {
     }
   }
 
+  @Get(':id/logs/history')
+  @UseGuards(AuthGuard('jwt'))
+  async getLogsHistory(
+    @Param('id') id: string,
+    @Req() req: any,
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    // Get recent logs from database (last hour)
+    const recentLogs = await this.botLogsService.getRecentLogs(id, 100);
+
+    // Format logs to match the console format
+    const COLORS = {
+      YELLOW: '\x1b[33m',
+      BLUE: '\x1b[34m',
+      GREEN: '\x1b[32m',
+      CYAN: '\x1b[36m',
+      MAGENTA: '\x1b[35m',
+      RESET: '\x1b[0m',
+      GRAY: '\x1b[90m'
+    };
+
+    const formattedLogs = recentLogs.map(log => {
+      const timestamp = new Date(log.createdAt).toLocaleTimeString();
+      const source = log.source || 'bot';
+      const botName = bot.name;
+
+      const prefix = source === 'Discord' ? `${COLORS.CYAN}discord@${botName}${COLORS.RESET}` :
+                     source === 'System' ? `${COLORS.YELLOW}container@fivebot${COLORS.RESET}` :
+                     source === 'Commands' ? `${COLORS.GREEN}cmd@${botName}${COLORS.RESET}` :
+                     `${COLORS.BLUE}${source.toLowerCase()}@${botName}${COLORS.RESET}`;
+
+      return `${COLORS.GRAY}[${timestamp}]${COLORS.RESET} [${prefix}]: ${log.message}`;
+    });
+
+    return {
+      logs: formattedLogs,
+      bot: {
+        id: bot.id,
+        name: bot.name,
+        status: bot.status,
+      }
+    };
+  }
+
   @Get(':id/logs/live')
   @UseGuards(AuthGuard('jwt'))
   async getLiveLogs(
@@ -919,16 +967,6 @@ export class BotsController {
     if (bot.status === 'ONLINE' || bot.status === 'STARTING') {
       // Bot is online - get logs from buffer
       logs = this.consoleBufferService.getBuffer(id);
-      
-      // If buffer is empty, add a placeholder
-      if (logs.length === 0) {
-        const timestamp = new Date().toLocaleTimeString();
-        logs = [`[${timestamp}] [container@fivebot]: Server marked as online...`];
-      }
-    } else {
-      // Bot is offline - show placeholder
-      const timestamp = new Date().toLocaleTimeString();
-      logs = [`[${timestamp}] [container@fivebot]: Server marked as offline...`];
     }
 
     return {
