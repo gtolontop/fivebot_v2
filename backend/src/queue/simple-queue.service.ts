@@ -437,8 +437,8 @@ export class SimpleQueueService implements IQueueService {
 
       // Bot process itself logs initialization steps
 
-      // Wait a bit to see if the process starts successfully
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // Wait longer to ensure bot is fully operational before marking online
+      await new Promise(resolve => setTimeout(resolve, 5000));
 
       if (this.runningBots.has(botId)) {
         // Update bot status to online AND set startedAt to NOW (when bot actually started)
@@ -462,13 +462,16 @@ export class SimpleQueueService implements IQueueService {
 
         console.log(`✅ Bot "${bot.name}" (owner: ${bot.owner.username}) started successfully`);
 
-        // Add Pterodactyl-style server online message
+        // Add Pterodactyl-style server online message (after bot logs "fully operational")
+        // Wait a bit more to ensure bot's final log is captured first
+        await new Promise(resolve => setTimeout(resolve, 500));
+
         try {
           await this.botLogsService.addLog(
             botId,
             LogLevel.INFO,
             'Server marked as online...',
-            'System'
+            'container'
           );
         } catch (logError) {
           console.error('Failed to add online log:', logError);
