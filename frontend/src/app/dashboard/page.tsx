@@ -111,7 +111,7 @@ export default function DashboardPage() {
       const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
 
       if (days > 0) {
-        setLiveUptime(`${days}d ${hours}h ${minutes}m`);
+        setLiveUptime(`${days}d ${hours}h ${minutes}m ${seconds}s`);
       } else if (hours > 0) {
         setLiveUptime(`${hours}h ${minutes}m ${seconds}s`);
       } else if (minutes > 0) {
