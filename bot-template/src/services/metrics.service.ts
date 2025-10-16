@@ -1,5 +1,6 @@
 import { Client, Message, CommandInteraction, Guild, GuildMember } from 'discord.js';
 import { PrismaClient } from '@prisma/client';
+import * as os from 'os';
 
 interface MetricEvent {
   type: 'message' | 'command' | 'error' | 'guild_join' | 'guild_leave' | 'member_join' | 'member_leave';
@@ -36,13 +37,14 @@ export class MetricsService {
   private sendInterval: NodeJS.Timeout | null = null;
   private commandStartTimes: Map<string, number> = new Map();
 
-  // Network tracking
+  // CPU tracking
+  private lastCpuUsage = process.cpuUsage();
+  private lastCpuCheck = Date.now();
+
+  // Network tracking - cumulative totals for the session
   private networkStats = {
-    lastCheck: Date.now(),
-    lastBytesReceived: 0,
-    lastBytesSent: 0,
-    downloadSpeed: 0, // KB/s
-    uploadSpeed: 0,   // KB/s
+    totalBytesReceived: 0,
+    totalBytesSent: 0,
   };
 
   constructor(
