@@ -6,6 +6,7 @@ import { DiscordService } from '../common/discord/discord.service';
 import { QueueService } from '../queue/queue.service';
 import { UsersService } from '../users/users.service';
 import { BotLogsService } from './bot-logs.service';
+import { RedisService } from '../common/redis/redis.service';
 
 interface CreateBotDto {
   name: string;
@@ -59,6 +60,7 @@ export class BotsService {
     public queueService: QueueService, // Make public for monitor service access
     private usersService: UsersService,
     private botLogsService: BotLogsService,
+    private redisService: RedisService,
   ) {}
 
   async create(ownerId: string, data: CreateBotDto): Promise<Bot> {
