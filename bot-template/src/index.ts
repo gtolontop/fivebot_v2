@@ -178,14 +178,14 @@ class ChildBot {
         // Check if ticket system is enabled BEFORE calling ready
         // ticketEnabled is now a direct column in bot_configs, not in ticketData JSON
         const ticketEnabled = (this.config as any).ticketEnabled || false;
-        console.log(`🎫 Ticket system enabled: ${ticketEnabled}`);
+        //console.log(`🎫 Ticket system enabled: ${ticketEnabled}`);
 
         await ready(this.client, this.prisma, this.botId, ticketEnabled);
 
         // Initialize metrics service after bot is ready
         try {
           this.metricsService = new MetricsService(this.client, this.prisma, this.botId);
-          console.log('📊 Metrics tracking initialized');
+          console.log('Metrics tracking initialized and started');
         } catch (error) {
           console.error('⚠️ Failed to initialize metrics service:', error);
         }
@@ -193,7 +193,7 @@ class ChildBot {
         // Initialize command service
         try {
           this.commandService = new CommandService(this.client, this.prisma, this.botId);
-          console.log('✅ Command service initialized');
+          console.log('Command module initialized and started');
         } catch (error) {
           console.error('⚠️ Failed to initialize command service:', error);
         }
@@ -215,30 +215,30 @@ class ChildBot {
             this.commandService.setTicketPanelService(this.ticketHandler.getServices().panelService);
           }
 
-          console.log('🎫 Ticket system initialized');
+          console.log('🎫 Ticket module initialized and started');
         }
 
         // Start command service
         if (this.commandService) {
           try {
             this.commandService.start();
-            console.log('📡 Command service started');
+            console.log('📡 Command module started');
           } catch (error) {
-            console.error('⚠️ Failed to start command service:', error);
+            console.error('⚠️ Failed to start command module:', error);
           }
         }
 
-        // Start status rotation service
+        // Start status rotation module
         try {
           this.statusService = new StatusService(this.client);
           this.statusService.start();
-          console.log('✅ Status service started');
+          console.log('Status module initialized and started');
         } catch (error) {
-          console.error('⚠️ Failed to start status service:', error);
+          console.error('⚠️ Failed to start status module:', error);
         }
 
-        console.log('✅ Bot fully initialized and running');
-        console.log(`⏱️  Process uptime: ${Math.floor(process.uptime())}s`);
+        console.log('Bot fully initialized and running');
+        //console.log(`⏱️  Process uptime: ${Math.floor(process.uptime())}s`);
       } catch (error) {
         console.error('❌ Error in ready event:', error);
         // Don't exit - try to keep running
@@ -331,23 +331,23 @@ class ChildBot {
         throw new Error('Invalid token format: token too short');
       }
 
-      console.log(`Token length: ${token.length} characters`);
+      //console.log(`Token length: ${token.length} characters`);
 
       // Connect to database
       await this.prisma.$connect();
-      console.log('Database connected');
+      console.log('Database succesfully connected');
 
       // Update bot status
       await this.prisma.bot.update({
         where: { id: this.botId },
         data: { status: 'STARTING' }
       });
-      console.log('✅ Bot status updated to STARTING');
+      //console.log('✅ Bot status updated to STARTING');
 
       // Login to Discord
       console.log('Attempting to login to Discord...');
       await this.client.login(token);
-      console.log(`🤖 Child bot started for bot ID: ${this.botId}`);
+      console.log(`Bot started for bot ID: ${this.botId}`);
 
     } catch (error) {
       console.error('Failed to start bot:', error);

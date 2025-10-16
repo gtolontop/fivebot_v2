@@ -450,7 +450,7 @@ export class SimpleQueueService implements IQueueService {
           await this.botLogsService.addLog(
             botId,
             LogLevel.INFO,
-            'Loading bot configuration...',
+            'Sending bot configuration to container...',
             'System'
           );
         } catch (e) {}
