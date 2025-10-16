@@ -82,28 +82,35 @@ export default function DashboardPage() {
   useEffect(() => {
     if (user && !loading) {
       fetchDashboardData();
+
+      // Auto-refresh every 5 seconds to get live bot updates
+      const refreshInterval = setInterval(() => {
+        fetchDashboardData();
+      }, 5000);
+
+      return () => clearInterval(refreshInterval);
     }
   }, [user, loading]);
 
   // Live uptime counter - updates every second
   useEffect(() => {
     const updateUptime = () => {
-      const activeBots = bots.filter(bot => bot.status === 'ONLINE' && bot.startedAt);
+      const activeBots = bots.filter(bot => bot.status === 'ONLINE');
       if (activeBots.length === 0) {
         setLiveUptime('0s');
         return;
       }
 
-      // Calculate average uptime across all active bots
+      // Use startedAt if available, otherwise use current time (just started)
       const oldestBot = activeBots.reduce((oldest, bot) => {
-        const botStartTime = new Date(bot.startedAt!).getTime();
-        const oldestStartTime = new Date(oldest.startedAt!).getTime();
+        const botStartTime = bot.startedAt ? new Date(bot.startedAt).getTime() : Date.now();
+        const oldestStartTime = oldest.startedAt ? new Date(oldest.startedAt).getTime() : Date.now();
         return botStartTime < oldestStartTime ? bot : oldest;
       });
 
-      const startTime = new Date(oldestBot.startedAt!).getTime();
+      const startTime = oldestBot.startedAt ? new Date(oldestBot.startedAt).getTime() : Date.now();
       const now = Date.now();
-      const diffMs = now - startTime;
+      const diffMs = Math.max(0, now - startTime); // Ensure non-negative
 
       const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
       const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
