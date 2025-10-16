@@ -233,11 +233,13 @@ class ChildBot {
         // Start status rotation module
         try {
           this.statusService = new StatusService(this.client);
-          this.statusService.start();
-          const statusText = this.config.statusRotation && Object.keys(this.config.statusRotation).length > 0
-            ? 'enabled'
-            : 'disabled';
-          console.log(`└─ Status module ready (rotation ${statusText})`);
+          const rotationStatus = this.statusService.start();
+
+          if (rotationStatus.enabled && rotationStatus.interval) {
+            console.log(`└─ Status module ready (rotation active - ${rotationStatus.interval}s)`);
+          } else {
+            console.log(`└─ Status module ready (rotation disabled)`);
+          }
         } catch (error) {
           console.error('⚠️ Failed to start status module:', error);
         }
