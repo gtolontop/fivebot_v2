@@ -549,7 +549,7 @@ export default function BotDetailPage() {
               </div>
               <div>
                 <div className="text-2xl font-bold text-orange-600">
-                  {bot.status === 'ONLINE' ? `${realTimeStats.cpuUsage.toFixed(1)}%` : '0%'}
+                  {bot.status === 'ONLINE' ? `${realTimeStats.cpuUsage.toFixed(1)}%` : '—'}
                 </div>
                 <p className="text-xs font-medium text-gray-600">CPU</p>
               </div>
