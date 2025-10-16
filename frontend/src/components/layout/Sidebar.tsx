@@ -64,20 +64,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
   useEffect(() => {
     fetchAllBots();
 
-    // Listen for bot status updates via custom event
-    const handleBotOnline = (event: CustomEvent) => {
-      const { botId } = event.detail;
+    // Connect to WebSocket for real-time bot status updates
+    const socket = require('socket.io-client')(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001');
+
+    socket.on('bot-online', ({ botId }: { botId: string }) => {
       setAllBots((prevBots) =>
         prevBots.map((bot) =>
           bot.id === botId ? { ...bot, status: 'ONLINE' } : bot
         )
       );
-    };
-
-    window.addEventListener('bot-online' as any, handleBotOnline as any);
+    });
 
     return () => {
-      window.removeEventListener('bot-online' as any, handleBotOnline as any);
+      socket.disconnect();
     };
   }, []); // Empty deps - only run once per mount
 
