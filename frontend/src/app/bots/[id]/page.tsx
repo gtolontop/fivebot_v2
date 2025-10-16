@@ -564,7 +564,7 @@ export default function BotDetailPage() {
               </div>
               <div>
                 <div className="text-2xl font-bold text-purple-600">
-                  {bot.status === 'ONLINE' ? `${realTimeStats.memoryUsage.toFixed(1)}%` : '0%'}
+                  {bot.status === 'ONLINE' ? `${realTimeStats.memoryUsage.toFixed(1)}%` : '—'}
                 </div>
                 <p className="text-xs font-medium text-gray-600">RAM</p>
               </div>
