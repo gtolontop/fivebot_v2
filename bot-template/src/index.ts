@@ -284,35 +284,57 @@ class ChildBot {
       }, 1000);
     });
     
-    process.on('SIGINT', async () => {
-      console.log('Received SIGINT, shutting down gracefully...');
+    // Handle graceful shutdown signals
+    let isShuttingDown = false;
+
+    const handleShutdown = async (signal: string) => {
+      if (isShuttingDown) return;
+      isShuttingDown = true;
       await this.shutdown();
-    });
-    
-    process.on('SIGTERM', async () => {
-      console.log('Received SIGTERM, shutting down gracefully...');
-      await this.shutdown();
+    };
+
+    process.on('SIGINT', () => handleShutdown('SIGINT'));
+    process.on('SIGTERM', () => handleShutdown('SIGTERM'));
+
+    // On Windows, process might be killed before SIGTERM is handled
+    // Use beforeExit as a fallback
+    process.on('beforeExit', async () => {
+      if (!isShuttingDown) {
+        isShuttingDown = true;
+        console.clear();
+        console.log('Server marked as offline');
+
+        try {
+          await this.prisma.bot.update({
+            where: { id: this.botId },
+            data: { status: 'OFFLINE' }
+          }).catch(() => {});
+          await this.prisma.$disconnect().catch(() => {});
+        } catch (e) {}
+      }
     });
   }
 
   private async shutdown() {
     try {
-      // Clear console
+      // Clear console FIRST (before any async operations)
       console.clear();
+
+      // Show message immediately (synchronous)
+      console.log('Server marked as offline');
 
       // Update bot status to offline
       await this.prisma.bot.update({
         where: { id: this.botId },
         data: { status: 'OFFLINE' }
-      });
+      }).catch(() => {}); // Ignore errors
 
       // Disconnect from Discord
       this.client.destroy();
 
       // Close database connection
-      await this.prisma.$disconnect();
+      await this.prisma.$disconnect().catch(() => {});
 
-      console.log('Server marked as offline');
       process.exit(0);
     } catch (error) {
       console.clear();
