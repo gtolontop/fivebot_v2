@@ -57,7 +57,8 @@
       "Bash(move bots \"(protected)/bots\")",
       "Bash(move profile \"(protected)/profile\")",
       "Bash(move billing \"(protected)/billing\")",
-      "Bash(move settings \"(protected)/settings\")"
+      "Bash(move settings \"(protected)/settings\")",
+      "Bash(git reset:*)"
     ],
     "deny": [],
     "ask": [],

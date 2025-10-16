@@ -9,10 +9,12 @@ import {
   Param,
   UseGuards,
   Req,
+  Res,
   NotFoundException,
   BadRequestException,
   ForbiddenException,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { BotsService } from './bots.service';
 import { BotMetricsService, DashboardStats, DailyMetrics } from './bot-metrics.service';
@@ -26,6 +28,7 @@ import { ConsoleBufferService } from './console-buffer.service';
 import { BotRealtimeMetricsService } from './bot-realtime-metrics.service';
 import { BotProcessMetricsService } from './bot-process-metrics.service';
 import { CollaboratorsService } from './collaborators.service';
+import { EventsService } from '../common/events/events.service';
 import { LogLevel } from '@prisma/client';
 
 interface CreateBotDto {
@@ -87,6 +90,7 @@ export class BotsController {
     private botProcessMetricsService: BotProcessMetricsService,
     private ticketService: TicketService,
     private collaboratorsService: CollaboratorsService,
+    private eventsService: EventsService,
   ) {}
 
   @Post()
@@ -99,6 +103,29 @@ export class BotsController {
   @UseGuards(AuthGuard('jwt'))
   async findAll(@Req() req: any) {
     return this.botsService.findAll(req.user.id);
+  }
+
+  @Get('events/status')
+  @UseGuards(AuthGuard('jwt-query'))
+  async streamBotStatus(@Req() req: any, @Res() res: Response) {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+
+    const subscription = this.eventsService.botStatus$.subscribe({
+      next: (event) => {
+        res.write(`data: ${JSON.stringify(event)}\n\n`);
+      },
+      error: (err) => {
+        console.error('SSE error:', err);
+        res.end();
+      },
+    });
+
+    req.on('close', () => {
+      subscription.unsubscribe();
+    });
   }
 
   @Get(':id')
