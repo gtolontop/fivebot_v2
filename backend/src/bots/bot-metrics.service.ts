@@ -378,18 +378,9 @@ export class BotMetricsService {
       ? Math.round(todayMetrics.reduce((sum, metric) => sum + (metric.avg_response_time_ms || 45), 0) / todayMetrics.length)
       : 45;
 
-    // Calculate current active uptime and add to cumulative
-    let currentSessionUptime = 0;
-    const now = Date.now();
-    for (const bot of bots) {
-      if (bot.status === 'ONLINE' && bot.startedAt) {
-        const uptimeMs = Math.max(0, now - new Date(bot.startedAt).getTime());
-        currentSessionUptime += Math.floor(uptimeMs / 1000);
-      }
-    }
-
-    // Return cumulative uptime (stored) + current session uptime
-    const totalUptime = (user?.cumulativeUptime || 0) + currentSessionUptime;
+    // Return only cumulative uptime (stored in DB)
+    // Frontend will add the current active session time for real-time display
+    const totalUptime = user?.cumulativeUptime || 0;
 
       return {
         totalBots,
