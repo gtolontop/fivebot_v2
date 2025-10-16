@@ -519,7 +519,7 @@ export default function BotDetailPage() {
               </div>
               <div>
                 <div className="text-2xl font-bold text-blue-600">
-                  {bot.status === 'ONLINE' ? guilds.length : 0}
+                  {bot.status === 'ONLINE' ? guilds.length : '—'}
                 </div>
                 <p className="text-xs font-medium text-gray-600">Servers</p>
               </div>
