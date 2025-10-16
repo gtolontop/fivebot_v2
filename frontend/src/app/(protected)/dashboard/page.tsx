@@ -84,26 +84,11 @@ export default function DashboardPage() {
     }
   }, [user, loading]);
 
-  // Calculate uptime streak - total time all bots have been UP
+  // Calculate cumulative uptime - total time across all bot sessions
   useEffect(() => {
     const updateUptime = () => {
-      const activeBots = bots.filter(bot => bot.status === 'ONLINE');
-      if (activeBots.length === 0) {
-        setLiveUptime('0d');
-        return;
-      }
-
-      // Calculate total uptime across all bots
-      let totalUptimeSeconds = 0;
-      const now = Date.now();
-
-      activeBots.forEach(bot => {
-        if (bot.startedAt) {
-          const startTime = new Date(bot.startedAt).getTime();
-          const uptimeMs = Math.max(0, now - startTime);
-          totalUptimeSeconds += Math.floor(uptimeMs / 1000);
-        }
-      });
+      // stats.uptime contains cumulative seconds from backend
+      const totalUptimeSeconds = stats.uptime || 0;
 
       // Convert to days, hours, minutes, seconds
       const days = Math.floor(totalUptimeSeconds / (60 * 60 * 24));
@@ -127,7 +112,7 @@ export default function DashboardPage() {
     const interval = setInterval(updateUptime, 1000); // Update every second for live counter
 
     return () => clearInterval(interval);
-  }, [bots]);
+  }, [stats.uptime]);
 
   const fetchDashboardData = async () => {
     try {
