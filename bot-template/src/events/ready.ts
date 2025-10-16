@@ -4,14 +4,15 @@ import { buildCommands } from '../commands';
 
 export async function ready(client: Client, prisma: PrismaClient, botId: string, ticketEnabled: boolean = false) {
   if (!client.user) return;
-  
+
   console.log(`Bot logged in as ${client.user.tag}`);
-  console.log(`Connected to ${client.guilds.cache.size} servers`);
-  console.log(`Serving ${client.users.cache.size} users`);
-  
+  console.log(`├─ Connected to ${client.guilds.cache.size} ${client.guilds.cache.size === 1 ? 'server' : 'servers'}`);
+  console.log(`├─ Serving ${client.users.cache.size} ${client.users.cache.size === 1 ? 'user' : 'users'}`);
+  console.log(`└─ Registering slash commands...`);
+
   // Deploy slash commands
   await deployCommands(client);
-  
+
   // Set bot activity
   client.user.setActivity('Ready to serve!', { type: ActivityType.Playing });
   
