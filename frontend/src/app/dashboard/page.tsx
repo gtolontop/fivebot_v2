@@ -82,13 +82,6 @@ export default function DashboardPage() {
   useEffect(() => {
     if (user && !loading) {
       fetchDashboardData();
-
-      // Auto-refresh every 5 seconds to get live bot updates
-      const refreshInterval = setInterval(() => {
-        fetchDashboardData();
-      }, 5000);
-
-      return () => clearInterval(refreshInterval);
     }
   }, [user, loading]);
 
