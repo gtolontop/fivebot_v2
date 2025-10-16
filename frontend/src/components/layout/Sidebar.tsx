@@ -65,15 +65,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
     fetchAllBots();
   }, []); // Empty deps - only run once per mount
 
-  // Auto-expand when on /bots or /bots/[id] pages & persist state
+  // Only expand when on /bots (All Bots page) - collapse for everything else
   useEffect(() => {
-    if (pathname === '/bots' || (botId && botId !== 'create')) {
+    if (pathname === '/bots') {
+      // On All Bots page - expand
       setBotsExpanded(true);
       if (typeof window !== 'undefined') {
         localStorage.setItem('sidebar:botsExpanded', 'true');
       }
+    } else {
+      // On any other page - collapse
+      setBotsExpanded(false);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('sidebar:botsExpanded', 'false');
+      }
     }
-  }, [pathname, botId]);
+  }, [pathname]);
 
   // Save botsExpanded to localStorage when it changes
   useEffect(() => {
