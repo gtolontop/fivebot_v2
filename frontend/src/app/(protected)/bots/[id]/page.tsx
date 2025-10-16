@@ -160,31 +160,31 @@ export default function BotDetailPage() {
     return () => clearInterval(metricsInterval);
   }, [bot?.status, botId]);
 
-  // Parse ANSI color codes to Tailwind classes
+  // Parse ANSI color codes to Tailwind classes (adapted for light background)
   const parseAnsiColors = (text: string) => {
     const ansiRegex = /\x1b\[([0-9;]+)m/g;
     const parts: { text: string; color: string }[] = [];
     let lastIndex = 0;
-    let currentColor = 'text-gray-300';
+    let currentColor = 'text-gray-700';
 
     const colorMap: Record<string, string> = {
-      '0': 'text-gray-300',
+      '0': 'text-gray-700',
       '30': 'text-gray-900',
-      '31': 'text-red-400',
-      '32': 'text-green-400',
-      '33': 'text-yellow-400',
-      '34': 'text-blue-400',
-      '35': 'text-purple-400',
-      '36': 'text-cyan-400',
-      '37': 'text-gray-300',
+      '31': 'text-red-600',
+      '32': 'text-green-600',
+      '33': 'text-yellow-600',
+      '34': 'text-blue-600',
+      '35': 'text-purple-600',
+      '36': 'text-cyan-600',
+      '37': 'text-gray-700',
       '90': 'text-gray-500',
-      '91': 'text-red-300',
-      '92': 'text-green-300',
-      '93': 'text-yellow-300',
-      '94': 'text-blue-300',
-      '95': 'text-purple-300',
-      '96': 'text-cyan-300',
-      '97': 'text-white',
+      '91': 'text-red-500',
+      '92': 'text-green-500',
+      '93': 'text-yellow-500',
+      '94': 'text-blue-500',
+      '95': 'text-purple-500',
+      '96': 'text-cyan-500',
+      '97': 'text-gray-900',
     };
 
     let match;
@@ -204,7 +204,7 @@ export default function BotDetailPage() {
       parts.push({ text: text.substring(lastIndex), color: currentColor });
     }
 
-    return parts.length > 0 ? parts : [{ text, color: 'text-gray-300' }];
+    return parts.length > 0 ? parts : [{ text, color: 'text-gray-700' }];
   };
 
   // Polling for logs - ALWAYS active
