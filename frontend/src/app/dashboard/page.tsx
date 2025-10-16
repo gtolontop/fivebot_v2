@@ -71,6 +71,7 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [recentActivity, setRecentActivity] = useState<ActivityEvent[]>([]);
   const [liveFeed, setLiveFeed] = useState(true);
+  const [liveUptime, setLiveUptime] = useState<string>('0s');
 
   useEffect(() => {
     if (!loading && !user) {
