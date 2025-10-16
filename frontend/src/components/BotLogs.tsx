@@ -26,35 +26,25 @@ export default function BotLogs({ botId, botStatus, className = '' }: BotLogsPro
   const logsEndRef = useRef<HTMLDivElement>(null);
   const logsContainerRef = useRef<HTMLDivElement>(null);
   const lastFetchedLogsRef = useRef<string[]>([]);
+  const hasLoadedHistoryRef = useRef(false);
+
+  // Load history once on mount
+  useEffect(() => {
+    if (!hasLoadedHistoryRef.current) {
+      loadHistoricalLogs();
+      hasLoadedHistoryRef.current = true;
+    }
+  }, [botId]);
 
   // Fetch logs when bot status changes or component mounts
   useEffect(() => {
     if (botStatus !== 'ONLINE') {
       // Don't clear logs when bot goes offline - keep the history
       setIsConnected(false);
-      
-      // Add a status change log entry
-      const statusLog: LogEntry = {
-        id: `status-${Date.now()}`,
-        timestamp: new Date().toLocaleTimeString(),
-        level: 'info',
-        message: `Bot status changed to ${botStatus}`,
-        category: 'System'
-      };
-      setLogs(prev => [...prev, statusLog].slice(-500)); // Keep last 500 logs
       return;
     }
 
-    // Add connection log
-    const connectLog: LogEntry = {
-      id: `connect-${Date.now()}`,
-      timestamp: new Date().toLocaleTimeString(),
-      level: 'success',
-      message: 'Connected to bot console',
-      category: 'System'
-    };
-    setLogs(prev => [...prev, connectLog].slice(-500));
-
+    // Start polling for new logs
     fetchLogs();
     const interval = setInterval(fetchLogs, 3000);
     setIsConnected(true);
@@ -71,6 +61,62 @@ export default function BotLogs({ botId, botStatus, className = '' }: BotLogsPro
       logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [logs, isAutoScroll]);
+
+  const loadHistoricalLogs = async () => {
+    try {
+      const token = Cookies.get('token');
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/bots/${botId}/logs/history`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.logs && data.logs.length > 0) {
+          // Convert raw log strings to structured LogEntry objects
+          const structuredLogs: LogEntry[] = data.logs.map((logString: string, index: number) => {
+            const id = `history-${Date.now()}-${index}`;
+
+            // Extract timestamp from log string
+            const timestampMatch = logString.match(/\[(\d{2}:\d{2}:\d{2})\]/);
+            const timestamp = timestampMatch ? timestampMatch[1] : new Date().toLocaleTimeString();
+
+            // Parse log level from message
+            let level: LogEntry['level'] = 'info';
+            let message = logString;
+            let category = 'Bot';
+
+            if (logString.includes('✅') || logString.toLowerCase().includes('success')) {
+              level = 'success';
+            } else if (logString.includes('❌') || logString.toLowerCase().includes('error')) {
+              level = 'error';
+            } else if (logString.includes('⚠️') || logString.toLowerCase().includes('warn')) {
+              level = 'warn';
+            } else if (logString.includes('🔄') || logString.toLowerCase().includes('debug')) {
+              level = 'debug';
+            }
+
+            // Extract category from message patterns
+            if (logString.includes('discord@')) category = 'Discord';
+            else if (logString.includes('cmd@')) category = 'Commands';
+            else if (logString.includes('container@')) category = 'System';
+
+            return { id, timestamp, level, message, category };
+          });
+
+          setLogs(structuredLogs);
+          lastFetchedLogsRef.current = structuredLogs.map(log => log.message);
+        }
+      }
+    } catch (error) {
+      console.log('Could not fetch historical logs:', error);
+    }
+  };
 
   const fetchLogs = async () => {
     try {
