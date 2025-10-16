@@ -26,7 +26,7 @@ export class StatusService {
 
   private loadConfig(): StatusConfig {
     const envConfig = process.env.CONFIG ? JSON.parse(process.env.CONFIG) : {};
-    
+
     // Default statuses with variables
     const defaultStatuses: StatusItem[] = [
       {
@@ -66,6 +66,14 @@ export class StatusService {
         statusRotation = {};
       }
     }
+
+    // Debug log
+    console.log('[StatusService] Config loaded:', {
+      enabled: statusRotation.enabled,
+      interval: statusRotation.interval,
+      hasStatuses: !!statusRotation.statuses,
+      statusCount: statusRotation.statuses?.length || 0
+    });
 
     return {
       enabled: statusRotation.enabled ?? false, // Disabled by default until configured
