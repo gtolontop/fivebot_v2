@@ -20,6 +20,7 @@ interface LogEntry {
 export default function BotLogs({ botId, botStatus, className = '' }: BotLogsProps) {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isConnected, setIsConnected] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [filterLevel, setFilterLevel] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [isAutoScroll, setIsAutoScroll] = useState(true);
@@ -63,6 +64,7 @@ export default function BotLogs({ botId, botStatus, className = '' }: BotLogsPro
   }, [logs, isAutoScroll]);
 
   const loadHistoricalLogs = async () => {
+    setIsLoadingHistory(true);
     try {
       const token = Cookies.get('token');
       const response = await fetch(
@@ -111,10 +113,31 @@ export default function BotLogs({ botId, botStatus, className = '' }: BotLogsPro
 
           setLogs(structuredLogs);
           lastFetchedLogsRef.current = structuredLogs.map(log => log.message);
+        } else {
+          // No logs found - add a placeholder
+          const placeholderLog: LogEntry = {
+            id: `placeholder-${Date.now()}`,
+            timestamp: new Date().toLocaleTimeString(),
+            level: 'info',
+            message: 'No recent logs available. Logs from the last hour will appear here.',
+            category: 'System'
+          };
+          setLogs([placeholderLog]);
         }
       }
     } catch (error) {
       console.log('Could not fetch historical logs:', error);
+      // Add error log
+      const errorLog: LogEntry = {
+        id: `error-${Date.now()}`,
+        timestamp: new Date().toLocaleTimeString(),
+        level: 'error',
+        message: 'Failed to load log history',
+        category: 'System'
+      };
+      setLogs([errorLog]);
+    } finally {
+      setIsLoadingHistory(false);
     }
   };
 
@@ -317,12 +340,19 @@ export default function BotLogs({ botId, botStatus, className = '' }: BotLogsPro
       </div>
 
       {/* Logs Container */}
-      <div 
+      <div
         ref={logsContainerRef}
         onScroll={handleScroll}
         className="bg-gray-900 text-green-400 p-4 rounded-lg text-sm font-mono h-80 overflow-y-auto border border-gray-700"
       >
-        {filteredLogs.length === 0 ? (
+        {isLoadingHistory ? (
+          <div className="text-gray-500 text-center py-8">
+            <div className="flex items-center justify-center space-x-2">
+              <div className="w-4 h-4 border-2 border-gray-500 border-t-green-400 rounded-full animate-spin"></div>
+              <span>Loading logs...</span>
+            </div>
+          </div>
+        ) : filteredLogs.length === 0 ? (
           <div className="text-gray-500 text-center py-8">
             {logs.length === 0 ? 'No logs available...' : 'No logs match your filters'}
           </div>
