@@ -47,29 +47,52 @@ export class CommandService {
   }
 
   private async checkForCommands() {
-    try {
-      // Check if botCommand model exists
-      if (!this.prisma.botCommand) {
-        console.log('⚠️ BotCommand model not found. Please run "npx prisma generate" to update the Prisma client.');
-        return;
-      }
-      
-      // Get pending commands
-      const commands = await this.prisma.botCommand.findMany({
-        where: {
-          botId: this.botId,
-          status: 'PENDING'
-        },
-        orderBy: {
-          createdAt: 'asc'
-        }
-      });
+    const maxRetries = 3;
+    const retryDelay = 2000; // 2 seconds
 
-      for (const command of commands) {
-        await this.executeCommand(command);
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        // Check if botCommand model exists
+        if (!this.prisma.botCommand) {
+          console.log('⚠️ BotCommand model not found. Please run "npx prisma generate" to update the Prisma client.');
+          return;
+        }
+
+        // Get pending commands
+        const commands = await this.prisma.botCommand.findMany({
+          where: {
+            botId: this.botId,
+            status: 'PENDING'
+          },
+          orderBy: {
+            createdAt: 'asc'
+          }
+        });
+
+        for (const command of commands) {
+          await this.executeCommand(command);
+        }
+
+        // Success - exit retry loop
+        return;
+      } catch (error: any) {
+        // Check if it's a database connection error
+        const isConnectionError = error?.code === 'P1001' ||
+                                  error?.message?.includes("Can't reach database");
+
+        if (isConnectionError && attempt < maxRetries) {
+          console.log(`⚠️ Database connection failed (attempt ${attempt}/${maxRetries}), retrying in ${retryDelay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, retryDelay));
+        } else {
+          // Log error only on final attempt or non-connection errors
+          if (attempt === maxRetries) {
+            console.error(`❌ Error checking for commands after ${maxRetries} attempts:`, error?.message || error);
+          } else {
+            console.error('Error checking for commands:', error);
+          }
+          return;
+        }
       }
-    } catch (error) {
-      console.error('Error checking for commands:', error);
     }
   }
 
