@@ -182,18 +182,11 @@ class ChildBot {
 
         await ready(this.client, this.prisma, this.botId, ticketEnabled);
 
-        // Initialize metrics service after bot is ready
-        try {
-          this.metricsService = new MetricsService(this.client, this.prisma, this.botId);
-          console.log('Metrics tracking initialized and started');
-        } catch (error) {
-          console.error('⚠️ Failed to initialize metrics service:', error);
-        }
+        console.log('Starting modules...');
 
         // Initialize command service
         try {
           this.commandService = new CommandService(this.client, this.prisma, this.botId);
-          console.log('Command module initialized and started');
         } catch (error) {
           console.error('⚠️ Failed to initialize command service:', error);
         }
@@ -214,30 +207,39 @@ class ChildBot {
           if (this.commandService && this.ticketHandler) {
             this.commandService.setTicketPanelService(this.ticketHandler.getServices().panelService);
           }
-
-          console.log('🎫 Ticket module initialized and started');
         }
 
         // Start command service
         if (this.commandService) {
           try {
             this.commandService.start();
-            console.log('📡 Command module started');
+            console.log('├─ Command module ready');
           } catch (error) {
             console.error('⚠️ Failed to start command module:', error);
           }
+        }
+
+        // Initialize metrics service after bot is ready
+        try {
+          this.metricsService = new MetricsService(this.client, this.prisma, this.botId);
+          console.log('├─ Metrics tracking ready');
+        } catch (error) {
+          console.error('⚠️ Failed to initialize metrics service:', error);
         }
 
         // Start status rotation module
         try {
           this.statusService = new StatusService(this.client);
           this.statusService.start();
-          console.log('Status module initialized and started');
+          const statusText = this.config.statusRotation && Object.keys(this.config.statusRotation).length > 0
+            ? 'enabled'
+            : 'disabled';
+          console.log(`└─ Status module ready (rotation ${statusText})`);
         } catch (error) {
           console.error('⚠️ Failed to start status module:', error);
         }
 
-        console.log('Bot fully initialized and running');
+        console.log('✅ Bot fully operational');
         //console.log(`⏱️  Process uptime: ${Math.floor(process.uptime())}s`);
       } catch (error) {
         console.error('❌ Error in ready event:', error);
