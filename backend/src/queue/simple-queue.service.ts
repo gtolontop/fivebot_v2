@@ -232,6 +232,18 @@ export class SimpleQueueService implements IQueueService {
         startedAt: new Date(),
       });
 
+      // Add initial startup log
+      try {
+        await this.botLogsService.addLog(
+          botId,
+          LogLevel.INFO,
+          'Server marked as starting...',
+          'System'
+        );
+      } catch (e) {
+        console.error('Failed to add startup log:', e);
+      }
+
       // Save bot state in Redis for crash recovery
       await this.redisService.saveBotState(botId, {
         status: 'ONLINE',
@@ -433,39 +445,7 @@ export class SimpleQueueService implements IQueueService {
         }
       });
 
-      // Add startup logs progressively
-      setTimeout(async () => {
-        try {
-          await this.botLogsService.addLog(
-            botId,
-            LogLevel.INFO,
-            'Starting bot process...',
-            'System'
-          );
-        } catch (e) {}
-      }, 500);
-
-      setTimeout(async () => {
-        try {
-          await this.botLogsService.addLog(
-            botId,
-            LogLevel.INFO,
-            'Sending bot configuration to container...',
-            'System'
-          );
-        } catch (e) {}
-      }, 1000);
-
-      setTimeout(async () => {
-        try {
-          await this.botLogsService.addLog(
-            botId,
-            LogLevel.INFO,
-            'Connecting to Discord...',
-            'System'
-          );
-        } catch (e) {}
-      }, 1500);
+      // Bot process itself logs initialization steps
 
       // Wait a bit to see if the process starts successfully
       await new Promise(resolve => setTimeout(resolve, 3000));
