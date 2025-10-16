@@ -85,6 +85,48 @@ export default function DashboardPage() {
     }
   }, [user, loading]);
 
+  // Live uptime counter - updates every second
+  useEffect(() => {
+    const updateUptime = () => {
+      const activeBots = bots.filter(bot => bot.status === 'ONLINE' && bot.startedAt);
+      if (activeBots.length === 0) {
+        setLiveUptime('0s');
+        return;
+      }
+
+      // Calculate average uptime across all active bots
+      const oldestBot = activeBots.reduce((oldest, bot) => {
+        const botStartTime = new Date(bot.startedAt!).getTime();
+        const oldestStartTime = new Date(oldest.startedAt!).getTime();
+        return botStartTime < oldestStartTime ? bot : oldest;
+      });
+
+      const startTime = new Date(oldestBot.startedAt!).getTime();
+      const now = Date.now();
+      const diffMs = now - startTime;
+
+      const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+
+      if (days > 0) {
+        setLiveUptime(`${days}d ${hours}h ${minutes}m`);
+      } else if (hours > 0) {
+        setLiveUptime(`${hours}h ${minutes}m ${seconds}s`);
+      } else if (minutes > 0) {
+        setLiveUptime(`${minutes}m ${seconds}s`);
+      } else {
+        setLiveUptime(`${seconds}s`);
+      }
+    };
+
+    updateUptime();
+    const interval = setInterval(updateUptime, 1000);
+
+    return () => clearInterval(interval);
+  }, [bots]);
+
   const fetchDashboardData = async () => {
     try {
       setIsLoading(true);
@@ -242,23 +284,19 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Uptime */}
-            <div className="group relative bg-gradient-to-br from-primary-50 to-blue-50 rounded-xl p-5 border border-primary-100 hover:border-primary-300 transition-all hover:shadow-lg">
+            <div className="group relative bg-gradient-to-br from-success-50 to-green-50 rounded-xl p-5 border border-success-100 hover:border-success-300 transition-all hover:shadow-lg">
               <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                  <SignalIcon className="w-6 h-6 text-primary-600" />
-                </div>
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-primary-600">{uptimePercent}%</div>
+                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform relative">
+                  <ClockIcon className="w-6 h-6 text-success-600" />
+                  {stats.activeBots > 0 && (
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-success-500 rounded-full animate-pulse"></div>
+                  )}
                 </div>
               </div>
               <div className="space-y-2">
-                <p className="text-sm font-semibold text-gray-900">System Uptime</p>
-                <div className="w-full bg-primary-200 rounded-full h-2 overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-primary-500 to-primary-600 rounded-full transition-all duration-1000"
-                    style={{ width: `${uptimePercent}%` }}
-                  ></div>
-                </div>
+                <p className="text-sm font-semibold text-gray-900">Uptime</p>
+                <div className="text-3xl font-bold text-success-600 tabular-nums">{liveUptime}</div>
+                <p className="text-xs text-gray-500">Live counter</p>
               </div>
             </div>
 
