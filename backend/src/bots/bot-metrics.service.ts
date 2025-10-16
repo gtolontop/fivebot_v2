@@ -415,8 +415,8 @@ export class BotMetricsService {
     try {
       metrics = await this.prisma.$queryRawUnsafe(
         `SELECT * FROM bot_metrics
-         WHERE bot_id = ?
-         AND date >= ?
+         WHERE bot_id = $1
+         AND date >= $2
          AND date IS NOT NULL
          AND EXTRACT(YEAR FROM date) > 1000
          AND updated_at IS NOT NULL
