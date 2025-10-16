@@ -542,15 +542,6 @@ export class SimpleQueueService implements IQueueService {
 
       console.log(`🛑 Stopping bot "${botName}" (owner: ${ownerName})`);
 
-      // Clear console and add offline message
-      this.consoleBufferService.clearBuffer(botId);
-      await this.botLogsService.addLog(
-        botId,
-        LogLevel.INFO,
-        'Server marked as offline',
-        'container'
-      );
-
       // Save user's intention to stop the bot
       await this.redisService.saveBotState(botId, {
         status: 'OFFLINE',
