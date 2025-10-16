@@ -374,6 +374,14 @@ export class MetricsService {
       try {
         const ws = (this.client.ws as any);
 
+        console.log('[Metrics] Attempting to patch WebSocket. ws exists:', !!ws);
+        if (ws) {
+          console.log('[Metrics] ws.shards exists:', !!ws.shards);
+          if (ws.shards) {
+            console.log('[Metrics] ws.shards size:', ws.shards.size);
+          }
+        }
+
         if (!ws || !ws.shards) {
           console.log('[Metrics] WebSocket shards not available yet');
           return;
@@ -382,6 +390,8 @@ export class MetricsService {
         // Patch each shard's send method
         let patchedCount = 0;
         for (const [shardId, shard] of ws.shards) {
+          console.log(`[Metrics] Processing shard ${shardId}, has connection:`, !!shard?.connection);
+
           if (shard && shard.connection) {
             const originalSend = shard.connection.send;
             shard.connection.send = function(data: any, cb?: any) {
@@ -390,8 +400,13 @@ export class MetricsService {
                              typeof data === 'string' ? Buffer.byteLength(data) :
                              JSON.stringify(data).length;
                 networkStats.totalBytesSent += bytes;
+
+                // Debug first few sends
+                if (networkStats.totalBytesSent < 5000) {
+                  console.log(`[Metrics] Upload tracked: ${bytes} bytes (total: ${networkStats.totalBytesSent})`);
+                }
               } catch (e) {
-                // Ignore errors
+                console.error('[Metrics] Error tracking upload:', e);
               }
               return originalSend.call(this, data, cb);
             };
@@ -400,9 +415,9 @@ export class MetricsService {
         }
 
         if (patchedCount > 0) {
-          console.log(`[Metrics] Patched ${patchedCount} WebSocket shard(s) for upload tracking`);
+          console.log(`[Metrics] ✅ Patched ${patchedCount} WebSocket shard(s) for upload tracking`);
         } else {
-          console.log('[Metrics] No WebSocket shards available to patch');
+          console.log('[Metrics] ❌ No WebSocket shards available to patch');
         }
       } catch (error) {
         console.error('[Metrics] Failed to patch WebSocket:', error);
@@ -411,11 +426,13 @@ export class MetricsService {
 
     // Patch on ready
     this.client.once('ready', () => {
+      console.log('[Metrics] Client ready, scheduling WebSocket patch in 2s...');
       setTimeout(() => patchWebSocket(), 2000);
     });
 
     // Also try when already connected
     if (this.client.isReady()) {
+      console.log('[Metrics] Client already ready, scheduling WebSocket patch in 2s...');
       setTimeout(() => patchWebSocket(), 2000);
     }
   }
