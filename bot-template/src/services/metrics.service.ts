@@ -427,6 +427,16 @@ export class MetricsService {
         networkUpload: Math.round(this.networkStats.totalBytesSent / 1024), // Total KB uploaded
       };
 
+      // Debug log
+      if (processMetrics.networkDownload > 0 || processMetrics.networkUpload > 0) {
+        console.log('[Metrics] Network stats:', {
+          down: processMetrics.networkDownload + ' KB',
+          up: processMetrics.networkUpload + ' KB',
+          downBytes: this.networkStats.totalBytesReceived,
+          upBytes: this.networkStats.totalBytesSent
+        });
+      }
+
       // Send to backend
       const response = await fetch(`${this.backendUrl}/api/bots/${this.botId}/metrics/process`, {
         method: 'POST',
