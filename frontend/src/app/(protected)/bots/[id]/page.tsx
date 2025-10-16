@@ -731,20 +731,27 @@ export default function BotDetailPage() {
                     else if (prefix.includes('container@')) prefixColor = 'text-yellow-600';
                     else if (prefix.includes('system@')) prefixColor = 'text-green-600';
 
+                    const messageParts = parseAnsiColors(message);
+
                     return (
                       <div key={index} className="py-0.5 hover:bg-gray-100/50 -mx-2 px-2 rounded transition-colors">
                         <span className="text-gray-500">[{time}]</span>
                         <span className={`${prefixColor} ml-2`}>[{prefix}]:</span>
-                        <span className="ml-2 text-gray-700">
-                          {message}
+                        <span className="ml-2">
+                          {messageParts.map((part, i) => (
+                            <span key={i} className={part.color}>{part.text}</span>
+                          ))}
                         </span>
                       </div>
                     );
                   }
 
+                  const parts = parseAnsiColors(log);
                   return (
-                    <div key={index} className="py-0.5 hover:bg-gray-100/50 -mx-2 px-2 rounded transition-colors text-gray-700">
-                      {log}
+                    <div key={index} className="py-0.5 hover:bg-gray-100/50 -mx-2 px-2 rounded transition-colors">
+                      {parts.map((part, i) => (
+                        <span key={i} className={part.color}>{part.text}</span>
+                      ))}
                     </div>
                   );
                 })
