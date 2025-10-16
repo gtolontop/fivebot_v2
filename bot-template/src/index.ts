@@ -352,6 +352,10 @@ class ChildBot {
 
   public async start() {
     try {
+      // Clear console before starting
+      process.stdout.write('\x1Bc');
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       // Force synchronous output for consistent ordering with small delays
       await new Promise(resolve => process.stdout.write('Initializing bot...\n', resolve));
       await new Promise(resolve => setTimeout(resolve, 50)); // Small delay to ensure order
