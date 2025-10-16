@@ -182,7 +182,10 @@ class ChildBot {
 
         await ready(this.client, this.prisma, this.botId, ticketEnabled);
 
-        console.log('Starting modules...');
+        // Force flush stdout before continuing
+        await new Promise(resolve => {
+          process.stdout.write('Starting modules...\n', () => resolve(true));
+        });
 
         // Initialize command service
         try {
