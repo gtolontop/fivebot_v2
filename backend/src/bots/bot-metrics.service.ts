@@ -144,9 +144,15 @@ export class BotMetricsService {
 
   async getDashboardStats(userId: string): Promise<DashboardStats> {
     try {
+      // Get user with cumulative uptime
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { cumulativeUptime: true },
+      });
+
       // Get user's bots
       const bots = await this.prisma.bot.findMany({
-        where: { 
+        where: {
           ownerId: userId
           // No need for isActive filter since bots are hard deleted
         },
@@ -367,12 +373,23 @@ export class BotMetricsService {
         };
       });
 
-    // Calculate average response time and uptime
+    // Calculate average response time
     const avgResponseTime = todayMetrics.length > 0
       ? Math.round(todayMetrics.reduce((sum, metric) => sum + (metric.avg_response_time_ms || 45), 0) / todayMetrics.length)
       : 45;
 
-    const uptime = activeBots > 0 ? 99.8 : 0; // Realistic uptime percentage
+    // Calculate current active uptime and add to cumulative
+    let currentSessionUptime = 0;
+    const now = Date.now();
+    for (const bot of bots) {
+      if (bot.status === 'ONLINE' && bot.startedAt) {
+        const uptimeMs = Math.max(0, now - new Date(bot.startedAt).getTime());
+        currentSessionUptime += Math.floor(uptimeMs / 1000);
+      }
+    }
+
+    // Return cumulative uptime (stored) + current session uptime
+    const totalUptime = (user?.cumulativeUptime || 0) + currentSessionUptime;
 
       return {
         totalBots,
@@ -385,7 +402,7 @@ export class BotMetricsService {
         botStatusDistribution,
         topBots,
         avgResponseTime,
-        uptime,
+        uptime: totalUptime,
       };
     } catch (error) {
       console.error('Error in getDashboardStats:', error);

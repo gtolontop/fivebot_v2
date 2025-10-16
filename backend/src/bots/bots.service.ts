@@ -691,6 +691,21 @@ export class BotsService {
 
     await this.updateStatus(botId, BotStatus.STOPPING);
 
+    // Save cumulative uptime before clearing startedAt
+    if (bot.startedAt) {
+      const uptimeMs = Math.max(0, Date.now() - new Date(bot.startedAt).getTime());
+      const uptimeSeconds = Math.floor(uptimeMs / 1000);
+
+      await this.prisma.user.update({
+        where: { id: ownerId },
+        data: {
+          cumulativeUptime: {
+            increment: uptimeSeconds
+          }
+        }
+      });
+    }
+
     // Clear startedAt timestamp when bot stops
     await this.prisma.bot.update({
       where: { id: botId },
