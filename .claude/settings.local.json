@@ -52,7 +52,12 @@
       "Bash(del \"c:\\Users\\teamr\\Desktop\\fivebot_v2\\frontend\\src\\app\\dashboard\\page.OLD.tsx\")",
       "Bash(netstat:*)",
       "Bash(npx nest g:*)",
-      "Bash(npx nest g service:*)"
+      "Bash(npx nest g service:*)",
+      "Bash(move dashboard \"(protected)/dashboard\")",
+      "Bash(move bots \"(protected)/bots\")",
+      "Bash(move profile \"(protected)/profile\")",
+      "Bash(move billing \"(protected)/billing\")",
+      "Bash(move settings \"(protected)/settings\")"
     ],
     "deny": [],
     "ask": [],
