@@ -355,87 +355,79 @@ export class MetricsService {
   }
 
   private startNetworkTracking() {
-    // Track ALL network traffic from the process using Node.js internals
-    // These are cumulative totals for the entire session
-    const net = require('net');
-    const tls = require('tls');
-    const https = require('https');
-
-    // Keep reference to our network stats for closure
+    // Track Discord WebSocket traffic using EventEmitter hooks
     const networkStats = this.networkStats;
 
-    // Patch net.Socket to track TCP bytes
-    const originalNetSocketWrite = net.Socket.prototype.write;
-    const originalNetSocketOn = net.Socket.prototype.on;
-
-    net.Socket.prototype.write = function(...args: any[]) {
-      const data = args[0];
-      if (data) {
-        const bytes = Buffer.isBuffer(data) ? data.length : Buffer.byteLength(data.toString());
-        networkStats.totalBytesSent += bytes;
+    // Hook into Discord.js WebSocket events
+    this.client.on('raw' as any, (packet: any) => {
+      if (packet) {
+        try {
+          const packetSize = JSON.stringify(packet).length;
+          networkStats.totalBytesReceived += packetSize;
+        } catch (e) {
+          // Ignore parse errors
+        }
       }
-      return originalNetSocketWrite.apply(this, args);
-    };
+    });
 
-    net.Socket.prototype.on = function(event: string, listener: any) {
-      if (event === 'data') {
-        const wrappedListener = (chunk: Buffer) => {
-          networkStats.totalBytesReceived += chunk.length;
-          return listener(chunk);
+    // Hook into the WebSocket send method
+    if (this.client.ws?.connection) {
+      const originalSend = this.client.ws.connection.send;
+      this.client.ws.connection.send = function(...args: any[]) {
+        if (args[0]) {
+          const data = args[0];
+          const bytes = Buffer.isBuffer(data) ? data.length :
+                       typeof data === 'string' ? Buffer.byteLength(data) :
+                       JSON.stringify(data).length;
+          networkStats.totalBytesSent += bytes;
+        }
+        return originalSend.apply(this, args);
+      };
+    }
+
+    // Also patch WebSocket for future connections
+    this.client.on('ready', () => {
+      if (this.client.ws?.connection) {
+        const originalSend = this.client.ws.connection.send;
+        this.client.ws.connection.send = function(...args: any[]) {
+          if (args[0]) {
+            const data = args[0];
+            const bytes = Buffer.isBuffer(data) ? data.length :
+                         typeof data === 'string' ? Buffer.byteLength(data) :
+                         JSON.stringify(data).length;
+            networkStats.totalBytesSent += bytes;
+          }
+          return originalSend.apply(this, args);
         };
-        return originalNetSocketOn.call(this, event, wrappedListener);
       }
-      return originalNetSocketOn.call(this, event, listener);
-    };
-
-    // Patch TLS Socket to track HTTPS bytes (Discord uses WSS/HTTPS)
-    const originalTLSSocketWrite = tls.TLSSocket.prototype.write;
-    const originalTLSSocketOn = tls.TLSSocket.prototype.on;
-
-    tls.TLSSocket.prototype.write = function(...args: any[]) {
-      const data = args[0];
-      if (data) {
-        const bytes = Buffer.isBuffer(data) ? data.length : Buffer.byteLength(data.toString());
-        networkStats.totalBytesSent += bytes;
-      }
-      return originalTLSSocketWrite.apply(this, args);
-    };
-
-    tls.TLSSocket.prototype.on = function(event: string, listener: any) {
-      if (event === 'data') {
-        const wrappedListener = (chunk: Buffer) => {
-          networkStats.totalBytesReceived += chunk.length;
-          return listener(chunk);
-        };
-        return originalTLSSocketOn.call(this, event, wrappedListener);
-      }
-      return originalTLSSocketOn.call(this, event, listener);
-    };
+    });
   }
 
   private async sendProcessMetrics() {
     try {
       // Get current CPU usage and calculate percentage
       const now = Date.now();
-      const timeDelta = (now - this.lastCpuCheck) * 1000; // Convert to microseconds
+      const timeDeltaMs = now - this.lastCpuCheck; // Time in milliseconds
       const currentCpuUsage = process.cpuUsage(this.lastCpuUsage);
 
-      // CPU percentage: (user + system time) / (elapsed time) * 100
-      // Don't divide by number of CPUs to get actual process CPU usage
+      // CPU percentage: (CPU microseconds used) / (elapsed microseconds) * 100
+      const cpuMicroseconds = currentCpuUsage.user + currentCpuUsage.system;
+      const elapsedMicroseconds = timeDeltaMs * 1000;
+
       const cpuPercent = Math.min(100, Math.max(0,
-        ((currentCpuUsage.user + currentCpuUsage.system) / timeDelta) * 100
+        (cpuMicroseconds / elapsedMicroseconds) * 100
       ));
 
       // Update tracking for next calculation
       this.lastCpuUsage = process.cpuUsage();
       this.lastCpuCheck = now;
 
-      // Get memory usage - use heapUsed for more accurate representation
+      // Get memory usage - use RSS (actual physical memory used)
       const memoryUsage = process.memoryUsage();
-      const totalSystemMemory = os.totalmem();
-      const usedMemoryMB = Math.round(memoryUsage.heapUsed / 1024 / 1024);
-      // Calculate percentage based on heap used vs total heap
-      const memoryPercent = Math.min(100, (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100);
+      const usedMemoryMB = Math.round(memoryUsage.rss / 1024 / 1024);
+      // Calculate percentage: RSS / 512MB (reasonable limit for a bot process)
+      const memoryLimit = 512 * 1024 * 1024; // 512 MB
+      const memoryPercent = Math.min(100, (memoryUsage.rss / memoryLimit) * 100);
 
       // Get Discord stats
       const guildsCount = this.client.guilds.cache.size;
