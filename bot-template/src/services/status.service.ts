@@ -74,21 +74,20 @@ export class StatusService {
     };
   }
 
-  public start() {
-    /*if (!this.config.enabled) {
-      console.log('Status rotation is disabled');
-      return;
-    }*/
-
+  public start(): { enabled: boolean; interval?: number } {
     // Set initial status
     this.updateStatus();
+
+    if (!this.config.enabled) {
+      return { enabled: false };
+    }
 
     // Start rotation
     this.rotationTimer = setInterval(() => {
       this.updateStatus();
     }, this.config.rotationInterval * 1000);
 
-    console.log(`📊 Status rotation started (${this.config.rotationInterval}s interval)`);
+    return { enabled: true, interval: this.config.rotationInterval };
   }
 
   public stop() {
