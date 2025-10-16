@@ -698,16 +698,10 @@ export default function BotDetailPage() {
             <div
               ref={consoleRef}
               onScroll={handleConsoleScroll}
-              className={`h-96 overflow-y-auto font-mono text-sm p-4 space-y-0.5 ${
-                bot.status === 'ONLINE' || bot.status === 'STARTING'
-                  ? 'scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900'
-                  : 'scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100'
-              }`}
+              className="h-96 overflow-y-auto font-mono text-sm p-4 space-y-0.5 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
             >
               {logs.length === 0 ? (
-                <div className={`flex flex-col items-center justify-center h-full ${
-                  bot.status === 'ONLINE' || bot.status === 'STARTING' ? 'text-gray-500' : 'text-gray-400'
-                }`}>
+                <div className="flex flex-col items-center justify-center h-full text-gray-400">
                   {bot.status === 'ONLINE' ? (
                     <>
                       <svg className="w-12 h-12 mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
