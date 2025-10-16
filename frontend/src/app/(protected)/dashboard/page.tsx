@@ -94,13 +94,18 @@ export default function DashboardPage() {
       const now = Date.now();
       const activeBots = bots.filter(bot => bot.status === 'ONLINE');
 
+      let currentActiveSeconds = 0;
       activeBots.forEach(bot => {
         if (bot.startedAt) {
           const startTime = new Date(bot.startedAt).getTime();
           const uptimeMs = Math.max(0, now - startTime);
-          totalUptimeSeconds += Math.floor(uptimeMs / 1000);
+          currentActiveSeconds += Math.floor(uptimeMs / 1000);
         }
       });
+
+      console.log('[DEBUG] Cumulative:', totalUptimeSeconds, 'Current active:', currentActiveSeconds, 'Active bots:', activeBots.length);
+
+      totalUptimeSeconds += currentActiveSeconds;
 
       // Convert to days, hours, minutes, seconds
       const days = Math.floor(totalUptimeSeconds / (60 * 60 * 24));
