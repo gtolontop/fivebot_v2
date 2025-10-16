@@ -656,15 +656,25 @@ export default function BotDetailPage() {
         {/* Console + Servers Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Console - Takes 2/3 */}
-          <div className="lg:col-span-2 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl border border-gray-700 overflow-hidden">
-          <div className="px-6 py-4 bg-gray-800/50 border-b border-gray-700 flex items-center justify-between">
+          <div className={`lg:col-span-2 rounded-2xl border overflow-hidden ${
+            bot.status === 'ONLINE' || bot.status === 'STARTING'
+              ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border-gray-700'
+              : 'bg-white/60 backdrop-blur-sm border-gray-200/50'
+          }`}>
+          <div className={`px-6 py-4 border-b flex items-center justify-between ${
+            bot.status === 'ONLINE' || bot.status === 'STARTING'
+              ? 'bg-gray-800/50 border-gray-700'
+              : 'bg-gray-50/50 border-gray-200'
+          }`}>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-red-500 rounded-full"></div>
                 <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
                 <div className="w-3 h-3 bg-green-500 rounded-full"></div>
               </div>
-              <span className="text-gray-400 font-mono text-sm">Console</span>
+              <span className={`font-mono text-sm ${
+                bot.status === 'ONLINE' || bot.status === 'STARTING' ? 'text-gray-400' : 'text-gray-600'
+              }`}>Console</span>
             </div>
             <div className="flex items-center gap-2">
               {!autoScroll && (
