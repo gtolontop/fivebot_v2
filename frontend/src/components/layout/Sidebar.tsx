@@ -127,7 +127,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
   ];
 
-  const isActive = (href: string): boolean => {
+  // Memoize isActive to avoid recalculation
+  const isActive = useCallback((href: string): boolean => {
     if (href === '/dashboard') {
       return pathname === href;
     }
@@ -136,7 +137,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       return pathname === '/bots';
     }
     return pathname?.startsWith(href) ?? false;
-  };
+  }, [pathname]);
 
   return (
     <aside
