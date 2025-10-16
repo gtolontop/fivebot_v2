@@ -216,6 +216,7 @@ class ChildBot {
           try {
             this.commandService.start();
             await new Promise(resolve => process.stdout.write('├─ Command module ready\n', resolve));
+            await new Promise(resolve => setTimeout(resolve, 50));
           } catch (error) {
             console.error('⚠️ Failed to start command module:', error);
           }
@@ -225,6 +226,7 @@ class ChildBot {
         try {
           this.metricsService = new MetricsService(this.client, this.prisma, this.botId);
           await new Promise(resolve => process.stdout.write('├─ Metrics tracking ready\n', resolve));
+          await new Promise(resolve => setTimeout(resolve, 50));
         } catch (error) {
           console.error('⚠️ Failed to initialize metrics service:', error);
         }
@@ -236,14 +238,17 @@ class ChildBot {
 
           if (rotationStatus.enabled && rotationStatus.interval) {
             await new Promise(resolve => process.stdout.write(`└─ Status module ready (rotation active - ${rotationStatus.interval}s)\n`, resolve));
+            await new Promise(resolve => setTimeout(resolve, 50));
           } else {
             await new Promise(resolve => process.stdout.write('└─ Status module ready (rotation disabled)\n', resolve));
+            await new Promise(resolve => setTimeout(resolve, 50));
           }
         } catch (error) {
           console.error('⚠️ Failed to start status module:', error);
         }
 
         await new Promise(resolve => process.stdout.write('✅ Bot fully operational\n', resolve));
+        await new Promise(resolve => setTimeout(resolve, 50));
         //console.log(`⏱️  Process uptime: ${Math.floor(process.uptime())}s`);
       } catch (error) {
         console.error('❌ Error in ready event:', error);
