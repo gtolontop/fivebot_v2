@@ -105,24 +105,26 @@ export default function DashboardPage() {
         }
       });
 
-      // Convert to days, hours, minutes
+      // Convert to days, hours, minutes, seconds
       const days = Math.floor(totalUptimeSeconds / (60 * 60 * 24));
       const hours = Math.floor((totalUptimeSeconds % (60 * 60 * 24)) / (60 * 60));
       const minutes = Math.floor((totalUptimeSeconds % (60 * 60)) / 60);
+      const seconds = Math.floor(totalUptimeSeconds % 60);
 
+      // Format based on largest unit
       if (days > 0) {
-        setLiveUptime(`${days}d ${hours}h`);
+        setLiveUptime(`${days}d ${hours}h ${minutes}m`);
       } else if (hours > 0) {
-        setLiveUptime(`${hours}h ${minutes}m`);
+        setLiveUptime(`${hours}h ${minutes}m ${seconds}s`);
       } else if (minutes > 0) {
-        setLiveUptime(`${minutes}m`);
+        setLiveUptime(`${minutes}m ${seconds}s`);
       } else {
-        setLiveUptime('< 1m');
+        setLiveUptime(`${seconds}s`);
       }
     };
 
     updateUptime();
-    const interval = setInterval(updateUptime, 10000); // Update every 10s (no need for live counter)
+    const interval = setInterval(updateUptime, 1000); // Update every second for live counter
 
     return () => clearInterval(interval);
   }, [bots]);
