@@ -696,9 +696,9 @@ export default function BotDetailPage() {
                   <span className="text-success-400 text-xs font-semibold">LIVE</span>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 px-3 py-1 bg-gray-700/30 border border-gray-600/30 rounded-lg">
-                  <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
-                  <span className="text-gray-400 text-xs font-semibold">OFFLINE</span>
+                <div className="flex items-center gap-2 px-3 py-1 bg-gray-100 border border-gray-300 rounded-lg">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                  <span className="text-gray-600 text-xs font-semibold">OFFLINE</span>
                 </div>
               )}
             </div>
