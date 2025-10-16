@@ -320,11 +320,9 @@ class ChildBot {
 
   private async shutdown() {
     try {
-      // Clear console FIRST (before any async operations)
-      console.clear();
-
-      // Show message immediately (synchronous)
-      console.log('Server marked as offline');
+      // Clear console and show message synchronously
+      process.stdout.write('\x1Bc'); // Clear screen
+      process.stdout.write('Server marked as offline\n');
 
       // Update bot status to offline
       await this.prisma.bot.update({
@@ -340,8 +338,8 @@ class ChildBot {
 
       process.exit(0);
     } catch (error) {
-      console.clear();
-      console.log('Server marked as offline');
+      process.stdout.write('\x1Bc'); // Clear screen
+      process.stdout.write('Server marked as offline\n');
       process.exit(1);
     }
   }
