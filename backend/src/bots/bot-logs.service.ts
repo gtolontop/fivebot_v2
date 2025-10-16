@@ -63,7 +63,7 @@ export class BotLogsService {
 
       // Colorize prefix based on source
       const prefix = source === 'Discord' ? `${COLORS.CYAN}discord@${botName}${COLORS.RESET}` :
-                     source === 'System' ? `${COLORS.YELLOW}container@bot${COLORS.RESET}` :
+                     source === 'System' ? `${COLORS.YELLOW}container@fivebot${COLORS.RESET}` :
                      source === 'Commands' ? `${COLORS.GREEN}cmd@${botName}${COLORS.RESET}` :
                      `${COLORS.BLUE}${source?.toLowerCase() || 'bot'}@${botName}${COLORS.RESET}`;
 
