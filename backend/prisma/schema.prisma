@@ -15,6 +15,7 @@ model User {
   avatar               String?
   role                 UserRole           @default(USER)
   credits              Int                @default(100)
+  cumulativeUptime     Int                @default(0) @map("cumulative_uptime")
   discordAccessToken   String?            @map("discord_access_token") @db.Text
   discordRefreshToken  String?            @map("discord_refresh_token") @db.Text
   discordTokenExpiry   DateTime?          @map("discord_token_expiry")
