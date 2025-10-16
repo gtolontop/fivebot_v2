@@ -20,6 +20,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { botsAPI } from '@/utils/api';
 import Cookies from 'js-cookie';
+import { io } from 'socket.io-client';
 
 export interface NavItem {
   label: string;
