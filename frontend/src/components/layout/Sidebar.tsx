@@ -44,7 +44,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onToggleCollapse,
 }) => {
   const pathname = usePathname();
-  const [botsExpanded, setBotsExpanded] = useState(false);
+
+  // Persist botsExpanded state in localStorage to survive remounts
+  const [botsExpanded, setBotsExpanded] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sidebar:botsExpanded');
+      return saved === 'true';
+    }
+    return false;
+  });
+
   const [allBots, setAllBots] = useState<any[]>([]);
 
   // Extract bot ID from pathname
@@ -56,12 +65,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
     fetchAllBots();
   }, []); // Empty deps - only run once per mount
 
-  // Auto-expand when on /bots or /bots/[id] pages
+  // Auto-expand when on /bots or /bots/[id] pages & persist state
   useEffect(() => {
     if (pathname === '/bots' || (botId && botId !== 'create')) {
       setBotsExpanded(true);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('sidebar:botsExpanded', 'true');
+      }
     }
   }, [pathname, botId]);
+
+  // Save botsExpanded to localStorage when it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sidebar:botsExpanded', String(botsExpanded));
+    }
+  }, [botsExpanded]);
 
   const fetchAllBots = async () => {
     try {
