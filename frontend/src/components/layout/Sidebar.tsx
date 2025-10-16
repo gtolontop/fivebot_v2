@@ -60,11 +60,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const botIdMatch = pathname?.match(/\/bots\/([^\/]+)/);
   const botId = botIdMatch ? botIdMatch[1] : null;
 
-  // Fetch bots on mount and every 3 seconds
+  // Fetch bots ONCE on mount - backend uses Redis cache
   useEffect(() => {
     fetchAllBots();
-    const interval = setInterval(fetchAllBots, 3000);
-    return () => clearInterval(interval);
   }, []);
 
   // Only expand when on /bots (All Bots page) - collapse for everything else
