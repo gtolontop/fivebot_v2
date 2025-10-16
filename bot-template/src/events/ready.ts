@@ -23,18 +23,6 @@ export async function ready(client: Client, prisma: PrismaClient, botId: string,
       data: { status: 'ONLINE' },
     });
 
-    // Notify frontend via WebSocket
-    try {
-      const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
-      await fetch(`${backendUrl}/events/bot-online`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ botId }),
-      });
-    } catch (err) {
-      console.error('Failed to notify frontend:', err);
-    }
-
     // Update host status
     await prisma.host.updateMany({
       where: { 
