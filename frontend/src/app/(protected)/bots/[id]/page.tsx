@@ -401,10 +401,11 @@ export default function BotDetailPage() {
     return parts.length > 0 ? parts.join(' ') : '< 1m';
   };
 
-  const formatBytes = (bytes: number) => {
-    if (bytes < 1024) return `${bytes.toFixed(1)} B/s`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB/s`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB/s`;
+  const formatBytes = (kb: number) => {
+    // Input is already in KB, format as total data transferred
+    if (kb < 1024) return `${kb.toFixed(1)} KB`;
+    if (kb < 1024 * 1024) return `${(kb / 1024).toFixed(1)} MB`;
+    return `${(kb / (1024 * 1024)).toFixed(1)} GB`;
   };
 
   const getStatusColor = (status: string) => {
@@ -626,7 +627,7 @@ export default function BotDetailPage() {
                 <div className="text-lg font-bold text-green-600">
                   {bot.status === 'ONLINE' ? formatBytes(realTimeStats.networkDownload) : '—'}
                 </div>
-                <p className="text-xs font-medium text-gray-600">↓ Down</p>
+                <p className="text-xs font-medium text-gray-600">Total ↓</p>
               </div>
             </div>
           </div>
@@ -643,7 +644,7 @@ export default function BotDetailPage() {
                 <div className="text-lg font-bold text-blue-600">
                   {bot.status === 'ONLINE' ? formatBytes(realTimeStats.networkUpload) : '—'}
                 </div>
-                <p className="text-xs font-medium text-gray-600">↑ Up</p>
+                <p className="text-xs font-medium text-gray-600">Total ↑</p>
               </div>
             </div>
           </div>
