@@ -319,8 +319,8 @@ class ChildBot {
 
   public async start() {
     try {
-      console.log('Initializing bot...');
       console.log('├─ Validating token...');
+      console.log('Initializing bot...');
 
       // Validate BOT_TOKEN exists
       const token = process.env.BOT_TOKEN;
