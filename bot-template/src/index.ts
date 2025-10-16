@@ -184,6 +184,7 @@ class ChildBot {
 
         // Force flush stdout before continuing
         await new Promise(resolve => process.stdout.write('Starting modules...\n', resolve));
+        await new Promise(resolve => setTimeout(resolve, 50));
 
         // Initialize command service
         try {
@@ -346,9 +347,11 @@ class ChildBot {
 
   public async start() {
     try {
-      // Force synchronous output for consistent ordering
+      // Force synchronous output for consistent ordering with small delays
       await new Promise(resolve => process.stdout.write('Initializing bot...\n', resolve));
+      await new Promise(resolve => setTimeout(resolve, 50)); // Small delay to ensure order
       await new Promise(resolve => process.stdout.write('├─ Validating token...\n', resolve));
+      await new Promise(resolve => setTimeout(resolve, 50));
 
       // Validate BOT_TOKEN exists
       const token = process.env.BOT_TOKEN;
@@ -364,6 +367,7 @@ class ChildBot {
       // Connect to database
       await this.prisma.$connect();
       await new Promise(resolve => process.stdout.write('├─ Database connected\n', resolve));
+      await new Promise(resolve => setTimeout(resolve, 50));
 
       // Update bot status
       await this.prisma.bot.update({
@@ -371,6 +375,7 @@ class ChildBot {
         data: { status: 'STARTING' }
       });
       await new Promise(resolve => process.stdout.write('└─ Configuration loaded\n', resolve));
+      await new Promise(resolve => setTimeout(resolve, 50));
 
       // Login to Discord
       await this.client.login(token);
