@@ -664,9 +664,7 @@ export default function BotDetailPage() {
                 <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
                 <div className="w-3 h-3 bg-green-500 rounded-full"></div>
               </div>
-              <span className={`font-mono text-sm ${
-                bot.status === 'ONLINE' || bot.status === 'STARTING' ? 'text-gray-400' : 'text-gray-600'
-              }`}>Console</span>
+              <span className="font-mono text-sm text-gray-600">Console</span>
             </div>
             <div className="flex items-center gap-2">
               {!autoScroll && (
@@ -683,9 +681,9 @@ export default function BotDetailPage() {
                 </button>
               )}
               {bot.status === 'ONLINE' ? (
-                <div className="flex items-center gap-2 px-3 py-1 bg-success-900/30 border border-success-500/30 rounded-lg">
+                <div className="flex items-center gap-2 px-3 py-1 bg-success-100 border border-success-300 rounded-lg">
                   <div className="w-2 h-2 bg-success-500 rounded-full animate-pulse"></div>
-                  <span className="text-success-400 text-xs font-semibold">LIVE</span>
+                  <span className="text-success-700 text-xs font-semibold">LIVE</span>
                 </div>
               ) : (
                 <div className="flex items-center gap-2 px-3 py-1 bg-gray-100 border border-gray-300 rounded-lg">
