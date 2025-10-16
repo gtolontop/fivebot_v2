@@ -181,11 +181,11 @@ export class SimpleQueueService implements IQueueService {
 
       console.log(`🚀 Starting bot "${bot.name}" (owner: ${bot.owner.username})`);
 
-      // Check if bot is already running (check both local Map and Redis)
+      // Check if bot is REALLY running (verify process exists, not just Redis state)
       const isRunningLocally = this.runningBots.has(botId);
-      const isRunningInRedis = await this.redisService.isRunningBot(botId);
+      const processExists = isRunningLocally && this.runningBots.get(botId)?.killed === false;
 
-      if (isRunningLocally || isRunningInRedis) {
+      if (processExists) {
         console.log(`✅ Bot "${bot.name}" is already running - resynchronizing status to ONLINE`);
 
         // Resynchronize status to ONLINE instead of failing silently
@@ -200,6 +200,14 @@ export class SimpleQueueService implements IQueueService {
         });
 
         return;
+      }
+
+      // If Redis says running but no process exists, clean up Redis
+      const isRunningInRedis = await this.redisService.isRunningBot(botId);
+      if (isRunningInRedis && !processExists) {
+        console.log(`⚠️ Bot "${bot.name}" marked as running in Redis but process doesn't exist - cleaning up`);
+        await this.redisService.removeRunningBot(botId);
+        this.runningBots.delete(botId);
       }
 
       // Decrypt bot token
