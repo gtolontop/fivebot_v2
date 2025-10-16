@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -39,44 +39,59 @@ export interface SidebarProps {
   onToggleCollapse?: () => void;
 }
 
+// Cache bots data outside component to persist across remounts
+let botsCache: any[] = [];
+let botsCacheTimestamp = 0;
+const CACHE_DURATION = 30000; // 30 seconds
+
 export const Sidebar: React.FC<SidebarProps> = ({
   collapsed = false,
   onToggleCollapse,
 }) => {
   const pathname = usePathname();
-  const [currentBot, setCurrentBot] = useState<any>(null);
   const [botsExpanded, setBotsExpanded] = useState(false);
-  const [allBots, setAllBots] = useState<any[]>([]);
-  const [hasFetchedBots, setHasFetchedBots] = useState(false);
+  const [allBots, setAllBots] = useState<any[]>(botsCache);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Extract bot ID from pathname
-  const botIdMatch = pathname?.match(/\/bots\/([^\/]+)/);
-  const botId = botIdMatch ? botIdMatch[1] : null;
+  // Extract bot ID from pathname - memoized to avoid recalculation
+  const botId = useMemo(() => {
+    const match = pathname?.match(/\/bots\/([^\/]+)/);
+    return match ? match[1] : null;
+  }, [pathname]);
 
-  // Fetch all bots for sidebar ONCE on mount
-  useEffect(() => {
-    if (!hasFetchedBots) {
-      fetchAllBots();
+  // Fetch bots with caching
+  const fetchAllBots = useCallback(async () => {
+    // Use cache if fresh
+    const now = Date.now();
+    if (botsCache.length > 0 && (now - botsCacheTimestamp) < CACHE_DURATION) {
+      setAllBots(botsCache);
+      return;
     }
-  }, [hasFetchedBots]);
 
-  // Auto-expand when on /bots or /bots/[id] pages (no refetch)
+    setIsLoading(true);
+    try {
+      const response = await botsAPI.getAll();
+      botsCache = response.data || [];
+      botsCacheTimestamp = now;
+      setAllBots(botsCache);
+    } catch (error) {
+      console.error('Error fetching bots:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Fetch bots ONCE on mount (or use cache)
+  useEffect(() => {
+    fetchAllBots();
+  }, []); // Empty deps - only run once
+
+  // Auto-expand when on /bots or /bots/[id] pages
   useEffect(() => {
     if (pathname === '/bots' || (botId && botId !== 'create')) {
       setBotsExpanded(true);
     }
   }, [pathname, botId]);
-
-  const fetchAllBots = async () => {
-    try {
-      const response = await botsAPI.getAll();
-      setAllBots(response.data || []);
-      setHasFetchedBots(true);
-    } catch (error) {
-      console.error('Error fetching bots:', error);
-      setHasFetchedBots(true);
-    }
-  };
 
   const navigation: NavSection[] = [
     {
