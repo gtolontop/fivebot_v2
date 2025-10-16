@@ -644,6 +644,9 @@ export class BotsService {
       },
     }).catch(error => console.error('Failed to create audit log:', error));
 
+    // Invalidate cache
+    await this.invalidateBotsCache(ownerId);
+
     return this.findOne(botId, ownerId);
   }
 
