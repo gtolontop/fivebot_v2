@@ -647,7 +647,7 @@ export default function BotDetailPage() {
                 <div className="text-lg font-bold text-blue-600">
                   {bot.status === 'ONLINE' ? formatBytes(realTimeStats.networkUpload) : '—'}
                 </div>
-                <p className="text-xs font-medium text-gray-600">Total ↑</p>
+                <p className="text-xs font-medium text-gray-600">↑ Upload</p>
               </div>
             </div>
           </div>
