@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Navbar } from '@/components/layout/Navbar';
-import { useBotStatusMonitor } from '@/hooks/useBotStatusMonitor';
 
 /**
  * Protected layout - wraps all authenticated pages
@@ -15,7 +14,6 @@ export default function ProtectedLayout({
   children: React.ReactNode;
 }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  useBotStatusMonitor(); // Monitor bot status changes
 
   const toggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed);
