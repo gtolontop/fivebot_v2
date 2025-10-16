@@ -138,8 +138,6 @@ export class BotWorker extends WorkerHost {
         },
       });
 
-      await this.logJobComplete(botId, job.id.toString(), 'Bot started successfully');
-
     } catch (error) {
       this.logger.error(`Failed to start bot ${botId}:`, error);
       await this.logJobFailed(botId, job.id.toString(), error.message);
