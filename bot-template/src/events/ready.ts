@@ -18,23 +18,21 @@ export async function ready(client: Client, prisma: PrismaClient, botId: string,
   
   try {
     // Update bot status to online
-    //console.log('📝 Updating bot status to ONLINE...');
     await prisma.bot.update({
       where: { id: botId },
       data: { status: 'ONLINE' },
     });
-    //console.log('✅ Bot status successfully updated to ONLINE');
 
-    // Notify backend about status change via HTTP
+    // Notify frontend via WebSocket
     try {
       const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
-      await fetch(`${backendUrl}/internal/bot-status`, {
+      await fetch(`${backendUrl}/events/bot-online`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ botId, status: 'ONLINE' }),
+        body: JSON.stringify({ botId }),
       });
     } catch (err) {
-      console.error('Failed to notify backend about status change:', err);
+      console.error('Failed to notify frontend:', err);
     }
 
     // Update host status
