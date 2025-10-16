@@ -352,11 +352,6 @@ class ChildBot {
 
   public async start() {
     try {
-      // Wait a bit for backend to be ready to receive logs, then clear console
-      await new Promise(resolve => setTimeout(resolve, 300));
-      console.log('[CLEAR_CONSOLE]');
-      await new Promise(resolve => setTimeout(resolve, 100));
-
       // Force synchronous output for consistent ordering with small delays
       await new Promise(resolve => process.stdout.write('Initializing bot...\n', resolve));
       await new Promise(resolve => setTimeout(resolve, 50)); // Small delay to ensure order
