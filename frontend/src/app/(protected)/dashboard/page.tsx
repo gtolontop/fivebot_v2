@@ -84,50 +84,45 @@ export default function DashboardPage() {
     }
   }, [user, loading]);
 
-  // Live uptime counter - updates every second
+  // Calculate uptime streak - total time all bots have been UP
   useEffect(() => {
     const updateUptime = () => {
       const activeBots = bots.filter(bot => bot.status === 'ONLINE');
       if (activeBots.length === 0) {
-        setLiveUptime('0s');
+        setLiveUptime('0d');
         return;
       }
 
-      // Use startedAt if available, otherwise use current time (just started)
-      const oldestBot = activeBots.reduce((oldest, bot) => {
-        const botStartTime = bot.startedAt ? new Date(bot.startedAt).getTime() : Date.now();
-        const oldestStartTime = oldest.startedAt ? new Date(oldest.startedAt).getTime() : Date.now();
-        return botStartTime < oldestStartTime ? bot : oldest;
+      // Calculate total uptime across all bots
+      let totalUptimeSeconds = 0;
+      const now = Date.now();
+
+      activeBots.forEach(bot => {
+        if (bot.startedAt) {
+          const startTime = new Date(bot.startedAt).getTime();
+          const uptimeMs = Math.max(0, now - startTime);
+          totalUptimeSeconds += Math.floor(uptimeMs / 1000);
+        }
       });
 
-      const startTime = oldestBot.startedAt ? new Date(oldestBot.startedAt).getTime() : Date.now();
-      const now = Date.now();
-      const diffMs = Math.max(0, now - startTime); // Ensure non-negative
-
-      const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
-
-      // Format with proper padding
-      const d = String(days);
-      const h = String(hours).padStart(2, '0');
-      const m = String(minutes).padStart(2, '0');
-      const s = String(seconds).padStart(2, '0');
+      // Convert to days, hours, minutes
+      const days = Math.floor(totalUptimeSeconds / (60 * 60 * 24));
+      const hours = Math.floor((totalUptimeSeconds % (60 * 60 * 24)) / (60 * 60));
+      const minutes = Math.floor((totalUptimeSeconds % (60 * 60)) / 60);
 
       if (days > 0) {
-        setLiveUptime(`${d}d ${h}:${m}:${s}`);
+        setLiveUptime(`${days}d ${hours}h`);
       } else if (hours > 0) {
-        setLiveUptime(`${hours}:${m}:${s}`);
+        setLiveUptime(`${hours}h ${minutes}m`);
       } else if (minutes > 0) {
-        setLiveUptime(`${minutes}:${s}`);
+        setLiveUptime(`${minutes}m`);
       } else {
-        setLiveUptime(`${seconds}s`);
+        setLiveUptime('< 1m');
       }
     };
 
     updateUptime();
-    const interval = setInterval(updateUptime, 1000);
+    const interval = setInterval(updateUptime, 10000); // Update every 10s (no need for live counter)
 
     return () => clearInterval(interval);
   }, [bots]);
