@@ -3,6 +3,7 @@ import { PrismaService } from '../common/prisma/prisma.service';
 import { QueueService } from '../queue/queue.service';
 import { RedisService } from '../common/redis/redis.service';
 import { BotStatus } from '@prisma/client';
+import { BotLogsService } from './bot-logs.service';
 
 @Injectable()
 export class BotRecoveryService implements OnApplicationBootstrap {
@@ -13,6 +14,7 @@ export class BotRecoveryService implements OnApplicationBootstrap {
     private prisma: PrismaService,
     private queueService: QueueService,
     private redisService: RedisService,
+    private botLogsService: BotLogsService,
   ) {}
 
   async onApplicationBootstrap() {
@@ -127,6 +129,9 @@ export class BotRecoveryService implements OnApplicationBootstrap {
 
             // Wait a bit to ensure clean state
             await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Log system event for startup
+            await this.botLogsService.logSystemEvent(botId, 'START');
 
             // Queue start job
             await this.queueService.addJob('start-bot', { botId });
