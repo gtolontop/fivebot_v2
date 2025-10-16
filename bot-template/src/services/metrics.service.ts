@@ -356,12 +356,7 @@ export class MetricsService {
 
   private startNetworkTracking() {
     // Track ALL network traffic from the process using Node.js internals
-    let bytesReceived = 0;
-    let bytesSent = 0;
-
-    // Hook into Node.js http/https modules to track all network I/O
-    const http = require('http');
-    const https = require('https');
+    // These are cumulative totals for the entire session
     const net = require('net');
 
     // Patch Socket to track all bytes
@@ -372,7 +367,7 @@ export class MetricsService {
       const data = args[0];
       if (data) {
         const bytes = Buffer.isBuffer(data) ? data.length : Buffer.byteLength(data.toString());
-        bytesSent += bytes;
+        this._metricsService?.networkStats.totalBytesSent += bytes;
       }
       return originalSocketWrite.apply(this, args);
     };
@@ -380,7 +375,7 @@ export class MetricsService {
     net.Socket.prototype.on = function(event: string, listener: any) {
       if (event === 'data') {
         const wrappedListener = (chunk: Buffer) => {
-          bytesReceived += chunk.length;
+          this._metricsService?.networkStats.totalBytesReceived += chunk.length;
           return listener(chunk);
         };
         return originalSocketOn.call(this, event, wrappedListener);
@@ -388,25 +383,8 @@ export class MetricsService {
       return originalSocketOn.call(this, event, listener);
     };
 
-    // Calculate network speed every 5 seconds
-    setInterval(() => {
-      const now = Date.now();
-      const timeDiff = (now - this.networkStats.lastCheck) / 1000; // seconds
-
-      if (timeDiff > 0) {
-        // Convert bytes to KB and calculate speed
-        const receivedKB = bytesReceived / 1024;
-        const sentKB = bytesSent / 1024;
-
-        this.networkStats.downloadSpeed = receivedKB / timeDiff;
-        this.networkStats.uploadSpeed = sentKB / timeDiff;
-
-        // Reset counters
-        this.networkStats.lastCheck = now;
-        bytesReceived = 0;
-        bytesSent = 0;
-      }
-    }, 5000);
+    // Store reference to this metrics service so Socket patches can access it
+    (net.Socket.prototype as any)._metricsService = this;
   }
 
   private async sendProcessMetrics() {
