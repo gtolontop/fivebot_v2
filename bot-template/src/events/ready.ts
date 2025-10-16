@@ -23,6 +23,18 @@ export async function ready(client: Client, prisma: PrismaClient, botId: string,
       data: { status: 'ONLINE' },
     });
 
+    // Notify frontend
+    try {
+      const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
+      await fetch(`${backendUrl}/events/bot-status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ botId, status: 'ONLINE' }),
+      });
+    } catch (err) {
+      // Ignore
+    }
+
     // Update host status
     await prisma.host.updateMany({
       where: { 
