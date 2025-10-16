@@ -175,10 +175,6 @@ class ChildBot {
     // Core events
     this.client.once('ready', async () => {
       try {
-        // Clear console at the start (after bot is marked as STARTING)
-        console.log('[CLEAR_CONSOLE]');
-        await new Promise(resolve => setTimeout(resolve, 200));
-
         // Check if ticket system is enabled BEFORE calling ready
         // ticketEnabled is now a direct column in bot_configs, not in ticketData JSON
         const ticketEnabled = (this.config as any).ticketEnabled || false;
@@ -356,6 +352,11 @@ class ChildBot {
 
   public async start() {
     try {
+      // Wait a bit for backend to be ready to receive logs, then clear console
+      await new Promise(resolve => setTimeout(resolve, 300));
+      console.log('[CLEAR_CONSOLE]');
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       // Force synchronous output for consistent ordering with small delays
       await new Promise(resolve => process.stdout.write('Initializing bot...\n', resolve));
       await new Promise(resolve => setTimeout(resolve, 50)); // Small delay to ensure order
