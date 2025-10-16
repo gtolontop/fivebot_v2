@@ -482,7 +482,7 @@ export class SimpleQueueService implements IQueueService {
             botId,
             LogLevel.INFO,
             'Server marked as online...',
-            'container'
+            'System'
           );
         } catch (logError) {
           console.error('Failed to add online log:', logError);
