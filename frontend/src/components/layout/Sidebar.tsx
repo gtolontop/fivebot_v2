@@ -39,52 +39,22 @@ export interface SidebarProps {
   onToggleCollapse?: () => void;
 }
 
-// Cache bots data outside component to persist across remounts
-let botsCache: any[] = [];
-let botsCacheTimestamp = 0;
-const CACHE_DURATION = 30000; // 30 seconds
-
 export const Sidebar: React.FC<SidebarProps> = ({
   collapsed = false,
   onToggleCollapse,
 }) => {
   const pathname = usePathname();
   const [botsExpanded, setBotsExpanded] = useState(false);
-  const [allBots, setAllBots] = useState<any[]>(botsCache);
-  const [isLoading, setIsLoading] = useState(false);
+  const [allBots, setAllBots] = useState<any[]>([]);
 
-  // Extract bot ID from pathname - memoized to avoid recalculation
-  const botId = useMemo(() => {
-    const match = pathname?.match(/\/bots\/([^\/]+)/);
-    return match ? match[1] : null;
-  }, [pathname]);
+  // Extract bot ID from pathname
+  const botIdMatch = pathname?.match(/\/bots\/([^\/]+)/);
+  const botId = botIdMatch ? botIdMatch[1] : null;
 
-  // Fetch bots with caching
-  const fetchAllBots = useCallback(async () => {
-    // Use cache if fresh
-    const now = Date.now();
-    if (botsCache.length > 0 && (now - botsCacheTimestamp) < CACHE_DURATION) {
-      setAllBots(botsCache);
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const response = await botsAPI.getAll();
-      botsCache = response.data || [];
-      botsCacheTimestamp = now;
-      setAllBots(botsCache);
-    } catch (error) {
-      console.error('Error fetching bots:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // Fetch bots ONCE on mount (or use cache)
+  // Fetch bots ONCE on mount - backend uses Redis cache
   useEffect(() => {
     fetchAllBots();
-  }, []); // Empty deps - only run once
+  }, []); // Empty deps - only run once per mount
 
   // Auto-expand when on /bots or /bots/[id] pages
   useEffect(() => {
@@ -92,6 +62,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
       setBotsExpanded(true);
     }
   }, [pathname, botId]);
+
+  const fetchAllBots = async () => {
+    try {
+      const response = await botsAPI.getAll();
+      setAllBots(response.data || []);
+    } catch (error) {
+      console.error('Error fetching bots:', error);
+    }
+  };
 
   const navigation: NavSection[] = [
     {
