@@ -649,6 +649,15 @@ export class SimpleQueueService implements IQueueService {
       });
 
       console.log(`✅ Bot "${botName}" stopped successfully and status updated to OFFLINE`);
+
+      // NOW clear console and add offline message (after process is killed)
+      this.consoleBufferService.clearBuffer(botId);
+      await this.botLogsService.addLog(
+        botId,
+        LogLevel.INFO,
+        'Server marked as offline',
+        'container'
+      );
       
     } catch (error) {
       console.error(`❌ Failed to stop bot ${botId}:`, error);
