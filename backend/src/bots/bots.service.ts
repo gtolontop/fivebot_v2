@@ -595,6 +595,9 @@ export class BotsService {
       }
     }
 
+    // Clear console buffer before starting
+    this.consoleBufferService.clearBuffer(botId);
+
     // Only add the starting log after validation checks pass
     await this.botLogsService.addLog(
       botId,
