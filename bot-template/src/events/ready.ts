@@ -17,12 +17,12 @@ export async function ready(client: Client, prisma: PrismaClient, botId: string,
   
   try {
     // Update bot status to online
-    console.log('📝 Updating bot status to ONLINE...');
+    //console.log('📝 Updating bot status to ONLINE...');
     await prisma.bot.update({
       where: { id: botId },
       data: { status: 'ONLINE' },
     });
-    console.log('✅ Bot status successfully updated to ONLINE');
+    //console.log('✅ Bot status successfully updated to ONLINE');
 
     // Update host status
     await prisma.host.updateMany({
@@ -114,13 +114,13 @@ async function deployCommands(client: Client) {
       }
     }
     
-    console.log('V2 Commands config:', JSON.stringify(parsedEmbedV2Commands, null, 2));
+    //console.log('V2 Commands config:', JSON.stringify(parsedEmbedV2Commands, null, 2));
     
     // Build commands dynamically with V2 commands
     const allCommands = buildCommands(customCommands, parsedEmbedV2Commands);
     
-    console.log(`Registering ${allCommands.length} commands...`);
-    console.log('Commands to register:', allCommands.map(cmd => cmd.name));
+    //console.log(`Registering ${allCommands.length} commands...`);
+    //console.log('Commands to register:', allCommands.map(cmd => cmd.name));
     
     // Deploy globally
     await rest.put(
