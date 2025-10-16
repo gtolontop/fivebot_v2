@@ -20,7 +20,6 @@ import {
 } from '@heroicons/react/24/outline';
 import { botsAPI } from '@/utils/api';
 import Cookies from 'js-cookie';
-import { io } from 'socket.io-client';
 
 export interface NavItem {
   label: string;
@@ -61,25 +60,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const botIdMatch = pathname?.match(/\/bots\/([^\/]+)/);
   const botId = botIdMatch ? botIdMatch[1] : null;
 
-  // Fetch bots ONCE on mount - backend uses Redis cache
+  // Fetch bots on mount and every 3 seconds
   useEffect(() => {
     fetchAllBots();
-
-    // Connect to WebSocket for real-time bot status updates
-    const socket = require('socket.io-client')(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001');
-
-    socket.on('bot-online', ({ botId }: { botId: string }) => {
-      setAllBots((prevBots) =>
-        prevBots.map((bot) =>
-          bot.id === botId ? { ...bot, status: 'ONLINE' } : bot
-        )
-      );
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, []); // Empty deps - only run once per mount
+    const interval = setInterval(fetchAllBots, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Only expand when on /bots (All Bots page) - collapse for everything else
   useEffect(() => {
