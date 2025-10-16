@@ -67,14 +67,6 @@ export class StatusService {
       }
     }
 
-    // Debug log
-    console.log('[StatusService] Config loaded:', {
-      enabled: statusRotation.enabled,
-      interval: statusRotation.interval,
-      hasStatuses: !!statusRotation.statuses,
-      statusCount: statusRotation.statuses?.length || 0
-    });
-
     return {
       enabled: statusRotation.enabled ?? false, // Disabled by default until configured
       rotationInterval: statusRotation.interval ?? 60, // 60 seconds default
