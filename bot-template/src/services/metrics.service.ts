@@ -355,10 +355,9 @@ export class MetricsService {
   }
 
   private startNetworkTracking() {
-    // Track Discord WebSocket traffic using EventEmitter hooks
     const networkStats = this.networkStats;
 
-    // Hook into Discord.js WebSocket events
+    // Track incoming WebSocket messages via raw event
     this.client.on('raw' as any, (packet: any) => {
       if (packet) {
         try {
@@ -370,37 +369,46 @@ export class MetricsService {
       }
     });
 
-    // Hook into the WebSocket send method
-    if (this.client.ws?.connection) {
-      const originalSend = this.client.ws.connection.send;
-      this.client.ws.connection.send = function(...args: any[]) {
-        if (args[0]) {
-          const data = args[0];
-          const bytes = Buffer.isBuffer(data) ? data.length :
-                       typeof data === 'string' ? Buffer.byteLength(data) :
-                       JSON.stringify(data).length;
-          networkStats.totalBytesSent += bytes;
-        }
-        return originalSend.apply(this, args);
-      };
-    }
+    // Patch WebSocket send when ready
+    const patchWebSocket = () => {
+      try {
+        // Access the WebSocket manager's connection
+        const ws = (this.client.ws as any);
 
-    // Also patch WebSocket for future connections
-    this.client.on('ready', () => {
-      if (this.client.ws?.connection) {
-        const originalSend = this.client.ws.connection.send;
-        this.client.ws.connection.send = function(...args: any[]) {
-          if (args[0]) {
-            const data = args[0];
+        if (!ws || !ws.connection) {
+          console.log('[Metrics] WebSocket not available yet for patching');
+          return;
+        }
+
+        // Patch the send method to track outgoing data
+        const originalSend = ws.connection.send.bind(ws.connection);
+        ws.connection.send = (data: any, ...args: any[]) => {
+          try {
             const bytes = Buffer.isBuffer(data) ? data.length :
                          typeof data === 'string' ? Buffer.byteLength(data) :
                          JSON.stringify(data).length;
             networkStats.totalBytesSent += bytes;
+          } catch (e) {
+            // Ignore errors in size calculation
           }
-          return originalSend.apply(this, args);
+          return originalSend(data, ...args);
         };
+
+        console.log('[Metrics] WebSocket patched for network tracking');
+      } catch (error) {
+        console.error('[Metrics] Failed to patch WebSocket:', error);
       }
+    };
+
+    // Patch on ready
+    this.client.once('ready', () => {
+      setTimeout(() => patchWebSocket(), 1000); // Delay to ensure connection is established
     });
+
+    // Also try to patch immediately if already connected
+    if (this.client.isReady()) {
+      setTimeout(() => patchWebSocket(), 1000);
+    }
   }
 
   private async sendProcessMetrics() {
