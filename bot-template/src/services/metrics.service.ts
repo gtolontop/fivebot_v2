@@ -391,10 +391,6 @@ export class MetricsService {
                            Buffer.isBuffer(body) ? body.length :
                            JSON.stringify(body).length;
               networkStats.totalBytesSent += bytes;
-
-              if (networkStats.totalBytesSent < 10000) {
-                console.log(`[Metrics] REST Upload: ${bytes} bytes (total: ${Math.round(networkStats.totalBytesSent / 1024)} KB)`);
-              }
             }
           } catch (e) {
             // Ignore
@@ -403,7 +399,7 @@ export class MetricsService {
           return result;
         };
 
-        console.log('[Metrics] ✅ REST API patched for upload tracking');
+        //console.log('[Metrics] ✅ REST API patched for upload tracking');
       } catch (error) {
         console.error('[Metrics] Failed to patch REST:', error);
       }
