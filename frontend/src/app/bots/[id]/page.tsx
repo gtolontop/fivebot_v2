@@ -732,9 +732,17 @@ export default function BotDetailPage() {
                     key={guild.id}
                     className="flex items-center gap-3 p-3 border border-gray-200 rounded-xl hover:border-primary-300 hover:bg-primary-50/30 transition-all"
                   >
-                    <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                      {guild.name[0].toUpperCase()}
-                    </div>
+                    {guild.icon ? (
+                      <img
+                        src={`https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.${guild.icon.startsWith('a_') ? 'gif' : 'png'}?size=64`}
+                        alt={guild.name}
+                        className="w-10 h-10 rounded-lg flex-shrink-0 object-cover"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                        {guild.name[0].toUpperCase()}
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm text-gray-900 truncate">{guild.name}</p>
                       <p className="text-xs text-gray-500">

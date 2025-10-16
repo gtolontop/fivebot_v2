@@ -110,15 +110,18 @@ export default function DashboardPage() {
       const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
 
-      // Always show seconds with padding
-      const sec = String(seconds).padStart(2, '0');
+      // Format with proper padding
+      const d = String(days);
+      const h = String(hours).padStart(2, '0');
+      const m = String(minutes).padStart(2, '0');
+      const s = String(seconds).padStart(2, '0');
 
       if (days > 0) {
-        setLiveUptime(`${days}d ${hours}h ${minutes}m ${sec}s`);
+        setLiveUptime(`${d}d ${h}:${m}:${s}`);
       } else if (hours > 0) {
-        setLiveUptime(`${hours}h ${minutes}m ${sec}s`);
+        setLiveUptime(`${hours}:${m}:${s}`);
       } else if (minutes > 0) {
-        setLiveUptime(`${minutes}m ${sec}s`);
+        setLiveUptime(`${minutes}:${s}`);
       } else {
         setLiveUptime(`${seconds}s`);
       }
