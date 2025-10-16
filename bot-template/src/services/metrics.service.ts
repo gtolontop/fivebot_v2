@@ -358,13 +358,15 @@ export class MetricsService {
     // Track ALL network traffic from the process using Node.js internals
     // These are cumulative totals for the entire session
     const net = require('net');
+    const tls = require('tls');
+    const https = require('https');
 
     // Keep reference to our network stats for closure
     const networkStats = this.networkStats;
 
-    // Patch Socket to track all bytes
-    const originalSocketWrite = net.Socket.prototype.write;
-    const originalSocketOn = net.Socket.prototype.on;
+    // Patch net.Socket to track TCP bytes
+    const originalNetSocketWrite = net.Socket.prototype.write;
+    const originalNetSocketOn = net.Socket.prototype.on;
 
     net.Socket.prototype.write = function(...args: any[]) {
       const data = args[0];
@@ -372,7 +374,7 @@ export class MetricsService {
         const bytes = Buffer.isBuffer(data) ? data.length : Buffer.byteLength(data.toString());
         networkStats.totalBytesSent += bytes;
       }
-      return originalSocketWrite.apply(this, args);
+      return originalNetSocketWrite.apply(this, args);
     };
 
     net.Socket.prototype.on = function(event: string, listener: any) {
@@ -381,22 +383,47 @@ export class MetricsService {
           networkStats.totalBytesReceived += chunk.length;
           return listener(chunk);
         };
-        return originalSocketOn.call(this, event, wrappedListener);
+        return originalNetSocketOn.call(this, event, wrappedListener);
       }
-      return originalSocketOn.call(this, event, listener);
+      return originalNetSocketOn.call(this, event, listener);
+    };
+
+    // Patch TLS Socket to track HTTPS bytes (Discord uses WSS/HTTPS)
+    const originalTLSSocketWrite = tls.TLSSocket.prototype.write;
+    const originalTLSSocketOn = tls.TLSSocket.prototype.on;
+
+    tls.TLSSocket.prototype.write = function(...args: any[]) {
+      const data = args[0];
+      if (data) {
+        const bytes = Buffer.isBuffer(data) ? data.length : Buffer.byteLength(data.toString());
+        networkStats.totalBytesSent += bytes;
+      }
+      return originalTLSSocketWrite.apply(this, args);
+    };
+
+    tls.TLSSocket.prototype.on = function(event: string, listener: any) {
+      if (event === 'data') {
+        const wrappedListener = (chunk: Buffer) => {
+          networkStats.totalBytesReceived += chunk.length;
+          return listener(chunk);
+        };
+        return originalTLSSocketOn.call(this, event, wrappedListener);
+      }
+      return originalTLSSocketOn.call(this, event, listener);
     };
   }
 
   private async sendProcessMetrics() {
     try {
       // Get current CPU usage and calculate percentage
-      const currentCpuUsage = process.cpuUsage(this.lastCpuUsage);
       const now = Date.now();
       const timeDelta = (now - this.lastCpuCheck) * 1000; // Convert to microseconds
+      const currentCpuUsage = process.cpuUsage(this.lastCpuUsage);
 
-      // CPU percentage: (user + system time) / (elapsed time * number of CPUs) * 100
+      // CPU percentage: (user + system time) / (elapsed time) * 100
+      // Don't divide by number of CPUs to get actual process CPU usage
       const cpuPercent = Math.min(100, Math.max(0,
-        ((currentCpuUsage.user + currentCpuUsage.system) / timeDelta) * 100 / os.cpus().length
+        ((currentCpuUsage.user + currentCpuUsage.system) / timeDelta) * 100
       ));
 
       // Update tracking for next calculation
