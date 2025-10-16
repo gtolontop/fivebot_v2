@@ -359,6 +359,9 @@ export class MetricsService {
     // These are cumulative totals for the entire session
     const net = require('net');
 
+    // Keep reference to our network stats for closure
+    const networkStats = this.networkStats;
+
     // Patch Socket to track all bytes
     const originalSocketWrite = net.Socket.prototype.write;
     const originalSocketOn = net.Socket.prototype.on;
@@ -367,7 +370,7 @@ export class MetricsService {
       const data = args[0];
       if (data) {
         const bytes = Buffer.isBuffer(data) ? data.length : Buffer.byteLength(data.toString());
-        this._metricsService?.networkStats.totalBytesSent += bytes;
+        networkStats.totalBytesSent += bytes;
       }
       return originalSocketWrite.apply(this, args);
     };
@@ -375,16 +378,13 @@ export class MetricsService {
     net.Socket.prototype.on = function(event: string, listener: any) {
       if (event === 'data') {
         const wrappedListener = (chunk: Buffer) => {
-          this._metricsService?.networkStats.totalBytesReceived += chunk.length;
+          networkStats.totalBytesReceived += chunk.length;
           return listener(chunk);
         };
         return originalSocketOn.call(this, event, wrappedListener);
       }
       return originalSocketOn.call(this, event, listener);
     };
-
-    // Store reference to this metrics service so Socket patches can access it
-    (net.Socket.prototype as any)._metricsService = this;
   }
 
   private async sendProcessMetrics() {
