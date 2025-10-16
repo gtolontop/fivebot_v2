@@ -336,6 +336,18 @@ class ChildBot {
         data: { status: 'OFFLINE' }
       }).catch(() => {}); // Ignore errors
 
+      // Notify frontend
+      try {
+        const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
+        await fetch(`${backendUrl}/events/bot-status`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ botId: this.botId, status: 'OFFLINE' }),
+        });
+      } catch (err) {
+        // Ignore
+      }
+
       // Disconnect from Discord
       this.client.destroy();
 
