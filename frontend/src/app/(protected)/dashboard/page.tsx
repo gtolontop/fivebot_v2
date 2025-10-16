@@ -285,20 +285,19 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Uptime */}
-            <div className="group relative bg-gradient-to-br from-success-50 to-green-50 rounded-xl p-5 border border-success-100 hover:border-success-300 transition-all hover:shadow-lg">
+            {/* Uptime Streak */}
+            <div className="group relative bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-5 border border-orange-100 hover:border-orange-300 transition-all hover:shadow-lg">
               <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform relative">
-                  <ClockIcon className="w-6 h-6 text-success-600" />
-                  {stats.activeBots > 0 && (
-                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-success-500 rounded-full animate-pulse"></div>
-                  )}
+                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                  <svg className="w-6 h-6 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clipRule="evenodd"/>
+                  </svg>
                 </div>
               </div>
-              <div className="space-y-2">
-                <p className="text-sm font-semibold text-gray-900">Uptime</p>
-                <div className="text-3xl font-bold text-success-600 tabular-nums">{liveUptime}</div>
-                <p className="text-xs text-gray-500">Live counter</p>
+              <div className="space-y-1">
+                <div className="text-3xl font-bold text-orange-600">{liveUptime}</div>
+                <p className="text-sm font-semibold text-gray-900">Uptime Streak</p>
+                <p className="text-xs text-gray-500">Without downtime</p>
               </div>
             </div>
 
