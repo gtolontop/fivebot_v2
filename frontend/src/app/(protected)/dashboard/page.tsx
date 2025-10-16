@@ -291,8 +291,8 @@ export default function DashboardPage() {
               </div>
               <div className="space-y-1">
                 <div className="text-3xl font-bold text-orange-600">{liveUptime}</div>
-                <p className="text-sm font-semibold text-gray-900">Uptime Streak</p>
-                <p className="text-xs text-gray-500">Without downtime</p>
+                <p className="text-sm font-semibold text-gray-900">Global Uptime</p>
+                <p className="text-xs text-gray-500">Total time online</p>
               </div>
             </div>
 
