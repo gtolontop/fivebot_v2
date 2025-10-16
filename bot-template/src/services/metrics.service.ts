@@ -411,17 +411,25 @@ export class MetricsService {
 
   private async sendProcessMetrics() {
     try {
-      // Get process CPU and memory usage
-      const cpuUsage = process.cpuUsage();
+      // Get current CPU usage and calculate percentage
+      const currentCpuUsage = process.cpuUsage(this.lastCpuUsage);
+      const now = Date.now();
+      const timeDelta = (now - this.lastCpuCheck) * 1000; // Convert to microseconds
+
+      // CPU percentage: (user + system time) / (elapsed time * number of CPUs) * 100
+      const cpuPercent = Math.min(100, Math.max(0,
+        ((currentCpuUsage.user + currentCpuUsage.system) / timeDelta) * 100 / os.cpus().length
+      ));
+
+      // Update tracking for next calculation
+      this.lastCpuUsage = process.cpuUsage();
+      this.lastCpuCheck = now;
+
+      // Get memory usage with real system memory
       const memoryUsage = process.memoryUsage();
-
-      // Calculate CPU percentage (approximate)
-      const cpuPercent = Math.min(100, ((cpuUsage.user + cpuUsage.system) / 1000000) % 100);
-
-      // Calculate memory percentage (RSS / total available memory estimate)
-      const totalMemoryMB = 512; // Estimate - could be adjusted
+      const totalSystemMemory = os.totalmem();
       const usedMemoryMB = Math.round(memoryUsage.rss / 1024 / 1024);
-      const memoryPercent = Math.min(100, (usedMemoryMB / totalMemoryMB) * 100);
+      const memoryPercent = Math.min(100, (memoryUsage.rss / totalSystemMemory) * 100);
 
       // Get Discord stats
       const guildsCount = this.client.guilds.cache.size;
@@ -431,14 +439,14 @@ export class MetricsService {
       const uptime = Math.floor(process.uptime());
 
       const processMetrics = {
-        cpuUsage: Math.round(cpuPercent),
-        memoryUsage: Math.round(memoryPercent),
+        cpuUsage: Math.round(cpuPercent * 10) / 10, // One decimal place
+        memoryUsage: Math.round(memoryPercent * 10) / 10,
         memoryMB: usedMemoryMB,
         uptime,
         guildsCount,
         usersCount,
-        networkDownload: Math.round(this.networkStats.downloadSpeed * 10) / 10, // Round to 1 decimal
-        networkUpload: Math.round(this.networkStats.uploadSpeed * 10) / 10,
+        networkDownload: Math.round(this.networkStats.totalBytesReceived / 1024), // Total KB downloaded
+        networkUpload: Math.round(this.networkStats.totalBytesSent / 1024), // Total KB uploaded
       };
 
       // Send to backend
