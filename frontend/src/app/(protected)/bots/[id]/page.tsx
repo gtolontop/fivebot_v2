@@ -726,32 +726,25 @@ export default function BotDetailPage() {
                   if (logMatch) {
                     const [, time, prefix, message] = logMatch;
 
-                    let prefixColor = 'text-gray-400';
-                    if (prefix.includes('bot@')) prefixColor = 'text-blue-400';
-                    else if (prefix.includes('container@')) prefixColor = 'text-yellow-400';
-                    else if (prefix.includes('system@')) prefixColor = 'text-green-400';
-
-                    const messageParts = parseAnsiColors(message);
+                    let prefixColor = 'text-gray-600';
+                    if (prefix.includes('bot@')) prefixColor = 'text-blue-600';
+                    else if (prefix.includes('container@')) prefixColor = 'text-yellow-600';
+                    else if (prefix.includes('system@')) prefixColor = 'text-green-600';
 
                     return (
-                      <div key={index} className="py-0.5 hover:bg-gray-800/50 -mx-2 px-2 rounded transition-colors">
+                      <div key={index} className="py-0.5 hover:bg-gray-100/50 -mx-2 px-2 rounded transition-colors">
                         <span className="text-gray-500">[{time}]</span>
                         <span className={`${prefixColor} ml-2`}>[{prefix}]:</span>
-                        <span className="ml-2">
-                          {messageParts.map((part, i) => (
-                            <span key={i} className={part.color}>{part.text}</span>
-                          ))}
+                        <span className="ml-2 text-gray-700">
+                          {message}
                         </span>
                       </div>
                     );
                   }
 
-                  const parts = parseAnsiColors(log);
                   return (
-                    <div key={index} className="py-0.5 hover:bg-gray-800/50 -mx-2 px-2 rounded transition-colors">
-                      {parts.map((part, i) => (
-                        <span key={i} className={part.color}>{part.text}</span>
-                      ))}
+                    <div key={index} className="py-0.5 hover:bg-gray-100/50 -mx-2 px-2 rounded transition-colors text-gray-700">
+                      {log}
                     </div>
                   );
                 })
@@ -759,11 +752,7 @@ export default function BotDetailPage() {
             </div>
 
             {/* Gradient overlay at bottom */}
-            <div className={`absolute bottom-0 left-0 right-0 h-12 pointer-events-none ${
-              bot.status === 'ONLINE' || bot.status === 'STARTING'
-                ? 'bg-gradient-to-t from-gray-900 to-transparent'
-                : 'bg-gradient-to-t from-white/60 to-transparent'
-            }`}></div>
+            <div className="absolute bottom-0 left-0 right-0 h-12 pointer-events-none bg-gradient-to-t from-white/60 to-transparent"></div>
           </div>
         </div>
 
