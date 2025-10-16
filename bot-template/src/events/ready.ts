@@ -25,6 +25,18 @@ export async function ready(client: Client, prisma: PrismaClient, botId: string,
     });
     //console.log('✅ Bot status successfully updated to ONLINE');
 
+    // Notify backend about status change via HTTP
+    try {
+      const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
+      await fetch(`${backendUrl}/internal/bot-status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ botId, status: 'ONLINE' }),
+      });
+    } catch (err) {
+      console.error('Failed to notify backend about status change:', err);
+    }
+
     // Update host status
     await prisma.host.updateMany({
       where: { 

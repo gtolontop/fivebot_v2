@@ -13,6 +13,7 @@ import { BotProcessMetricsService } from './bot-process-metrics.service';
 import { TicketService } from './ticket.service';
 import { CollaboratorsService } from './collaborators.service';
 import { EncryptionService } from '../common/encryption/encryption.service';
+import { EventsService } from '../common/events/events.service';
 import { DiscordModule } from '../common/discord/discord.module';
 import { QueueModule } from '../queue/queue.module';
 import { UsersModule } from '../users/users.module';
@@ -20,7 +21,7 @@ import { UsersModule } from '../users/users.module';
 @Module({
   imports: [QueueModule, UsersModule, DiscordModule],
   controllers: [BotsController, TicketMessagesController],
-  providers: [BotsService, BotRecoveryService, BotMetricsService, SetupMetricsService, BotMonitorService, BotLogsService, ConsoleBufferService, BotRealtimeMetricsService, BotProcessMetricsService, TicketService, CollaboratorsService, EncryptionService],
-  exports: [BotsService, BotRecoveryService, BotLogsService, ConsoleBufferService, BotMetricsService, BotProcessMetricsService, CollaboratorsService],
+  providers: [BotsService, BotRecoveryService, BotMetricsService, SetupMetricsService, BotMonitorService, BotLogsService, ConsoleBufferService, BotRealtimeMetricsService, BotProcessMetricsService, TicketService, CollaboratorsService, EncryptionService, EventsService],
+  exports: [BotsService, BotRecoveryService, BotLogsService, ConsoleBufferService, BotMetricsService, BotProcessMetricsService, CollaboratorsService, EventsService],
 })
 export class BotsModule {}

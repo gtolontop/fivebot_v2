@@ -6,6 +6,7 @@ import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { JwtQueryStrategy } from './jwt-query.strategy';
 import { DiscordStrategy } from './strategies/discord.strategy';
 import { UsersModule } from '../users/users.module';
 
@@ -22,7 +23,7 @@ import { UsersModule } from '../users/users.module';
     UsersModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, DiscordStrategy],
+  providers: [AuthService, JwtStrategy, JwtQueryStrategy, DiscordStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}

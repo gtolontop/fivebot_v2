@@ -63,6 +63,40 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // Fetch bots ONCE on mount - backend uses Redis cache
   useEffect(() => {
     fetchAllBots();
+
+    // Listen to bot status changes via SSE
+    const token = Cookies.get('token');
+    if (!token) return;
+
+    const eventSource = new EventSource(
+      `${process.env.NEXT_PUBLIC_API_URL}/bots/events/status?token=${token}`
+    );
+
+    eventSource.onmessage = (event) => {
+      try {
+        const statusUpdate = JSON.parse(event.data);
+
+        // Update bot status in local state
+        setAllBots((prevBots) =>
+          prevBots.map((bot) =>
+            bot.id === statusUpdate.botId
+              ? { ...bot, status: statusUpdate.status }
+              : bot
+          )
+        );
+      } catch (error) {
+        console.error('Failed to parse SSE event:', error);
+      }
+    };
+
+    eventSource.onerror = (error) => {
+      console.error('SSE connection error:', error);
+      eventSource.close();
+    };
+
+    return () => {
+      eventSource.close();
+    };
   }, []); // Empty deps - only run once per mount
 
   // Only expand when on /bots (All Bots page) - collapse for everything else
