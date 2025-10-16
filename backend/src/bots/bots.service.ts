@@ -229,6 +229,17 @@ export class BotsService {
   }
 
   async findAll(ownerId: string): Promise<Bot[]> {
+    // Try Redis cache first (5 second TTL)
+    const cacheKey = `user:bots:${ownerId}`;
+    try {
+      const cached = await this.redisService.getClient().get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+    } catch (error) {
+      // Cache miss, continue to DB
+    }
+
     // Get bots where user is owner OR active collaborator
     const bots = await this.prisma.bot.findMany({
       where: {
@@ -260,9 +271,6 @@ export class BotsService {
       orderBy: { createdAt: 'desc' },
     });
 
-    // Include tokenEncrypted for background refresh
-    // (not exposed to client, only used internally)
-
     // Parse JSON fields in configs
     bots.forEach(bot => {
       if (bot.config) {
@@ -280,6 +288,13 @@ export class BotsService {
 
     // Auto-sync any bots that might be out of sync (but don't await to avoid slowing the response)
     this.autoSyncBotsInBackground(bots);
+
+    // Cache result in Redis for 5 seconds
+    try {
+      await this.redisService.getClient().setex(cacheKey, 5, JSON.stringify(bots));
+    } catch (error) {
+      // Ignore cache write errors
+    }
 
     return bots;
   }
