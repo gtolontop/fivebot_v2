@@ -232,17 +232,7 @@ export class SimpleQueueService implements IQueueService {
         startedAt: new Date(),
       });
 
-      // Add initial startup log
-      try {
-        await this.botLogsService.addLog(
-          botId,
-          LogLevel.INFO,
-          'Server marked as starting...',
-          'System'
-        );
-      } catch (e) {
-        console.error('Failed to add startup log:', e);
-      }
+      // Startup log is already added in bots.service.ts, no need to duplicate it here
 
       // Save bot state in Redis for crash recovery
       await this.redisService.saveBotState(botId, {
