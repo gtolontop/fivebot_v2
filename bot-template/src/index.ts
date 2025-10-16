@@ -350,9 +350,10 @@ class ChildBot {
 
   public async start() {
     try {
-      console.log('Initializing bot...');
+      // Force synchronous output for consistent ordering
+      await new Promise(resolve => process.stdout.write('Initializing bot...\n', resolve));
+      await new Promise(resolve => process.stdout.write('├─ Validating token...\n', resolve));
 
-      console.log('├─ Validating token...');
       // Validate BOT_TOKEN exists
       const token = process.env.BOT_TOKEN;
       if (!token) {
@@ -366,14 +367,14 @@ class ChildBot {
 
       // Connect to database
       await this.prisma.$connect();
-      console.log('├─ Database connected');
+      await new Promise(resolve => process.stdout.write('├─ Database connected\n', resolve));
 
       // Update bot status
       await this.prisma.bot.update({
         where: { id: this.botId },
         data: { status: 'STARTING' }
       });
-      console.log('└─ Configuration loaded');
+      await new Promise(resolve => process.stdout.write('└─ Configuration loaded\n', resolve));
 
       // Login to Discord
       await this.client.login(token);
