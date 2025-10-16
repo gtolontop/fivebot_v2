@@ -75,10 +75,10 @@ export class StatusService {
   }
 
   public start() {
-    if (!this.config.enabled) {
+    /*if (!this.config.enabled) {
       console.log('Status rotation is disabled');
       return;
-    }
+    }*/
 
     // Set initial status
     this.updateStatus();
