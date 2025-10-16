@@ -11,6 +11,12 @@ export class ConsoleBufferService {
    * @param logLine - The formatted log line (already includes timestamp and prefix)
    */
   addLog(botId: string, logLine: string): void {
+    // Check if this is a clear console marker
+    if (logLine.includes('[CLEAR_CONSOLE]')) {
+      this.clearBuffer(botId);
+      return; // Don't add this marker to the buffer
+    }
+
     if (!this.buffers.has(botId)) {
       this.buffers.set(botId, []);
     }
