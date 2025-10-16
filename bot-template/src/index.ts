@@ -297,22 +297,26 @@ class ChildBot {
 
   private async shutdown() {
     try {
+      // Clear console
+      console.clear();
+
       // Update bot status to offline
       await this.prisma.bot.update({
         where: { id: this.botId },
         data: { status: 'OFFLINE' }
       });
-      
+
       // Disconnect from Discord
       this.client.destroy();
-      
+
       // Close database connection
       await this.prisma.$disconnect();
-      
-      console.log('Shutdown complete');
+
+      console.log('Server marked as offline');
       process.exit(0);
     } catch (error) {
-      console.error('Error during shutdown:', error);
+      console.clear();
+      console.log('Server marked as offline');
       process.exit(1);
     }
   }
