@@ -430,11 +430,12 @@ export class MetricsService {
       this.lastCpuUsage = process.cpuUsage();
       this.lastCpuCheck = now;
 
-      // Get memory usage with real system memory
+      // Get memory usage - use heapUsed for more accurate representation
       const memoryUsage = process.memoryUsage();
       const totalSystemMemory = os.totalmem();
-      const usedMemoryMB = Math.round(memoryUsage.rss / 1024 / 1024);
-      const memoryPercent = Math.min(100, (memoryUsage.rss / totalSystemMemory) * 100);
+      const usedMemoryMB = Math.round(memoryUsage.heapUsed / 1024 / 1024);
+      // Calculate percentage based on heap used vs total heap
+      const memoryPercent = Math.min(100, (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100);
 
       // Get Discord stats
       const guildsCount = this.client.guilds.cache.size;
