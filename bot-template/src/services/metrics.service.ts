@@ -538,7 +538,7 @@ export class MetricsService {
       const uptime = Math.floor(process.uptime());
 
       const processMetrics = {
-        cpuUsage: Math.round(cpuPercent * 10) / 10, // One decimal place
+        cpuUsage: Math.round(avgCpuPercent * 10) / 10, // Use average, one decimal place
         memoryUsage: Math.round(memoryPercent * 10) / 10,
         memoryMB: usedMemoryMB,
         uptime,
