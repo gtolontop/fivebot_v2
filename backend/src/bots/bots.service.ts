@@ -692,8 +692,24 @@ export class BotsService {
     await this.updateStatus(botId, BotStatus.STOPPING);
 
     // Save cumulative uptime before clearing startedAt
-    if (bot.startedAt) {
-      const uptimeMs = Math.max(0, Date.now() - new Date(bot.startedAt).getTime());
+    // Only save if this is the LAST active bot stopping
+    const allUserBots = await this.prisma.bot.findMany({
+      where: { ownerId },
+      select: { id: true, status: true, startedAt: true }
+    });
+
+    const activeBots = allUserBots.filter(b => b.status === 'ONLINE' && b.id !== botId);
+
+    // If no other bots are active, save the session time from earliest started bot
+    if (activeBots.length === 0 && bot.startedAt) {
+      // Find the earliest startedAt time among all bots in this session
+      const allStarts = allUserBots
+        .filter(b => b.startedAt)
+        .map(b => new Date(b.startedAt).getTime());
+
+      const earliestStart = allStarts.length > 0 ? Math.min(...allStarts) : new Date(bot.startedAt).getTime();
+
+      const uptimeMs = Math.max(0, Date.now() - earliestStart);
       const uptimeSeconds = Math.floor(uptimeMs / 1000);
 
       await this.prisma.user.update({

@@ -84,28 +84,29 @@ export default function DashboardPage() {
     }
   }, [user, loading]);
 
-  // Calculate cumulative uptime - total time across all bot sessions
+  // Calculate cumulative uptime - global platform uptime (1 second = 1 second regardless of bot count)
   useEffect(() => {
     const updateUptime = () => {
       // Start with cumulative uptime from backend
       let totalUptimeSeconds = stats.uptime || 0;
 
-      // Add current active session time for all online bots
-      const now = Date.now();
+      // Add current session time ONLY if at least one bot is online
       const activeBots = bots.filter(bot => bot.status === 'ONLINE');
 
-      let currentActiveSeconds = 0;
-      activeBots.forEach(bot => {
-        if (bot.startedAt) {
-          const startTime = new Date(bot.startedAt).getTime();
-          const uptimeMs = Math.max(0, now - startTime);
-          currentActiveSeconds += Math.floor(uptimeMs / 1000);
+      if (activeBots.length > 0) {
+        // Find the earliest started bot to calculate session time
+        const earliestStart = Math.min(
+          ...activeBots
+            .filter(bot => bot.startedAt)
+            .map(bot => new Date(bot.startedAt).getTime())
+        );
+
+        if (earliestStart && earliestStart !== Infinity) {
+          const now = Date.now();
+          const sessionSeconds = Math.floor((now - earliestStart) / 1000);
+          totalUptimeSeconds += sessionSeconds;
         }
-      });
-
-      console.log('[DEBUG] Cumulative:', totalUptimeSeconds, 'Current active:', currentActiveSeconds, 'Active bots:', activeBots.length);
-
-      totalUptimeSeconds += currentActiveSeconds;
+      }
 
       // Convert to days, hours, minutes, seconds
       const days = Math.floor(totalUptimeSeconds / (60 * 60 * 24));
