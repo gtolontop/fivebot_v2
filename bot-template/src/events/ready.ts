@@ -97,38 +97,31 @@ async function deployCommands(client: Client) {
     const { REST, Routes } = require('discord.js');
     const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
 
-    console.log('Registering slash commands...');
-    
     // Get custom commands and V2 commands from config
     const config = process.env.CONFIG ? JSON.parse(process.env.CONFIG) : {};
     const customCommands = config.customCommands || {};
-    
+
     // Parse embedV2Commands if needed
     let parsedEmbedV2Commands = {};
     if (config.embedV2Commands) {
       try {
-        parsedEmbedV2Commands = typeof config.embedV2Commands === 'string' 
-          ? JSON.parse(config.embedV2Commands) 
+        parsedEmbedV2Commands = typeof config.embedV2Commands === 'string'
+          ? JSON.parse(config.embedV2Commands)
           : config.embedV2Commands;
       } catch (e) {
         console.error('Failed to parse embedV2Commands in ready:', e);
       }
     }
-    
-    //console.log('V2 Commands config:', JSON.stringify(parsedEmbedV2Commands, null, 2));
-    
+
     // Build commands dynamically with V2 commands
     const allCommands = buildCommands(customCommands, parsedEmbedV2Commands);
-    
-    //console.log(`Registering ${allCommands.length} commands...`);
-    //console.log('Commands to register:', allCommands.map(cmd => cmd.name));
-    
+
     // Deploy globally
     await rest.put(
       Routes.applicationCommands(client.user?.id),
       { body: allCommands },
     );
-    
+
     // Also deploy to each guild for immediate availability
     for (const guild of client.guilds.cache.values()) {
       try {
@@ -141,8 +134,6 @@ async function deployCommands(client: Client) {
         console.error(`Failed to deploy commands to guild ${guild.name}:`, error);
       }
     }
-
-    console.log('Slash commands registered');
   } catch (error) {
     console.error('❌ Error deploying commands:', error);
   }
