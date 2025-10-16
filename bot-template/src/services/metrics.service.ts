@@ -446,7 +446,7 @@ export class MetricsService {
           console.log(`[Metrics] ✅ Patched ${patchedCount} WebSocket shard(s)`);
           return true;
         } else {
-          console.log('[Metrics] ❌ No shards to patch');
+          //console.log('[Metrics] ❌ No shards to patch');
           return false;
         }
       } catch (error) {
@@ -469,12 +469,12 @@ export class MetricsService {
     };
 
     this.client.once('ready', () => {
-      console.log('[Metrics] Client ready, attempting WebSocket patch...');
+      //console.log('[Metrics] Client ready, attempting WebSocket patch...');
       setTimeout(tryPatchWS, 2000);
     });
 
     if (this.client.isReady()) {
-      console.log('[Metrics] Client already ready, attempting WebSocket patch...');
+      //console.log('[Metrics] Client already ready, attempting WebSocket patch...');
       setTimeout(tryPatchWS, 2000);
     }
   }
@@ -496,13 +496,13 @@ export class MetricsService {
       ));
 
       // Debug
-      console.log('[Metrics] CPU:', {
+      /*console.log('[Metrics] CPU:', {
         percent: cpuPercent.toFixed(2) + '%',
         totalCpuMs: (totalCpuMicroseconds / 1000).toFixed(0),
         uptimeMs: (processUptimeMicroseconds / 1000).toFixed(0),
         user: absoluteCpuUsage.user,
         system: absoluteCpuUsage.system
-      });
+      });*/
 
       this.lastCpuCheck = now;
 
