@@ -40,6 +40,7 @@ export class MetricsService {
   // CPU tracking
   private lastCpuUsage = process.cpuUsage();
   private lastCpuCheck = Date.now();
+  private cpuSamples: number[] = [];
 
   // Network tracking - cumulative totals for the session
   private networkStats = {
@@ -369,31 +370,61 @@ export class MetricsService {
       }
     });
 
-    // Patch WebSocket send when ready
+    // Track outgoing traffic via REST API
+    const patchREST = () => {
+      try {
+        const rest = (this.client as any).rest;
+
+        if (!rest) {
+          console.log('[Metrics] REST API not available');
+          return;
+        }
+
+        // Patch the request method
+        const originalRequest = rest.request.bind(rest);
+        rest.request = async function(...args: any[]) {
+          const result = await originalRequest(...args);
+
+          // Estimate upload size from request
+          try {
+            if (args[0] && args[0].body) {
+              const body = args[0].body;
+              const bytes = typeof body === 'string' ? Buffer.byteLength(body) :
+                           Buffer.isBuffer(body) ? body.length :
+                           JSON.stringify(body).length;
+              networkStats.totalBytesSent += bytes;
+
+              if (networkStats.totalBytesSent < 10000) {
+                console.log(`[Metrics] REST Upload: ${bytes} bytes (total: ${Math.round(networkStats.totalBytesSent / 1024)} KB)`);
+              }
+            }
+          } catch (e) {
+            // Ignore
+          }
+
+          return result;
+        };
+
+        console.log('[Metrics] ✅ REST API patched for upload tracking');
+      } catch (error) {
+        console.error('[Metrics] Failed to patch REST:', error);
+      }
+    };
+
+    // Also patch WebSocket for gateway traffic
     const patchWebSocket = () => {
       try {
         const ws = (this.client.ws as any);
 
-        console.log('[Metrics] Attempting to patch WebSocket. ws exists:', !!ws);
-        if (ws) {
-          console.log('[Metrics] ws.shards exists:', !!ws.shards);
-          if (ws.shards) {
-            console.log('[Metrics] ws.shards size:', ws.shards.size);
-          }
+        if (!ws || !ws.shards || ws.shards.size === 0) {
+          console.log('[Metrics] WebSocket not ready (ws:', !!ws, 'shards:', !!ws?.shards, 'size:', ws?.shards?.size || 0, ')');
+          return false;
         }
 
-        if (!ws || !ws.shards) {
-          console.log('[Metrics] WebSocket shards not available yet');
-          return;
-        }
-
-        // Patch each shard's send method
         let patchedCount = 0;
         for (const [shardId, shard] of ws.shards) {
-          console.log(`[Metrics] Processing shard ${shardId}, has connection:`, !!shard?.connection);
-
-          if (shard && shard.connection) {
-            const originalSend = shard.connection.send;
+          if (shard && shard.connection && shard.connection.send) {
+            const originalSend = shard.connection.send.bind(shard.connection);
             shard.connection.send = function(data: any, cb?: any) {
               try {
                 const bytes = Buffer.isBuffer(data) ? data.length :
@@ -401,39 +432,52 @@ export class MetricsService {
                              JSON.stringify(data).length;
                 networkStats.totalBytesSent += bytes;
 
-                // Debug first few sends
-                if (networkStats.totalBytesSent < 5000) {
-                  console.log(`[Metrics] Upload tracked: ${bytes} bytes (total: ${networkStats.totalBytesSent})`);
+                if (networkStats.totalBytesSent < 10000) {
+                  console.log(`[Metrics] WS Upload: ${bytes} bytes (total: ${Math.round(networkStats.totalBytesSent / 1024)} KB)`);
                 }
               } catch (e) {
-                console.error('[Metrics] Error tracking upload:', e);
+                // Ignore
               }
-              return originalSend.call(this, data, cb);
+              return originalSend(data, cb);
             };
             patchedCount++;
           }
         }
 
         if (patchedCount > 0) {
-          console.log(`[Metrics] ✅ Patched ${patchedCount} WebSocket shard(s) for upload tracking`);
+          console.log(`[Metrics] ✅ Patched ${patchedCount} WebSocket shard(s)`);
+          return true;
         } else {
-          console.log('[Metrics] ❌ No WebSocket shards available to patch');
+          console.log('[Metrics] ❌ No shards to patch');
+          return false;
         }
       } catch (error) {
-        console.error('[Metrics] Failed to patch WebSocket:', error);
+        console.error('[Metrics] WebSocket patch error:', error);
+        return false;
       }
     };
 
-    // Patch on ready
+    // Try to patch immediately and on ready
+    patchREST();
+
+    let wsPatched = false;
+    const tryPatchWS = () => {
+      if (!wsPatched) {
+        wsPatched = patchWebSocket();
+        if (!wsPatched) {
+          setTimeout(tryPatchWS, 3000); // Retry every 3s until success
+        }
+      }
+    };
+
     this.client.once('ready', () => {
-      console.log('[Metrics] Client ready, scheduling WebSocket patch in 2s...');
-      setTimeout(() => patchWebSocket(), 2000);
+      console.log('[Metrics] Client ready, attempting WebSocket patch...');
+      setTimeout(tryPatchWS, 2000);
     });
 
-    // Also try when already connected
     if (this.client.isReady()) {
-      console.log('[Metrics] Client already ready, scheduling WebSocket patch in 2s...');
-      setTimeout(() => patchWebSocket(), 2000);
+      console.log('[Metrics] Client already ready, attempting WebSocket patch...');
+      setTimeout(tryPatchWS, 2000);
     }
   }
 
