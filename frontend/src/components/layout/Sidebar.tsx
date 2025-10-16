@@ -60,44 +60,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const botIdMatch = pathname?.match(/\/bots\/([^\/]+)/);
   const botId = botIdMatch ? botIdMatch[1] : null;
 
-  // Fetch bots ONCE on mount - backend uses Redis cache
+  // Fetch bots on mount and poll every 5 seconds for status updates
   useEffect(() => {
     fetchAllBots();
 
-    // Listen to bot status changes via SSE
-    const token = Cookies.get('token');
-    if (!token) return;
+    const interval = setInterval(() => {
+      fetchAllBots();
+    }, 5000);
 
-    const eventSource = new EventSource(
-      `${process.env.NEXT_PUBLIC_API_URL}/bots/events/status?token=${token}`
-    );
-
-    eventSource.onmessage = (event) => {
-      try {
-        const statusUpdate = JSON.parse(event.data);
-
-        // Update bot status in local state
-        setAllBots((prevBots) =>
-          prevBots.map((bot) =>
-            bot.id === statusUpdate.botId
-              ? { ...bot, status: statusUpdate.status }
-              : bot
-          )
-        );
-      } catch (error) {
-        console.error('Failed to parse SSE event:', error);
-      }
-    };
-
-    eventSource.onerror = (error) => {
-      console.error('SSE connection error:', error);
-      eventSource.close();
-    };
-
-    return () => {
-      eventSource.close();
-    };
-  }, []); // Empty deps - only run once per mount
+    return () => clearInterval(interval);
+  }, []);
 
   // Only expand when on /bots (All Bots page) - collapse for everything else
   useEffect(() => {
