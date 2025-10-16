@@ -914,35 +914,42 @@ export class BotsController {
       throw new NotFoundException('Bot not found');
     }
 
-    // Get recent logs from database (last hour)
-    const recentLogs = await this.botLogsService.getRecentLogs(id, 100);
+    let logs: string[] = [];
 
-    // Format logs to match the console format
-    const COLORS = {
-      YELLOW: '\x1b[33m',
-      BLUE: '\x1b[34m',
-      GREEN: '\x1b[32m',
-      CYAN: '\x1b[36m',
-      MAGENTA: '\x1b[35m',
-      RESET: '\x1b[0m',
-      GRAY: '\x1b[90m'
-    };
+    // If bot is online, get logs from buffer (live process)
+    if (bot.status === 'ONLINE' || bot.status === 'STARTING') {
+      logs = this.consoleBufferService.getBuffer(id);
+    } else {
+      // Bot is offline, get logs from database
+      const recentLogs = await this.botLogsService.getRecentLogs(id, 500);
 
-    const formattedLogs = recentLogs.map(log => {
-      const timestamp = new Date(log.createdAt).toLocaleTimeString();
-      const source = log.source || 'bot';
-      const botName = bot.name;
+      // Format logs to match the console format
+      const COLORS = {
+        YELLOW: '\x1b[33m',
+        BLUE: '\x1b[34m',
+        GREEN: '\x1b[32m',
+        CYAN: '\x1b[36m',
+        MAGENTA: '\x1b[35m',
+        RESET: '\x1b[0m',
+        GRAY: '\x1b[90m'
+      };
 
-      const prefix = source === 'Discord' ? `${COLORS.CYAN}discord@${botName}${COLORS.RESET}` :
-                     source === 'System' ? `${COLORS.YELLOW}container@fivebot${COLORS.RESET}` :
-                     source === 'Commands' ? `${COLORS.GREEN}cmd@${botName}${COLORS.RESET}` :
-                     `${COLORS.BLUE}${source.toLowerCase()}@${botName}${COLORS.RESET}`;
+      logs = recentLogs.map(log => {
+        const timestamp = new Date(log.createdAt).toLocaleTimeString();
+        const source = log.source || 'bot';
+        const botName = bot.name;
 
-      return `${COLORS.GRAY}[${timestamp}]${COLORS.RESET} [${prefix}]: ${log.message}`;
-    });
+        const prefix = source === 'Discord' ? `${COLORS.CYAN}discord@${botName}${COLORS.RESET}` :
+                       source === 'System' ? `${COLORS.YELLOW}container@fivebot${COLORS.RESET}` :
+                       source === 'Commands' ? `${COLORS.GREEN}cmd@${botName}${COLORS.RESET}` :
+                       `${COLORS.BLUE}${source.toLowerCase()}@${botName}${COLORS.RESET}`;
+
+        return `${COLORS.GRAY}[${timestamp}]${COLORS.RESET} [${prefix}]: ${log.message}`;
+      });
+    }
 
     return {
-      logs: formattedLogs,
+      logs,
       bot: {
         id: bot.id,
         name: bot.name,
