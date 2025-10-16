@@ -5,7 +5,6 @@ import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import V2CommandsConfig from '@/components/V2CommandsConfig';
 import { designTokens } from '@/styles/design-tokens';
 
@@ -44,22 +43,19 @@ export default function CommandsConfigPage() {
 
   if (authLoading || loading) {
     return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-96">
+      <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <div className="w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-600">Loading...</p>
           </div>
         </div>
-      </DashboardLayout>
     );
   }
 
   if (!user || !bot) return null;
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Header */}
         <div>
           <div className="flex items-center space-x-3 mb-2">
@@ -93,6 +89,5 @@ export default function CommandsConfigPage() {
           }}
         />
       </div>
-    </DashboardLayout>
   );
 }

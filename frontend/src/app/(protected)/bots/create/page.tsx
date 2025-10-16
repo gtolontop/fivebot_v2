@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/Button';
 import { Card, PanelCard } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
@@ -69,8 +68,7 @@ export default function CreateBotPage() {
   }
 
   return (
-    <DashboardLayout>
-      <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center space-x-4">
@@ -265,6 +263,5 @@ export default function CreateBotPage() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
   );
 }

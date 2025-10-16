@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import {
   PlusIcon,
   FunnelIcon,
@@ -189,22 +188,19 @@ export default function BotsPage() {
 
   if (loading || botsLoading) {
     return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-96">
+      <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-primary-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-600 font-medium">Loading your bots...</p>
           </div>
         </div>
-      </DashboardLayout>
     );
   }
 
   if (!user) return null;
 
   return (
-    <DashboardLayout>
-      <div className="max-w-[1600px] mx-auto space-y-6">
+    <div className="max-w-[1600px] mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -434,6 +430,5 @@ export default function BotsPage() {
           </div>
         )}
       </div>
-    </DashboardLayout>
   );
 }

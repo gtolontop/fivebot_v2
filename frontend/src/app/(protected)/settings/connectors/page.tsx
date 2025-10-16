@@ -3,7 +3,6 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { LinkIcon } from '@heroicons/react/24/outline';
 
 export default function ConnectorsPage() {
@@ -18,22 +17,19 @@ export default function ConnectorsPage() {
 
   if (loading) {
     return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-96">
+      <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-primary-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-600 font-medium">Loading connectors...</p>
           </div>
         </div>
-      </DashboardLayout>
     );
   }
 
   if (!user) return null;
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Connectors</h1>
           <p className="text-sm text-gray-500 mt-1">Connect your favorite services and integrations</p>
@@ -93,6 +89,5 @@ export default function ConnectorsPage() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
   );
 }
