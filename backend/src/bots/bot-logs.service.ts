@@ -77,17 +77,11 @@ export class BotLogsService {
   }
 
   // Get recent logs for a bot (for live console)
-  async getRecentLogs(botId: string, limit: number = 100): Promise<BotLogEntry[]> {
-    // Get logs from the last hour to avoid showing old duplicate messages
-    const oneHourAgo = new Date();
-    oneHourAgo.setHours(oneHourAgo.getHours() - 1);
-    
+  async getRecentLogs(botId: string, limit: number = 500): Promise<BotLogEntry[]> {
+    // Get all recent logs (no time limit, just last N logs)
     const logs = await this.prisma.botLog.findMany({
-      where: { 
+      where: {
         botId,
-        createdAt: {
-          gte: oneHourAgo
-        }
       },
       orderBy: { createdAt: 'desc' },
       take: limit,
