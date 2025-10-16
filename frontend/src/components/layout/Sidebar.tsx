@@ -60,22 +60,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const botIdMatch = pathname?.match(/\/bots\/([^\/]+)/);
   const botId = botIdMatch ? botIdMatch[1] : null;
 
-  // Fetch bots on mount
+  // Fetch bots ONCE on mount - backend uses Redis cache
   useEffect(() => {
     fetchAllBots();
-
-    // Listen to custom events for bot status updates
-    const handleBotStatusUpdate = ((e: CustomEvent) => {
-      const { botId, status } = e.detail;
-      setAllBots((prevBots) =>
-        prevBots.map((bot) =>
-          bot.id === botId ? { ...bot, status } : bot
-        )
-      );
-    }) as EventListener;
-
-    window.addEventListener('bot-status-update', handleBotStatusUpdate);
-    return () => window.removeEventListener('bot-status-update', handleBotStatusUpdate);
   }, []);
 
   // Only expand when on /bots (All Bots page) - collapse for everything else
