@@ -492,19 +492,30 @@ export class MetricsService {
       const cpuMicroseconds = currentCpuUsage.user + currentCpuUsage.system;
       const elapsedMicroseconds = timeDeltaMs * 1000;
 
-      const cpuPercent = Math.min(100, Math.max(0,
-        (cpuMicroseconds / elapsedMicroseconds) * 100
-      ));
+      let cpuPercent = 0;
+      if (elapsedMicroseconds > 0) {
+        cpuPercent = Math.min(100, Math.max(0,
+          (cpuMicroseconds / elapsedMicroseconds) * 100
+        ));
+      }
+
+      // Keep a rolling average of CPU samples to smooth out 0% readings
+      this.cpuSamples.push(cpuPercent);
+      if (this.cpuSamples.length > 6) { // Keep last 60 seconds (6 samples at 10s interval)
+        this.cpuSamples.shift();
+      }
+
+      // Use average CPU instead of instant reading
+      const avgCpuPercent = this.cpuSamples.reduce((a, b) => a + b, 0) / this.cpuSamples.length;
 
       // Debug CPU calculation
-      if (cpuPercent > 0.1 || Math.random() < 0.1) { // Log if CPU > 0 or randomly 10% of the time
+      if (cpuPercent > 0.1 || avgCpuPercent > 0.1 || Math.random() < 0.1) {
         console.log('[Metrics] CPU Debug:', {
+          instant: cpuPercent.toFixed(2) + '%',
+          average: avgCpuPercent.toFixed(2) + '%',
+          samples: this.cpuSamples.length,
           cpuMicroseconds,
-          elapsedMicroseconds,
-          timeDeltaMs,
-          cpuPercent: cpuPercent.toFixed(2) + '%',
-          user: currentCpuUsage.user,
-          system: currentCpuUsage.system
+          timeDeltaMs
         });
       }
 
