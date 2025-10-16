@@ -299,6 +299,16 @@ export class BotsService {
     return bots;
   }
 
+  // Helper to invalidate Redis cache for user's bots list
+  private async invalidateBotsCache(userId: string): Promise<void> {
+    const cacheKey = `user:bots:${userId}`;
+    try {
+      await this.redisService.getClient().del(cacheKey);
+    } catch (error) {
+      // Ignore cache errors
+    }
+  }
+
   // Background sync without blocking the main request
   private async autoSyncBotsInBackground(bots: any[]): Promise<void> {
     setImmediate(async () => {
@@ -694,6 +704,9 @@ export class BotsService {
         resource: 'bot',
       },
     });
+
+    // Invalidate cache
+    await this.invalidateBotsCache(ownerId);
 
     return this.findOne(botId, ownerId);
   }
