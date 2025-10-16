@@ -3,7 +3,6 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { BellIcon, CheckIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { notificationsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
@@ -55,14 +54,12 @@ export default function NotificationsPage() {
 
   if (loading || loadingNotifications) {
     return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-96">
+      <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-primary-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-600 font-medium">Loading notifications...</p>
           </div>
         </div>
-      </DashboardLayout>
     );
   }
 
@@ -164,8 +161,7 @@ export default function NotificationsPage() {
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
         </div>
@@ -320,6 +316,5 @@ export default function NotificationsPage() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
   );
 }

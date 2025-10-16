@@ -7,7 +7,6 @@ import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
 import dynamic from 'next/dynamic';
 import Cookies from 'js-cookie';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import {
   BoltIcon,
   ChatBubbleLeftRightIcon,
@@ -206,22 +205,19 @@ export default function AnalyticsPage() {
 
   if (loading || isLoading) {
     return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-96">
+      <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-primary-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-600 font-medium">Loading analytics...</p>
           </div>
         </div>
-      </DashboardLayout>
     );
   }
 
   if (!user || !bot) return null;
 
   return (
-    <DashboardLayout>
-      <div className="max-w-[1600px] mx-auto space-y-6">
+    <div className="max-w-[1600px] mx-auto space-y-6">
         {/* Header */}
         <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 p-6">
           <div className="flex items-center justify-between">
@@ -623,6 +619,5 @@ export default function AnalyticsPage() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
   );
 }

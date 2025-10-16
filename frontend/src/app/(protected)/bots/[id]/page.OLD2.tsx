@@ -6,7 +6,6 @@ import { useEffect, useState, useRef } from 'react';
 import { botsAPI } from '@/utils/api';
 import toast from 'react-hot-toast';
 import Cookies from 'js-cookie';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, PanelCard, Badge, Avatar, Button } from '@/components/ui';
 import {
   PlayIcon,
@@ -269,22 +268,19 @@ export default function BotDetailPage() {
 
   if (loading || botLoading) {
     return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-96">
+      <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <div className="w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-600">Loading bot details...</p>
           </div>
         </div>
-      </DashboardLayout>
     );
   }
 
   if (!user || !bot) return null;
 
   return (
-    <DashboardLayout>
-      {/* Header */}
+    {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
           <Avatar
@@ -535,6 +531,5 @@ export default function BotDetailPage() {
           </Card>
         </div>
       </div>
-    </DashboardLayout>
   );
 }
