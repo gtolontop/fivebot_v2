@@ -25,9 +25,13 @@
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
     "db:studio": "prisma studio",
+    "db:seed": "ts-node prisma/seed.ts",
     "reset-bot-status": "node scripts/reset-bot-status.js",
     "debug:ticket": "ts-node scripts/debug-ticket-config.ts",
     "clean:panels": "node scripts/clean-orphan-panels.js"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {
     "@nestjs/bullmq": "^10.0.1",
