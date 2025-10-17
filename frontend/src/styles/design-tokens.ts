@@ -26,6 +26,7 @@ export const designTokens = {
     bodySmall: 'text-xs text-gray-600',
 
     // Special
+    small: 'text-xs text-gray-600',
     caption: 'text-xs text-gray-500 uppercase tracking-wider font-medium',
     code: 'font-mono text-sm',
     label: 'text-sm font-medium text-gray-700',
