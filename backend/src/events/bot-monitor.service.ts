@@ -10,33 +10,15 @@ export class BotMonitorService implements OnModuleInit {
   ) {}
 
   onModuleInit() {
-    // Check every 5 seconds for dead bots
-    setInterval(() => this.checkDeadBots(), 5000);
+    // DISABLED: This service is redundant with backend/src/bots/bot-monitor.service.ts
+    // which already has a heartbeat check every 15 seconds with proper process verification.
+    // This service was causing conflicts by marking bots as OFFLINE based only on updatedAt
+    // without checking if the process is actually running.
+
+    // console.log('⚠️ EventsModule BotMonitorService is disabled - using main BotMonitorService instead');
   }
 
   private async checkDeadBots() {
-    try {
-      const onlineBots = await this.prisma.bot.findMany({
-        where: { status: 'ONLINE' },
-        select: { id: true, updatedAt: true },
-      });
-
-      const now = new Date();
-      for (const bot of onlineBots) {
-        const secondsSinceUpdate = (now.getTime() - bot.updatedAt.getTime()) / 1000;
-
-        // If no update in 15 seconds, mark as offline
-        if (secondsSinceUpdate > 15) {
-          await this.prisma.bot.update({
-            where: { id: bot.id },
-            data: { status: 'OFFLINE' },
-          });
-
-          this.gateway.emitBotStatus(bot.id, 'OFFLINE');
-        }
-      }
-    } catch (error) {
-      console.error('Error checking dead bots:', error);
-    }
+    // DISABLED - See onModuleInit comment
   }
 }
