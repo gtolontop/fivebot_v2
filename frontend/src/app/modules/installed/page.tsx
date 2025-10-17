@@ -82,13 +82,13 @@ export default function InstalledModulesPage() {
       const token = localStorage.getItem('token');
 
       // Fetch user modules
-      const modulesRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/modules/user/owned`, {
+      const modulesRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/modules/user/owned`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUserModules(modulesRes.data);
 
       // Fetch bots
-      const botsRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/bots`, {
+      const botsRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/bots`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setBots(botsRes.data);
@@ -97,7 +97,7 @@ export default function InstalledModulesPage() {
       const botModulesData: Record<string, BotModule[]> = {};
       for (const bot of botsRes.data) {
         try {
-          const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/modules/bots/${bot.id}`, {
+          const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/modules/bots/${bot.id}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           botModulesData[bot.id] = res.data;
@@ -120,7 +120,7 @@ export default function InstalledModulesPage() {
       setActionLoading(`install-${botId}-${moduleId}`);
       const token = localStorage.getItem('token');
       await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/modules/bots/${botId}/${moduleId}/install`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/modules/bots/${botId}/${moduleId}/install`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -141,7 +141,7 @@ export default function InstalledModulesPage() {
       setActionLoading(`uninstall-${botId}-${moduleId}`);
       const token = localStorage.getItem('token');
       await axios.delete(
-        `${process.env.NEXT_PUBLIC_API_URL}/modules/bots/${botId}/${moduleId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/modules/bots/${botId}/${moduleId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success('Module uninstalled successfully!');
