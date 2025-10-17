@@ -81,7 +81,9 @@ export default function BrowseModulesPage() {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}/api/modules?${params.toString()}`
       );
-      setModules(response.data);
+      // Filter out core modules (framework) from browse page
+      const nonCoreModules = response.data.filter((m: any) => !m.isCore);
+      setModules(nonCoreModules);
     } catch (error) {
       console.error('Error fetching modules:', error);
     } finally {
