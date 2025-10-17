@@ -44,13 +44,13 @@ export class ModulesController {
 
   // ==================== USER MODULE ROUTES (AUTHENTICATED) ====================
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard('jwt'))
   @Get('user/owned')
   async getUserModules(@Request() req) {
     return this.modulesService.getUserModules(req.user.id);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard('jwt'))
   @Post(':id/purchase')
   async purchaseModule(@Request() req, @Param('id') moduleId: string) {
     return this.modulesService.purchaseModule(req.user.id, moduleId);
@@ -58,19 +58,19 @@ export class ModulesController {
 
   // ==================== BOT MODULE ROUTES (AUTHENTICATED) ====================
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard('jwt'))
   @Get('bots/:botId')
   async getBotModules(@Param('botId') botId: string) {
     return this.modulesService.getBotModules(botId);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard('jwt'))
   @Get('bots/:botId/:moduleId')
   async getBotModule(@Param('botId') botId: string, @Param('moduleId') moduleId: string) {
     return this.modulesService.getBotModule(botId, moduleId);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard('jwt'))
   @Post('bots/:botId/:moduleId/install')
   async installModule(
     @Request() req,
@@ -80,7 +80,7 @@ export class ModulesController {
     return this.modulesService.installModuleOnBot(req.user.id, botId, moduleId);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard('jwt'))
   @Delete('bots/:botId/:moduleId')
   async uninstallModule(
     @Request() req,
@@ -90,7 +90,7 @@ export class ModulesController {
     return this.modulesService.uninstallModuleFromBot(req.user.id, botId, moduleId);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard('jwt'))
   @Patch('bots/:botId/:moduleId/toggle')
   async toggleModule(
     @Request() req,
@@ -101,7 +101,7 @@ export class ModulesController {
     return this.modulesService.toggleModuleOnBot(req.user.id, botId, moduleId, enabled);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard('jwt'))
   @Patch('bots/:botId/:moduleId/config')
   async updateModuleConfig(
     @Request() req,
