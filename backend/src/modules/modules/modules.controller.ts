@@ -10,8 +10,8 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { ModulesService } from './modules.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ModuleCategory } from '@prisma/client';
 
 @Controller('modules')
