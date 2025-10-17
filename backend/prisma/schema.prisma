@@ -57,6 +57,7 @@ model Bot {
   jobLogs        JobLog[]
   commands       BotCommand[]
   collaborators  BotCollaborator[]
+  botModules     BotModule[]
 
   @@index([ownerId], map: "bots_owner_id_fkey")
   @@map("bots")
