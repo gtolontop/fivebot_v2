@@ -50,7 +50,7 @@ export default function AdminDashboardPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/dashboard`, {
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/dashboard`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setStats(response.data);
