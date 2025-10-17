@@ -40,6 +40,7 @@ import { ModulesModule } from './modules/modules/modules.module';
     QueueModule,
     TasksModule,
     NotificationsModule,
+    ModulesModule,
   ],
   controllers: [UrlMetadataController, UploadController],
   providers: [AppService],
