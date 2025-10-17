@@ -17,6 +17,7 @@ import { TasksModule } from './tasks/tasks.module';
 import { UrlMetadataController } from './utils/url-metadata.controller';
 import { UploadController } from './utils/upload.controller';
 import { NotificationsModule } from './notifications/notifications.module';
+import { ModulesModule } from './modules/modules/modules.module';
 
 @Module({
   imports: [
