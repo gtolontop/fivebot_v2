@@ -147,11 +147,15 @@ export default function BotsPage() {
       attempts++;
 
       try {
-        // Fetch ALL bots data to get fresh startedAt
-        await fetchBots();
-
         const response = await botsAPI.getStatus(botId);
         const status = response.data.status;
+
+        // Update only this specific bot's status
+        setBots(prevBots =>
+          prevBots.map(bot =>
+            bot.id === botId ? { ...bot, status } : bot
+          )
+        );
 
         // Stop polling if bot is ONLINE or ERROR, or max attempts reached
         if (status === 'ONLINE' || status === 'ERROR' || attempts >= maxAttempts) {
