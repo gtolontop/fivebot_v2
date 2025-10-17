@@ -484,3 +484,120 @@ enum NotificationType {
   WARNING
   ERROR
 }
+
+// ==================== MODULE SYSTEM ====================
+
+model Module {
+  id              String           @id @default(uuid())
+  slug            String           @unique
+  name            String
+  description     String           @db.Text
+  longDescription String?          @map("long_description") @db.Text
+  category        ModuleCategory
+  price           Int              @default(0) // 0 = gratuit
+  icon            String?
+  banner          String?
+  version         String           @default("1.0.0")
+  author          String           @default("FiveBot")
+  tags            String?          @db.Text // JSON array
+  features        String?          @db.Text // JSON array
+  screenshots     String?          @db.Text // JSON array of URLs
+  dependencies    String?          @db.Text // JSON array of module slugs
+  configSchema    String?          @map("config_schema") @db.Text // JSON schema for config UI
+  isCore          Boolean          @default(false) @map("is_core") // Framework modules
+  isActive        Boolean          @default(true) @map("is_active") // Admin can disable
+  downloads       Int              @default(0)
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  userModules     UserModule[]
+  botModules      BotModule[]
+
+  @@index([category])
+  @@index([isCore])
+  @@index([isActive])
+  @@map("modules")
+}
+
+model UserModule {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  moduleId     String   @map("module_id")
+  purchasedAt  DateTime @default(now()) @map("purchased_at")
+  paymentAmount Int     @default(0) @map("payment_amount")
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  module       Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, moduleId])
+  @@index([userId])
+  @@index([moduleId])
+  @@map("user_modules")
+}
+
+model BotModule {
+  id          String    @id @default(uuid())
+  botId       String    @map("bot_id")
+  moduleId    String    @map("module_id")
+  enabled     Boolean   @default(true)
+  config      String?   @db.Text // JSON config specific to this module
+  installedAt DateTime  @default(now()) @map("installed_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  bot         Bot       @relation(fields: [botId], references: [id], onDelete: Cascade)
+  module      Module    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([botId, moduleId])
+  @@index([botId])
+  @@index([moduleId])
+  @@index([botId, enabled])
+  @@map("bot_modules")
+}
+
+enum ModuleCategory {
+  FRAMEWORK      // Core/essential
+  MODERATION     // Ban, kick, mute, etc.
+  WELCOME        // Welcome/goodbye
+  AUTOMATION     // Auto-role, auto-mod
+  UTILITY        // Info commands, embeds
+  TICKETS        // Support system
+  LOGGING        // Event logs
+  FUN            // Games, memes
+  MUSIC          // Music player
+  ECONOMY        // Virtual currency
+  LEVELING       // XP/levels
+  CUSTOM         // Custom commands
+}
+
+// ==================== TRANSACTIONS ====================
+
+model Transaction {
+  id          String            @id @default(uuid())
+  userId      String            @map("user_id")
+  type        TransactionType
+  amount      Int               // Credits amount
+  description String
+  metadata    String?           @db.Text // JSON: module info, admin notes, etc.
+  status      TransactionStatus @default(COMPLETED)
+  createdAt   DateTime          @default(now()) @map("created_at")
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+  @@map("transactions")
+}
+
+enum TransactionType {
+  MODULE_PURCHASE
+  CREDIT_PURCHASE
+  ADMIN_GRANT
+  ADMIN_DEDUCT
+  REFUND
+  BONUS
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
