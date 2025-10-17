@@ -18,6 +18,7 @@ import { UrlMetadataController } from './utils/url-metadata.controller';
 import { UploadController } from './utils/upload.controller';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ModulesModule } from './modules/modules/modules.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { ModulesModule } from './modules/modules/modules.module';
     TasksModule,
     NotificationsModule,
     ModulesModule,
+    AdminModule,
   ],
   controllers: [UrlMetadataController, UploadController],
   providers: [AppService],
