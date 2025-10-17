@@ -1310,18 +1310,21 @@ export class BotsService {
 
     // Build avatar URL from Discord CDN
     // Priority: user avatar > application icon > null
+    // Use png/gif format (not webp) to avoid Discord URL expiration issues
     let avatarUrl = null;
     if (tokenValidation.user?.avatar) {
       // Bot has a user avatar
-      avatarUrl = `https://cdn.discordapp.com/avatars/${tokenValidation.user.id}/${tokenValidation.user.avatar}.webp?size=256`;
+      const format = tokenValidation.user.avatar.startsWith('a_') ? 'gif' : 'png';
+      avatarUrl = `https://cdn.discordapp.com/avatars/${tokenValidation.user.id}/${tokenValidation.user.avatar}.${format}?size=256`;
     } else if (tokenValidation.application?.icon) {
       // Fallback to application icon
-      avatarUrl = `https://cdn.discordapp.com/app-icons/${tokenValidation.application.id}/${tokenValidation.application.icon}.webp?size=256`;
+      const format = tokenValidation.application.icon.startsWith('a_') ? 'gif' : 'png';
+      avatarUrl = `https://cdn.discordapp.com/app-icons/${tokenValidation.application.id}/${tokenValidation.application.icon}.${format}?size=256`;
     }
 
     // Build banner URL from Discord CDN
     const bannerUrl = tokenValidation.user?.banner
-      ? `https://cdn.discordapp.com/banners/${tokenValidation.user.id}/${tokenValidation.user.banner}.webp?size=512`
+      ? `https://cdn.discordapp.com/banners/${tokenValidation.user.id}/${tokenValidation.user.banner}.png?size=512`
       : null;
 
     // Update bot with new avatar and banner
@@ -1363,16 +1366,19 @@ export class BotsService {
               }
 
               // Build avatar URL - Priority: user avatar > application icon > null
+              // Use png/gif format (not webp) to avoid Discord URL expiration issues
               let avatarUrl = null;
               if (tokenValidation.user.avatar) {
-                avatarUrl = `https://cdn.discordapp.com/avatars/${tokenValidation.user.id}/${tokenValidation.user.avatar}.webp?size=256`;
+                const format = tokenValidation.user.avatar.startsWith('a_') ? 'gif' : 'png';
+                avatarUrl = `https://cdn.discordapp.com/avatars/${tokenValidation.user.id}/${tokenValidation.user.avatar}.${format}?size=256`;
               } else if (tokenValidation.application?.icon) {
-                avatarUrl = `https://cdn.discordapp.com/app-icons/${tokenValidation.application.id}/${tokenValidation.application.icon}.webp?size=256`;
+                const format = tokenValidation.application.icon.startsWith('a_') ? 'gif' : 'png';
+                avatarUrl = `https://cdn.discordapp.com/app-icons/${tokenValidation.application.id}/${tokenValidation.application.icon}.${format}?size=256`;
               }
 
               // Build banner URL
               const bannerUrl = tokenValidation.user.banner
-                ? `https://cdn.discordapp.com/banners/${tokenValidation.user.id}/${tokenValidation.user.banner}.webp?size=512`
+                ? `https://cdn.discordapp.com/banners/${tokenValidation.user.id}/${tokenValidation.user.banner}.png?size=512`
                 : null;
 
               // Update bot in database
@@ -1429,16 +1435,19 @@ export class BotsService {
               }
 
               // Build avatar URL - Priority: user avatar > application icon > null
+              // Use png/gif format (not webp) to avoid Discord URL expiration issues
               let avatarUrl = null;
               if (tokenValidation.user.avatar) {
-                avatarUrl = `https://cdn.discordapp.com/avatars/${tokenValidation.user.id}/${tokenValidation.user.avatar}.webp?size=256`;
+                const format = tokenValidation.user.avatar.startsWith('a_') ? 'gif' : 'png';
+                avatarUrl = `https://cdn.discordapp.com/avatars/${tokenValidation.user.id}/${tokenValidation.user.avatar}.${format}?size=256`;
               } else if (tokenValidation.application?.icon) {
-                avatarUrl = `https://cdn.discordapp.com/app-icons/${tokenValidation.application.id}/${tokenValidation.application.icon}.webp?size=256`;
+                const format = tokenValidation.application.icon.startsWith('a_') ? 'gif' : 'png';
+                avatarUrl = `https://cdn.discordapp.com/app-icons/${tokenValidation.application.id}/${tokenValidation.application.icon}.${format}?size=256`;
               }
 
               // Build banner URL
               const bannerUrl = tokenValidation.user.banner
-                ? `https://cdn.discordapp.com/banners/${tokenValidation.user.id}/${tokenValidation.user.banner}.webp?size=512`
+                ? `https://cdn.discordapp.com/banners/${tokenValidation.user.id}/${tokenValidation.user.banner}.png?size=512`
                 : null;
 
               // Only update if values changed
