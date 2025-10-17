@@ -20,7 +20,6 @@ import {
 } from '@heroicons/react/24/outline';
 import { botsAPI } from '@/utils/api';
 import Cookies from 'js-cookie';
-import { io } from 'socket.io-client';
 
 export interface NavItem {
   label: string;
@@ -64,21 +63,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // Fetch bots ONCE on mount - backend uses Redis cache
   useEffect(() => {
     fetchAllBots();
-
-    // Connect to WebSocket
-    const socket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001');
-
-    socket.on('bot-status', ({ botId, status }: { botId: string; status: string }) => {
-      setAllBots((prevBots) =>
-        prevBots.map((bot) =>
-          bot.id === botId ? { ...bot, status } : bot
-        )
-      );
-    });
-
-    return () => {
-      socket.disconnect();
-    };
   }, []);
 
   // Only expand when on /bots (All Bots page) - collapse for everything else
