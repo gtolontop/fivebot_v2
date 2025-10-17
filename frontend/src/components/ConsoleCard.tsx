@@ -14,9 +14,21 @@ export default function ConsoleCard({ logs, botStatus, isOnline }: ConsoleCardPr
   // Auto-scroll to bottom when new logs are added
   useEffect(() => {
     if (consoleRef.current) {
-      consoleRef.current.scrollTop = consoleRef.current.scrollHeight;
+      // Use requestAnimationFrame to ensure DOM has updated
+      requestAnimationFrame(() => {
+        if (consoleRef.current) {
+          consoleRef.current.scrollTop = consoleRef.current.scrollHeight;
+        }
+      });
     }
   }, [logs]);
+
+  // Also scroll to bottom on initial mount
+  useEffect(() => {
+    if (consoleRef.current) {
+      consoleRef.current.scrollTop = consoleRef.current.scrollHeight;
+    }
+  }, []);
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
