@@ -379,6 +379,63 @@ Design and send beautiful Discord embeds with ease!
     isCore: false,
     isActive: true,
   },
+
+  // ==================== STATUS ROTATION ====================
+  {
+    slug: 'status-rotation',
+    name: 'Status Rotation',
+    description: 'Automatically rotate your bot\'s status messages',
+    longDescription: `
+## Status Rotation
+
+Keep your bot's status fresh with automatic rotation!
+
+### Features
+- Multiple status messages
+- Customizable rotation interval
+- Support for all activity types (Playing, Watching, Listening, Competing)
+- Random or sequential rotation
+- Variables support ({servers}, {users}, {uptime})
+
+### Configuration
+Set up multiple status messages that will rotate automatically at your chosen interval.
+
+### Activity Types
+- Playing - "Playing a game"
+- Watching - "Watching something"
+- Listening - "Listening to music"
+- Competing - "Competing in an event"
+    `,
+    category: ModuleCategory.UTILITY,
+    price: 0,
+    icon: '🔄',
+    version: '1.0.0',
+    author: 'FiveBot',
+    tags: JSON.stringify(['utility', 'status', 'presence', 'activity']),
+    features: JSON.stringify([
+      'Multiple status messages',
+      'Customizable intervals',
+      'All activity types',
+      'Random or sequential',
+      'Dynamic variables',
+    ]),
+    configSchema: JSON.stringify({
+      statuses: {
+        type: 'array',
+        label: 'Status Messages',
+        required: true,
+        itemSchema: {
+          type: { type: 'select', options: ['PLAYING', 'WATCHING', 'LISTENING', 'COMPETING'] },
+          text: { type: 'string', maxLength: 128 }
+        }
+      },
+      interval: { type: 'number', label: 'Rotation Interval (seconds)', default: 60, min: 10, max: 3600 },
+      mode: { type: 'select', label: 'Rotation Mode', options: ['sequential', 'random'], default: 'sequential' },
+    }),
+    dependencies: JSON.stringify(['framework']),
+    isCore: false,
+    isActive: true,
+  },
 ];
 
 export async function seedModules() {
