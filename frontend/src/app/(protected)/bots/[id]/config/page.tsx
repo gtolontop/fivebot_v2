@@ -3,159 +3,69 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { botsAPI } from '@/utils/api';
-import toast from 'react-hot-toast';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { SearchInput } from '@/components/ui/Input';
 import { designTokens } from '@/styles/design-tokens';
+import axios from 'axios';
+import toast from 'react-hot-toast';
+
+interface Module {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  category: string;
+  icon: string;
+  isCore: boolean;
+}
 
 interface BotModule {
   id: string;
-  name: string;
-  description: string;
-  icon: string;
-  category: 'core' | 'moderation' | 'utility' | 'fun' | 'economy' | 'community';
+  moduleId: string;
   enabled: boolean;
-  installed: boolean;
-  configurable: boolean;
+  module: Module;
 }
 
-const AVAILABLE_MODULES: BotModule[] = [
-  {
-    id: 'welcome',
-    name: 'Welcome System',
-    description: 'Greet new members with custom messages and auto-roles',
-    icon: '👋',
-    category: 'community',
-    enabled: false,
-    installed: false,
-    configurable: true,
+const CONFIG_PAGES: Record<string, { title: string; description: string; path: string }> = {
+  modules: {
+    title: 'Modules',
+    description: 'Manage installed modules',
+    path: 'modules',
   },
-  {
-    id: 'moderation',
-    name: 'Auto Moderation',
-    description: 'Anti-spam, anti-raid, and content filtering',
-    icon: '🛡️',
-    category: 'moderation',
-    enabled: false,
-    installed: false,
-    configurable: true,
+  welcome: {
+    title: 'Welcome System',
+    description: 'Configure welcome messages and auto-roles',
+    path: 'welcome',
   },
-  {
-    id: 'tickets',
-    name: 'Ticket System',
-    description: 'Support ticket system with categories and transcripts',
-    icon: '🎫',
-    category: 'utility',
-    enabled: false,
-    installed: false,
-    configurable: true,
+  tickets: {
+    title: 'Ticket System',
+    description: 'Setup support ticket categories and panels',
+    path: 'tickets',
   },
-  {
-    id: 'leveling',
-    name: 'Leveling & XP',
-    description: 'Gamify your server with XP, levels, and role rewards',
-    icon: '📊',
-    category: 'economy',
-    enabled: false,
-    installed: false,
-    configurable: true,
+  collab: {
+    title: 'Collaborators',
+    description: 'Manage bot team members and permissions',
+    path: 'collab',
   },
-  {
-    id: 'commands',
-    name: 'Custom Commands',
-    description: 'Create custom commands with variables and embeds',
-    icon: '⚡',
-    category: 'utility',
-    enabled: false,
-    installed: false,
-    configurable: true,
+  commands: {
+    title: 'Custom Commands',
+    description: 'Create and edit custom commands',
+    path: 'commands',
   },
-  {
-    id: 'embeds',
-    name: 'Embed Builder',
-    description: 'Create rich embed messages with buttons and interactions',
-    icon: '📝',
-    category: 'utility',
-    enabled: false,
-    installed: false,
-    configurable: true,
+  status: {
+    title: 'Status Rotation',
+    description: 'Configure bot status messages',
+    path: 'status',
   },
-  {
-    id: 'reaction-roles',
-    name: 'Reaction Roles',
-    description: 'Let users self-assign roles using reactions or buttons',
-    icon: '🎭',
-    category: 'utility',
-    enabled: false,
-    installed: false,
-    configurable: true,
-  },
-  {
-    id: 'logs',
-    name: 'Server Logs',
-    description: 'Advanced logging for moderation and server events',
-    icon: '📋',
-    category: 'moderation',
-    enabled: false,
-    installed: false,
-    configurable: true,
-  },
-  {
-    id: 'music',
-    name: 'Music Player',
-    description: 'Play music from YouTube, Spotify, and more',
-    icon: '🎵',
-    category: 'fun',
-    enabled: false,
-    installed: false,
-    configurable: true,
-  },
-  {
-    id: 'giveaways',
-    name: 'Giveaways',
-    description: 'Create and manage server giveaways',
-    icon: '🎁',
-    category: 'fun',
-    enabled: false,
-    installed: false,
-    configurable: true,
-  },
-  {
-    id: 'collab',
-    name: 'Collaborators',
-    description: 'Manage bot collaborators and permissions',
-    icon: '👥',
-    category: 'core',
-    enabled: false,
-    installed: false,
-    configurable: true,
-  },
-  {
-    id: 'status',
-    name: 'Status Rotation',
-    description: 'Rotate bot status messages automatically',
-    icon: '🔄',
-    category: 'core',
-    enabled: false,
-    installed: false,
-    configurable: true,
-  },
-];
+};
 
-export default function BotConfigPage() {
+export default function BotConfigHomePage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const params = useParams();
-  const botId = params.id as string;
+  const botId = params?.id as string;
 
   const [bot, setBot] = useState<any>(null);
+  const [botModules, setBotModules] = useState<BotModule[]>([]);
   const [loading, setLoading] = useState(true);
-  const [modules, setModules] = useState<BotModule[]>(AVAILABLE_MODULES);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -165,468 +75,207 @@ export default function BotConfigPage() {
 
   useEffect(() => {
     if (user && botId) {
-      fetchBot();
+      fetchData();
     }
   }, [user, botId]);
 
-  const fetchBot = async () => {
+  const fetchData = async () => {
     try {
-      const response = await botsAPI.getById(botId);
-      const botData = response.data;
-      setBot(botData);
+      setLoading(true);
+      const token = localStorage.getItem('token');
 
-      // Map backend config to module states
-      const config = botData.config || {};
-      const updatedModules = AVAILABLE_MODULES.map(module => {
-        let installed = false;
-        let enabled = false;
-
-        // Map backend config fields to module states
-        switch (module.id) {
-          case 'welcome':
-            installed = !!config.welcomeEnabled;
-            enabled = config.welcomeEnabled === true;
-            break;
-          case 'tickets':
-            installed = !!config.ticketCategories || !!config.ticketTranscriptChannelId;
-            enabled = !!config.ticketCategories;
-            break;
-          case 'commands':
-            installed = !!config.embedV2Commands;
-            enabled = Object.keys(config.embedV2Commands || {}).some((key: string) => config.embedV2Commands[key]?.enabled);
-            break;
-          case 'collab':
-            installed = true; // Always available
-            enabled = true;
-            break;
-          case 'status':
-            installed = !!config.statusRotation;
-            enabled = config.statusRotation?.enabled === true;
-            break;
-          case 'moderation':
-            installed = !!config.autoModeration;
-            enabled = config.autoModeration?.enabled === true;
-            break;
-          case 'leveling':
-            installed = !!config.leveling;
-            enabled = config.leveling?.enabled === true;
-            break;
-          case 'logs':
-            installed = !!config.serverLogs;
-            enabled = config.serverLogs?.enabled === true;
-            break;
-          default:
-            // Keep default state for modules not yet implemented
-            break;
-        }
-
-        return { ...module, installed, enabled };
+      // Fetch bot
+      const botRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/bots/${botId}`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
+      setBot(botRes.data);
 
-      setModules(updatedModules);
-    } catch (error: any) {
-      console.error('Error fetching bot:', error);
-      toast.error('Failed to load bot details');
+      // Fetch bot modules
+      const modulesRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/modules/bots/${botId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setBotModules(modulesRes.data.filter((bm: BotModule) => bm.enabled));
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      toast.error('Failed to load configuration');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleInstallModule = async (moduleId: string) => {
-    try {
-      // Map module ID to backend config field
-      let configUpdate: any = {};
-
-      switch (moduleId) {
-        case 'welcome':
-          configUpdate = { welcomeEnabled: true };
-          break;
-        case 'tickets':
-          configUpdate = { ticketCategories: [] };
-          break;
-        case 'commands':
-          configUpdate = { embedV2Commands: {} };
-          break;
-        case 'status':
-          configUpdate = { statusRotation: { enabled: true, messages: [] } };
-          break;
-        case 'moderation':
-          configUpdate = { autoModeration: { enabled: true } };
-          break;
-        case 'leveling':
-          configUpdate = { leveling: { enabled: true } };
-          break;
-        case 'logs':
-          configUpdate = { serverLogs: { enabled: true } };
-          break;
-        default:
-          toast.error('Module installation not yet implemented');
-          return;
-      }
-
-      // Update backend
-      await botsAPI.updateConfig(botId, configUpdate);
-
-      // Update local state
-      setModules(prev => prev.map(m =>
-        m.id === moduleId ? { ...m, installed: true, enabled: true } : m
-      ));
-      setBot({ ...bot, config: { ...bot.config, ...configUpdate } });
-
-      toast.success('Module installed successfully!');
-    } catch (error: any) {
-      console.error('Error installing module:', error);
-      toast.error('Failed to install module');
-    }
-  };
-
-  const handleUninstallModule = async (moduleId: string) => {
-    try {
-      // Map module ID to backend config field to remove/disable
-      let configUpdate: any = {};
-
-      switch (moduleId) {
-        case 'welcome':
-          configUpdate = { welcomeEnabled: false };
-          break;
-        case 'tickets':
-          configUpdate = { ticketCategories: null };
-          break;
-        case 'commands':
-          configUpdate = { embedV2Commands: null };
-          break;
-        case 'status':
-          configUpdate = { statusRotation: null };
-          break;
-        case 'moderation':
-          configUpdate = { autoModeration: null };
-          break;
-        case 'leveling':
-          configUpdate = { leveling: null };
-          break;
-        case 'logs':
-          configUpdate = { serverLogs: null };
-          break;
-        case 'collab':
-          toast.error('Cannot uninstall core module');
-          return;
-        default:
-          toast.error('Module uninstallation not yet implemented');
-          return;
-      }
-
-      // Update backend
-      await botsAPI.updateConfig(botId, configUpdate);
-
-      // Update local state
-      setModules(prev => prev.map(m =>
-        m.id === moduleId ? { ...m, installed: false, enabled: false } : m
-      ));
-      setBot({ ...bot, config: { ...bot.config, ...configUpdate } });
-
-      toast.success('Module uninstalled');
-    } catch (error: any) {
-      console.error('Error uninstalling module:', error);
-      toast.error('Failed to uninstall module');
-    }
-  };
-
-  const handleToggleModule = async (moduleId: string) => {
-    const module = modules.find(m => m.id === moduleId);
-    if (!module) return;
-
-    try {
-      const newEnabledState = !module.enabled;
-      let configUpdate: any = {};
-
-      // Map module ID to backend config field
-      switch (moduleId) {
-        case 'welcome':
-          configUpdate = { welcomeEnabled: newEnabledState };
-          break;
-        case 'tickets':
-          // Tickets enabled/disabled based on presence of categories
-          if (!newEnabledState) {
-            configUpdate = { ticketCategories: null };
-          }
-          break;
-        case 'status':
-          configUpdate = {
-            statusRotation: {
-              ...(bot.config?.statusRotation || {}),
-              enabled: newEnabledState
-            }
-          };
-          break;
-        case 'moderation':
-          configUpdate = {
-            autoModeration: {
-              ...(bot.config?.autoModeration || {}),
-              enabled: newEnabledState
-            }
-          };
-          break;
-        case 'leveling':
-          configUpdate = {
-            leveling: {
-              ...(bot.config?.leveling || {}),
-              enabled: newEnabledState
-            }
-          };
-          break;
-        case 'logs':
-          configUpdate = {
-            serverLogs: {
-              ...(bot.config?.serverLogs || {}),
-              enabled: newEnabledState
-            }
-          };
-          break;
-        case 'collab':
-          // Collab always enabled
-          return;
-        default:
-          toast.error('Module toggle not yet implemented');
-          return;
-      }
-
-      // Update backend
-      await botsAPI.updateConfig(botId, configUpdate);
-
-      // Update local state
-      setModules(prev => prev.map(m =>
-        m.id === moduleId ? { ...m, enabled: newEnabledState } : m
-      ));
-      setBot({ ...bot, config: { ...bot.config, ...configUpdate } });
-
-      toast.success(`${module.name} ${newEnabledState ? 'enabled' : 'disabled'}`);
-    } catch (error: any) {
-      console.error('Error toggling module:', error);
-      toast.error('Failed to toggle module');
-    }
-  };
-
-  const handleConfigureModule = (moduleId: string) => {
-    router.push(`/bots/${botId}/config/${moduleId}`);
-  };
-
-  const filteredModules = modules.filter(module => {
-    const matchesSearch = module.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         module.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || module.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
-
-  const installedModules = filteredModules.filter(m => m.installed);
-  const availableModules = filteredModules.filter(m => !m.installed);
-
-  const getCategoryColor = (category: string) => {
-    const colors: Record<string, string> = {
-      core: 'bg-gray-100 text-gray-700',
-      moderation: 'bg-red-100 text-red-700',
-      utility: 'bg-blue-100 text-blue-700',
-      fun: 'bg-purple-100 text-purple-700',
-      economy: 'bg-yellow-100 text-yellow-700',
-      community: 'bg-green-100 text-green-700',
-    };
-    return colors[category] || 'bg-gray-100 text-gray-700';
-  };
-
   if (authLoading || loading) {
     return (
-      <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <div className="w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading...</p>
-          </div>
-        </div>
+      <div className="flex justify-center py-12">
+        <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>
     );
   }
 
-  if (!user || !bot) return null;
+  const enabledModules = botModules.filter((bm) => bm.enabled);
+  const hasModules = enabledModules.length > 0;
 
   return (
-    <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <div className="flex items-center space-x-3 mb-2">
-            <button
-              onClick={() => router.push(`/bots/${botId}`)}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <h1 className={designTokens.typography.h1}>{bot.name} - Configuration</h1>
-          </div>
-          <p className={designTokens.typography.body + ' text-gray-500'}>
-            Add and configure modules for your bot
-          </p>
-        </div>
+    <div className="space-y-8">
+      {/* Header */}
+      <div>
+        <h1 className={designTokens.typography.h1}>Bot Configuration</h1>
+        <p className={designTokens.typography.body + ' text-gray-500 mt-2'}>
+          Configure and customize {bot?.name}
+        </p>
+      </div>
 
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <SearchInput
-              placeholder="Search modules..."
-              value={searchQuery}
-              onChange={setSearchQuery}
-            />
-          </div>
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            {['all', 'core', 'moderation', 'utility', 'fun', 'economy', 'community'].map(category => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-colors ${
-                  selectedCategory === category
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
-                }`}
-              >
-                {category.charAt(0).toUpperCase() + category.slice(1)}
-              </button>
+      {/* Core Config Sections */}
+      <div>
+        <h2 className={designTokens.typography.h2 + ' mb-4'}>Core Settings</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <ConfigCard
+            icon="🧩"
+            title="Modules"
+            description="Manage installed modules"
+            onClick={() => router.push(`/bots/${botId}/config/modules`)}
+            badge={`${enabledModules.length} active`}
+            badgeColor="bg-blue-100 text-blue-800"
+          />
+          <ConfigCard
+            icon="👥"
+            title="Collaborators"
+            description="Manage team members"
+            onClick={() => router.push(`/bots/${botId}/config/collab`)}
+          />
+          <ConfigCard
+            icon="🔄"
+            title="Status Rotation"
+            description="Bot status messages"
+            onClick={() => router.push(`/bots/${botId}/config/status`)}
+          />
+        </div>
+      </div>
+
+      {/* Module Configurations */}
+      {hasModules && (
+        <div>
+          <h2 className={designTokens.typography.h2 + ' mb-4'}>Module Configuration</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {enabledModules.map((botModule) => (
+              <ConfigCard
+                key={botModule.id}
+                icon={botModule.module.icon}
+                title={botModule.module.name}
+                description={botModule.module.description}
+                onClick={() => router.push(`/bots/${botId}/config/${botModule.module.slug}`)}
+                badge={botModule.enabled ? 'Enabled' : 'Disabled'}
+                badgeColor={
+                  botModule.enabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                }
+              />
             ))}
           </div>
         </div>
+      )}
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="p-4">
-            <div className="text-sm text-gray-500 mb-1">Installed Modules</div>
-            <div className="text-2xl font-bold text-gray-900">{modules.filter(m => m.installed).length}</div>
-          </Card>
-          <Card className="p-4">
-            <div className="text-sm text-gray-500 mb-1">Enabled Modules</div>
-            <div className="text-2xl font-bold text-success-600">
-              {modules.filter(m => m.enabled).length}
-            </div>
-          </Card>
-          <Card className="p-4">
-            <div className="text-sm text-gray-500 mb-1">Available Modules</div>
-            <div className="text-2xl font-bold text-gray-400">
-              {modules.filter(m => !m.installed).length}
-            </div>
-          </Card>
+      {/* Quick Actions */}
+      <div>
+        <h2 className={designTokens.typography.h2 + ' mb-4'}>Quick Actions</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <QuickActionCard
+            icon="🛒"
+            title="Browse Modules"
+            description="Discover and install new modules"
+            onClick={() => router.push('/browse')}
+          />
+          <QuickActionCard
+            icon="📦"
+            title="My Modules"
+            description="View and manage your module library"
+            onClick={() => router.push('/installed/modules')}
+          />
         </div>
+      </div>
 
-        {/* Installed Modules */}
-        {installedModules.length > 0 && (
-          <div>
-            <h2 className={designTokens.typography.h2 + ' mb-4'}>Installed Modules</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {installedModules.map(module => (
-                <Card key={module.id} className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="text-3xl">{module.icon}</div>
-                      <div>
-                        <h3 className={designTokens.typography.h3}>{module.name}</h3>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${getCategoryColor(module.category)}`}>
-                          {module.category}
-                        </span>
-                      </div>
-                    </div>
-                    <Badge variant={module.enabled ? 'success' : 'secondary'} size="sm">
-                      {module.enabled ? 'Enabled' : 'Disabled'}
-                    </Badge>
-                  </div>
-
-                  <p className="text-sm text-gray-600 mb-4">{module.description}</p>
-
-                  <div className="flex items-center space-x-2">
-                    {module.configurable && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        fullWidth
-                        onClick={() => handleConfigureModule(module.id)}
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        Configure
-                      </Button>
-                    )}
-
-                    <button
-                      onClick={() => handleToggleModule(module.id)}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        module.enabled ? 'bg-success-600' : 'bg-gray-300'
-                      }`}
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          module.enabled ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
-                    </button>
-
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      onClick={() => handleUninstallModule(module.id)}
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </Button>
-                  </div>
-                </Card>
-              ))}
+      {/* Empty State */}
+      {!hasModules && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+          <div className="flex items-start space-x-4">
+            <div className="text-3xl">💡</div>
+            <div>
+              <h3 className={designTokens.typography.h3 + ' text-blue-900 mb-2'}>
+                No modules installed yet
+              </h3>
+              <p className={designTokens.typography.body + ' text-blue-700 mb-4'}>
+                Install modules to unlock powerful features for your bot. Browse the marketplace
+                or install from your library.
+              </p>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => router.push('/browse')}
+                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                >
+                  Browse Marketplace
+                </button>
+                <button
+                  onClick={() => router.push('/installed/modules')}
+                  className="px-4 py-2 bg-white text-primary-600 border border-primary-600 rounded-lg hover:bg-primary-50 transition-colors"
+                >
+                  My Module Library
+                </button>
+              </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
+    </div>
+  );
+}
 
-        {/* Available Modules */}
-        {availableModules.length > 0 && (
-          <div>
-            <h2 className={designTokens.typography.h2 + ' mb-4'}>Available Modules</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {availableModules.map(module => (
-                <Card key={module.id} className="p-6 hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="text-3xl">{module.icon}</div>
-                      <div>
-                        <h3 className={designTokens.typography.h3}>{module.name}</h3>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${getCategoryColor(module.category)}`}>
-                          {module.category}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+interface ConfigCardProps {
+  icon: string;
+  title: string;
+  description: string;
+  onClick: () => void;
+  badge?: string;
+  badgeColor?: string;
+}
 
-                  <p className="text-sm text-gray-600 mb-4">{module.description}</p>
-
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    fullWidth
-                    onClick={() => handleInstallModule(module.id)}
-                    icon={
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd"/>
-                      </svg>
-                    }
-                  >
-                    Install Module
-                  </Button>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {filteredModules.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-gray-400 text-5xl mb-4">🔍</div>
-            <h3 className={designTokens.typography.h3 + ' mb-2'}>No modules found</h3>
-            <p className="text-gray-500">Try adjusting your search or filters</p>
-          </div>
+function ConfigCard({ icon, title, description, onClick, badge, badgeColor }: ConfigCardProps) {
+  return (
+    <button
+      onClick={onClick}
+      className="bg-white rounded-xl p-6 border border-gray-200 hover:border-primary-500 hover:shadow-lg transition-all text-left group"
+    >
+      <div className="flex items-start justify-between mb-3">
+        <div className="text-4xl">{icon}</div>
+        {badge && (
+          <span className={`px-2 py-1 text-xs font-medium rounded ${badgeColor || 'bg-gray-100 text-gray-800'}`}>
+            {badge}
+          </span>
         )}
       </div>
+      <h3 className={designTokens.typography.h4 + ' mb-2 group-hover:text-primary-600 transition-colors'}>
+        {title}
+      </h3>
+      <p className={designTokens.typography.small + ' text-gray-500'}>{description}</p>
+    </button>
+  );
+}
+
+interface QuickActionCardProps {
+  icon: string;
+  title: string;
+  description: string;
+  onClick: () => void;
+}
+
+function QuickActionCard({ icon, title, description, onClick }: QuickActionCardProps) {
+  return (
+    <button
+      onClick={onClick}
+      className="bg-gradient-to-br from-primary-50 to-primary-100 rounded-xl p-6 border-2 border-primary-200 hover:border-primary-400 hover:shadow-lg transition-all text-left group"
+    >
+      <div className="text-4xl mb-3">{icon}</div>
+      <h3 className={designTokens.typography.h4 + ' mb-2 group-hover:text-primary-700 transition-colors'}>
+        {title}
+      </h3>
+      <p className={designTokens.typography.small + ' text-gray-600'}>{description}</p>
+    </button>
   );
 }
