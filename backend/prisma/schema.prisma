@@ -26,6 +26,8 @@ model User {
   creditsHistory       CreditsHistory[]
   collaborations       BotCollaborator[]
   notifications        Notification[]
+  userModules          UserModule[]
+  transactions         Transaction[]
 
   @@map("users")
 }
