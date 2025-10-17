@@ -69,7 +69,7 @@ export default function ModuleDetailPage() {
   const fetchModule = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/modules/${slug}`);
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/modules/${slug}`);
       setModule(response.data);
     } catch (error) {
       console.error('Error fetching module:', error);
@@ -83,11 +83,11 @@ export default function ModuleDetailPage() {
   const checkOwnership = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/modules/user/owned`, {
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/modules/user/owned`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const ownedModules = response.data;
-      const moduleData = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/modules/${slug}`);
+      const moduleData = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/modules/${slug}`);
       const isOwned = ownedModules.some((m: any) => m.moduleId === moduleData.data.id);
       setOwned(isOwned || moduleData.data.isCore || moduleData.data.price === 0);
     } catch (error) {
@@ -113,7 +113,7 @@ export default function ModuleDetailPage() {
       setPurchasing(true);
       const token = localStorage.getItem('token');
       await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/modules/${module.id}/purchase`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/modules/${module.id}/purchase`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );

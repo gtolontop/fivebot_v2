@@ -79,7 +79,7 @@ export default function BrowseModulesPage() {
       if (searchQuery) params.append('search', searchQuery);
 
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/modules?${params.toString()}`
+        `${process.env.NEXT_PUBLIC_API_URL}/api/modules?${params.toString()}`
       );
       setModules(response.data);
     } catch (error) {

@@ -85,13 +85,13 @@ export default function BotConfigHomePage() {
       const token = localStorage.getItem('token');
 
       // Fetch bot
-      const botRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/bots/${botId}`, {
+      const botRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/bots/${botId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setBot(botRes.data);
 
       // Fetch bot modules
-      const modulesRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/modules/bots/${botId}`, {
+      const modulesRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/modules/bots/${botId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setBotModules(modulesRes.data.filter((bm: BotModule) => bm.enabled));

@@ -67,13 +67,13 @@ export default function BotModulesPage() {
       const token = localStorage.getItem('token');
 
       // Fetch bot details
-      const botRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/bots/${botId}`, {
+      const botRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/bots/${botId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setBot(botRes.data);
 
       // Fetch bot modules
-      const modulesRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/modules/bots/${botId}`, {
+      const modulesRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/modules/bots/${botId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setBotModules(modulesRes.data);
@@ -90,7 +90,7 @@ export default function BotModulesPage() {
       setToggleLoading(moduleId);
       const token = localStorage.getItem('token');
       await axios.patch(
-        `${process.env.NEXT_PUBLIC_API_URL}/modules/bots/${botId}/${moduleId}/toggle`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/modules/bots/${botId}/${moduleId}/toggle`,
         { enabled: !enabled },
         { headers: { Authorization: `Bearer ${token}` } }
       );
