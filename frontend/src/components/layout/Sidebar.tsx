@@ -114,7 +114,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       title: 'Modules',
       items: [
-        { label: 'Browse', href: '/modules', icon: PuzzlePieceIcon },
+        { label: 'Browse', href: '/browse', icon: PuzzlePieceIcon },
         { label: 'Installed', href: '/modules/installed', icon: PuzzlePieceIcon },
       ],
     },
