@@ -18,23 +18,24 @@ interface BotConfig {
 }
 
 export async function guildMemberAdd(
-  member: GuildMember, 
-  welcomeService: WelcomeService, 
+  member: GuildMember,
+  welcomeService: WelcomeService,
   config: BotConfig
 ) {
   try {
     console.log(`New member joined: ${member.user.tag} in ${member.guild.name}`);
+    console.log(`[Auto-Role] Config check at join - Enabled: ${config.autoRoleEnabled}`);
 
     // Créer une clé unique pour éviter les doublons
     const welcomeKey = `${member.user.id}-${member.guild.id}-${Date.now()}`;
     const dedupeKey = `${member.user.id}-${member.guild.id}`;
-    
+
     // Vérifier si on a déjà traité ce membre récemment (dans les 30 dernières secondes)
     if (recentWelcomes.has(dedupeKey)) {
       console.log(`⚠️ Duplicate welcome detected for ${member.user.tag}, skipping...`);
       return;
     }
-    
+
     // Ajouter à la cache et nettoyer après 30 secondes
     recentWelcomes.add(dedupeKey);
     setTimeout(() => {
