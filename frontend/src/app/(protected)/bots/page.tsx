@@ -140,8 +140,7 @@ export default function BotsPage() {
           await botsAPI.start(botId);
           toast.success('Bot is starting...');
 
-          // Poll for status update
-          pollBotStatus(botId);
+          // The global polling will handle status updates automatically
           break;
 
         case 'stop':
@@ -155,14 +154,7 @@ export default function BotsPage() {
           await botsAPI.stop(botId);
           toast.success('Bot stopped');
 
-          // Update to OFFLINE after a short delay
-          setTimeout(() => {
-            setBots(prevBots =>
-              prevBots.map(bot =>
-                bot.id === botId ? { ...bot, status: 'OFFLINE' } : bot
-              )
-            );
-          }, 1000);
+          // The global polling will handle status updates automatically
           break;
 
         case 'delete':
