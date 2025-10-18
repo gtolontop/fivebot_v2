@@ -493,7 +493,16 @@ export class ModulesService {
       throw new NotFoundException('Module not installed on this bot');
     }
 
-    // Update config
+    // Get module details to check slug
+    const module = await this.prisma.module.findUnique({
+      where: { id: moduleId },
+    });
+
+    if (!module) {
+      throw new NotFoundException('Module not found');
+    }
+
+    // Update config in bot_modules table
     const updated = await this.prisma.botModule.update({
       where: {
         botId_moduleId: { botId, moduleId },
@@ -503,6 +512,18 @@ export class ModulesService {
       },
       include: { module: true },
     });
+
+    // Sync config to bot_configs table for compatibility
+    if (module.slug === 'auto-role' && config.roles) {
+      await this.prisma.botConfig.update({
+        where: { botId },
+        data: {
+          autoRoleEnabled: true,
+          autoRoleIds: JSON.stringify(config.roles), // Save role IDs as JSON array
+        },
+      });
+      console.log(`✅ Auto-role config synced to bot_configs for bot ${botId}`);
+    }
 
     return updated;
   }
