@@ -31,19 +31,18 @@ export default function BotManagement({
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  const handleForceRestart = async () => {
-    if (!window.confirm(`Are you sure you want to force restart ${botName}? This will stop the bot and start it again.`)) {
+  const handleRestart = async () => {
+    if (!window.confirm(`Are you sure you want to restart ${botName}? This will restart the bot process.`)) {
       return;
     }
 
-    setActionLoading('force-restart');
+    setActionLoading('restart');
     try {
-      // Force restart by stopping then starting
-      await botsAPI.start(botId, { force: true });
-      toast.success('Bot force restarted successfully');
+      await botsAPI.restart(botId);
+      toast.success('Bot restart initiated');
       onStatusChange();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Error force restarting bot');
+      toast.error(error.response?.data?.message || 'Error restarting bot');
     } finally {
       setActionLoading(null);
     }
