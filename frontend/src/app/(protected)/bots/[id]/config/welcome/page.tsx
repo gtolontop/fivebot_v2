@@ -190,9 +190,9 @@ export default function WelcomeConfigPage() {
           <div className="flex items-center space-x-3">
             <div className="text-4xl">👋</div>
             <div>
-              <h1 className={designTokens.typography.h2}>Welcome System</h1>
+              <h1 className={designTokens.typography.h2}>Welcome & Goodbye</h1>
               <p className={designTokens.typography.body + ' text-gray-500'}>
-                Configure welcome/goodbye messages and auto-roles
+                Configure welcome and goodbye messages
               </p>
             </div>
           </div>
@@ -215,7 +215,7 @@ export default function WelcomeConfigPage() {
             searchable={guilds.length > 5}
           />
           <p className="mt-2 text-xs text-blue-700">
-            Select the Discord server to configure channels and roles
+            Select the Discord server to configure channels
           </p>
         </div>
       )}
