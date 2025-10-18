@@ -31,7 +31,6 @@ export default function FrameworkConfigPage() {
 
   // Form states
   const [name, setName] = useState('');
-  const [prefix, setPrefix] = useState('');
   const [token, setToken] = useState('');
   const [showToken, setShowToken] = useState(false);
 
@@ -173,24 +172,6 @@ export default function FrameworkConfigPage() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               placeholder="My Discord Bot"
             />
-          </div>
-
-          {/* Bot Prefix */}
-          <div className="space-y-2 mb-4">
-            <label className="block text-sm font-medium text-gray-700">
-              Command Prefix
-            </label>
-            <input
-              type="text"
-              value={prefix}
-              onChange={(e) => setPrefix(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              placeholder="!"
-              maxLength={5}
-            />
-            <p className="text-sm text-gray-500">
-              The prefix users will type before commands (e.g., !help)
-            </p>
           </div>
 
           {/* Client ID (read-only) */}
