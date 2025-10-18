@@ -58,7 +58,10 @@
       "Bash(move profile \"(protected)/profile\")",
       "Bash(move billing \"(protected)/billing\")",
       "Bash(move settings \"(protected)/settings\")",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(for:*)",
+      "Bash(do echo \"=== $file ===\")",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": [],
