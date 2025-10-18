@@ -92,7 +92,7 @@ export async function guildMemberAdd(
           console.log(`   └─ Auto-role enabled but no roles configured`);
         }
       } catch (error) {
-        console.error(`   ❌ Error in auto-role:`, error.message);
+        console.error(`   ❌ Error in auto-role:`, error instanceof Error ? error.message : 'Unknown error');
       }
     }
 
