@@ -152,6 +152,8 @@ class ChildBot {
         welcomeChannelId: config.welcomeChannelId,
         welcomeEmbedJson: config.welcomeEmbedJson,
         welcomeLogoUrl: config.welcomeLogoUrl,
+        goodbyeEnabled: config.goodbyeEnabled || false,
+        goodbyeChannelId: config.goodbyeChannelId,
         moderationEnabled: config.moderationEnabled || false,
         autoRoleEnabled: config.autoRoleEnabled || false,
         autoRoleId: config.autoRoleId,
@@ -282,6 +284,12 @@ class ChildBot {
       // Reload config from database to get latest settings
       const freshConfig = await this.configService!.getConfig();
       await guildMemberAdd(member, this.welcomeService!, freshConfig as any);
+    });
+
+    this.client.on('guildMemberRemove', async (member) => {
+      // Reload config from database to get latest settings
+      const freshConfig = await this.configService!.getConfig();
+      await guildMemberRemove(member, this.welcomeService!, freshConfig as any);
     });
     
     this.client.on('interactionCreate', (interaction) => 
