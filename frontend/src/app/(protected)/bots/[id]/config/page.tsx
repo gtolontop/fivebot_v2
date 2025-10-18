@@ -118,7 +118,7 @@ export default function BotConfigHomePage() {
     );
   }
 
-  const enabledModules = botModules.filter((bm) => bm.enabled);
+  const enabledModules = botModules.filter((bm) => bm.enabled && !bm.module.isCore);
   const hasModules = enabledModules.length > 0;
 
   return (
