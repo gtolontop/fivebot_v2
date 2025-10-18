@@ -156,6 +156,10 @@ export class ModulesService {
       throw new BadRequestException('Core modules cannot be purchased (they are included by default)');
     }
 
+    if (module.price === 0 && module.author === 'FiveBot') {
+      throw new BadRequestException('This free FiveBot module is automatically available to all users');
+    }
+
     // Check if already owned
     const alreadyOwned = await this.userOwnsModule(userId, moduleId);
     if (alreadyOwned) {
