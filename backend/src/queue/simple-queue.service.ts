@@ -691,6 +691,98 @@ export class SimpleQueueService implements IQueueService {
     }
   }
 
+  private async handleRestartBot(data: JobData): Promise<void> {
+    const botId = data.botId;
+
+    try {
+      // Get bot info for better logging
+      const bot = await this.prisma.bot.findUnique({
+        where: { id: botId },
+        select: { name: true, owner: { select: { username: true } } }
+      });
+
+      const botName = bot?.name || botId;
+      const ownerName = bot?.owner?.username || 'unknown';
+
+      console.log(`🔄 Restarting bot "${botName}" (owner: ${ownerName})`);
+
+      // Save restart intention in Redis
+      await this.redisService.saveBotState(botId, {
+        status: 'RESTARTING',
+        userAction: 'restart',
+        timestamp: new Date(),
+        metadata: { intentional: true, phase: 'stopping' }
+      });
+
+      // First, stop the bot if it's running
+      const botProcess = this.runningBots.get(botId);
+      if (botProcess) {
+        console.log(`🛑 Stopping bot "${botName}" before restart...`);
+
+        // Kill the process
+        if (process.platform === 'win32' && botProcess.pid) {
+          const { exec } = require('child_process');
+          exec(`taskkill /F /PID ${botProcess.pid} /T`, (error) => {
+            if (error) {
+              console.error(`❌ taskkill error during restart:`, error);
+            } else {
+              console.log(`✅ Process ${botProcess.pid} killed for restart`);
+            }
+          });
+        } else {
+          botProcess.kill('SIGTERM');
+        }
+
+        // Wait for process to exit
+        await new Promise<void>((resolve) => {
+          const exitHandler = () => {
+            console.log(`📤 Bot ${botId} process exited for restart`);
+            resolve();
+          };
+          botProcess.once('exit', exitHandler);
+          setTimeout(() => {
+            botProcess.removeListener('exit', exitHandler);
+            resolve();
+          }, 3000);
+        });
+
+        // Clean up
+        this.runningBots.delete(botId);
+        await this.redisService.removeRunningBot(botId);
+      }
+
+      // Wait a bit for clean shutdown
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      console.log(`🚀 Starting bot "${botName}" after restart...`);
+
+      // Update Redis state to starting phase
+      await this.redisService.saveBotState(botId, {
+        status: 'STARTING',
+        userAction: 'restart',
+        timestamp: new Date(),
+        metadata: { intentional: true, phase: 'starting' }
+      });
+
+      // Now start the bot (reuse the start logic)
+      await this.handleStartBot(data);
+
+      console.log(`✅ Bot "${botName}" restarted successfully`);
+
+    } catch (error) {
+      console.error(`❌ Failed to restart bot ${botId}:`, error);
+
+      // Clean up on error
+      this.runningBots.delete(botId);
+      await this.redisService.removeRunningBot(botId);
+
+      // Mark as error
+      await this.updateBotStatusSafe(botId, BotStatus.ERROR);
+
+      throw error;
+    }
+  }
+
   private async handleDeleteBot(data: JobData): Promise<void> {
     console.log(`Deleting bot ${data.botId}`);
     // Simulate work
