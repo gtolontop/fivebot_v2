@@ -111,6 +111,44 @@ export default function ModuleConfigPage() {
     }
   };
 
+  const fetchGuilds = async () => {
+    try {
+      const token = Cookies.get('token');
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/bots/${botId}/guilds`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setGuilds(response.data);
+      if (response.data.length > 0) {
+        setSelectedGuild(response.data[0].id);
+      }
+    } catch (error) {
+      console.error('Error fetching guilds:', error);
+    }
+  };
+
+  const fetchGuildData = async (guildId: string) => {
+    try {
+      const token = Cookies.get('token');
+
+      // Fetch roles
+      const rolesRes = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/bots/${botId}/guilds/${guildId}/roles`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setGuildRoles(rolesRes.data);
+
+      // Fetch channels
+      const channelsRes = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/bots/${botId}/guilds/${guildId}/channels`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setGuildChannels(channelsRes.data);
+    } catch (error) {
+      console.error('Error fetching guild data:', error);
+    }
+  };
+
   const handleSave = async () => {
     try {
       setSaving(true);
@@ -205,6 +243,29 @@ export default function ModuleConfigPage() {
         </div>
       )}
 
+      {/* Guild Selector */}
+      {guilds.length > 0 && Object.keys(configSchema).length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <label className="block text-sm font-medium text-blue-900 mb-2">
+            Select Server
+          </label>
+          <select
+            value={selectedGuild}
+            onChange={(e) => setSelectedGuild(e.target.value)}
+            className="w-full px-4 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
+          >
+            {guilds.map((guild) => (
+              <option key={guild.id} value={guild.id}>
+                {guild.name}
+              </option>
+            ))}
+          </select>
+          <p className="mt-2 text-xs text-blue-700">
+            Select the Discord server to configure roles and channels for this module
+          </p>
+        </div>
+      )}
+
       {/* Configuration Form */}
       {Object.keys(configSchema).length > 0 ? (
         <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -276,13 +337,20 @@ export default function ModuleConfigPage() {
                 )}
 
                 {schema.type === 'channel' && (
-                  <input
-                    type="text"
+                  <select
                     value={config[key] ?? ''}
                     onChange={(e) => setConfig({ ...config, [key]: e.target.value })}
-                    placeholder="Channel ID"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  />
+                  >
+                    <option value="">Select a channel</option>
+                    {guildChannels
+                      .filter((ch) => !schema.channelType || ch.type === (schema.channelType === 'category' ? 4 : 0))
+                      .map((channel) => (
+                        <option key={channel.id} value={channel.id}>
+                          {channel.type === 4 ? '📁' : channel.type === 0 ? '#' : '🔊'} {channel.name}
+                        </option>
+                      ))}
+                  </select>
                 )}
 
                 {schema.type === 'select' && (
@@ -300,20 +368,50 @@ export default function ModuleConfigPage() {
                   </select>
                 )}
 
-                {schema.type === 'roles' && (
-                  <input
-                    type="text"
-                    value={Array.isArray(config[key]) ? config[key].join(', ') : config[key] ?? ''}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setConfig({
-                        ...config,
-                        [key]: schema.multiple ? value.split(',').map(v => v.trim()).filter(v => v) : value
-                      });
-                    }}
-                    placeholder={schema.multiple ? "Role IDs (comma-separated)" : "Role ID"}
+                {schema.type === 'roles' && !schema.multiple && (
+                  <select
+                    value={config[key] ?? ''}
+                    onChange={(e) => setConfig({ ...config, [key]: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  />
+                  >
+                    <option value="">Select a role</option>
+                    {guildRoles.map((role) => (
+                      <option key={role.id} value={role.id}>
+                        {role.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+
+                {schema.type === 'roles' && schema.multiple && (
+                  <div className="space-y-2">
+                    <div className="border border-gray-300 rounded-lg p-3 max-h-60 overflow-y-auto">
+                      {guildRoles.map((role) => (
+                        <label key={role.id} className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={(config[key] || []).includes(role.id)}
+                            onChange={(e) => {
+                              const currentRoles = config[key] || [];
+                              const newRoles = e.target.checked
+                                ? [...currentRoles, role.id]
+                                : currentRoles.filter((id: string) => id !== role.id);
+                              setConfig({ ...config, [key]: newRoles });
+                            }}
+                            className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
+                          />
+                          <span
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: `#${role.color?.toString(16).padStart(6, '0') || '99aab5'}` }}
+                          />
+                          <span className="text-sm">{role.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      {(config[key] || []).length} role(s) selected
+                    </p>
+                  </div>
                 )}
 
                 {schema.type === 'array' && (
