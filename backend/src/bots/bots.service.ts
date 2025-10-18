@@ -167,6 +167,30 @@ export class BotsService {
       },
     });
 
+    // Install core framework module automatically
+    console.log('Installation du module framework...');
+    try {
+      const frameworkModule = await this.prisma.module.findUnique({
+        where: { slug: 'framework' },
+      });
+
+      if (frameworkModule) {
+        await this.prisma.botModule.create({
+          data: {
+            botId: bot.id,
+            moduleId: frameworkModule.id,
+            enabled: true,
+          },
+        });
+        console.log('Module framework installé avec succès');
+      } else {
+        console.warn('Module framework non trouvé dans la base de données');
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'installation du module framework:', error);
+      // Continue anyway, non-critical
+    }
+
     // Spend user credits
     console.log('Déduction des crédits...');
     await this.usersService.spendCredits(ownerId, creditCost, `Created bot: ${data.name}`);
