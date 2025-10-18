@@ -83,13 +83,13 @@ export async function guildMemberAdd(
           }
 
           if (assignedRoles.length > 0) {
-            console.log(`   ├─ Auto-assigned ${assignedRoles.length} role(s): ${assignedRoles.join(', ')}`);
+            console.log(`   🎭 Auto-assigned ${assignedRoles.length} role(s): ${assignedRoles.join(', ')}`);
           }
           if (failedRoles.length > 0) {
-            console.log(`   └─ Failed to assign ${failedRoles.length} role(s)`);
+            console.log(`   ⚠️  Failed to assign ${failedRoles.length} role(s)`);
           }
         } else {
-          console.log(`   └─ Auto-role enabled but no roles configured`);
+          console.log(`   ⚠️  Auto-role enabled but no roles configured`);
         }
       } catch (error) {
         console.error(`   ❌ Error in auto-role:`, error instanceof Error ? error.message : 'Unknown error');
