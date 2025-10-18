@@ -283,6 +283,93 @@ export default function ModuleConfigPage() {
                     ))}
                   </select>
                 )}
+
+                {schema.type === 'roles' && (
+                  <input
+                    type="text"
+                    value={Array.isArray(config[key]) ? config[key].join(', ') : config[key] ?? ''}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setConfig({
+                        ...config,
+                        [key]: schema.multiple ? value.split(',').map(v => v.trim()).filter(v => v) : value
+                      });
+                    }}
+                    placeholder={schema.multiple ? "Role IDs (comma-separated)" : "Role ID"}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                )}
+
+                {schema.type === 'array' && (
+                  <div className="space-y-3">
+                    {(config[key] || []).map((item: any, idx: number) => (
+                      <div key={idx} className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg">
+                        <div className="flex-1 space-y-3">
+                          {schema.itemSchema && Object.entries(schema.itemSchema).map(([itemKey, itemSchema]: [string, any]) => (
+                            <div key={itemKey}>
+                              <label className="block text-xs font-medium text-gray-600 mb-1">
+                                {itemKey}
+                              </label>
+                              {itemSchema.type === 'select' ? (
+                                <select
+                                  value={item[itemKey] ?? itemSchema.options?.[0] ?? ''}
+                                  onChange={(e) => {
+                                    const newArray = [...(config[key] || [])];
+                                    newArray[idx] = { ...newArray[idx], [itemKey]: e.target.value };
+                                    setConfig({ ...config, [key]: newArray });
+                                  }}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                >
+                                  {itemSchema.options?.map((option: string) => (
+                                    <option key={option} value={option}>
+                                      {option}
+                                    </option>
+                                  ))}
+                                </select>
+                              ) : (
+                                <input
+                                  type="text"
+                                  value={item[itemKey] ?? ''}
+                                  onChange={(e) => {
+                                    const newArray = [...(config[key] || [])];
+                                    newArray[idx] = { ...newArray[idx], [itemKey]: e.target.value };
+                                    setConfig({ ...config, [key]: newArray });
+                                  }}
+                                  maxLength={itemSchema.maxLength}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                        <button
+                          onClick={() => {
+                            const newArray = [...(config[key] || [])];
+                            newArray.splice(idx, 1);
+                            setConfig({ ...config, [key]: newArray });
+                          }}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      onClick={() => {
+                        const newItem: any = {};
+                        if (schema.itemSchema) {
+                          Object.entries(schema.itemSchema).forEach(([itemKey, itemSchema]: [string, any]) => {
+                            newItem[itemKey] = itemSchema.options?.[0] ?? '';
+                          });
+                        }
+                        setConfig({ ...config, [key]: [...(config[key] || []), newItem] });
+                      }}
+                      className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-primary-500 hover:text-primary-600 transition-colors"
+                    >
+                      + Add {schema.label || 'Item'}
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
