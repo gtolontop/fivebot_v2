@@ -81,12 +81,6 @@ export default function InstalledModulesPage() {
       setLoading(true);
       const token = localStorage.getItem('token');
 
-      if (!token) {
-        toast.error('No authentication token found');
-        router.push('/auth/login');
-        return;
-      }
-
       // Fetch user modules
       const modulesRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/modules/user/owned`, {
         headers: { Authorization: `Bearer ${token}` },
