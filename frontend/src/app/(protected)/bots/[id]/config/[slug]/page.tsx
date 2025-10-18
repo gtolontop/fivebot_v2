@@ -41,6 +41,10 @@ export default function ModuleConfigPage() {
   const [config, setConfig] = useState<any>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [guilds, setGuilds] = useState<any[]>([]);
+  const [selectedGuild, setSelectedGuild] = useState<string>('');
+  const [guildRoles, setGuildRoles] = useState<any[]>([]);
+  const [guildChannels, setGuildChannels] = useState<any[]>([]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -51,8 +55,15 @@ export default function ModuleConfigPage() {
   useEffect(() => {
     if (user && botId && moduleSlug) {
       fetchData();
+      fetchGuilds();
     }
   }, [user, botId, moduleSlug]);
+
+  useEffect(() => {
+    if (selectedGuild) {
+      fetchGuildData(selectedGuild);
+    }
+  }, [selectedGuild]);
 
   const fetchData = async () => {
     try {
