@@ -431,35 +431,31 @@ export default function ModuleConfigPage() {
                 )}
 
                 {schema.type === 'channel' && (
-                  <select
-                    value={config[key] ?? ''}
-                    onChange={(e) => setConfig({ ...config, [key]: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  >
-                    <option value="">Select a channel</option>
-                    {guildChannels
+                  <CustomSelect
+                    options={guildChannels
                       .filter((ch) => !schema.channelType || ch.type === (schema.channelType === 'category' ? 4 : 0))
-                      .map((channel) => (
-                        <option key={channel.id} value={channel.id}>
-                          {channel.type === 4 ? '📁' : channel.type === 0 ? '#' : '🔊'} {channel.name}
-                        </option>
-                      ))}
-                  </select>
+                      .map((channel) => ({
+                        value: channel.id,
+                        label: channel.name,
+                        icon: channel.type === 4 ? '📁' : channel.type === 0 ? '#' : '🔊'
+                      }))}
+                    value={config[key] ?? ''}
+                    onChange={(value) => setConfig({ ...config, [key]: value })}
+                    placeholder="Select a channel"
+                    searchable={guildChannels.length > 10}
+                  />
                 )}
 
                 {schema.type === 'select' && (
-                  <select
+                  <CustomSelect
+                    options={schema.options?.map((option: string) => ({
+                      value: option,
+                      label: option
+                    })) || []}
                     value={config[key] ?? schema.default ?? ''}
-                    onChange={(e) => setConfig({ ...config, [key]: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  >
-                    <option value="">Select an option</option>
-                    {schema.options?.map((option: string) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(value) => setConfig({ ...config, [key]: value })}
+                    placeholder="Select an option"
+                  />
                 )}
 
                 {schema.type === 'roles' && !schema.multiple && (
