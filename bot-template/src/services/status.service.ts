@@ -19,14 +19,12 @@ export class StatusService {
   private currentIndex: number = 0;
   private rotationTimer?: NodeJS.Timeout;
 
-  constructor(client: Client) {
+  constructor(client: Client, moduleConfig?: any) {
     this.client = client;
-    this.config = this.loadConfig();
+    this.config = this.loadConfig(moduleConfig);
   }
 
-  private loadConfig(): StatusConfig {
-    const envConfig = process.env.CONFIG ? JSON.parse(process.env.CONFIG) : {};
-
+  private loadConfig(moduleConfig?: any): StatusConfig {
     // Default statuses with variables
     const defaultStatuses: StatusItem[] = [
       {
@@ -39,38 +37,27 @@ export class StatusService {
         type: 'playing',
         status: 'online'
       },
-      {
-        text: 'Version 2.0',
-        type: 'playing',
-        status: 'online'
-      },
-      {
-        text: '{members} members',
-        type: 'watching',
-        status: 'online'
-      },
-      {
-        text: 'with {channels} channels',
-        type: 'playing',
-        status: 'online'
-      }
     ];
 
-    // Parse statusRotation if it exists
-    let statusRotation = envConfig.statusRotation || {};
-    if (typeof statusRotation === 'string') {
-      try {
-        statusRotation = JSON.parse(statusRotation);
-      } catch (e) {
-        console.error('Failed to parse statusRotation:', e);
-        statusRotation = {};
-      }
+    // If module config is provided, use it
+    if (moduleConfig && moduleConfig.statuses && Array.isArray(moduleConfig.statuses)) {
+      const statuses = moduleConfig.statuses.map((s: any) => ({
+        text: s.text || '',
+        type: (s.type || 'PLAYING').toLowerCase() as StatusItem['type'],
+        status: 'online' as const
+      }));
+
+      return {
+        enabled: statuses.length > 0,
+        rotationInterval: moduleConfig.interval || 60,
+        statuses: statuses.length > 0 ? statuses : defaultStatuses
+      };
     }
 
     return {
-      enabled: statusRotation.enabled ?? false, // Disabled by default until configured
-      rotationInterval: statusRotation.interval ?? 60, // 60 seconds default
-      statuses: statusRotation.statuses || defaultStatuses
+      enabled: false,
+      rotationInterval: 60,
+      statuses: defaultStatuses
     };
   }
 
