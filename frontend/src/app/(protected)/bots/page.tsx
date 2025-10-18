@@ -41,6 +41,7 @@ export default function BotsPage() {
   const [botsLoading, setBotsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [pollingActive, setPollingActive] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -53,6 +54,46 @@ export default function BotsPage() {
       fetchBots();
     }
   }, [user, loading]);
+
+  // Global polling for all transitioning bots
+  useEffect(() => {
+    // Check if any bot is in a transitioning state
+    const hasTransitioningBots = bots.some(
+      bot => bot.status === 'STARTING' || bot.status === 'STOPPING'
+    );
+
+    if (hasTransitioningBots && !pollingActive) {
+      setPollingActive(true);
+      const interval = setInterval(async () => {
+        try {
+          // Refresh all bots
+          const response = await botsAPI.getAll();
+          const updatedBots = response.data;
+          setBots(updatedBots);
+
+          // Check if we should stop polling
+          const stillTransitioning = updatedBots.some(
+            (bot: Bot) => bot.status === 'STARTING' || bot.status === 'STOPPING'
+          );
+
+          if (!stillTransitioning) {
+            setPollingActive(false);
+            clearInterval(interval);
+          }
+        } catch (error) {
+          console.error('Error polling bot statuses:', error);
+        }
+      }, 1000); // Poll every second
+
+      // Cleanup
+      return () => {
+        clearInterval(interval);
+        setPollingActive(false);
+      };
+    } else if (!hasTransitioningBots && pollingActive) {
+      setPollingActive(false);
+    }
+  }, [bots, pollingActive]);
 
   const fetchBots = async () => {
     try {
