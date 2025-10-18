@@ -138,6 +138,13 @@ export default function ModuleConfigPage() {
         `${process.env.NEXT_PUBLIC_API_URL}/api/bots/${botId}/guilds/${guildId}/roles`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      // Find bot's highest role position
+      const botRole = rolesRes.data.find((r: any) => r.tags?.bot_id === bot?.clientId);
+      if (botRole) {
+        setBotHighestRole(botRole.position);
+      }
+
       setGuildRoles(rolesRes.data);
 
       // Fetch channels
@@ -148,6 +155,49 @@ export default function ModuleConfigPage() {
       setGuildChannels(channelsRes.data);
     } catch (error) {
       console.error('Error fetching guild data:', error);
+    }
+  };
+
+  const getAssignableRoles = () => {
+    return guildRoles.filter((role) => {
+      // Exclure @everyone
+      if (role.name === '@everyone') return false;
+
+      // Exclure les rôles managed (bots, intégrations, booster)
+      if (role.managed) return false;
+
+      // Exclure les rôles au-dessus du bot
+      if (role.position >= botHighestRole) return false;
+
+      return true;
+    }).sort((a, b) => b.position - a.position); // Trier par position (plus haut en premier)
+  };
+
+  const handleImageUpload = async (file: File, fieldKey: string) => {
+    try {
+      setUploading(true);
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const token = Cookies.get('token');
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/upload`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      setConfig({ ...config, [fieldKey]: response.data.url });
+      toast.success('Image uploaded successfully');
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'Failed to upload image';
+      toast.error(message);
+    } finally {
+      setUploading(false);
     }
   };
 
