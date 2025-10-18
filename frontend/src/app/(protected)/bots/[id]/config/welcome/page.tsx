@@ -28,16 +28,13 @@ export default function WelcomeConfigPage() {
   const [config, setConfig] = useState<BotConfig>({
     welcomeEnabled: false,
     goodbyeEnabled: false,
-    autoRoleEnabled: false,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [guilds, setGuilds] = useState<any[]>([]);
   const [selectedGuild, setSelectedGuild] = useState<string>('');
   const [guildChannels, setGuildChannels] = useState<any[]>([]);
-  const [guildRoles, setGuildRoles] = useState<any[]>([]);
   const [uploading, setUploading] = useState(false);
-  const [botHighestRole, setBotHighestRole] = useState<number>(0);
 
   useEffect(() => {
     if (!authLoading && !user) {
