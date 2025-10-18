@@ -69,6 +69,8 @@ model BotConfig {
   welcomeChannelId          String?  @map("welcome_channel_id")
   welcomeEmbedJson          String?  @map("welcome_embed_json") @db.Text
   welcomeLogoUrl            String?  @map("welcome_logo_url")
+  goodbyeEnabled            Boolean  @default(false) @map("goodbye_enabled")
+  goodbyeChannelId          String?  @map("goodbye_channel_id")
   moderationEnabled         Boolean  @default(false) @map("moderation_enabled")
   autoRoleEnabled           Boolean  @default(false) @map("auto_role_enabled")
   autoRoleId                String?  @map("auto_role_id")
