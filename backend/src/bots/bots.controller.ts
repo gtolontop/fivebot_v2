@@ -239,6 +239,12 @@ export class BotsController {
     return this.botsService.findOne(id, req.user.id);
   }
 
+  @Get(':id/config')
+  @UseGuards(AuthGuard('jwt'))
+  async getConfig(@Param('id') id: string, @Req() req: any) {
+    return this.botsService.getConfig(id, req.user.id);
+  }
+
   @Patch(':id/config')
   @UseGuards(AuthGuard('jwt'))
   async updateConfig(
