@@ -103,12 +103,7 @@ export class ModulesService {
       return true;
     }
 
-    // Check if module is free
-    if (module?.price === 0) {
-      return true;
-    }
-
-    // Check if user purchased it
+    // Check if user has it in their collection (purchased or claimed)
     const userModule = await this.prisma.userModule.findUnique({
       where: {
         userId_moduleId: { userId, moduleId },
