@@ -73,6 +73,14 @@ export class ModuleLoaderService {
   }
 
   getEnabledModules(): LoadedModule[] {
-    return this.getAllModules().filter(m => m.enabled);
+    return this.getAllModules()
+      .filter(m => m.enabled)
+      .sort((a, b) => {
+        // Framework toujours en premier
+        if (a.isCore && !b.isCore) return -1;
+        if (!a.isCore && b.isCore) return 1;
+        // Ensuite par ordre alphabétique
+        return a.name.localeCompare(b.name);
+      });
   }
 }
