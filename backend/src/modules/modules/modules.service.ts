@@ -103,6 +103,11 @@ export class ModulesService {
       return true;
     }
 
+    // Check if module is free and from FiveBot (auto-owned)
+    if (module?.price === 0 && module?.author === 'FiveBot') {
+      return true;
+    }
+
     // Check if user has it in their collection (purchased or claimed)
     const userModule = await this.prisma.userModule.findUnique({
       where: {
