@@ -93,12 +93,13 @@ export class ModulesService {
       },
     });
 
-    // Get all free FiveBot modules (auto-owned)
+    // Get all free FiveBot modules (auto-owned) - exclude Framework/Core modules
     const fiveBotFreeModules = await this.prisma.module.findMany({
       where: {
         price: 0,
         author: 'FiveBot',
         isActive: true,
+        isCore: false, // Exclude core/framework modules
       },
     });
 
