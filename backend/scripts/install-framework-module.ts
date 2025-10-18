@@ -38,7 +38,7 @@ async function installFrameworkModuleOnAllBots() {
     let alreadyInstalledCount = 0;
 
     for (const bot of bots) {
-      if (bot.modules.length > 0) {
+      if (bot.botModules.length > 0) {
         console.log(`⏭️  Bot "${bot.name}" a déjà le module framework installé`);
         alreadyInstalledCount++;
         continue;
