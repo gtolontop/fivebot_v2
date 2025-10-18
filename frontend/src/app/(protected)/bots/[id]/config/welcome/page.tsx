@@ -108,18 +108,6 @@ export default function WelcomeConfigPage() {
     try {
       const token = Cookies.get('token');
 
-      const rolesRes = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/bots/${botId}/guilds/${guildId}/roles`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      const botRole = rolesRes.data.find((r: any) => r.tags?.bot_id === bot?.clientId);
-      if (botRole) {
-        setBotHighestRole(botRole.position);
-      }
-
-      setGuildRoles(rolesRes.data);
-
       const channelsRes = await axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}/api/bots/${botId}/guilds/${guildId}/channels`,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -128,17 +116,6 @@ export default function WelcomeConfigPage() {
     } catch (error) {
       console.error('Error fetching guild data:', error);
     }
-  };
-
-  const getAssignableRoles = () => {
-    return guildRoles
-      .filter((role) => {
-        if (role.name === '@everyone') return false;
-        if (role.managed) return false;
-        if (botHighestRole > 0 && role.position >= botHighestRole) return false;
-        return true;
-      })
-      .sort((a, b) => b.position - a.position);
   };
 
   const handleImageUpload = async (file: File, fieldKey: string) => {
@@ -198,7 +175,6 @@ export default function WelcomeConfigPage() {
   }
 
   const textChannels = guildChannels.filter((ch) => ch.type === 0);
-  const selectedRoleIds = config.autoRoleIds ? JSON.parse(config.autoRoleIds) : [];
 
   return (
     <div className="space-y-6">
