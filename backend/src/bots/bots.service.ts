@@ -12,7 +12,6 @@ import { ConsoleBufferService } from './console-buffer.service';
 interface CreateBotDto {
   name: string;
   token: string;
-  prefix?: string;
 }
 
 interface UpdateBotConfigDto {
