@@ -410,6 +410,24 @@ export class BotsService {
     return bot;
   }
 
+  async getConfig(botId: string, ownerId: string): Promise<BotConfig> {
+    // Verify ownership
+    const bot = await this.findOne(botId, ownerId);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    const config = await this.prisma.botConfig.findUnique({
+      where: { botId },
+    });
+
+    if (!config) {
+      throw new NotFoundException('Bot configuration not found');
+    }
+
+    return config;
+  }
+
   async updateConfig(botId: string, ownerId: string, data: UpdateBotConfigDto): Promise<BotConfig> {
     // Verify ownership
     const bot = await this.findOne(botId, ownerId);
