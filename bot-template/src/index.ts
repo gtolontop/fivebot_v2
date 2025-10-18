@@ -228,8 +228,6 @@ class ChildBot {
         if (this.commandService) {
           try {
             this.commandService.start();
-            await new Promise(resolve => process.stdout.write('├─ Command module ready\n', resolve));
-            await new Promise(resolve => setTimeout(resolve, 50));
           } catch (error) {
             console.error('⚠️ Failed to start command module:', error);
           }
@@ -238,26 +236,18 @@ class ChildBot {
         // Initialize metrics service after bot is ready
         try {
           this.metricsService = new MetricsService(this.client, this.prisma, this.botId);
-          await new Promise(resolve => process.stdout.write('├─ Metrics tracking ready\n', resolve));
-          await new Promise(resolve => setTimeout(resolve, 50));
         } catch (error) {
           console.error('⚠️ Failed to initialize metrics service:', error);
         }
 
-        // Start status rotation module
-        try {
-          this.statusService = new StatusService(this.client);
-          const rotationStatus = this.statusService.start();
-
-          if (rotationStatus.enabled && rotationStatus.interval) {
-            await new Promise(resolve => process.stdout.write(`└─ Status module ready (rotation active - ${rotationStatus.interval}s)\n`, resolve));
-            await new Promise(resolve => setTimeout(resolve, 50));
-          } else {
-            await new Promise(resolve => process.stdout.write('└─ Status module ready (rotation disabled)\n', resolve));
-            await new Promise(resolve => setTimeout(resolve, 50));
+        // Start status rotation module if enabled
+        if (this.moduleLoader?.isModuleEnabled('status-rotation')) {
+          try {
+            this.statusService = new StatusService(this.client);
+            const rotationStatus = this.statusService.start();
+          } catch (error) {
+            console.error('⚠️ Failed to start status rotation:', error);
           }
-        } catch (error) {
-          console.error('⚠️ Failed to start status module:', error);
         }
 
         await new Promise(resolve => process.stdout.write('✅ Bot fully operational\n', resolve));
