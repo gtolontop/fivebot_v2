@@ -34,7 +34,6 @@ import { LogLevel } from '@prisma/client';
 interface CreateBotDto {
   name: string;
   token: string;
-  prefix?: string;
 }
 
 interface UpdateBotConfigDto {

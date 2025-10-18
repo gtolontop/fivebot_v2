@@ -40,7 +40,6 @@ model Bot {
   clientId       String?           @map("client_id")
   avatar         String?
   banner         String?
-  prefix         String            @default("!")
   isActive       Boolean           @default(false) @map("is_active")
   containerId    String?           @map("container_id")
   instanceId     String?           @map("instance_id")
