@@ -181,6 +181,7 @@ class ChildBot {
       console.error('Error loading config:', error);
       return {
         welcomeEnabled: false,
+        goodbyeEnabled: false,
         moderationEnabled: false,
         autoRoleEnabled: false,
       };
