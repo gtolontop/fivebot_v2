@@ -90,8 +90,9 @@ export default function ModuleDetailPage() {
       const ownedModules = response.data;
       const moduleData = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/modules/${slug}`);
       const isOwned = ownedModules.some((m: any) => m.moduleId === moduleData.data.id);
-      // Only mark as owned if it's in the user's collection OR if it's a core module
-      setOwned(isOwned || moduleData.data.isCore);
+      // Mark as owned if: in collection, core module, or free FiveBot module
+      const isFiveBotFree = moduleData.data.price === 0 && moduleData.data.author === 'FiveBot';
+      setOwned(isOwned || moduleData.data.isCore || isFiveBotFree);
     } catch (error) {
       console.error('Error checking ownership:', error);
     }
