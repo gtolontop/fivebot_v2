@@ -207,14 +207,19 @@ export default function ModuleConfigPage() {
                 </label>
 
                 {schema.type === 'boolean' && (
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={config[key] ?? schema.default ?? false}
-                      onChange={(e) => setConfig({ ...config, [key]: e.target.checked })}
-                      className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
-                    />
-                    <span className="text-sm text-gray-600">Enable this feature</span>
+                  <div className="flex items-center space-x-3">
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={config[key] ?? schema.default ?? false}
+                        onChange={(e) => setConfig({ ...config, [key]: e.target.checked })}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                    </label>
+                    <span className={`text-sm font-medium ${config[key] ?? schema.default ? 'text-primary-600' : 'text-gray-500'}`}>
+                      {config[key] ?? schema.default ? 'Enabled' : 'Disabled'}
+                    </span>
                   </div>
                 )}
 
