@@ -23,8 +23,7 @@ export async function guildMemberAdd(
   config: BotConfig
 ) {
   try {
-    console.log(`New member joined: ${member.user.tag} in ${member.guild.name}`);
-    console.log(`[Auto-Role] Config check at join - Enabled: ${config.autoRoleEnabled}`);
+    console.log(`\n👋 New member: ${member.user.tag}`);
 
     // Créer une clé unique pour éviter les doublons
     const welcomeKey = `${member.user.id}-${member.guild.id}-${Date.now()}`;
@@ -32,7 +31,7 @@ export async function guildMemberAdd(
 
     // Vérifier si on a déjà traité ce membre récemment (dans les 30 dernières secondes)
     if (recentWelcomes.has(dedupeKey)) {
-      console.log(`⚠️ Duplicate welcome detected for ${member.user.tag}, skipping...`);
+      console.log(`⚠️  Duplicate event detected, skipping...`);
       return;
     }
 
@@ -57,14 +56,12 @@ export async function guildMemberAdd(
           try {
             roleIds = JSON.parse(config.autoRoleIds);
           } catch (e) {
-            console.error(`❌ Failed to parse autoRoleIds:`, e);
+            console.error(`   ❌ Failed to parse role configuration`);
           }
         } else if (config.autoRoleId) {
           // Legacy single role support
           roleIds = [config.autoRoleId];
         }
-
-        console.log(`[Auto-Role] Config check - Enabled: ${config.autoRoleEnabled}, Role IDs: ${roleIds.join(', ')}`);
 
         if (roleIds.length > 0) {
           const assignedRoles: string[] = [];
@@ -73,33 +70,29 @@ export async function guildMemberAdd(
           for (const roleId of roleIds) {
             try {
               const role = member.guild.roles.cache.get(roleId);
-              console.log(`[Auto-Role] Role lookup for ${roleId}:`, role ? `Found: ${role.name}` : 'Not found in cache');
 
               if (role) {
                 await member.roles.add(role);
                 assignedRoles.push(role.name);
-                console.log(`✅ Auto-role assigned to ${member.user.tag}: ${role.name}`);
               } else {
                 failedRoles.push(roleId);
-                console.warn(`⚠️ Auto-role not found in cache: ${roleId}`);
               }
             } catch (roleError) {
               failedRoles.push(roleId);
-              console.error(`❌ Failed to assign role ${roleId}:`, roleError);
             }
           }
 
           if (assignedRoles.length > 0) {
-            console.log(`✅ Successfully assigned ${assignedRoles.length} role(s): ${assignedRoles.join(', ')}`);
+            console.log(`   ├─ Auto-assigned ${assignedRoles.length} role(s): ${assignedRoles.join(', ')}`);
           }
           if (failedRoles.length > 0) {
-            console.warn(`⚠️ Failed to assign ${failedRoles.length} role(s): ${failedRoles.join(', ')}`);
+            console.log(`   └─ Failed to assign ${failedRoles.length} role(s)`);
           }
         } else {
-          console.warn(`⚠️ Auto-role is enabled but no role IDs are configured`);
+          console.log(`   └─ Auto-role enabled but no roles configured`);
         }
       } catch (error) {
-        console.error(`❌ Error in auto-role assignment:`, error);
+        console.error(`   ❌ Error in auto-role:`, error.message);
       }
     }
 
