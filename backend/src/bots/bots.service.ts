@@ -772,6 +772,83 @@ export class BotsService {
     return this.findOne(botId, ownerId);
   }
 
+  async restart(botId: string, ownerId: string): Promise<Bot> {
+    const bot = await this.findOne(botId, ownerId);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    // Get owner username for logging
+    const owner = await this.prisma.user.findUnique({
+      where: { id: bot.ownerId },
+      select: { username: true }
+    });
+    const ownerUsername = owner?.username || 'unknown';
+
+    console.log(`🔄 Restarting bot "${bot.name}" (owner: ${ownerUsername})`);
+
+    // Add restarting log
+    await this.botLogsService.addLog(
+      botId,
+      LogLevel.INFO,
+      'Server marked as restarting...',
+      'System'
+    );
+
+    // Update status to RESTARTING
+    await this.updateStatus(botId, BotStatus.RESTARTING);
+
+    // Clear console buffer
+    this.consoleBufferService.clearBuffer(botId);
+
+    // Create job log for restart
+    await this.prisma.jobLog.create({
+      data: {
+        botId,
+        jobId: `restart-${Date.now()}`,
+        jobType: 'RESTART_BOT',
+        status: 'PROCESSING',
+        message: `🔄 Restarting bot "${bot.name}" (requested by ${ownerUsername})`,
+        metadata: JSON.stringify({
+          requestedBy: ownerId,
+          requesterUsername: ownerUsername,
+          timestamp: new Date().toISOString()
+        })
+      }
+    });
+
+    // Add restart job to queue
+    try {
+      await Promise.race([
+        this.queueService.addJob('restart-bot', { botId }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Queue timeout')), 3000)
+        )
+      ]);
+    } catch (error) {
+      console.error('Warning: Queue operation delayed, continuing anyway:', error.message);
+      // Still try to add the job in background
+      this.queueService.addJob('restart-bot', { botId }).catch(e =>
+        console.error('Background queue add failed:', e)
+      );
+    }
+
+    // Create audit log
+    this.prisma.auditLog.create({
+      data: {
+        userId: ownerId,
+        botId,
+        action: 'BOT_RESTARTED',
+        resource: 'bot',
+      },
+    }).catch(error => console.error('Failed to create audit log:', error));
+
+    // Invalidate cache
+    await this.invalidateBotsCache(ownerId);
+
+    return this.findOne(botId, ownerId);
+  }
+
   async suspend(botId: string, ownerId: string): Promise<Bot> {
     const bot = await this.findOne(botId, ownerId);
     if (!bot) {
