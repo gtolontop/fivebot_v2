@@ -82,7 +82,7 @@ export default function ModuleDetailPage() {
 
   const checkOwnership = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = Cookies.get('token');
       const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/modules/user/owned`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -111,7 +111,7 @@ export default function ModuleDetailPage() {
 
     try {
       setPurchasing(true);
-      const token = localStorage.getItem('token');
+      const token = Cookies.get('token');
       await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/api/modules/${module.id}/purchase`,
         {},
