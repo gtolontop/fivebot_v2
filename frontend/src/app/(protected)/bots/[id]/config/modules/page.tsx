@@ -64,7 +64,7 @@ export default function BotModulesPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = Cookies.get('token');
 
       // Fetch bot details
       const botRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/bots/${botId}`, {
@@ -88,7 +88,7 @@ export default function BotModulesPage() {
   const handleToggle = async (moduleId: string, enabled: boolean) => {
     try {
       setToggleLoading(moduleId);
-      const token = localStorage.getItem('token');
+      const token = Cookies.get('token');
       await axios.patch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/modules/bots/${botId}/${moduleId}/toggle`,
         { enabled: !enabled },

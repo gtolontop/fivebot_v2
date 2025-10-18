@@ -79,7 +79,7 @@ export default function InstalledModulesPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = Cookies.get('token');
 
       // Fetch user modules
       const modulesRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/modules/user/owned`, {
@@ -118,7 +118,7 @@ export default function InstalledModulesPage() {
   const handleInstall = async (botId: string, moduleId: string) => {
     try {
       setActionLoading(`install-${botId}-${moduleId}`);
-      const token = localStorage.getItem('token');
+      const token = Cookies.get('token');
       await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/api/modules/bots/${botId}/${moduleId}/install`,
         {},
@@ -139,7 +139,7 @@ export default function InstalledModulesPage() {
 
     try {
       setActionLoading(`uninstall-${botId}-${moduleId}`);
-      const token = localStorage.getItem('token');
+      const token = Cookies.get('token');
       await axios.delete(
         `${process.env.NEXT_PUBLIC_API_URL}/api/modules/bots/${botId}/${moduleId}`,
         { headers: { Authorization: `Bearer ${token}` } }
