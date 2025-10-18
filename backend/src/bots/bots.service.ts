@@ -104,15 +104,7 @@ export class BotsService {
       throw new BadRequestException('Insufficient credits');
     }
 
-    // Check user's bot limit
-    const maxBots = parseInt(process.env.MAX_BOTS_PER_USER) || 5;
-    const userBotCount = await this.prisma.bot.count({
-      where: { ownerId, isActive: true },
-    });
-
-    if (userBotCount >= maxBots) {
-      throw new BadRequestException(`Maximum of ${maxBots} bots per user`);
-    }
+    // Bot limit removed - users can create unlimited bots
 
     // Encrypt the token
     const encryptedToken = this.encryptionService.encrypt(data.token);
