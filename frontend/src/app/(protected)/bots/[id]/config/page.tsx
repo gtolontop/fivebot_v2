@@ -142,12 +142,6 @@ export default function BotConfigHomePage() {
             description="Manage team members"
             onClick={() => router.push(`/bots/${botId}/config/collab`)}
           />
-          <ConfigCard
-            icon="🔄"
-            title="Status Rotation"
-            description="Bot status messages"
-            onClick={() => router.push(`/bots/${botId}/config/status`)}
-          />
         </div>
       </div>
 
