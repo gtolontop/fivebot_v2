@@ -195,4 +195,75 @@ export class WelcomeService {
   async testWelcomeMessage(member: GuildMember): Promise<EmbedBuilder> {
     return this.buildWelcomeEmbed(member);
   }
+
+  async sendGoodbyeMessage(member: GuildMember): Promise<boolean> {
+    try {
+      if (!this.config.goodbyeEnabled) {
+        return false;
+      }
+
+      // Determine goodbye channel
+      let goodbyeChannel: TextChannel | null = null;
+
+      if (this.config.goodbyeChannelId) {
+        const channel = member.guild.channels.cache.get(this.config.goodbyeChannelId);
+        if (channel && channel.isTextBased()) {
+          goodbyeChannel = channel as TextChannel;
+        }
+      }
+
+      // Fallback to welcome channel if no specific goodbye channel
+      if (!goodbyeChannel && this.config.welcomeChannelId) {
+        const channel = member.guild.channels.cache.get(this.config.welcomeChannelId);
+        if (channel && channel.isTextBased()) {
+          goodbyeChannel = channel as TextChannel;
+        }
+      }
+
+      // Fallback to system channel or general channel
+      if (!goodbyeChannel) {
+        goodbyeChannel = member.guild.systemChannel ||
+          member.guild.channels.cache.find(
+            (ch) => ch.name.includes('general') && ch.isTextBased()
+          ) as TextChannel || null;
+      }
+
+      if (!goodbyeChannel) {
+        console.warn('No suitable goodbye channel found');
+        return false;
+      }
+
+      // Build goodbye message
+      const embed = this.buildGoodbyeEmbed(member);
+      await goodbyeChannel.send({ embeds: [embed] });
+
+      console.log(`👋 Goodbye message sent for ${member.user.tag} in #${goodbyeChannel.name}`);
+      return true;
+    } catch (error) {
+      console.error('Error sending goodbye message:', error);
+      return false;
+    }
+  }
+
+  private buildGoodbyeEmbed(member: GuildMember): EmbedBuilder {
+    const embed = new EmbedBuilder()
+      .setTitle('👋 Au revoir!')
+      .setDescription(`**${member.user.tag}** a quitté le serveur.\n\nNous espérons vous revoir bientôt!`)
+      .setColor(0xED4245)
+      .addFields(
+        {
+          name: '📊 Statistiques',
+          value: `Il reste **${member.guild.memberCount} membres** dans le serveur.`,
+          inline: true,
+        }
+      )
+      .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
+      .setFooter({
+        text: `Powered by FiveBot v2`,
+        iconURL: this.client.user?.displayAvatarURL(),
+      })
+      .setTimestamp();
+
+    return embed;
+  }
 }
