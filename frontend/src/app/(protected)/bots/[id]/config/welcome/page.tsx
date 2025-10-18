@@ -78,9 +78,6 @@ export default function WelcomeConfigPage() {
           welcomeLogoUrl: configRes.data.welcomeLogoUrl,
           goodbyeEnabled: configRes.data.goodbyeEnabled || false,
           goodbyeChannelId: configRes.data.goodbyeChannelId,
-          autoRoleEnabled: configRes.data.autoRoleEnabled || false,
-          autoRoleIds: configRes.data.autoRoleIds,
-          loggingChannelId: configRes.data.loggingChannelId,
         });
       }
     } catch (error: any) {
