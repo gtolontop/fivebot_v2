@@ -38,6 +38,17 @@ export default function CreateBotPage() {
     } catch (error: any) {
       console.error('Error creating bot:', error);
       const errorMessage = error.response?.data?.message || error.message || 'Failed to create bot';
+
+      // Check if error is about duplicate token
+      if (errorMessage.includes('already have a bot with this token')) {
+        toast.error('You already have a bot with this token');
+        // Redirect to bots overview page
+        setTimeout(() => {
+          router.push('/bots');
+        }, 1500);
+        return;
+      }
+
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
