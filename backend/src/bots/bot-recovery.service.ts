@@ -78,100 +78,40 @@ export class BotRecoveryService implements OnApplicationBootstrap {
 
       this.logger.log(`🔍 Considering ${botsToConsider.size} bots for recovery`);
 
-      // PHASE 3: Process each bot
-      for (const botId of botsToConsider) {
-        try {
-          // Get bot from database
-          const bot = await this.prisma.bot.findUnique({
-            where: { id: botId },
-            select: {
-              id: true,
-              name: true,
-              status: true,
-              isActive: true,
-              owner: { select: { username: true } }
-            }
-          });
+      // PHASE 3: Process bots in parallel batches
+      const BATCH_SIZE = 25; // Process 25 bots at a time
+      const BATCH_DELAY = 2000; // 2s delay between batches
+      const botIdsArray = Array.from(botsToConsider);
 
-          if (!bot) {
-            this.logger.warn(`⚠️ Bot ${botId} not found in database, cleaning up Redis state`);
-            await this.redisService.deleteBotState(botId);
-            skipped++;
-            continue;
-          }
+      for (let i = 0; i < botIdsArray.length; i += BATCH_SIZE) {
+        const batch = botIdsArray.slice(i, i + BATCH_SIZE);
+        const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
+        const totalBatches = Math.ceil(botIdsArray.length / BATCH_SIZE);
 
-          if (!bot.isActive) {
-            this.logger.log(`⏸️ Bot "${bot.name}" is suspended, skipping recovery`);
-            await this.redisService.deleteBotState(botId);
-            // Mark as offline
-            await this.prisma.bot.update({
-              where: { id: botId },
-              data: { status: BotStatus.OFFLINE }
-            });
-            skipped++;
-            continue;
-          }
+        this.logger.log(`📦 Processing batch ${batchNumber}/${totalBatches} (${batch.length} bots)`);
 
-          // Get Redis state if exists
-          const redisState = botStates.get(botId);
+        // Process all bots in this batch in parallel
+        const results = await Promise.allSettled(
+          batch.map(botId => this.processBotRecovery(botId, botStates))
+        );
 
-          // Decide if we should recover
-          const shouldRecover = this.shouldRecoverBotOnBootstrap(bot, redisState);
-
-          if (shouldRecover) {
-            this.logger.log(`🔁 Recovering bot "${bot.name}" (owner: ${bot.owner.username}) - Status: ${bot.status}`);
-
-            // Ensure bot is marked as OFFLINE first
-            await this.prisma.bot.update({
-              where: { id: botId },
-              data: { status: BotStatus.OFFLINE }
-            });
-
-            // Wait a bit to ensure clean state
-            await new Promise(resolve => setTimeout(resolve, 500));
-
-            // Log system event for startup
-            await this.botLogsService.logSystemEvent(botId, 'START');
-
-            // Queue start job
-            await this.queueService.addJob('start-bot', { botId });
-
-            // Update state to indicate recovery attempt
-            await this.redisService.saveBotState(botId, {
-              status: 'ONLINE',
-              userAction: 'system',
-              timestamp: new Date(),
-              metadata: { recovered: true, recoveredFromBootstrap: true }
-            });
-
-            recovered++;
-            this.logger.log(`✅ Bot "${bot.name}" queued for recovery`);
+        // Count results
+        for (const result of results) {
+          if (result.status === 'fulfilled') {
+            if (result.value === 'recovered') recovered++;
+            else if (result.value === 'skipped') skipped++;
+            else if (result.value === 'failed') failed++;
           } else {
-            this.logger.log(`⏭️ Skipping recovery for bot "${bot.name}" - Not eligible for auto-recovery`);
-
-            // Mark as offline if it was online but shouldn't be recovered
-            if (bot.status === BotStatus.ONLINE) {
-              await this.prisma.bot.update({
-                where: { id: botId },
-                data: { status: BotStatus.OFFLINE }
-              });
-            }
-
-            // Clean up Redis state
-            if (redisState?.userAction === 'stop') {
-              await this.redisService.deleteBotState(botId);
-            }
-
-            skipped++;
+            failed++;
+            this.logger.error('❌ Batch processing error:', result.reason);
           }
-
-        } catch (error) {
-          this.logger.error(`❌ Failed to recover bot ${botId}:`, error);
-          failed++;
         }
 
-        // Small delay between recoveries to avoid overload
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Delay between batches (except for the last batch)
+        if (i + BATCH_SIZE < botIdsArray.length) {
+          this.logger.log(`⏳ Waiting ${BATCH_DELAY}ms before next batch...`);
+          await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
+        }
       }
 
       this.logger.log(`✅ Recovery complete: ${recovered} recovered, ${skipped} skipped, ${failed} failed`);
@@ -180,6 +120,96 @@ export class BotRecoveryService implements OnApplicationBootstrap {
       this.logger.error('❌ Recovery process failed:', error);
     } finally {
       this.recoveryInProgress = false;
+    }
+  }
+
+  private async processBotRecovery(
+    botId: string,
+    botStates: Map<string, any>
+  ): Promise<'recovered' | 'skipped' | 'failed'> {
+    try {
+      // Get bot from database
+      const bot = await this.prisma.bot.findUnique({
+        where: { id: botId },
+        select: {
+          id: true,
+          name: true,
+          status: true,
+          isActive: true,
+          owner: { select: { username: true } }
+        }
+      });
+
+      if (!bot) {
+        this.logger.warn(`⚠️ Bot ${botId} not found in database, cleaning up Redis state`);
+        await this.redisService.deleteBotState(botId);
+        return 'skipped';
+      }
+
+      if (!bot.isActive) {
+        this.logger.log(`⏸️ Bot "${bot.name}" is suspended, skipping recovery`);
+        await this.redisService.deleteBotState(botId);
+        // Mark as offline
+        await this.prisma.bot.update({
+          where: { id: botId },
+          data: { status: BotStatus.OFFLINE }
+        });
+        return 'skipped';
+      }
+
+      // Get Redis state if exists
+      const redisState = botStates.get(botId);
+
+      // Decide if we should recover
+      const shouldRecover = this.shouldRecoverBotOnBootstrap(bot, redisState);
+
+      if (shouldRecover) {
+        this.logger.log(`🔁 Recovering bot "${bot.name}" (owner: ${bot.owner.username}) - Status: ${bot.status}`);
+
+        // Ensure bot is marked as OFFLINE first
+        await this.prisma.bot.update({
+          where: { id: botId },
+          data: { status: BotStatus.OFFLINE }
+        });
+
+        // Log system event for startup
+        await this.botLogsService.logSystemEvent(botId, 'START');
+
+        // Queue start job
+        await this.queueService.addJob('start-bot', { botId });
+
+        // Update state to indicate recovery attempt
+        await this.redisService.saveBotState(botId, {
+          status: 'ONLINE',
+          userAction: 'system',
+          timestamp: new Date(),
+          metadata: { recovered: true, recoveredFromBootstrap: true }
+        });
+
+        this.logger.log(`✅ Bot "${bot.name}" queued for recovery`);
+        return 'recovered';
+      } else {
+        this.logger.log(`⏭️ Skipping recovery for bot "${bot.name}" - Not eligible for auto-recovery`);
+
+        // Mark as offline if it was online but shouldn't be recovered
+        if (bot.status === BotStatus.ONLINE) {
+          await this.prisma.bot.update({
+            where: { id: botId },
+            data: { status: BotStatus.OFFLINE }
+          });
+        }
+
+        // Clean up Redis state
+        if (redisState?.userAction === 'stop') {
+          await this.redisService.deleteBotState(botId);
+        }
+
+        return 'skipped';
+      }
+
+    } catch (error) {
+      this.logger.error(`❌ Failed to recover bot ${botId}:`, error);
+      return 'failed';
     }
   }
 
