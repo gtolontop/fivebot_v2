@@ -37,17 +37,17 @@ export class ModulesController {
     });
   }
 
-  @Get(':slug')
-  async getModuleBySlug(@Param('slug') slug: string) {
-    return this.modulesService.findBySlug(slug);
-  }
-
   // ==================== USER MODULE ROUTES (AUTHENTICATED) ====================
 
   @UseGuards(AuthGuard('jwt'))
   @Get('user/owned')
   async getUserModules(@Request() req) {
     return this.modulesService.getUserModules(req.user.id);
+  }
+
+  @Get(':slug')
+  async getModuleBySlug(@Param('slug') slug: string) {
+    return this.modulesService.findBySlug(slug);
   }
 
   @UseGuards(AuthGuard('jwt'))
