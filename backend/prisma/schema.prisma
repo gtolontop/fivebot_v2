@@ -217,6 +217,7 @@ enum BotStatus {
   ONLINE
   ERROR
   STOPPING
+  RESTARTING
 }
 
 enum HostStatus {
