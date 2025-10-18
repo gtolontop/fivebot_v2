@@ -11,7 +11,6 @@ interface Bot {
   id: string;
   name: string;
   token: string;
-  prefix: string;
   clientId?: string;
   status: string;
   avatar?: string;

@@ -142,7 +142,6 @@ export class BotsService {
         clientId: tokenValidation.application?.id,
         avatar: avatarUrl,
         banner: bannerUrl,
-        prefix: data.prefix || '!',
         status: BotStatus.OFFLINE,
         isActive: true, // Bot is active by default
       },
