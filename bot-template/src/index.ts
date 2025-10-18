@@ -152,6 +152,7 @@ class ChildBot {
         moderationEnabled: config.moderationEnabled || false,
         autoRoleEnabled: config.autoRoleEnabled || false,
         autoRoleId: config.autoRoleId,
+        autoRoleIds: config.autoRoleIds,
         loggingChannelId: config.loggingChannelId,
         customCommands: config.customCommands,
         ticketEnabled: config.ticketEnabled || false,
@@ -162,7 +163,14 @@ class ChildBot {
         statusRotation: statusRotation,
         embedV2Commands: embedV2Commands,
       };
-      
+
+      // Debug log for auto-role configuration
+      if (finalConfig.autoRoleEnabled) {
+        console.log(`[Auto-Role] Configuration loaded - Enabled: ${finalConfig.autoRoleEnabled}`);
+        console.log(`[Auto-Role] autoRoleId: ${finalConfig.autoRoleId || 'not set'}`);
+        console.log(`[Auto-Role] autoRoleIds: ${finalConfig.autoRoleIds || 'not set'}`);
+      }
+
       return finalConfig;
     } catch (error) {
       console.error('Error loading config:', error);
