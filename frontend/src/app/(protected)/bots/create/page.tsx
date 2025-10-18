@@ -40,12 +40,14 @@ export default function CreateBotPage() {
       const errorMessage = error.response?.data?.message || error.message || 'Failed to create bot';
 
       // Check if error is about duplicate token
-      if (errorMessage.includes('already have a bot with this token')) {
-        toast.error('You already have a bot with this token');
+      if (errorMessage.includes('already have a bot with this token') ||
+          errorMessage.includes('already in use')) {
+        // Show the actual error message from backend
+        toast.error(errorMessage);
         // Redirect to bots overview page
         setTimeout(() => {
           router.push('/bots');
-        }, 1500);
+        }, 2000);
         return;
       }
 

@@ -70,20 +70,29 @@ export class BotsService {
     console.log('Owner ID:', ownerId);
     console.log('Bot data:', { name: data.name, tokenLength: data.token?.length });
 
-    // Check if user already has a bot with the same token
-    console.log('Vérification des tokens dupliqués...');
+    // Check if this token is already used by ANY user (not just current user)
+    console.log('Vérification des tokens dupliqués globalement...');
     const encryptedTokenToCheck = this.encryptionService.encrypt(data.token);
     const existingBotWithToken = await this.prisma.bot.findFirst({
-      where: { 
-        ownerId,
+      where: {
         tokenEncrypted: encryptedTokenToCheck,
         isActive: true
       },
+      select: {
+        id: true,
+        name: true,
+        ownerId: true
+      }
     });
-    
+
     if (existingBotWithToken) {
       console.log('Token déjà utilisé, arrêt');
-      throw new BadRequestException('You already have a bot with this token');
+      // If it's the same user, different message
+      if (existingBotWithToken.ownerId === ownerId) {
+        throw new BadRequestException(`You already have a bot with this token: "${existingBotWithToken.name}"`);
+      }
+      // If it's a different user, generic message (don't leak who owns it)
+      throw new BadRequestException('This bot token is already in use');
     }
 
     // Validate bot token with Discord API
