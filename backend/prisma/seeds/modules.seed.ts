@@ -180,8 +180,8 @@ Automatically assign roles when members join your server!
       'Role hierarchy support',
     ]),
     configSchema: JSON.stringify({
-      roles: { type: 'roles', label: 'Roles to assign', required: true, multiple: true },
-      assignOnVerify: { type: 'boolean', label: 'Wait for verification', default: false },
+      roles: { type: 'roles', label: 'Roles to assign when members join', required: true, multiple: true },
+      assignOnVerify: { type: 'boolean', label: 'Wait for member verification (requires Discord Member Screening)', default: false },
     }),
     dependencies: JSON.stringify(['framework']),
     isCore: false,

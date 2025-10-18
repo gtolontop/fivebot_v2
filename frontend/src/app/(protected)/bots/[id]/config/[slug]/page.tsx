@@ -347,7 +347,7 @@ export default function ModuleConfigPage() {
                   </div>
                 )}
 
-                {schema.type === 'string' && (
+                {schema.type === 'string' && !key.toLowerCase().includes('url') && (
                   <input
                     type="text"
                     value={config[key] ?? schema.default ?? ''}
@@ -356,6 +356,46 @@ export default function ModuleConfigPage() {
                     maxLength={schema.maxLength}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   />
+                )}
+
+                {schema.type === 'string' && key.toLowerCase().includes('url') && (
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="text"
+                        value={config[key] ?? schema.default ?? ''}
+                        onChange={(e) => setConfig({ ...config, [key]: e.target.value })}
+                        placeholder="https://example.com/image.png or upload below"
+                        maxLength={schema.maxLength}
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      />
+                      <label className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors cursor-pointer">
+                        {uploading ? 'Uploading...' : 'Upload'}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleImageUpload(file, key);
+                          }}
+                          className="hidden"
+                          disabled={uploading}
+                        />
+                      </label>
+                    </div>
+                    {config[key] && (
+                      <div className="relative w-32 h-32 border border-gray-300 rounded-lg overflow-hidden">
+                        <img
+                          src={config[key]}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect width="100" height="100" fill="%23ddd"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%23999"%3EInvalid%3C/text%3E%3C/svg%3E';
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 {schema.type === 'text' && (
@@ -421,48 +461,65 @@ export default function ModuleConfigPage() {
                 )}
 
                 {schema.type === 'roles' && !schema.multiple && (
-                  <select
-                    value={config[key] ?? ''}
-                    onChange={(e) => setConfig({ ...config, [key]: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  >
-                    <option value="">Select a role</option>
-                    {guildRoles.map((role) => (
-                      <option key={role.id} value={role.id}>
-                        {role.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="space-y-2">
+                    <select
+                      value={config[key] ?? ''}
+                      onChange={(e) => setConfig({ ...config, [key]: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    >
+                      <option value="">Select a role</option>
+                      {getAssignableRoles().map((role) => (
+                        <option key={role.id} value={role.id}>
+                          {role.name}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-gray-500">
+                      ℹ️ Only showing roles the bot can assign (excluding @everyone, managed roles, and roles above the bot)
+                    </p>
+                  </div>
                 )}
 
                 {schema.type === 'roles' && schema.multiple && (
                   <div className="space-y-2">
-                    <div className="border border-gray-300 rounded-lg p-3 max-h-60 overflow-y-auto">
-                      {guildRoles.map((role) => (
-                        <label key={role.id} className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={(config[key] || []).includes(role.id)}
-                            onChange={(e) => {
-                              const currentRoles = config[key] || [];
-                              const newRoles = e.target.checked
-                                ? [...currentRoles, role.id]
-                                : currentRoles.filter((id: string) => id !== role.id);
-                              setConfig({ ...config, [key]: newRoles });
-                            }}
-                            className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
-                          />
-                          <span
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: `#${role.color?.toString(16).padStart(6, '0') || '99aab5'}` }}
-                          />
-                          <span className="text-sm">{role.name}</span>
-                        </label>
-                      ))}
+                    <div className="border border-gray-300 rounded-lg p-3 max-h-60 overflow-y-auto bg-gray-50">
+                      {getAssignableRoles().length === 0 ? (
+                        <p className="text-sm text-gray-500 text-center py-4">
+                          No assignable roles available. Make sure the bot has a role with proper permissions.
+                        </p>
+                      ) : (
+                        getAssignableRoles().map((role) => (
+                          <label key={role.id} className="flex items-center space-x-3 p-2 hover:bg-white rounded cursor-pointer transition-colors">
+                            <input
+                              type="checkbox"
+                              checked={(config[key] || []).includes(role.id)}
+                              onChange={(e) => {
+                                const currentRoles = config[key] || [];
+                                const newRoles = e.target.checked
+                                  ? [...currentRoles, role.id]
+                                  : currentRoles.filter((id: string) => id !== role.id);
+                                setConfig({ ...config, [key]: newRoles });
+                              }}
+                              className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
+                            />
+                            <span
+                              className="w-3 h-3 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: `#${role.color?.toString(16).padStart(6, '0') || '99aab5'}` }}
+                            />
+                            <span className="text-sm font-medium">{role.name}</span>
+                            <span className="text-xs text-gray-400 ml-auto">Position: {role.position}</span>
+                          </label>
+                        ))
+                      )}
                     </div>
-                    <p className="text-xs text-gray-500">
-                      {(config[key] || []).length} role(s) selected
-                    </p>
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                      <span>
+                        {(config[key] || []).length} role(s) selected
+                      </span>
+                      <span>
+                        ℹ️ Excluding @everyone, managed roles, and roles above the bot
+                      </span>
+                    </div>
                   </div>
                 )}
 
