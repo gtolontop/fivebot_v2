@@ -41,7 +41,6 @@ export default function BotsPage() {
   const [botsLoading, setBotsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
-  const [pollingActive, setPollingActive] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -62,38 +61,41 @@ export default function BotsPage() {
       bot => bot.status === 'STARTING' || bot.status === 'STOPPING'
     );
 
-    if (hasTransitioningBots && !pollingActive) {
-      setPollingActive(true);
-      const interval = setInterval(async () => {
-        try {
-          // Refresh all bots
-          const response = await botsAPI.getAll();
-          const updatedBots = response.data;
-          setBots(updatedBots);
-
-          // Check if we should stop polling
-          const stillTransitioning = updatedBots.some(
-            (bot: Bot) => bot.status === 'STARTING' || bot.status === 'STOPPING'
-          );
-
-          if (!stillTransitioning) {
-            setPollingActive(false);
-            clearInterval(interval);
-          }
-        } catch (error) {
-          console.error('Error polling bot statuses:', error);
-        }
-      }, 1000); // Poll every second
-
-      // Cleanup
-      return () => {
-        clearInterval(interval);
-        setPollingActive(false);
-      };
-    } else if (!hasTransitioningBots && pollingActive) {
-      setPollingActive(false);
+    if (!hasTransitioningBots) {
+      return; // No need to poll
     }
-  }, [bots, pollingActive]);
+
+    console.log('🔄 Starting global polling for transitioning bots');
+
+    const interval = setInterval(async () => {
+      try {
+        console.log('📡 Polling all bot statuses...');
+        // Refresh all bots
+        const response = await botsAPI.getAll();
+        const updatedBots = response.data;
+
+        setBots(updatedBots);
+
+        // Check if we should stop polling
+        const stillTransitioning = updatedBots.some(
+          (bot: Bot) => bot.status === 'STARTING' || bot.status === 'STOPPING'
+        );
+
+        if (!stillTransitioning) {
+          console.log('✅ All bots finished transitioning, stopping poll');
+          clearInterval(interval);
+        }
+      } catch (error) {
+        console.error('Error polling bot statuses:', error);
+      }
+    }, 1500); // Poll every 1.5 seconds
+
+    // Cleanup on unmount or when dependencies change
+    return () => {
+      console.log('🛑 Cleaning up polling interval');
+      clearInterval(interval);
+    };
+  }, [bots.some(bot => bot.status === 'STARTING' || bot.status === 'STOPPING')]);
 
   const fetchBots = async () => {
     try {
