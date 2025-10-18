@@ -7,6 +7,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { designTokens } from '@/styles/design-tokens';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import Cookies from 'js-cookie';
 
 interface Module {
   id: string;
@@ -79,7 +80,7 @@ export default function InstalledModulesPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = Cookies.get('token');
 
       // Fetch user modules
       const modulesRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/modules/user/owned`, {
@@ -110,7 +111,7 @@ export default function InstalledModulesPage() {
     } catch (error: any) {
       console.error('Error fetching data:', error);
       if (error.response?.status === 401) {
-        localStorage.removeItem('token');
+        Cookies.remove('token');
         router.push('/auth/login');
         toast.error('Session expired. Please login again.');
       } else {
