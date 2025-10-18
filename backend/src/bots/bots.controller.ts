@@ -1465,59 +1465,6 @@ export class BotsController {
     return this.ticketService.updateCommands(id, commands);
   }
 
-  @Get('analytics/overview')
-  @UseGuards(AuthGuard('jwt'))
-  async getAnalyticsOverview(@Req() req: any) {
-    const bots = await this.botsService.findAll(req.user.id);
-    const overview = {
-      totalBots: bots.length,
-      activeBots: bots.filter(b => b.status === 'ONLINE').length,
-      aggregatedMetrics: {
-        totalCommands: 0,
-        totalMessages: 0,
-        totalErrors: 0,
-        avgResponseTime: 0,
-      },
-      botMetrics: [] as any[],
-    };
-
-    // Get metrics for each bot
-    for (const bot of bots) {
-      try {
-        const realtimeData = await this.botRealtimeMetricsService.getRealtimeData(bot.id);
-        const analytics = await this.botRealtimeMetricsService.getAnalytics(bot.id, 'daily');
-        
-        overview.botMetrics.push({
-          botId: bot.id,
-          botName: bot.name,
-          status: bot.status,
-          realtime: realtimeData.metrics,
-          daily: analytics.summary,
-        });
-
-        // Aggregate metrics
-        overview.aggregatedMetrics.totalCommands += analytics.summary.totalCommands || 0;
-        overview.aggregatedMetrics.totalMessages += analytics.summary.totalMessages || 0;
-        overview.aggregatedMetrics.totalErrors += analytics.summary.totalErrors || 0;
-      } catch (error) {
-        console.error(`Error getting metrics for bot ${bot.id}:`, error);
-      }
-    }
-
-    // Calculate average response time
-    if (overview.botMetrics.length > 0) {
-      const totalResponseTime = overview.botMetrics.reduce(
-        (sum, bot) => sum + (bot.daily.avgResponseTime || 0),
-        0
-      );
-      overview.aggregatedMetrics.avgResponseTime = Math.round(
-        totalResponseTime / overview.botMetrics.length
-      );
-    }
-
-    return overview;
-  }
-
   // ==================== COLLABORATORS ROUTES ====================
 
   @Get(':id/collaborators')
