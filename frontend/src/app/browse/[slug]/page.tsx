@@ -104,12 +104,6 @@ export default function ModuleDetailPage() {
       return;
     }
 
-    if (module.price === 0) {
-      toast.success('This module is free!');
-      setOwned(true);
-      return;
-    }
-
     try {
       setPurchasing(true);
       const token = Cookies.get('token');
@@ -118,11 +112,17 @@ export default function ModuleDetailPage() {
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success(`Successfully purchased ${module.name}!`);
+
+      if (module.price === 0) {
+        toast.success(`${module.name} added to your collection!`);
+      } else {
+        toast.success(`Successfully purchased ${module.name}!`);
+      }
+
       setOwned(true);
       checkOwnership();
     } catch (error: any) {
-      const message = error.response?.data?.message || 'Failed to purchase module';
+      const message = error.response?.data?.message || 'Failed to get module';
       toast.error(message);
     } finally {
       setPurchasing(false);
