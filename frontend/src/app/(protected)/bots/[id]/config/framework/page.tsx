@@ -52,7 +52,6 @@ export default function FrameworkConfigPage() {
       const response = await botsAPI.getById(botId);
       setBot(response.data);
       setName(response.data.name);
-      setPrefix(response.data.prefix);
       setToken(response.data.token || '');
     } catch (error) {
       console.error('Error fetching bot:', error);
@@ -66,7 +65,7 @@ export default function FrameworkConfigPage() {
   const handleSave = async () => {
     try {
       setSaving(true);
-      await botsAPI.updateConfig(botId, { name, prefix });
+      await botsAPI.updateConfig(botId, { name });
       toast.success('Bot settings saved successfully!');
       fetchBot();
     } catch (error: any) {
