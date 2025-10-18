@@ -460,18 +460,18 @@ export default function ModuleConfigPage() {
 
                 {schema.type === 'roles' && !schema.multiple && (
                   <div className="space-y-2">
-                    <select
+                    <CustomSelect
+                      options={getAssignableRoles().map((role) => ({
+                        value: role.id,
+                        label: role.name,
+                        color: `#${role.color?.toString(16).padStart(6, '0') || '99aab5'}`,
+                        description: `Position: ${role.position}`
+                      }))}
                       value={config[key] ?? ''}
-                      onChange={(e) => setConfig({ ...config, [key]: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    >
-                      <option value="">Select a role</option>
-                      {getAssignableRoles().map((role) => (
-                        <option key={role.id} value={role.id}>
-                          {role.name}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(value) => setConfig({ ...config, [key]: value })}
+                      placeholder="Select a role"
+                      searchable={getAssignableRoles().length > 10}
+                    />
                     <p className="text-xs text-gray-500">
                       ℹ️ Only showing roles the bot can assign (excluding @everyone, managed roles, and roles above the bot)
                     </p>
@@ -480,44 +480,20 @@ export default function ModuleConfigPage() {
 
                 {schema.type === 'roles' && schema.multiple && (
                   <div className="space-y-2">
-                    <div className="border border-gray-300 rounded-lg p-3 max-h-60 overflow-y-auto bg-gray-50">
-                      {getAssignableRoles().length === 0 ? (
-                        <p className="text-sm text-gray-500 text-center py-4">
-                          No assignable roles available. Make sure the bot has a role with proper permissions.
-                        </p>
-                      ) : (
-                        getAssignableRoles().map((role) => (
-                          <label key={role.id} className="flex items-center space-x-3 p-2 hover:bg-white rounded cursor-pointer transition-colors">
-                            <input
-                              type="checkbox"
-                              checked={(config[key] || []).includes(role.id)}
-                              onChange={(e) => {
-                                const currentRoles = config[key] || [];
-                                const newRoles = e.target.checked
-                                  ? [...currentRoles, role.id]
-                                  : currentRoles.filter((id: string) => id !== role.id);
-                                setConfig({ ...config, [key]: newRoles });
-                              }}
-                              className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
-                            />
-                            <span
-                              className="w-3 h-3 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: `#${role.color?.toString(16).padStart(6, '0') || '99aab5'}` }}
-                            />
-                            <span className="text-sm font-medium">{role.name}</span>
-                            <span className="text-xs text-gray-400 ml-auto">Position: {role.position}</span>
-                          </label>
-                        ))
-                      )}
-                    </div>
-                    <div className="flex items-center justify-between text-xs text-gray-500">
-                      <span>
-                        {(config[key] || []).length} role(s) selected
-                      </span>
-                      <span>
-                        ℹ️ Excluding @everyone, managed roles, and roles above the bot
-                      </span>
-                    </div>
+                    <CustomMultiSelect
+                      options={getAssignableRoles().map((role) => ({
+                        value: role.id,
+                        label: role.name,
+                        color: `#${role.color?.toString(16).padStart(6, '0') || '99aab5'}`,
+                        description: `Position: ${role.position}`
+                      }))}
+                      values={config[key] || []}
+                      onChange={(values) => setConfig({ ...config, [key]: values })}
+                      placeholder="Select roles"
+                    />
+                    <p className="text-xs text-gray-500">
+                      ℹ️ Excluding @everyone, managed roles, and roles above the bot
+                    </p>
                   </div>
                 )}
 
