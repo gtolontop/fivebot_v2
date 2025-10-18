@@ -1029,6 +1029,7 @@ export class SimpleQueueService implements IQueueService {
   private getJobPriority(jobType: string): number {
     const priorities = {
       'create-bot': 10,
+      'restart-bot': 9,
       'start-bot': 8,
       'stop-bot': 9,
       'delete-bot': 7,
