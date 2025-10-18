@@ -207,7 +207,7 @@ export class MetricsService {
         // Clear events after successful send
         this.events = [];
         this.lastSent = now;
-        console.log(`[Metrics] Successfully sent ${batch.events.length} events`);
+        // console.log(`[Metrics] Successfully sent ${batch.events.length} events`);
       } else {
         console.error(`[Metrics] Failed to send metrics: ${response.status}`);
       }
