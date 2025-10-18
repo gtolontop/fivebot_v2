@@ -7,6 +7,8 @@ import { designTokens } from '@/styles/design-tokens';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import Cookies from 'js-cookie';
+import CustomSelect from '@/components/CustomSelect';
+import CustomMultiSelect from '@/components/CustomMultiSelect';
 
 interface Module {
   id: string;
