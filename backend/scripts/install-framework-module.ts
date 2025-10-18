@@ -25,7 +25,7 @@ async function installFrameworkModuleOnAllBots() {
       select: {
         id: true,
         name: true,
-        modules: {
+        botModules: {
           where: { moduleId: frameworkModule.id },
           select: { id: true },
         },
