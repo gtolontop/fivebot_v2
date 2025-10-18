@@ -323,40 +323,7 @@ export class BotsController {
   @Post(':id/restart')
   @UseGuards(AuthGuard('jwt'))
   async restart(@Param('id') id: string, @Req() req: any) {
-    try {
-      console.log(`🔄 Restarting bot ${id} for user ${req.user.id}`);
-
-      // Get current bot to return immediately
-      const bot = await this.botsService.findOne(id, req.user.id);
-      if (!bot) {
-        throw new NotFoundException('Bot not found');
-      }
-
-      // Perform restart asynchronously
-      setImmediate(async () => {
-        try {
-          // First stop the bot
-          await this.botsService.stop(id, req.user.id);
-          // Wait a bit for clean shutdown
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          // Then start it again
-          await this.botsService.start(id, req.user.id);
-          console.log(`✅ Bot ${id} restart completed`);
-        } catch (error) {
-          console.error(`❌ Bot ${id} restart failed:`, error);
-        }
-      });
-
-      // Return immediately with restarting status
-      return {
-        ...bot,
-        status: 'RESTARTING',
-        message: 'Bot restart initiated'
-      };
-    } catch (error) {
-      console.error(`❌ Error initiating bot restart ${id}:`, error);
-      throw error;
-    }
+    return this.botsService.restart(id, req.user.id);
   }
 
   @Post(':id/suspend')
