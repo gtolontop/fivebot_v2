@@ -177,19 +177,59 @@ export class WelcomeService {
 
   private replacePlaceholders(text: string, member: GuildMember): string {
     if (!text) return '';
-    
+
+    // Calculate account age
+    const accountCreatedDate = new Date(member.user.createdTimestamp);
+    const accountAgeDays = Math.floor((Date.now() - member.user.createdTimestamp) / (1000 * 60 * 60 * 24));
+    const accountAgeText = accountAgeDays < 1
+      ? 'Today'
+      : accountAgeDays === 1
+        ? '1 day'
+        : `${accountAgeDays} days`;
+
+    // Calculate join position
+    const memberArray = Array.from(member.guild.members.cache.values());
+    const sortedMembers = memberArray.sort((a, b) =>
+      (a.joinedTimestamp || 0) - (b.joinedTimestamp || 0)
+    );
+    const joinPosition = sortedMembers.findIndex(m => m.id === member.id) + 1;
+
+    // Get boost info
+    const boostCount = member.guild.premiumSubscriptionCount || 0;
+    const boostTier = member.guild.premiumTier || 0;
+
+    // Get counts
+    const channelCount = member.guild.channels.cache.size;
+    const roleCount = member.guild.roles.cache.size;
+
     return text
+      // User variables
       .replace(/{user}/g, member.toString())
       .replace(/{username}/g, member.user.username)
       .replace(/{tag}/g, member.user.tag)
-      .replace(/{guild}/g, member.guild.name)
-      .replace(/{memberCount}/g, member.guild.memberCount.toString())
-      .replace(/{logo}/g, this.config.welcomeLogoUrl || member.guild.iconURL() || '')
-      .replace(/{thumbnail}/g, this.config.welcomeThumbnailUrl || '')
+      .replace(/{userId}/g, member.user.id)
       .replace(/{userAvatar}/g, member.user.displayAvatarURL({ size: 256 }))
+      .replace(/{accountAge}/g, accountAgeText)
+      .replace(/{joinPosition}/g, joinPosition.toString())
+
+      // Guild variables
+      .replace(/{guild}/g, member.guild.name)
+      .replace(/{guildId}/g, member.guild.id)
       .replace(/{guildIcon}/g, member.guild.iconURL({ size: 256 }) || '')
+      .replace(/{memberCount}/g, member.guild.memberCount.toString())
+      .replace(/{boostCount}/g, boostCount.toString())
+      .replace(/{boostTier}/g, boostTier.toString())
+      .replace(/{channelCount}/g, channelCount.toString())
+      .replace(/{roleCount}/g, roleCount.toString())
+
+      // Date/Time variables
       .replace(/{date}/g, new Date().toLocaleDateString())
-      .replace(/{time}/g, new Date().toLocaleTimeString());
+      .replace(/{time}/g, new Date().toLocaleTimeString())
+      .replace(/{timestamp}/g, Math.floor(Date.now() / 1000).toString())
+
+      // Legacy/Config variables
+      .replace(/{logo}/g, this.config.welcomeLogoUrl || member.guild.iconURL() || '')
+      .replace(/{thumbnail}/g, this.config.welcomeThumbnailUrl || '');
   }
 
   async testWelcomeMessage(member: GuildMember): Promise<EmbedBuilder> {
