@@ -174,40 +174,6 @@ export default function BotsPage() {
     }
   };
 
-  const pollBotStatus = (botId: string) => {
-    let attempts = 0;
-    const maxAttempts = 20; // 20 seconds max
-
-    const interval = setInterval(async () => {
-      attempts++;
-
-      try {
-        const response = await botsAPI.getStatus(botId);
-        const status = response.data.status;
-
-        // Update only this specific bot's status
-        setBots(prevBots =>
-          prevBots.map(bot =>
-            bot.id === botId ? { ...bot, status } : bot
-          )
-        );
-
-        // Stop polling if bot is ONLINE or ERROR, or max attempts reached
-        if (status === 'ONLINE' || status === 'ERROR' || attempts >= maxAttempts) {
-          clearInterval(interval);
-          if (status === 'ONLINE') {
-            toast.success('Bot is now online!');
-          }
-        }
-      } catch (error) {
-        console.error('Error polling bot status:', error);
-        if (attempts >= maxAttempts) {
-          clearInterval(interval);
-        }
-      }
-    }, 1000); // Check every second
-  };
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'ONLINE':
