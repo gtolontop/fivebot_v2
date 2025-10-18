@@ -128,6 +128,112 @@ export class BotsController {
     });
   }
 
+  @Get('dashboard/stats')
+  @UseGuards(AuthGuard('jwt'))
+  async getDashboardStats(@Req() req: any): Promise<DashboardStats> {
+    return this.botMetricsService.getDashboardStats(req.user.id);
+  }
+
+  @Get('debug/running')
+  @UseGuards(AuthGuard('jwt'))
+  async getRunningBots(@Req() req: any) {
+    try {
+      const queueService = this.botsService['queueService'];
+      const runningBots = queueService.getRunningBots ? await queueService.getRunningBots() : [];
+
+      console.log(`🔍 Debug: ${runningBots.length} bots currently running in process manager`);
+
+      return {
+        runningBots,
+        count: runningBots.length,
+        message: `Found ${runningBots.length} running bot processes`
+      };
+    } catch (error) {
+      console.error('Error getting running bots:', error);
+      throw error;
+    }
+  }
+
+  @Get('analytics/overview')
+  @UseGuards(AuthGuard('jwt'))
+  async getAnalyticsOverview(@Req() req: any) {
+    const bots = await this.botsService.findAll(req.user.id);
+    const overview = {
+      totalBots: bots.length,
+      activeBots: bots.filter(b => b.status === 'ONLINE').length,
+      aggregatedMetrics: {
+        totalCommands: 0,
+        totalMessages: 0,
+        totalErrors: 0,
+        avgResponseTime: 0,
+      },
+      botMetrics: [] as any[],
+    };
+
+    // Get metrics for each bot
+    for (const bot of bots) {
+      try {
+        const realtimeData = await this.botRealtimeMetricsService.getRealtimeData(bot.id);
+        const analytics = await this.botRealtimeMetricsService.getAnalytics(bot.id, 'daily');
+
+        overview.botMetrics.push({
+          botId: bot.id,
+          botName: bot.name,
+          status: bot.status,
+          realtime: realtimeData.metrics,
+          daily: analytics.summary,
+        });
+
+        // Aggregate metrics
+        overview.aggregatedMetrics.totalCommands += analytics.summary.totalCommands || 0;
+        overview.aggregatedMetrics.totalMessages += analytics.summary.totalMessages || 0;
+        overview.aggregatedMetrics.totalErrors += analytics.summary.totalErrors || 0;
+      } catch (error) {
+        console.error(`Error getting metrics for bot ${bot.id}:`, error);
+      }
+    }
+
+    // Calculate average response time
+    if (overview.botMetrics.length > 0) {
+      const totalResponseTime = overview.botMetrics.reduce(
+        (sum, bot) => sum + (bot.daily.avgResponseTime || 0),
+        0
+      );
+      overview.aggregatedMetrics.avgResponseTime = Math.round(
+        totalResponseTime / overview.botMetrics.length
+      );
+    }
+
+    return overview;
+  }
+
+  @Get('collaborators/my-invitations')
+  @UseGuards(AuthGuard('jwt'))
+  async getMyInvitations(@Req() req: any) {
+    const invitations = await this.prisma.botCollaborator.findMany({
+      where: {
+        userId: req.user.id,
+        status: 'PENDING',
+      },
+      include: {
+        bot: {
+          select: {
+            id: true,
+            name: true,
+            clientId: true,
+            status: true,
+          },
+        },
+      },
+      orderBy: { invitedAt: 'desc' },
+    });
+
+    return invitations.map((inv) => ({
+      ...inv,
+      permissions: inv.permissions ? JSON.parse(inv.permissions) : undefined,
+    }));
+  }
+
   @Get(':id')
   @UseGuards(AuthGuard('jwt'))
   async findOne(@Param('id') id: string, @Req() req: any) {
@@ -299,12 +405,6 @@ export class BotsController {
     @Req() req: any,
   ) {
     return this.botsService.getGuildRoles(id, guildId, req.user.id);
-  }
-
-  @Get('dashboard/stats')
-  @UseGuards(AuthGuard('jwt'))
-  async getDashboardStats(@Req() req: any): Promise<DashboardStats> {
-    return this.botMetricsService.getDashboardStats(req.user.id);
   }
 
   @Get(':id/metrics')
@@ -1129,26 +1229,6 @@ export class BotsController {
       };
     } catch (error) {
       console.error('Error in verify all statuses:', error);
-      throw error;
-    }
-  }
-
-  @Get('debug/running')
-  @UseGuards(AuthGuard('jwt'))
-  async getRunningBots(@Req() req: any) {
-    try {
-      const queueService = this.botsService['queueService'];
-      const runningBots = queueService.getRunningBots ? await queueService.getRunningBots() : [];
-
-      console.log(`🔍 Debug: ${runningBots.length} bots currently running in process manager`);
-
-      return {
-        runningBots,
-        count: runningBots.length,
-        message: `Found ${runningBots.length} running bot processes`
-      };
-    } catch (error) {
-      console.error('Error getting running bots:', error);
       throw error;
     }
   }
