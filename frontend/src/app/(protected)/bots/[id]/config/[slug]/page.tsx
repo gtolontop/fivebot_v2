@@ -160,23 +160,21 @@ export default function ModuleConfigPage() {
     }
   };
 
-  const getAllRolesWithStatus = () => {
+  const getAssignableRoles = () => {
     return guildRoles
-      .filter((role) => role.name !== '@everyone') // Toujours exclure @everyone
-      .map((role) => {
-        const isManaged = role.managed;
-        const isTooHigh = botHighestRole > 0 && role.position >= botHighestRole;
-        const isAssignable = !isManaged && !isTooHigh;
+      .filter((role) => {
+        // Exclure @everyone
+        if (role.name === '@everyone') return false;
 
-        return {
-          ...role,
-          isAssignable,
-          disabledReason: !isAssignable
-            ? (isManaged ? 'Managed role (bot/integration/booster)' : 'Role is above bot\'s highest role')
-            : undefined,
-        };
+        // Exclure les rôles managed (bots, intégrations, booster)
+        if (role.managed) return false;
+
+        // Exclure les rôles au-dessus ou égaux au bot
+        if (botHighestRole > 0 && role.position >= botHighestRole) return false;
+
+        return true;
       })
-      .sort((a, b) => b.position - a.position); // Trier par position
+      .sort((a, b) => b.position - a.position); // Trier par position (plus haut en premier)
   };
 
   const handleImageUpload = async (file: File, fieldKey: string) => {
