@@ -303,17 +303,17 @@ export default function ModuleConfigPage() {
           <label className="block text-sm font-medium text-blue-900 mb-2">
             Select Server
           </label>
-          <select
+          <CustomSelect
+            options={guilds.map(guild => ({
+              value: guild.id,
+              label: guild.name,
+              icon: '🌐'
+            }))}
             value={selectedGuild}
-            onChange={(e) => setSelectedGuild(e.target.value)}
-            className="w-full px-4 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
-          >
-            {guilds.map((guild) => (
-              <option key={guild.id} value={guild.id}>
-                {guild.name}
-              </option>
-            ))}
-          </select>
+            onChange={setSelectedGuild}
+            placeholder="Select a server"
+            searchable={guilds.length > 5}
+          />
           <p className="mt-2 text-xs text-blue-700">
             Select the Discord server to configure roles and channels for this module
           </p>
