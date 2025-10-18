@@ -24,6 +24,8 @@ interface BotConfig {
   welcomeChannelId?: string;
   welcomeEmbedJson?: string;
   welcomeLogoUrl?: string;
+  goodbyeEnabled: boolean;
+  goodbyeChannelId?: string;
   moderationEnabled: boolean;
   autoRoleEnabled: boolean;
   autoRoleId?: string;
