@@ -463,12 +463,10 @@ export default function ModuleConfigPage() {
                 {schema.type === 'roles' && !schema.multiple && (
                   <div className="space-y-2">
                     <CustomSelect
-                      options={getAllRolesWithStatus().map((role) => ({
+                      options={getAssignableRoles().map((role) => ({
                         value: role.id,
                         label: role.name,
                         color: `#${role.color?.toString(16).padStart(6, '0') || '99aab5'}`,
-                        description: role.disabledReason,
-                        disabled: !role.isAssignable,
                       }))}
                       value={config[key] ?? ''}
                       onChange={(value) => setConfig({ ...config, [key]: value })}
@@ -476,7 +474,7 @@ export default function ModuleConfigPage() {
                       searchable={guildRoles.length > 10}
                     />
                     <p className="text-xs text-gray-500">
-                      ℹ️ Grayed roles cannot be assigned (managed roles, integrations, or above bot)
+                      ℹ️ Only assignable roles shown (excluding @everyone, managed roles, and roles above bot)
                     </p>
                   </div>
                 )}
@@ -484,19 +482,17 @@ export default function ModuleConfigPage() {
                 {schema.type === 'roles' && schema.multiple && (
                   <div className="space-y-2">
                     <CustomMultiSelect
-                      options={getAllRolesWithStatus().map((role) => ({
+                      options={getAssignableRoles().map((role) => ({
                         value: role.id,
                         label: role.name,
                         color: `#${role.color?.toString(16).padStart(6, '0') || '99aab5'}`,
-                        description: role.disabledReason,
-                        disabled: !role.isAssignable,
                       }))}
                       values={config[key] || []}
                       onChange={(values) => setConfig({ ...config, [key]: values })}
                       placeholder="Select roles"
                     />
                     <p className="text-xs text-gray-500">
-                      ℹ️ Grayed roles cannot be assigned (managed roles, integrations, or above bot)
+                      ℹ️ Only assignable roles shown (excluding @everyone, managed roles, and roles above bot)
                     </p>
                   </div>
                 )}
