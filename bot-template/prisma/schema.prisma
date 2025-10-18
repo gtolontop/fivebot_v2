@@ -31,7 +31,6 @@ model Bot {
   name           String
   tokenEncrypted String             @map("token_encrypted") @db.Text
   clientId       String?            @map("client_id")
-  prefix         String             @default("!")
   isActive       Boolean            @default(false) @map("is_active")
   containerId    String?            @map("container_id")
   instanceId     String?            @map("instance_id")
