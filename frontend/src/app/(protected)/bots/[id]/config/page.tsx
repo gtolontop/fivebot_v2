@@ -83,7 +83,7 @@ export default function BotConfigHomePage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = Cookies.get('token');
 
       // Fetch bot
       const botRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/bots/${botId}`, {
@@ -99,7 +99,7 @@ export default function BotConfigHomePage() {
     } catch (error: any) {
       console.error('Error fetching data:', error);
       if (error.response?.status === 401) {
-        localStorage.removeItem('token');
+        Cookies.remove('token');
         router.push('/auth/login');
         toast.error('Session expired. Please login again.');
       } else {
