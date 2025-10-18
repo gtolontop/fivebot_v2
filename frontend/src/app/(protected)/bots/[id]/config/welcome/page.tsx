@@ -639,7 +639,7 @@ function EmbedEditor({
       </div>
 
       {/* Preview Panel */}
-      <div className="lg:sticky lg:top-6">
+      <div className="lg:sticky lg:top-6 space-y-4">
         <div className="bg-[#313338] rounded-lg p-4">
           <div className="flex items-center space-x-2 mb-4">
             <div className="w-10 h-10 rounded-full bg-primary-600 flex items-center justify-center text-white font-bold">
@@ -655,8 +655,68 @@ function EmbedEditor({
 
           <EmbedPreview embedData={embedData} />
         </div>
+
+        {/* Variables Reference */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <h4 className="text-sm font-semibold text-gray-900 mb-3">Available Variables</h4>
+          <div className="space-y-2 text-xs">
+            <VariableItem variable="{user}" description="Mention the user (@User)" />
+            <VariableItem variable="{username}" description="User's display name" />
+            <VariableItem variable="{tag}" description="User's tag (User#1234)" />
+            <VariableItem variable="{userId}" description="User's Discord ID" />
+            <VariableItem variable="{userAvatar}" description="User's avatar URL" />
+            <VariableItem variable="{guild}" description="Server name" />
+            <VariableItem variable="{guildId}" description="Server ID" />
+            <VariableItem variable="{guildIcon}" description="Server icon URL" />
+            <VariableItem variable="{memberCount}" description="Total member count" />
+            <VariableItem variable="{boostCount}" description="Server boost count" />
+            <VariableItem variable="{boostTier}" description="Server boost tier (0-3)" />
+            <VariableItem variable="{channelCount}" description="Total channel count" />
+            <VariableItem variable="{roleCount}" description="Total role count" />
+            <VariableItem variable="{date}" description="Current date" />
+            <VariableItem variable="{time}" description="Current time" />
+            <VariableItem variable="{timestamp}" description="Unix timestamp" />
+            <VariableItem variable="{accountAge}" description="User's account age" />
+            <VariableItem variable="{joinPosition}" description="User's join position" />
+          </div>
+          <p className="text-xs text-gray-500 mt-3 pt-3 border-t border-gray-200">
+            💡 Tip: Click on a variable to copy it to clipboard
+          </p>
+        </div>
       </div>
     </div>
+  );
+}
+
+function VariableItem({ variable, description }: { variable: string; description: string }) {
+  const handleCopy = () => {
+    navigator.clipboard.writeText(variable);
+    toast.success(`Copied ${variable} to clipboard!`);
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="w-full flex items-start justify-between p-2 hover:bg-gray-50 rounded transition-colors group"
+    >
+      <div className="flex-1 text-left">
+        <code className="text-primary-600 font-mono font-medium">{variable}</code>
+        <p className="text-gray-600 mt-0.5">{description}</p>
+      </div>
+      <svg
+        className="w-4 h-4 text-gray-400 group-hover:text-primary-600 transition-colors flex-shrink-0 mt-0.5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+        />
+      </svg>
+    </button>
   );
 }
 
