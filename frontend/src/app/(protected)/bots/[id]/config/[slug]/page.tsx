@@ -160,19 +160,23 @@ export default function ModuleConfigPage() {
     }
   };
 
-  const getAssignableRoles = () => {
-    return guildRoles.filter((role) => {
-      // Exclure @everyone
-      if (role.name === '@everyone') return false;
+  const getAllRolesWithStatus = () => {
+    return guildRoles
+      .filter((role) => role.name !== '@everyone') // Toujours exclure @everyone
+      .map((role) => {
+        const isManaged = role.managed;
+        const isTooHigh = botHighestRole > 0 && role.position >= botHighestRole;
+        const isAssignable = !isManaged && !isTooHigh;
 
-      // Exclure les rôles managed (bots, intégrations, booster)
-      if (role.managed) return false;
-
-      // Exclure les rôles au-dessus du bot
-      if (role.position >= botHighestRole) return false;
-
-      return true;
-    }).sort((a, b) => b.position - a.position); // Trier par position (plus haut en premier)
+        return {
+          ...role,
+          isAssignable,
+          disabledReason: !isAssignable
+            ? (isManaged ? 'Managed role (bot/integration/booster)' : 'Role is above bot\'s highest role')
+            : undefined,
+        };
+      })
+      .sort((a, b) => b.position - a.position); // Trier par position
   };
 
   const handleImageUpload = async (file: File, fieldKey: string) => {
@@ -461,19 +465,20 @@ export default function ModuleConfigPage() {
                 {schema.type === 'roles' && !schema.multiple && (
                   <div className="space-y-2">
                     <CustomSelect
-                      options={getAssignableRoles().map((role) => ({
+                      options={getAllRolesWithStatus().map((role) => ({
                         value: role.id,
                         label: role.name,
                         color: `#${role.color?.toString(16).padStart(6, '0') || '99aab5'}`,
-                        description: `Position: ${role.position}`
+                        description: role.disabledReason,
+                        disabled: !role.isAssignable,
                       }))}
                       value={config[key] ?? ''}
                       onChange={(value) => setConfig({ ...config, [key]: value })}
                       placeholder="Select a role"
-                      searchable={getAssignableRoles().length > 10}
+                      searchable={guildRoles.length > 10}
                     />
                     <p className="text-xs text-gray-500">
-                      ℹ️ Only showing roles the bot can assign (excluding @everyone, managed roles, and roles above the bot)
+                      ℹ️ Grayed roles cannot be assigned (managed roles, integrations, or above bot)
                     </p>
                   </div>
                 )}
@@ -481,18 +486,19 @@ export default function ModuleConfigPage() {
                 {schema.type === 'roles' && schema.multiple && (
                   <div className="space-y-2">
                     <CustomMultiSelect
-                      options={getAssignableRoles().map((role) => ({
+                      options={getAllRolesWithStatus().map((role) => ({
                         value: role.id,
                         label: role.name,
                         color: `#${role.color?.toString(16).padStart(6, '0') || '99aab5'}`,
-                        description: `Position: ${role.position}`
+                        description: role.disabledReason,
+                        disabled: !role.isAssignable,
                       }))}
                       values={config[key] || []}
                       onChange={(values) => setConfig({ ...config, [key]: values })}
                       placeholder="Select roles"
                     />
                     <p className="text-xs text-gray-500">
-                      ℹ️ Excluding @everyone, managed roles, and roles above the bot
+                      ℹ️ Grayed roles cannot be assigned (managed roles, integrations, or above bot)
                     </p>
                   </div>
                 )}
