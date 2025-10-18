@@ -304,7 +304,7 @@ export default function BotManagement({
       <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <h5 className="text-sm font-medium text-blue-900 mb-2">💡 Management Options</h5>
         <ul className="text-xs text-blue-700 space-y-1">
-          <li><strong>Force Restart:</strong> Immediately stops and restarts the bot process</li>
+          <li><strong>Restart:</strong> Cleanly stops and restarts the bot process</li>
           <li><strong>Force Stop:</strong> Terminates the bot process without graceful shutdown</li>
           <li><strong>Diagnostics:</strong> Runs health checks on all bot systems</li>
         </ul>
