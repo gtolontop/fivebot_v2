@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { ready } from './events/ready';
 import { interactionCreate } from './events/interactionCreate';
 import { guildMemberAdd } from './events/guildMemberAdd';
+import { guildMemberRemove } from './events/guildMemberRemove';
 import messageCreateHandler from './events/messageCreate';
 import { MetricsService } from './services/metrics.service';
 import { initializeTicketConfigSync } from './utils/syncTicketConfig';
