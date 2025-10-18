@@ -14,6 +14,7 @@ import { TicketInteractionHandler } from './handlers/ticketInteraction.handler';
 import { TicketService } from './services/ticket.service';
 import { TicketStateManager } from './services/ticketStateManager.service';
 import { StatusService } from './services/status.service';
+import { ModuleLoaderService } from './services/module-loader.service';
 
 dotenv.config();
 
@@ -49,6 +50,7 @@ class ChildBot {
   private ticketService?: TicketService;
   private ticketStateManager?: TicketStateManager;
   private statusService?: StatusService;
+  private moduleLoader?: ModuleLoaderService;
 
   constructor() {
     // Force immediate console output
@@ -185,6 +187,10 @@ class ChildBot {
         // Force flush stdout before continuing
         await new Promise(resolve => process.stdout.write('Starting modules...\n', resolve));
         await new Promise(resolve => setTimeout(resolve, 50));
+
+        // Load enabled modules from database
+        this.moduleLoader = new ModuleLoaderService(this.prisma, this.botId);
+        await this.moduleLoader.loadModules();
 
         // Initialize command service
         try {
