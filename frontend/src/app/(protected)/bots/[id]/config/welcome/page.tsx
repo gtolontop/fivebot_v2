@@ -16,9 +16,6 @@ interface BotConfig {
   welcomeLogoUrl?: string;
   goodbyeEnabled: boolean;
   goodbyeChannelId?: string;
-  autoRoleEnabled: boolean;
-  autoRoleIds?: string;
-  loggingChannelId?: string;
 }
 
 export default function WelcomeConfigPage() {
