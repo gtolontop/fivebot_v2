@@ -192,6 +192,13 @@ class ChildBot {
         this.moduleLoader = new ModuleLoaderService(this.prisma, this.botId);
         await this.moduleLoader.loadModules();
 
+        // Display loaded modules
+        const enabledModules = this.moduleLoader.getEnabledModules();
+        for (const module of enabledModules) {
+          await new Promise(resolve => process.stdout.write(`├─ ${module.name} module ready\n`, resolve));
+          await new Promise(resolve => setTimeout(resolve, 30));
+        }
+
         // Initialize command service
         try {
           this.commandService = new CommandService(this.client, this.prisma, this.botId);
