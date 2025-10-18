@@ -144,6 +144,9 @@ export class SimpleQueueService implements IQueueService {
       case 'stop-bot':
         await this.handleStopBot(job.data);
         break;
+      case 'restart-bot':
+        await this.handleRestartBot(job.data);
+        break;
       case 'delete-bot':
         await this.handleDeleteBot(job.data);
         break;
