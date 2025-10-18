@@ -82,7 +82,8 @@ export class ModulesService {
   // ==================== USER MODULES ====================
 
   async getUserModules(userId: string) {
-    return this.prisma.userModule.findMany({
+    // Get user's purchased/claimed modules
+    const userModules = await this.prisma.userModule.findMany({
       where: { userId },
       include: {
         module: true,
@@ -91,6 +92,30 @@ export class ModulesService {
         purchasedAt: 'desc',
       },
     });
+
+    // Get all free FiveBot modules (auto-owned)
+    const fiveBotFreeModules = await this.prisma.module.findMany({
+      where: {
+        price: 0,
+        author: 'FiveBot',
+        isActive: true,
+      },
+    });
+
+    // Add free FiveBot modules to the list if not already there
+    const userModuleIds = new Set(userModules.map(um => um.moduleId));
+    const additionalModules = fiveBotFreeModules
+      .filter(m => !userModuleIds.has(m.id))
+      .map(module => ({
+        id: `auto-${module.id}`, // Virtual ID
+        userId,
+        moduleId: module.id,
+        purchasedAt: new Date(),
+        paymentAmount: 0,
+        module,
+      }));
+
+    return [...userModules, ...additionalModules];
   }
 
   async userOwnsModule(userId: string, moduleId: string): Promise<boolean> {
