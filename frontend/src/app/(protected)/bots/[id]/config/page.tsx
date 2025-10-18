@@ -136,6 +136,14 @@ export default function BotConfigHomePage() {
         <h2 className={designTokens.typography.h2 + ' mb-4'}>Core Settings</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <ConfigCard
+            icon="⚙️"
+            title="Framework"
+            description="Bot settings, token, and management"
+            onClick={() => router.push(`/bots/${botId}/config/framework`)}
+            badge="Core"
+            badgeColor="bg-purple-100 text-purple-800"
+          />
+          <ConfigCard
             icon="🧩"
             title="Modules"
             description="Manage installed modules"
