@@ -84,6 +84,12 @@ export default function BotConfigHomePage() {
       setLoading(true);
       const token = localStorage.getItem('token');
 
+      if (!token) {
+        toast.error('No authentication token found');
+        router.push('/auth/login');
+        return;
+      }
+
       // Fetch bot
       const botRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/bots/${botId}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -95,9 +101,15 @@ export default function BotConfigHomePage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setBotModules(modulesRes.data.filter((bm: BotModule) => bm.enabled));
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching data:', error);
-      toast.error('Failed to load configuration');
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+        router.push('/auth/login');
+        toast.error('Session expired. Please login again.');
+      } else {
+        toast.error('Failed to load configuration');
+      }
     } finally {
       setLoading(false);
     }
