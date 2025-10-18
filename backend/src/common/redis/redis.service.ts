@@ -102,8 +102,8 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   // Bot state persistence for crash recovery
   async saveBotState(botId: string, state: {
-    status: 'ONLINE' | 'OFFLINE';
-    userAction: 'start' | 'stop' | 'crash' | 'system';
+    status: 'ONLINE' | 'OFFLINE' | 'STARTING' | 'RESTARTING';
+    userAction: 'start' | 'stop' | 'restart' | 'crash' | 'system';
     timestamp: Date;
     metadata?: any;
   }): Promise<void> {
