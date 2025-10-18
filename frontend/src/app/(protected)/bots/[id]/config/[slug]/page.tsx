@@ -45,6 +45,8 @@ export default function ModuleConfigPage() {
   const [selectedGuild, setSelectedGuild] = useState<string>('');
   const [guildRoles, setGuildRoles] = useState<any[]>([]);
   const [guildChannels, setGuildChannels] = useState<any[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [botHighestRole, setBotHighestRole] = useState<number>(0);
 
   useEffect(() => {
     if (!authLoading && !user) {
