@@ -194,8 +194,11 @@ class ChildBot {
 
         // Display loaded modules
         const enabledModules = this.moduleLoader.getEnabledModules();
-        for (const module of enabledModules) {
-          await new Promise(resolve => process.stdout.write(`├─ ${module.name} module ready\n`, resolve));
+        for (let i = 0; i < enabledModules.length; i++) {
+          const module = enabledModules[i];
+          const isLast = i === enabledModules.length - 1;
+          const prefix = isLast ? '└─' : '├─';
+          await new Promise(resolve => process.stdout.write(`${prefix} ${module.name} module ready\n`, resolve));
           await new Promise(resolve => setTimeout(resolve, 30));
         }
 
