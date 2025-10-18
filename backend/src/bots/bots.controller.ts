@@ -1697,33 +1697,6 @@ export class BotsController {
     return { success: true, message: 'Invitation declined' };
   }
 
-  @Get('collaborators/my-invitations')
-  @UseGuards(AuthGuard('jwt'))
-  async getMyInvitations(@Req() req: any) {
-    const invitations = await this.prisma.botCollaborator.findMany({
-      where: {
-        userId: req.user.id,
-        status: 'PENDING',
-      },
-      include: {
-        bot: {
-          select: {
-            id: true,
-            name: true,
-            clientId: true,
-            status: true,
-          },
-        },
-      },
-      orderBy: { invitedAt: 'desc' },
-    });
-
-    return invitations.map((inv) => ({
-      ...inv,
-      permissions: inv.permissions ? JSON.parse(inv.permissions) : undefined,
-    }));
-  }
-
   @Post(':id/refresh-assets')
   @UseGuards(AuthGuard('jwt'))
   async refreshBotAssets(@Param('id') id: string, @Req() req: any) {
