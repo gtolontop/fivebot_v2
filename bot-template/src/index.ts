@@ -275,9 +275,11 @@ class ChildBot {
       }
     });
     
-    this.client.on('guildMemberAdd', (member) => 
-      guildMemberAdd(member, this.welcomeService!, this.config)
-    );
+    this.client.on('guildMemberAdd', async (member) => {
+      // Reload config from database to get latest settings
+      const freshConfig = await this.configService!.getConfig();
+      await guildMemberAdd(member, this.welcomeService!, freshConfig as any);
+    });
     
     this.client.on('interactionCreate', (interaction) => 
       interactionCreate(interaction, this.prisma, this.configService!, this.ticketHandler || undefined)
