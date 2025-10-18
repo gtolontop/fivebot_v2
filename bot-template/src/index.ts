@@ -198,8 +198,11 @@ class ChildBot {
           const module = enabledModules[i];
           const isLast = i === enabledModules.length - 1;
           const prefix = isLast ? '└─' : '├─';
-          await new Promise(resolve => process.stdout.write(`${prefix} ${module.name} module ready\n`, resolve));
-          await new Promise(resolve => setTimeout(resolve, 30));
+          const output = `${prefix} ${module.name} module ready\n`;
+          await new Promise<void>(resolve => {
+            process.stdout.write(output, () => resolve());
+          });
+          await new Promise(resolve => setTimeout(resolve, 50));
         }
 
         // Initialize command service
