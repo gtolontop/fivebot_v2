@@ -73,14 +73,13 @@ export class ModuleLoaderService {
   }
 
   getEnabledModules(): LoadedModule[] {
-    return this.getAllModules()
-      .filter(m => m.enabled)
-      .sort((a, b) => {
-        // Framework toujours en premier
-        if (a.isCore && !b.isCore) return -1;
-        if (!a.isCore && b.isCore) return 1;
-        // Ensuite par ordre alphabétique
-        return a.name.localeCompare(b.name);
-      });
+    const modules = this.getAllModules().filter(m => m.enabled);
+
+    // Séparer les modules core et non-core
+    const coreModules = modules.filter(m => m.isCore);
+    const nonCoreModules = modules.filter(m => !m.isCore).sort((a, b) => a.name.localeCompare(b.name));
+
+    // Core modules en premier, puis le reste par ordre alphabétique
+    return [...coreModules, ...nonCoreModules];
   }
 }
