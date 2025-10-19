@@ -236,7 +236,7 @@ export class WelcomeService {
     return this.buildWelcomeEmbed(member);
   }
 
-  async sendGoodbyeMessage(member: GuildMember): Promise<boolean> {
+  async sendGoodbyeMessage(member: GuildMember | PartialGuildMember): Promise<boolean> {
     try {
       if (!this.config.goodbyeEnabled) {
         return false;
