@@ -532,5 +532,6 @@ export default function BotDetailPage() {
           </Card>
         </div>
       </div>
+    </div>
   );
 }
