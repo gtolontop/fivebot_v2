@@ -1,4 +1,4 @@
-import { Client, GuildMember, EmbedBuilder, TextChannel, AttachmentBuilder } from 'discord.js';
+import { Client, GuildMember, PartialGuildMember, EmbedBuilder, TextChannel, AttachmentBuilder } from 'discord.js';
 
 interface BotConfig {
   welcomeEnabled: boolean;
