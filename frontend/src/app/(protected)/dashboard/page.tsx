@@ -98,7 +98,7 @@ export default function DashboardPage() {
         const earliestStart = Math.min(
           ...activeBots
             .filter(bot => bot.startedAt)
-            .map(bot => new Date(bot.startedAt).getTime())
+            .map(bot => new Date(bot.startedAt!).getTime())
         );
 
         if (earliestStart && earliestStart !== Infinity) {
