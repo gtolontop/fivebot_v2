@@ -1,4 +1,4 @@
-import { GuildMember } from 'discord.js';
+import { GuildMember, PartialGuildMember } from 'discord.js';
 import { WelcomeService } from '../services/welcome.service';
 
 interface BotConfig {
@@ -10,7 +10,7 @@ interface BotConfig {
 }
 
 export async function guildMemberRemove(
-  member: GuildMember,
+  member: GuildMember | PartialGuildMember,
   welcomeService: WelcomeService,
   config: BotConfig
 ) {
