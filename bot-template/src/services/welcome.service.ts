@@ -285,7 +285,7 @@ export class WelcomeService {
     }
   }
 
-  private buildGoodbyeEmbed(member: GuildMember): EmbedBuilder {
+  private buildGoodbyeEmbed(member: GuildMember | PartialGuildMember): EmbedBuilder {
     const embed = new EmbedBuilder()
       .setTitle('👋 Au revoir!')
       .setDescription(`**${member.user.tag}** a quitté le serveur.\n\nNous espérons vous revoir bientôt!`)
