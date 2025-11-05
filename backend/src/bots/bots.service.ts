@@ -499,6 +499,14 @@ export class BotsService {
       configData.ticketData = JSON.stringify({ ...currentTicketData, ...ticketData });
     }
 
+    // Update bot fields if any (like name)
+    if (Object.keys(botFields).length > 0) {
+      await this.prisma.bot.update({
+        where: { id: botId },
+        data: botFields,
+      });
+    }
+
     const config = await this.prisma.botConfig.update({
       where: { botId },
       data: configData,
