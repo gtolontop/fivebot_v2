@@ -460,8 +460,14 @@ export class BotsService {
         : existingConfig.ticketData)
       : {};
 
-    // Fields that should not be included in update
-    const excludeFields = ['id', 'botId', 'createdAt', 'updatedAt', 'bot'];
+    // Fields that belong to Bot table, not BotConfig - handle separately
+    const botFields: any = {};
+    if ('name' in data) {
+      botFields.name = (data as any).name;
+    }
+
+    // Fields that should not be included in BotConfig update
+    const excludeFields = ['id', 'botId', 'createdAt', 'updatedAt', 'bot', 'name'];
 
     // Separate ticket data fields from regular config fields
     for (const [key, value] of Object.entries(data)) {
