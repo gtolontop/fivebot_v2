@@ -44,7 +44,7 @@ export class AppService implements OnApplicationBootstrap {
           },
           {
             maxWait: 10000, // Maximum time to wait for a transaction slot (10 seconds)
-            timeout: 60000, // Maximum time for the transaction to complete (60 seconds)
+            timeout: 15000, // Maximum time for the transaction to complete (15 seconds - Prisma Accelerate limit)
             isolationLevel: 'ReadCommitted', // Use less strict isolation to reduce locks
           }
         );
