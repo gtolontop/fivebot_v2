@@ -13,6 +13,7 @@ interface StatusRotationConfig {
   enabled: boolean;
   interval: number;
   statuses: StatusItem[];
+  enableFiveLinkStats?: boolean;
 }
 
 interface Props {
@@ -31,21 +32,29 @@ const DEFAULT_STATUSES: StatusItem[] = [
 ];
 
 const AVAILABLE_VARIABLES = [
-  { name: '{guilds}', description: 'Number of servers' },
-  { name: '{users}', description: 'Number of cached users' },
-  { name: '{members}', description: 'Total members across all servers' },
-  { name: '{channels}', description: 'Total channels' },
-  { name: '{voice}', description: 'Active voice connections' },
-  { name: '{uptime}', description: 'Bot uptime (e.g., 2d 5h)' },
-  { name: '{ping}', description: 'WebSocket ping' },
-  { name: '{version}', description: 'Bot version' },
+  { name: '{guilds}', description: 'Number of servers', category: 'bot' },
+  { name: '{users}', description: 'Number of cached users', category: 'bot' },
+  { name: '{members}', description: 'Total members across all servers', category: 'bot' },
+  { name: '{channels}', description: 'Total channels', category: 'bot' },
+  { name: '{voice}', description: 'Active voice connections', category: 'bot' },
+  { name: '{uptime}', description: 'Bot uptime (e.g., 2d 5h)', category: 'bot' },
+  { name: '{ping}', description: 'WebSocket ping', category: 'bot' },
+  { name: '{version}', description: 'Bot version', category: 'bot' },
+];
+
+const FIVELINK_VARIABLES = [
+  { name: '{fivelink-users}', description: 'Total FiveLink users', category: 'fivelink' },
+  { name: '{fivelink-views}', description: 'Total profile views', category: 'fivelink' },
+  { name: '{fivelink-clicks}', description: 'Total link clicks', category: 'fivelink' },
+  { name: '{fivelink-profiles}', description: 'Total FiveLink profiles', category: 'fivelink' },
 ];
 
 export default function StatusRotationConfig({ config, updateConfig }: Props) {
   const statusConfig: StatusRotationConfig = {
     enabled: config.statusRotation?.enabled || false,
     interval: config.statusRotation?.interval || 60,
-    statuses: config.statusRotation?.statuses || DEFAULT_STATUSES
+    statuses: config.statusRotation?.statuses || DEFAULT_STATUSES,
+    enableFiveLinkStats: config.statusRotation?.enableFiveLinkStats || false
   };
 
   const [newStatus, setNewStatus] = useState<StatusItem>({
@@ -146,6 +155,31 @@ export default function StatusRotationConfig({ config, updateConfig }: Props) {
 
       {statusConfig.enabled && (
         <div className="space-y-6">
+          {/* FiveLink Stats Toggle */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold text-blue-900 mb-1">FiveLink Statistics</h3>
+                <p className="text-xs text-blue-700">
+                  Display FiveLink platform statistics in your status messages
+                  <span className="block text-blue-600 mt-1">Requires FiveLink module to be enabled and configured</span>
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer ml-4">
+                <input
+                  type="checkbox"
+                  checked={statusConfig.enableFiveLinkStats}
+                  onChange={(e) => updateStatusRotation({ enableFiveLinkStats: e.target.checked })}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                <span className="ml-3 text-sm font-medium text-gray-900">
+                  {statusConfig.enableFiveLinkStats ? 'Enabled' : 'Disabled'}
+                </span>
+              </label>
+            </div>
+          </div>
+
           {/* Rotation Interval */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -351,14 +385,37 @@ export default function StatusRotationConfig({ config, updateConfig }: Props) {
             {/* Available Variables */}
             <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
               <h4 className="font-medium text-blue-900 mb-2">Available Variables</h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                {AVAILABLE_VARIABLES.map(variable => (
-                  <div key={variable.name} className="text-blue-800">
-                    <code className="font-mono">{variable.name}</code>
-                    <div className="text-xs text-blue-600">{variable.description}</div>
-                  </div>
-                ))}
+
+              {/* Bot Variables */}
+              <div className="mb-4">
+                <h5 className="text-xs font-semibold text-blue-800 mb-2 uppercase">Bot Statistics</h5>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                  {AVAILABLE_VARIABLES.map(variable => (
+                    <div key={variable.name} className="text-blue-800">
+                      <code className="font-mono text-xs">{variable.name}</code>
+                      <div className="text-xs text-blue-600">{variable.description}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
+
+              {/* FiveLink Variables (conditional) */}
+              {statusConfig.enableFiveLinkStats && (
+                <div className="pt-4 border-t border-blue-200">
+                  <h5 className="text-xs font-semibold text-blue-800 mb-2 uppercase flex items-center">
+                    FiveLink Statistics
+                    <span className="ml-2 px-2 py-0.5 bg-blue-200 text-blue-800 text-xs rounded-full">Module Required</span>
+                  </h5>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                    {FIVELINK_VARIABLES.map(variable => (
+                      <div key={variable.name} className="text-blue-800">
+                        <code className="font-mono text-xs">{variable.name}</code>
+                        <div className="text-xs text-blue-600">{variable.description}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

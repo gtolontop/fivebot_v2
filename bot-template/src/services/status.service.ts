@@ -1,9 +1,13 @@
 import { Client, ActivityType, PresenceStatusData } from 'discord.js';
+import { FiveLinkService, FiveLinkGlobalStats } from './fivelink.service';
+import { getRedisClient } from './redis.service';
+import { ModuleLoaderService } from './module-loader.service';
 
 export interface StatusConfig {
   enabled: boolean;
   rotationInterval: number; // in seconds
   statuses: StatusItem[];
+  enableFiveLinkStats?: boolean;
 }
 
 export interface StatusItem {
@@ -18,10 +22,17 @@ export class StatusService {
   private config: StatusConfig;
   private currentIndex: number = 0;
   private rotationTimer?: NodeJS.Timeout;
+  private moduleLoader?: ModuleLoaderService;
+  private fivelinkService?: FiveLinkService;
+  private fivelinkStatsCache?: FiveLinkGlobalStats;
+  private fivelinkCacheExpiry: number = 0;
+  private readonly FIVELINK_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-  constructor(client: Client, moduleConfig?: any) {
+  constructor(client: Client, moduleConfig?: any, moduleLoader?: ModuleLoaderService) {
     this.client = client;
+    this.moduleLoader = moduleLoader;
     this.config = this.loadConfig(moduleConfig);
+    this.initializeFiveLinkService();
   }
 
   private loadConfig(moduleConfig?: any): StatusConfig {
@@ -50,15 +61,54 @@ export class StatusService {
       return {
         enabled: statuses.length > 0,
         rotationInterval: moduleConfig.interval || 60,
-        statuses: statuses.length > 0 ? statuses : defaultStatuses
+        statuses: statuses.length > 0 ? statuses : defaultStatuses,
+        enableFiveLinkStats: moduleConfig.enableFiveLinkStats ?? false
       };
     }
 
     return {
       enabled: false,
       rotationInterval: 60,
-      statuses: defaultStatuses
+      statuses: defaultStatuses,
+      enableFiveLinkStats: false
     };
+  }
+
+  private initializeFiveLinkService() {
+    // Only initialize if FiveLink stats are enabled
+    if (!this.config.enableFiveLinkStats || !this.moduleLoader) {
+      return;
+    }
+
+    try {
+      // Check if FiveLink module is enabled
+      if (!this.moduleLoader.isModuleEnabled('fivelink')) {
+        console.log('⚠️ FiveLink stats requested but FiveLink module is not enabled');
+        return;
+      }
+
+      // Get FiveLink module config
+      const fivelinkConfig = this.moduleLoader.getModuleConfig('fivelink');
+      if (!fivelinkConfig || !fivelinkConfig.apiKey) {
+        console.log('⚠️ FiveLink stats requested but API key not configured');
+        return;
+      }
+
+      // Initialize FiveLink service
+      const redis = getRedisClient();
+      this.fivelinkService = new FiveLinkService(
+        {
+          apiKey: fivelinkConfig.apiKey,
+          cacheEnabled: true,
+          cacheTTL: 300, // 5 minutes
+        },
+        redis
+      );
+
+      console.log('✅ FiveLink stats integration enabled for status rotation');
+    } catch (error) {
+      console.error('⚠️ Failed to initialize FiveLink service for status rotation:', error);
+    }
   }
 
   public start(): { enabled: boolean; interval?: number } {
@@ -85,14 +135,14 @@ export class StatusService {
     }
   }
 
-  private updateStatus() {
+  private async updateStatus() {
     if (!this.client.user) return;
 
     const statusItem = this.config.statuses[this.currentIndex];
     if (!statusItem) return;
 
     // Replace variables in text
-    const text = this.replaceVariables(statusItem.text);
+    const text = await this.replaceVariables(statusItem.text);
 
     // Map activity type
     const activityType = this.getActivityType(statusItem.type);
@@ -111,7 +161,32 @@ export class StatusService {
     this.currentIndex = (this.currentIndex + 1) % this.config.statuses.length;
   }
 
-  private replaceVariables(text: string): string {
+  private async getFiveLinkStats(): Promise<FiveLinkGlobalStats | null> {
+    if (!this.fivelinkService) {
+      return null;
+    }
+
+    try {
+      // Check if cache is still valid
+      const now = Date.now();
+      if (this.fivelinkStatsCache && now < this.fivelinkCacheExpiry) {
+        return this.fivelinkStatsCache;
+      }
+
+      // Fetch fresh stats
+      const stats = await this.fivelinkService.getGlobalStats();
+      this.fivelinkStatsCache = stats;
+      this.fivelinkCacheExpiry = now + this.FIVELINK_CACHE_TTL;
+
+      return stats;
+    } catch (error) {
+      console.error('⚠️ Failed to fetch FiveLink stats for status:', error);
+      // Return cached data if available, even if expired
+      return this.fivelinkStatsCache || null;
+    }
+  }
+
+  private async replaceVariables(text: string): Promise<string> {
     const variables: Record<string, string> = {
       '{guilds}': this.client.guilds.cache.size.toString(),
       '{users}': this.client.users.cache.size.toString(),
@@ -124,6 +199,17 @@ export class StatusService {
       '{version}': '2.0.0',
       '{shards}': this.client.ws.shards.size.toString(),
     };
+
+    // Add FiveLink stats if enabled
+    if (this.config.enableFiveLinkStats && this.fivelinkService) {
+      const fivelinkStats = await this.getFiveLinkStats();
+      if (fivelinkStats) {
+        variables['{fivelink-users}'] = fivelinkStats.allTime.totalUsers.toLocaleString();
+        variables['{fivelink-views}'] = fivelinkStats.allTime.totalViews.toLocaleString();
+        variables['{fivelink-clicks}'] = fivelinkStats.allTime.totalClicks.toLocaleString();
+        variables['{fivelink-profiles}'] = fivelinkStats.allTime.totalProfiles.toLocaleString();
+      }
+    }
 
     let result = text;
     Object.entries(variables).forEach(([key, value]) => {
