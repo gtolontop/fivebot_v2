@@ -9,6 +9,9 @@ import * as serverInfoCommand from './server-info';
 import * as userProfileCommand from './user-profile';
 import * as teamCommand from './team';
 import * as announcementCommand from './announcement';
+import * as fivelinkLeaderboardCommand from './fivelink/leaderboard';
+import * as fivelinkProfileCommand from './fivelink/profile';
+import * as fivelinkStatsCommand from './fivelink/stats';
 
 // Get ticket enabled status from environment config
 const config = process.env.CONFIG ? JSON.parse(process.env.CONFIG) : {};
@@ -50,6 +53,13 @@ export function buildCommands(customCommands: Record<string, any> = {}, v2Comman
       commands.push(command);
     }
   });
+
+  // Add FiveLink commands if module is enabled
+  // We check if the module exists in bot_modules table at runtime
+  // For now, always register them so they're available when module is enabled
+  commands.push(fivelinkLeaderboardCommand.data);
+  commands.push(fivelinkProfileCommand.data);
+  commands.push(fivelinkStatsCommand.data);
   
   // Add ticket commands if enabled
   const parsedConfig = process.env.CONFIG ? JSON.parse(process.env.CONFIG) : {};
