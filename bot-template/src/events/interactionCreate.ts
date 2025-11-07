@@ -62,9 +62,9 @@ export async function interactionCreate(
           const embedData = embedV2Commands[command].embedV2Data || [];
           
           if (embedData.length === 0) {
-            await interaction.reply({ 
-              content: '❌ This embed has no content yet. Please configure it first.', 
-              ephemeral: true 
+            await interaction.reply({
+              content: '❌ This embed has no content yet. Please configure it first.',
+              flags: 64  // MessageFlags.Ephemeral
             });
             return;
           }
@@ -80,17 +80,17 @@ export async function interactionCreate(
         }
       } catch (error) {
         console.error(`[DEBUG] Failed to execute V2 command ${command}:`, error);
-        await interaction.reply({ 
-          content: '❌ This command encountered an error.', 
-          ephemeral: true 
+        await interaction.reply({
+          content: '❌ This command encountered an error.',
+          flags: 64  // MessageFlags.Ephemeral
         });
         return;
       }
     } else {
       console.log(`[DEBUG] Command ${command} is not enabled in config`);
-      await interaction.reply({ 
-        content: '❌ This command is not enabled.', 
-        ephemeral: true 
+      await interaction.reply({
+        content: '❌ This command is not enabled.',
+        flags: 64  // MessageFlags.Ephemeral
       });
       return;
     }
@@ -112,7 +112,7 @@ export async function interactionCreate(
     } catch (error) {
       console.error(`Error executing ticket command ${command}:`, error);
       if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({ content: '❌ An error occurred executing this command.', ephemeral: true });
+        await interaction.reply({ content: '❌ An error occurred executing this command.', flags: 64 });  // MessageFlags.Ephemeral
       }
       return;
     }
@@ -146,9 +146,9 @@ async function handleBuiltInCommands(
   // Only allow bot owner to use configuration commands
   const bot = await configService.getBot();
   if (!bot) {
-    await interaction.reply({ 
+    await interaction.reply({
       content: '❌ Configuration du bot non trouvée.',
-      ephemeral: true 
+      flags: 64  // MessageFlags.Ephemeral
     });
     return;
   }
@@ -160,7 +160,7 @@ async function handleBuiltInCommands(
   if (!owner || owner.discordId !== interaction.user.id) {
     await interaction.reply({
       content: '❌ Seul le propriétaire du bot peut utiliser cette commande.',
-      ephemeral: true
+      flags: 64  // MessageFlags.Ephemeral
     });
     return;
   }
@@ -195,7 +195,7 @@ async function handleBuiltInCommands(
     const replyMethod = interaction.replied || interaction.deferred ? 'editReply' : 'reply';
     await interaction[replyMethod]({
       content: '❌ Une erreur s\'est produite lors de l\'exécution de cette commande.',
-      ephemeral: true
+      flags: 64  // MessageFlags.Ephemeral
     });
   }
 }
