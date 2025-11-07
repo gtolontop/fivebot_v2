@@ -580,49 +580,58 @@ export class SimpleQueueService implements IQueueService {
 
       console.log(`🔄 Stopping bot "${botName}" process (PID: ${botProcess.pid})`);
 
-      // On Windows, use taskkill directly for immediate termination
+      // Helper function to recursively kill all child processes on Linux
+      const killProcessTreeLinux = async (pid: number, signal: string = 'SIGTERM'): Promise<void> => {
+        const { exec } = require('child_process');
+        const { promisify } = require('util');
+        const execPromise = promisify(exec);
+
+        try {
+          // Get ALL descendants recursively using ps
+          const { stdout } = await execPromise(`ps -o pid= --ppid ${pid}`);
+          const childPids = stdout.trim().split('\n').filter(p => p.trim()).map(p => parseInt(p.trim()));
+
+          // Recursively kill all children first
+          for (const childPid of childPids) {
+            await killProcessTreeLinux(childPid, signal);
+          }
+
+          // Then kill this process
+          try {
+            process.kill(pid, signal);
+            console.log(`✅ Killed PID ${pid} with ${signal}`);
+          } catch (e) {
+            console.log(`⚠️ PID ${pid} already dead`);
+          }
+        } catch (error) {
+          // No children found - just kill this process
+          try {
+            process.kill(pid, signal);
+            console.log(`✅ Killed PID ${pid} with ${signal}`);
+          } catch (e) {
+            // Already dead
+          }
+        }
+      };
+
+      // On Windows, use taskkill
       if (process.platform === 'win32' && botProcess.pid) {
         const { exec } = require('child_process');
-
-        // First try graceful shutdown with taskkill
         exec(`taskkill /PID ${botProcess.pid}`, (error) => {
           if (error) {
-            console.log(`⚠️ Graceful taskkill failed, forcing...`);
-            // Force kill with /F flag and tree /T to kill all child processes
             exec(`taskkill /F /PID ${botProcess.pid} /T`, (forceError) => {
-              if (forceError) {
-                console.error(`❌ taskkill force error: ${forceError}`);
-              } else {
-                console.log(`✅ Process ${botProcess.pid} force killed with taskkill`);
-              }
+              if (!forceError) console.log(`✅ Force killed with taskkill`);
             });
           } else {
-            console.log(`✅ Process ${botProcess.pid} killed gracefully with taskkill`);
+            console.log(`✅ Killed gracefully with taskkill`);
           }
         });
       } else {
-        // Unix/Linux systems - kill entire process tree
-        const { exec } = require('child_process');
-
-        console.log('📤 Sending SIGTERM to bot process tree...');
-
-        // CRITICAL FIX: Kill entire process tree on Linux
-        // npm run dev creates: npm -> sh -> tsx -> node
-        // We need to kill ALL of them, not just the parent
-        exec(`pkill -TERM -P ${botProcess.pid}`, (error) => {
-          // Also kill the parent process itself
-          try {
-            botProcess.kill('SIGTERM');
-          } catch (e) {
-            console.log('⚠️ Failed to send SIGTERM to parent:', e.message);
-          }
-
-          if (error) {
-            console.log(`⚠️ pkill SIGTERM had issues (may be normal if process already exited):`, error.message);
-          } else {
-            console.log(`✅ Sent SIGTERM to process tree`);
-          }
-        });
+        // Linux: Recursive kill of entire process tree
+        console.log('📤 Killing entire process tree recursively...');
+        killProcessTreeLinux(botProcess.pid, 'SIGTERM')
+          .then(() => console.log(`✅ Process tree killed`))
+          .catch((e) => console.log(`⚠️ Error:`, e.message));
       }
       
       // Timeout to force kill if needed
