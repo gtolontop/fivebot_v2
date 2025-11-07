@@ -192,11 +192,16 @@ async function handleBuiltInCommands(
   } catch (error) {
     console.error(`Command /${commandName} failed:`, error instanceof Error ? error.message : error);
 
-    const replyMethod = interaction.replied || interaction.deferred ? 'editReply' : 'reply';
-    await interaction[replyMethod]({
-      content: '❌ Une erreur s\'est produite lors de l\'exécution de cette commande.',
-      flags: 64  // MessageFlags.Ephemeral
-    });
+    if (interaction.replied || interaction.deferred) {
+      await interaction.editReply({
+        content: '❌ Une erreur s\'est produite lors de l\'exécution de cette commande.'
+      });
+    } else {
+      await interaction.reply({
+        content: '❌ Une erreur s\'est produite lors de l\'exécution de cette commande.',
+        flags: 64  // MessageFlags.Ephemeral
+      });
+    }
   }
 }
 
