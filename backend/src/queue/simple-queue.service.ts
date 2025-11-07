@@ -579,11 +579,11 @@ export class SimpleQueueService implements IQueueService {
       }
 
       console.log(`🔄 Stopping bot "${botName}" process (PID: ${botProcess.pid})`);
-      
+
       // On Windows, use taskkill directly for immediate termination
       if (process.platform === 'win32' && botProcess.pid) {
         const { exec } = require('child_process');
-        
+
         // First try graceful shutdown with taskkill
         exec(`taskkill /PID ${botProcess.pid}`, (error) => {
           if (error) {
@@ -601,8 +601,28 @@ export class SimpleQueueService implements IQueueService {
           }
         });
       } else {
-        // Unix systems - send SIGTERM
-        botProcess.kill('SIGTERM');
+        // Unix/Linux systems - kill entire process tree
+        const { exec } = require('child_process');
+
+        console.log('📤 Sending SIGTERM to bot process tree...');
+
+        // CRITICAL FIX: Kill entire process tree on Linux
+        // npm run dev creates: npm -> sh -> tsx -> node
+        // We need to kill ALL of them, not just the parent
+        exec(`pkill -TERM -P ${botProcess.pid}`, (error) => {
+          // Also kill the parent process itself
+          try {
+            botProcess.kill('SIGTERM');
+          } catch (e) {
+            console.log('⚠️ Failed to send SIGTERM to parent:', e.message);
+          }
+
+          if (error) {
+            console.log(`⚠️ pkill SIGTERM had issues (may be normal if process already exited):`, error.message);
+          } else {
+            console.log(`✅ Sent SIGTERM to process tree`);
+          }
+        });
       }
       
       // Timeout to force kill if needed
@@ -619,14 +639,22 @@ export class SimpleQueueService implements IQueueService {
                 console.error(`taskkill sync error:`, e);
               }
             } else {
-              botProcess.kill('SIGKILL');
+              // Linux: Kill entire process tree with SIGKILL
+              const { execSync } = require('child_process');
+              try {
+                execSync(`pkill -KILL -P ${botProcess.pid}`);
+                botProcess.kill('SIGKILL');
+                console.log(`✅ Force killed process tree with SIGKILL`);
+              } catch (e) {
+                console.log(`⚠️ Force kill error (may be already dead):`, e.message);
+              }
             }
           } catch (error) {
             console.log(`⚠️ Process may have already exited`);
           }
           this.runningBots.delete(botId);
         }
-      }, 3000); // 3 seconds timeout
+      }, 5000); // 5 seconds timeout (increased from 3s to give more time for graceful shutdown)
 
       // Wait for process to exit naturally
       await new Promise<void>((resolve) => {

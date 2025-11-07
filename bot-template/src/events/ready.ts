@@ -125,6 +125,17 @@ async function deployCommands(client: Client) {
     // Build commands dynamically with V2 commands
     const allCommands = buildCommands(customCommands, parsedEmbedV2Commands);
 
+    // CRITICAL: Clear any existing global commands to prevent duplicates
+    try {
+      await rest.put(
+        Routes.applicationCommands(client.user?.id),
+        { body: [] }, // Empty array = delete all global commands
+      );
+      console.log('✅ Global commands cleared');
+    } catch (error) {
+      console.error('Failed to clear global commands:', error);
+    }
+
     // Deploy to each guild for immediate availability
     // (Guild commands update instantly vs global commands which take up to 1 hour)
     for (const guild of client.guilds.cache.values()) {

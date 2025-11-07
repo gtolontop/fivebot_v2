@@ -338,6 +338,11 @@ class ChildBot {
     process.on('SIGINT', () => handleShutdown('SIGINT'));
     process.on('SIGTERM', () => handleShutdown('SIGTERM'));
 
+    // On Windows, also handle SIGBREAK (Ctrl+Break)
+    if (process.platform === 'win32') {
+      process.on('SIGBREAK', () => handleShutdown('SIGBREAK'));
+    }
+
     // On Windows, process might be killed before SIGTERM is handled
     // Use beforeExit as a fallback
     process.on('beforeExit', async () => {
@@ -361,7 +366,14 @@ class ChildBot {
     try {
       // Clear console and show message synchronously
       process.stdout.write('\x1Bc'); // Clear screen
-      process.stdout.write('Server marked as offline\n');
+      process.stdout.write('Server marked as stopping...\n');
+
+      // CRITICAL: Destroy Discord client FIRST to disconnect WebSocket immediately
+      console.log('🔌 Disconnecting from Discord...');
+      this.client.destroy();
+
+      // Wait for Discord disconnection to propagate (critical for proper offline status)
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Update bot status to offline
       await this.prisma.bot.update({
@@ -381,16 +393,14 @@ class ChildBot {
         // Ignore
       }
 
-      // Disconnect from Discord
-      this.client.destroy();
-
       // Close database connection
       await this.prisma.$disconnect().catch(() => {});
 
+      process.stdout.write('✅ Server marked as offline\n');
       process.exit(0);
     } catch (error) {
       process.stdout.write('\x1Bc'); // Clear screen
-      process.stdout.write('Server marked as offline\n');
+      process.stdout.write('⚠️ Error during shutdown\n');
       process.exit(1);
     }
   }
