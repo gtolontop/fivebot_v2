@@ -167,10 +167,6 @@ async function handleBuiltInCommands(
 
   try {
     switch (commandName) {
-      case 'help':
-        await handleHelp(interaction);
-        break;
-
       case 'ticket':
         // Import dynamically to avoid circular dependency
         const ticketCommand = await import('../commands/ticket');
