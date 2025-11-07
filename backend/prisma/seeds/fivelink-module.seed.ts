@@ -85,32 +85,24 @@ The module requires a FiveLink API key to function. You can create one for free 
       ]),
       dependencies: JSON.stringify([]), // No dependencies
       configSchema: JSON.stringify({
-        type: 'object',
-        required: ['apiKey'],
-        properties: {
-          apiKey: {
-            type: 'string',
-            title: 'FiveLink API Key',
-            description: 'Your FiveLink API key from https://fivelink.lol/dashboard/api',
-            pattern: '^fl_live_[A-Za-z0-9_-]+$',
-            minLength: 40,
-            maxLength: 100,
-            'x-secret': true, // Will be encrypted
-          },
-          cacheEnabled: {
-            type: 'boolean',
-            title: 'Enable Caching',
-            description: 'Cache API responses for better performance (recommended)',
-            default: true,
-          },
-          cacheTTL: {
-            type: 'number',
-            title: 'Cache Duration (seconds)',
-            description: 'How long to cache API responses',
-            default: 3600,
-            minimum: 60,
-            maximum: 86400,
-          },
+        apiKey: {
+          type: 'string',
+          label: 'FiveLink API Key',
+          required: true,
+          placeholder: 'fl_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+          maxLength: 100,
+        },
+        cacheEnabled: {
+          type: 'boolean',
+          label: 'Enable Caching',
+          default: true,
+        },
+        cacheTTL: {
+          type: 'number',
+          label: 'Cache Duration (seconds)',
+          default: 3600,
+          min: 60,
+          max: 86400,
         },
       }),
       isCore: false,
@@ -162,25 +154,24 @@ Display global FiveLink platform statistics.
       ]),
       dependencies: JSON.stringify([]),
       configSchema: JSON.stringify({
-        type: 'object',
-        required: ['apiKey'],
-        properties: {
-          apiKey: {
-            type: 'string',
-            title: 'FiveLink API Key',
-            description: 'Your FiveLink API key from https://fivelink.lol/dashboard/api',
-            'x-secret': true,
-          },
-          cacheEnabled: {
-            type: 'boolean',
-            title: 'Enable Caching',
-            default: true,
-          },
-          cacheTTL: {
-            type: 'number',
-            title: 'Cache Duration (seconds)',
-            default: 3600,
-          },
+        apiKey: {
+          type: 'string',
+          label: 'FiveLink API Key',
+          required: true,
+          placeholder: 'fl_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+          maxLength: 100,
+        },
+        cacheEnabled: {
+          type: 'boolean',
+          label: 'Enable Caching',
+          default: true,
+        },
+        cacheTTL: {
+          type: 'number',
+          label: 'Cache Duration (seconds)',
+          default: 3600,
+          min: 60,
+          max: 86400,
         },
       }),
       isCore: false,
