@@ -149,8 +149,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     await interaction.editReply({
       embeds: [embed],
       components: [linkButton],
-      // @ts-ignore - V2 flag
-      flags: COMP_V2_FLAG,
     });
   } catch (error: any) {
     console.error('[FiveLink] /profile command error:', error);
