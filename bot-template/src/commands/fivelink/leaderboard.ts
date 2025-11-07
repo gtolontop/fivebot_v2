@@ -163,7 +163,7 @@ function buildLeaderboardButtons(
 
   paginationRow.addComponents(
     new ButtonBuilder()
-      .setCustomId(`fivelink_lb_${currentType}_${Math.max(0, page - 1)}`)
+      .setCustomId(`fivelink_lb_prev_${currentType}_${Math.max(0, page - 1)}`)
       .setLabel('Previous')
       .setEmoji('⬅️')
       .setStyle(ButtonStyle.Secondary)
@@ -180,7 +180,7 @@ function buildLeaderboardButtons(
 
   paginationRow.addComponents(
     new ButtonBuilder()
-      .setCustomId(`fivelink_lb_${currentType}_${page + 1}`)
+      .setCustomId(`fivelink_lb_next_${currentType}_${page + 1}`)
       .setLabel('Next')
       .setEmoji('➡️')
       .setStyle(ButtonStyle.Secondary)
@@ -197,22 +197,28 @@ export async function handleLeaderboardButton(interaction: any) {
   try {
     await interaction.deferUpdate();
 
-    const [, , typeOrRefresh, pageStr] = interaction.customId.split('_');
+    const parts = interaction.customId.split('_');
+    // Format: fivelink_lb_ACTION_TYPE_PAGE or fivelink_lb_TYPE_PAGE
 
     let type: keyof typeof LEADERBOARD_TYPES;
     let page: number;
     let forceRefresh = false;
 
-    if (typeOrRefresh === 'refresh') {
+    const action = parts[2]; // 'prev', 'next', 'refresh', or the type name
+
+    if (action === 'prev' || action === 'next') {
+      // Pagination button: fivelink_lb_prev_TYPE_PAGE or fivelink_lb_next_TYPE_PAGE
+      type = parts[3] as keyof typeof LEADERBOARD_TYPES;
+      page = parseInt(parts[4]);
+    } else if (action === 'refresh') {
       // Refresh button: fivelink_lb_refresh_TYPE_PAGE
-      const [, , , actualType, actualPageStr] = interaction.customId.split('_');
-      type = actualType as keyof typeof LEADERBOARD_TYPES;
-      page = parseInt(actualPageStr);
+      type = parts[3] as keyof typeof LEADERBOARD_TYPES;
+      page = parseInt(parts[4]);
       forceRefresh = true;
     } else {
-      // Type/page button: fivelink_lb_TYPE_PAGE
-      type = typeOrRefresh as keyof typeof LEADERBOARD_TYPES;
-      page = parseInt(pageStr);
+      // Type button: fivelink_lb_TYPE_PAGE
+      type = parts[2] as keyof typeof LEADERBOARD_TYPES;
+      page = parseInt(parts[3]);
     }
 
     // Get module config
