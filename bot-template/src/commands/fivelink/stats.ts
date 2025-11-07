@@ -132,7 +132,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     } else {
       await interaction.reply({
         content: `❌ Failed to fetch statistics: ${errorMessage}`,
-        ephemeral: true,
+        flags: 64  // MessageFlags.Ephemeral
       });
     }
   }
