@@ -214,10 +214,64 @@ export class ConfigService {
     roleId?: string;
   }> {
     const config = await this.getConfig();
-    
+
     return {
       enabled: config.autoRoleEnabled,
       roleId: config.autoRoleId || undefined,
     };
+  }
+}
+
+/**
+ * Get module-specific configuration
+ * This is a standalone function that can be used in commands
+ */
+export async function getModuleConfig(guildId: string, moduleSlug: string): Promise<any> {
+  const prisma = new PrismaClient();
+
+  try {
+    // Get bot ID from environment (each bot instance has its own BOT_ID)
+    const botId = process.env.BOT_ID;
+    if (!botId) {
+      throw new Error('BOT_ID environment variable is not set');
+    }
+
+    // Find the module configuration for this bot
+    const botModule = await prisma.botModule.findFirst({
+      where: {
+        botId: botId,
+        module: {
+          slug: moduleSlug,
+        },
+        enabled: true,
+      },
+      include: {
+        module: true,
+      },
+    });
+
+    if (!botModule) {
+      return null;
+    }
+
+    // Parse the config JSON
+    let config = {};
+    if (botModule.config) {
+      try {
+        config = typeof botModule.config === 'string'
+          ? JSON.parse(botModule.config)
+          : botModule.config;
+      } catch (e) {
+        console.error(`Failed to parse config for module ${moduleSlug}:`, e);
+        return null;
+      }
+    }
+
+    return config;
+  } catch (error) {
+    console.error(`Error fetching module config for ${moduleSlug}:`, error);
+    return null;
+  } finally {
+    await prisma.$disconnect();
   }
 }
