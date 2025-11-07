@@ -15,8 +15,6 @@ import { FiveLinkService } from '../../services/fivelink.service';
 import { getRedisClient } from '../../services/redis.service';
 import { getModuleConfig } from '../../services/config.service';
 
-const COMP_V2_FLAG = 1 << 15;
-
 export const data = new SlashCommandBuilder()
   .setName('me')
   .setDescription('View your FiveLink profile');
@@ -166,8 +164,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     await interaction.editReply({
       embeds: [embed],
       components: [linkButton],
-      // @ts-ignore - V2 flag
-      flags: COMP_V2_FLAG,
     });
   } catch (error: any) {
     console.error('[FiveLink] /me command error:', error);
