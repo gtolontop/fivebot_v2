@@ -410,7 +410,8 @@ Keep your bot's status fresh with automatic rotation!
 - Customizable rotation interval
 - Support for all activity types (Playing, Watching, Listening, Competing)
 - Random or sequential rotation
-- Variables support ({servers}, {users}, {uptime})
+- Dynamic variables support ({guilds}, {users}, {uptime}, etc.)
+- **NEW:** FiveLink statistics integration
 
 ### Configuration
 Set up multiple status messages that will rotate automatically at your chosen interval.
@@ -420,6 +421,16 @@ Set up multiple status messages that will rotate automatically at your chosen in
 - Watching - "Watching something"
 - Listening - "Listening to music"
 - Competing - "Competing in an event"
+
+### Available Variables
+**Bot Statistics:**
+- {guilds}, {users}, {members}, {channels}, {voice}, {uptime}, {ping}, {version}
+
+**FiveLink Statistics (requires FiveLink module):**
+- {fivelink-users} - Total FiveLink users
+- {fivelink-views} - Total profile views
+- {fivelink-clicks} - Total link clicks
+- {fivelink-profiles} - Total FiveLink profiles
     `,
     category: ModuleCategory.UTILITY,
     price: 0,
@@ -433,6 +444,7 @@ Set up multiple status messages that will rotate automatically at your chosen in
       'All activity types',
       'Random or sequential',
       'Dynamic variables',
+      'FiveLink stats integration',
     ]),
     configSchema: JSON.stringify({
       statuses: {
@@ -446,6 +458,7 @@ Set up multiple status messages that will rotate automatically at your chosen in
       },
       interval: { type: 'number', label: 'Rotation Interval (seconds)', default: 60, min: 10, max: 3600 },
       mode: { type: 'select', label: 'Rotation Mode', options: ['sequential', 'random'], default: 'sequential' },
+      enableFiveLinkStats: { type: 'boolean', label: 'Enable FiveLink Statistics', default: false, description: 'Show FiveLink platform stats in status (requires FiveLink module)' },
     }),
     dependencies: JSON.stringify(['framework']),
     isCore: false,
