@@ -339,8 +339,10 @@ async function handleCustomCommand(
 
 async function handleHelp(interaction: ChatInputCommandInteraction) {
   try {
-    // Fetch commands to ensure we have the latest list
-    const commands = await interaction.client.application?.commands.fetch();
+    // Fetch guild commands (not global commands) since commands are registered per guild
+    const commands = interaction.guild
+      ? await interaction.guild.commands.fetch()
+      : await interaction.client.application?.commands.fetch();
 
     // Build command list
     let commandList = '';
