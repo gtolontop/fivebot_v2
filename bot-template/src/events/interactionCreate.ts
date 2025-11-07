@@ -220,9 +220,9 @@ async function handleCustomCommand(
       }
     } catch (error) {
       console.error(`Failed to execute V2 command ${commandName}:`, error);
-      await interaction.reply({ 
-        content: '❌ This V2 command is enabled but not properly configured.', 
-        ephemeral: true 
+      await interaction.reply({
+        content: '❌ This V2 command is enabled but not properly configured.',
+        flags: 64  // MessageFlags.Ephemeral
       });
       return;
     }
@@ -232,17 +232,17 @@ async function handleCustomCommand(
   if (!config.customCommands) {
     await interaction.reply({
       content: '❌ Command not recognized.',
-      ephemeral: true
+      flags: 64  // MessageFlags.Ephemeral
     });
     return;
   }
 
   const customCommand = (config.customCommands as any)?.[commandName];
-  
+
   if (!customCommand) {
     await interaction.reply({
       content: '❌ Command not recognized.',
-      ephemeral: true
+      flags: 64  // MessageFlags.Ephemeral
     });
     return;
   }
@@ -251,8 +251,7 @@ async function handleCustomCommand(
     if (customCommand.type === 'simple' && customCommand.response) {
       // Simple text response
       await interaction.reply({
-        content: customCommand.response,
-        ephemeral: false
+        content: customCommand.response
       });
     } else if (customCommand.type === 'embed' && customCommand.embed) {
       // Embed response
@@ -282,22 +281,21 @@ async function handleCustomCommand(
       if (customCommand.embed.footer && customCommand.embed.footer.text) {
         embed.setFooter({ text: customCommand.embed.footer.text });
       }
-      
+
       await interaction.reply({
-        embeds: [embed],
-        ephemeral: false
+        embeds: [embed]
       });
     } else {
       await interaction.reply({
         content: '❌ Invalid command configuration.',
-        ephemeral: true
+        flags: 64  // MessageFlags.Ephemeral
       });
     }
   } catch (error) {
     console.error(`Error executing custom command ${commandName}:`, error);
     await interaction.reply({
       content: '❌ Error executing custom command.',
-      ephemeral: true
+      flags: 64  // MessageFlags.Ephemeral
     });
   }
 }
