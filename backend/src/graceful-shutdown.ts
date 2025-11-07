@@ -15,28 +15,23 @@ export async function setupGracefulShutdown() {
     console.log(`\n⚠️  Received ${signal}, starting graceful shutdown...`);
 
     try {
-      // 1. Mark all bots as OFFLINE
-      const result = await prisma.$executeRaw`
-        UPDATE bots 
-        SET status = 'OFFLINE', updated_at = NOW()
-        WHERE status != 'OFFLINE'
-      `;
-      console.log(`✅ Marked ${result} bot(s) as OFFLINE`);
-
-      // 2. Kill all bot processes
+      // 1. Kill all bot processes FIRST
+      // Don't mark bots as OFFLINE - let recovery service handle restart
       if (process.platform === 'win32') {
         await execAsync('taskkill /F /IM node.exe /FI "WINDOWTITLE eq bot-*"').catch(() => {});
       } else {
-        await execAsync('pkill -f "bot-"').catch(() => {});
+        // Kill all tsx and node processes spawned by the bot
+        await execAsync('pkill -f "tsx src/index.ts"').catch(() => {});
+        await execAsync('pkill -f "bot-template"').catch(() => {});
       }
       console.log('✅ Terminated all bot processes');
 
-      // 3. Disconnect from database
+      // 2. Disconnect from database
       await prisma.$disconnect();
       console.log('✅ Disconnected from database');
 
-      // 4. Exit
-      console.log('✅ Graceful shutdown complete');
+      // 3. Exit
+      console.log('✅ Graceful shutdown complete - bots will be auto-recovered on restart');
       process.exit(0);
     } catch (error) {
       console.error('❌ Error during shutdown:', error);
