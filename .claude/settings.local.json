@@ -62,7 +62,9 @@
       "Bash(for:*)",
       "Bash(do echo \"=== $file ===\")",
       "Bash(done)",
-      "Bash(npx tsx:*)"
+      "Bash(npx tsx:*)",
+      "Read(//tmp/scp35540/home/fivebot/app/**)",
+      "Read(//tmp/scp33614/home/fivebot/app/bot-template/**)"
     ],
     "deny": [],
     "ask": [],
