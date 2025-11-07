@@ -12,6 +12,7 @@ import * as announcementCommand from './announcement';
 import * as fivelinkLeaderboardCommand from './fivelink/leaderboard';
 import * as fivelinkProfileCommand from './fivelink/profile';
 import * as fivelinkStatsCommand from './fivelink/stats';
+import * as fivelinkMeCommand from './fivelink/me';
 
 // Get ticket enabled status from environment config
 const config = process.env.CONFIG ? JSON.parse(process.env.CONFIG) : {};
