@@ -15,8 +15,6 @@ import { FiveLinkService } from '../../services/fivelink.service';
 import { getRedisClient } from '../../services/redis.service';
 import { getModuleConfig } from '../../services/config.service';
 
-const COMP_V2_FLAG = 1 << 15;
-
 export const data = new SlashCommandBuilder()
   .setName('stats')
   .setDescription('View global FiveLink platform statistics');
