@@ -767,20 +767,44 @@ export class SimpleQueueService implements IQueueService {
             }
           });
         } else {
+          // On Linux: Try SIGTERM first, then SIGKILL if it doesn't exit
+          console.log(`📤 Sending SIGTERM to bot process ${botProcess.pid}...`);
           botProcess.kill('SIGTERM');
         }
 
-        // Wait for process to exit
+        // Wait for process to exit with escalation to SIGKILL
         await new Promise<void>((resolve) => {
+          let resolved = false;
           const exitHandler = () => {
-            console.log(`📤 Bot ${botId} process exited for restart`);
-            resolve();
+            if (!resolved) {
+              console.log(`✅ Bot ${botId} process exited gracefully`);
+              resolved = true;
+              resolve();
+            }
           };
           botProcess.once('exit', exitHandler);
+
+          // After 3 seconds, escalate to SIGKILL on Linux
+          setTimeout(() => {
+            if (!resolved && process.platform !== 'win32') {
+              console.log(`⚠️ Bot ${botId} didn't exit gracefully, sending SIGKILL...`);
+              try {
+                botProcess.kill('SIGKILL');
+              } catch (e) {
+                console.log(`Process already dead: ${e.message}`);
+              }
+            }
+          }, 3000);
+
+          // Final timeout: force resolve after 5 seconds
           setTimeout(() => {
             botProcess.removeListener('exit', exitHandler);
-            resolve();
-          }, 3000);
+            if (!resolved) {
+              console.log(`⚠️ Bot ${botId} force killed after timeout`);
+              resolved = true;
+              resolve();
+            }
+          }, 5000);
         });
 
         // Clean up
