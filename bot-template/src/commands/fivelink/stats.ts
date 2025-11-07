@@ -115,8 +115,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     await interaction.editReply({
       embeds: [embed],
       components: [buttons],
-      // @ts-ignore - V2 flag
-      flags: COMP_V2_FLAG,
     });
   } catch (error: any) {
     console.error('[FiveLink] /stats command error:', error);
