@@ -61,6 +61,7 @@ export function buildCommands(customCommands: Record<string, any> = {}, v2Comman
   commands.push(fivelinkLeaderboardCommand.data);
   commands.push(fivelinkProfileCommand.data);
   commands.push(fivelinkStatsCommand.data);
+  commands.push(fivelinkMeCommand.data);
   
   // Add ticket commands if enabled
   const parsedConfig = process.env.CONFIG ? JSON.parse(process.env.CONFIG) : {};
