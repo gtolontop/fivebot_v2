@@ -23,8 +23,6 @@ const LEADERBOARD_TYPES = {
   mediaUploads: { emoji: '📸', label: 'Media', description: 'Most media uploaded' },
 };
 
-const COMP_V2_FLAG = 1 << 15;
-
 export const data = new SlashCommandBuilder()
   .setName('leaderboard')
   .setDescription('Display FiveLink leaderboards')
