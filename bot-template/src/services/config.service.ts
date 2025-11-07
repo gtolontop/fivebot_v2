@@ -225,9 +225,11 @@ export class ConfigService {
 /**
  * Get module-specific configuration
  * This is a standalone function that can be used in commands
+ * Uses a singleton PrismaClient to avoid "too many connections" errors
  */
 export async function getModuleConfig(guildId: string, moduleSlug: string): Promise<any> {
-  const prisma = new PrismaClient();
+  const { getPrismaClient } = await import('./prisma-singleton.service');
+  const prisma = getPrismaClient();
 
   try {
     // Get bot ID from environment (each bot instance has its own BOT_ID)
@@ -271,7 +273,6 @@ export async function getModuleConfig(guildId: string, moduleSlug: string): Prom
   } catch (error) {
     console.error(`Error fetching module config for ${moduleSlug}:`, error);
     return null;
-  } finally {
-    await prisma.$disconnect();
   }
+  // NOTE: No prisma.$disconnect() here since we're using a singleton
 }
