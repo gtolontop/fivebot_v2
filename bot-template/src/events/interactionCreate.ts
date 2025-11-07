@@ -10,9 +10,29 @@ export async function interactionCreate(
   ticketHandler?: TicketInteractionHandler
 ) {
   console.log('[INTERACTION] Received interaction:', interaction.type, 'isCommand:', interaction.isChatInputCommand());
-  
-  // Handle ticket interactions (buttons, select menus, modals)
+
+  // Handle button/select menu interactions
   if (!interaction.isChatInputCommand()) {
+    // Handle FiveLink button interactions
+    if (interaction.isButton()) {
+      const customId = interaction.customId;
+
+      // FiveLink leaderboard buttons
+      if (customId.startsWith('fivelink_lb_')) {
+        const { handleLeaderboardButton } = await import('../commands/fivelink/leaderboard');
+        await handleLeaderboardButton(interaction);
+        return;
+      }
+
+      // FiveLink stats refresh button
+      if (customId === 'fivelink_stats_refresh') {
+        const { handleStatsRefresh } = await import('../commands/fivelink/stats');
+        await handleStatsRefresh(interaction);
+        return;
+      }
+    }
+
+    // Handle ticket interactions (buttons, select menus, modals)
     if (ticketHandler && (interaction.isButton() || interaction.isStringSelectMenu() || interaction.isModalSubmit())) {
       await ticketHandler.handleInteraction(interaction);
     }
