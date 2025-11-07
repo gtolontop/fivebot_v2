@@ -589,7 +589,7 @@ export class SimpleQueueService implements IQueueService {
         try {
           // Get ALL descendants recursively using ps
           const { stdout } = await execPromise(`ps -o pid= --ppid ${pid}`);
-          const childPids = stdout.trim().split('\n').filter(p => p.trim()).map(p => parseInt(p.trim()));
+          const childPids = stdout.trim().split('\n').filter((p: string) => p.trim()).map((p: string) => parseInt(p.trim()));
 
           // Recursively kill all children first
           for (const childPid of childPids) {
@@ -617,9 +617,9 @@ export class SimpleQueueService implements IQueueService {
       // On Windows, use taskkill
       if (process.platform === 'win32' && botProcess.pid) {
         const { exec } = require('child_process');
-        exec(`taskkill /PID ${botProcess.pid}`, (error) => {
+        exec(`taskkill /PID ${botProcess.pid}`, (error: any) => {
           if (error) {
-            exec(`taskkill /F /PID ${botProcess.pid} /T`, (forceError) => {
+            exec(`taskkill /F /PID ${botProcess.pid} /T`, (forceError: any) => {
               if (!forceError) console.log(`✅ Force killed with taskkill`);
             });
           } else {
