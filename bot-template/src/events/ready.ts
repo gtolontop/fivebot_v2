@@ -125,13 +125,8 @@ async function deployCommands(client: Client) {
     // Build commands dynamically with V2 commands
     const allCommands = buildCommands(customCommands, parsedEmbedV2Commands);
 
-    // Deploy globally
-    await rest.put(
-      Routes.applicationCommands(client.user?.id),
-      { body: allCommands },
-    );
-
-    // Also deploy to each guild for immediate availability
+    // Deploy to each guild for immediate availability
+    // (Guild commands update instantly vs global commands which take up to 1 hour)
     for (const guild of client.guilds.cache.values()) {
       try {
         await rest.put(
