@@ -303,34 +303,45 @@ async function handleCustomCommand(
 }
 
 async function handleHelp(interaction: ChatInputCommandInteraction) {
-  const commands = interaction.client.application?.commands.cache;
+  try {
+    // Fetch commands to ensure we have the latest list
+    const commands = await interaction.client.application?.commands.fetch();
 
-  // Build command list
-  let commandList = '';
-  if (commands && commands.size > 0) {
-    commands.forEach(cmd => {
-      commandList += `\`/${cmd.name}\` - ${cmd.description || 'No description'}\n`;
-    });
-  } else {
-    commandList = '*No commands available at the moment.*';
+    // Build command list
+    let commandList = '';
+    if (commands && commands.size > 0) {
+      commands.forEach(cmd => {
+        commandList += `\`/${cmd.name}\` - ${cmd.description || 'No description'}\n`;
+      });
+    } else {
+      commandList = '*No commands available at the moment.*';
+    }
+
+    const embed = new EmbedBuilder()
+      .setColor(0x5865F2)
+      .setTitle('📋 Bot Commands')
+      .setDescription('Here are all the available commands:')
+      .addFields(
+        {
+          name: 'Available Commands',
+          value: commandList || '*No commands available*',
+          inline: false
+        }
+      )
+      .setFooter({
+        text: `Requested by ${interaction.user.tag}`,
+        iconURL: interaction.user.displayAvatarURL()
+      })
+      .setTimestamp();
+
+    await interaction.reply({ embeds: [embed] });
+  } catch (error) {
+    console.error('Error in handleHelp:', error);
+    if (!interaction.replied && !interaction.deferred) {
+      await interaction.reply({
+        content: '❌ An error occurred while fetching commands.',
+        flags: 64  // MessageFlags.Ephemeral
+      });
+    }
   }
-
-  const embed = new EmbedBuilder()
-    .setColor(0x5865F2)
-    .setTitle('📋 Bot Commands')
-    .setDescription('Here are all the available commands:')
-    .addFields(
-      {
-        name: 'Available Commands',
-        value: commandList || '*No commands available*',
-        inline: false
-      }
-    )
-    .setFooter({
-      text: `Requested by ${interaction.user.tag}`,
-      iconURL: interaction.user.displayAvatarURL()
-    })
-    .setTimestamp();
-
-  await interaction.reply({ embeds: [embed], ephemeral: false });
 }
