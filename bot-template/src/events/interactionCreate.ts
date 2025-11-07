@@ -116,6 +116,22 @@ export async function interactionCreate(
     }
   }
 
+  // Handle FiveLink commands
+  const fivelinkCommands = ['leaderboard', 'profile', 'stats'];
+  if (fivelinkCommands.includes(command)) {
+    try {
+      const commandModule = await import(`../commands/fivelink/${command}`);
+      await commandModule.execute(interaction);
+      return;
+    } catch (error) {
+      console.error(`Error executing FiveLink command ${command}:`, error);
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({ content: '❌ An error occurred executing this command.', flags: 64 });  // MessageFlags.Ephemeral
+      }
+      return;
+    }
+  }
+
   // Handle ticket moderation commands
   const ticketModerationCommands = ['close', 'add', 'remove', 'claim', 'unclaim', 'lock', 'unlock', 'rename', 'transfer', 'priority'];
   if (ticketModerationCommands.includes(command) && ticketHandler) {
