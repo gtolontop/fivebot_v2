@@ -117,7 +117,7 @@ export async function interactionCreate(
   }
 
   // Handle FiveLink commands
-  const fivelinkCommands = ['leaderboard', 'profile', 'stats'];
+  const fivelinkCommands = ['leaderboard', 'profile', 'stats', 'me'];
   if (fivelinkCommands.includes(command)) {
     try {
       const commandModule = await import(`../commands/fivelink/${command}`);
