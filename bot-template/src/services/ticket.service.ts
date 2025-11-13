@@ -85,17 +85,29 @@ export class TicketService {
       ...config,
       categories: config.categories ? JSON.parse(config.categories) : [],
       panels: config.panels ? JSON.parse(config.panels) : [],
-      // Transform single IDs to arrays for compatibility
-      staffRoles: config.staffRoleId ? [config.staffRoleId] : [],
+      // Load staff roles from JSON array, or fallback to single staffRoleId
+      staffRoles: (() => {
+        const roles: string[] = [];
+        // First, try to load from staffRoles JSON array
+        if (config.staffRoles) {
+          const parsed = Array.isArray(config.staffRoles) ? config.staffRoles : [];
+          roles.push(...parsed.filter(r => typeof r === 'string'));
+        }
+        // Fallback to legacy staffRoleId field
+        if (config.staffRoleId && !roles.includes(config.staffRoleId)) {
+          roles.push(config.staffRoleId);
+        }
+        return roles;
+      })(),
       allowedFileTypes: [],
       // Map categoryId to supportCategoryId for validation
-      supportCategoryId: config.categoryId,
+      supportCategoryId: config.supportCategoryId || config.categoryId,
       // Map namingFormat to namingPattern for consistency
-      namingPattern: config.namingFormat || 'ticket-{counter}',
+      namingPattern: config.namingPattern || config.namingFormat || 'ticket-{counter}',
       // Map maxTickets to maxTicketsPerUser
-      maxTicketsPerUser: config.maxTickets || 3,
+      maxTicketsPerUser: config.maxTicketsPerUser || config.maxTickets || 3,
       // Set default container type if not set
-      containerType: 'CHANNEL' as any
+      containerType: config.containerType || 'CHANNEL' as any
     };
 
     return parsed;
