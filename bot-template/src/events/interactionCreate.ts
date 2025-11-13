@@ -61,26 +61,19 @@ export async function interactionCreate(
   const isV2Command = v2PresetCommands.includes(command) || (embedV2Commands[command] && embedV2Commands[command].useEmbedV2);
   
   if (isV2Command) {
-    console.log(`[DEBUG] Detected V2 command: ${command}`);
-    console.log(`[DEBUG] V2 Commands config:`, embedV2Commands);
-    console.log(`[DEBUG] Is ${command} enabled?`, embedV2Commands[command]?.enabled);
-    
     if (embedV2Commands[command]?.enabled) {
       try {
         // For preset commands, load from modules
         if (v2PresetCommands.includes(command)) {
-          console.log(`[DEBUG] Loading preset command module: ${command}`);
           const commandModule = await import(`../commands/${command}`);
           if (commandModule.execute) {
             await commandModule.execute(interaction);
-            console.log(`[DEBUG] Command /${command} completed successfully`);
             return;
           }
         } else {
           // For dynamic commands, use the embed data
-          console.log(`[DEBUG] Executing dynamic embed: ${command}`);
           const embedData = embedV2Commands[command].embedV2Data || [];
-          
+
           if (embedData.length === 0) {
             await interaction.reply({
               content: '❌ This embed has no content yet. Please configure it first.',
@@ -95,11 +88,10 @@ export async function interactionCreate(
             flags: COMP_V2_FLAG,
             components: embedData
           });
-          console.log(`[DEBUG] Dynamic embed /${command} sent successfully`);
           return;
         }
       } catch (error) {
-        console.error(`[DEBUG] Failed to execute V2 command ${command}:`, error);
+        console.error(`Failed to execute V2 command ${command}:`, error);
         await interaction.reply({
           content: '❌ This command encountered an error.',
           flags: 64  // MessageFlags.Ephemeral
@@ -107,7 +99,6 @@ export async function interactionCreate(
         return;
       }
     } else {
-      console.log(`[DEBUG] Command ${command} is not enabled in config`);
       await interaction.reply({
         content: '❌ This command is not enabled.',
         flags: 64  // MessageFlags.Ephemeral
