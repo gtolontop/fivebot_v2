@@ -76,22 +76,37 @@ export class TicketContainerService {
   ): Promise<ThreadChannel | null> {
     try {
       // Find or create hub channel
-      let hubChannel: TextChannel;
-      
-      if (config.supportCategoryId) {
-        const category = await guild.channels.fetch(config.supportCategoryId) as CategoryChannel;
-        
-        // Look for existing hub channel
-        hubChannel = category.children.cache.find(
-          ch => ch.type === ChannelType.GuildText && ch.name === 'ticket-hub'
-        ) as TextChannel;
+      let hubChannel: TextChannel | null = null;
+      let category: CategoryChannel | null = null;
 
-        if (!hubChannel) {
-          // Create hub channel
+      // Try to load category if specified
+      if (config.supportCategoryId) {
+        try {
+          const fetchedChannel = await guild.channels.fetch(config.supportCategoryId).catch(() => null);
+
+          if (!fetchedChannel) {
+            console.warn(`[TicketContainerService] Support category ${config.supportCategoryId} not found, using default location`);
+          } else if (fetchedChannel.type !== ChannelType.GuildCategory) {
+            console.warn(`[TicketContainerService] Channel ${config.supportCategoryId} is not a category (type: ${fetchedChannel.type}), using default location`);
+          } else {
+            category = fetchedChannel as CategoryChannel;
+            // Look for existing hub channel in category
+            hubChannel = category.children.cache.find(
+              ch => ch.type === ChannelType.GuildText && ch.name === 'ticket-hub'
+            ) as TextChannel || null;
+          }
+        } catch (error) {
+          console.error(`[TicketContainerService] Error fetching category:`, error);
+        }
+      }
+
+      // Create hub channel in category if needed
+      if (!hubChannel && category) {
+        try {
           hubChannel = await guild.channels.create({
             name: 'ticket-hub',
             type: ChannelType.GuildText,
-            parent: category,
+            parent: category.id,
             permissionOverwrites: [
               {
                 id: guild.id,
@@ -127,16 +142,63 @@ export class TicketContainerService {
               ]
             }]
           });
+        } catch (error) {
+          console.error(`[TicketContainerService] Error creating hub channel in category:`, error);
         }
-      } else {
-        // No category specified, create in first text channel
-        hubChannel = guild.channels.cache
-          .filter(ch => ch.type === ChannelType.GuildText)
-          .first() as TextChannel;
+      }
+
+      // Fallback: find or create hub channel without category
+      if (!hubChannel) {
+        // Try to find existing ticket-hub channel
+        hubChannel = guild.channels.cache.find(
+          ch => ch.type === ChannelType.GuildText && ch.name === 'ticket-hub'
+        ) as TextChannel || null;
+
+        if (!hubChannel) {
+          // Last resort: create hub channel without category
+          console.log('[TicketContainerService] Creating ticket-hub channel without category');
+          hubChannel = await guild.channels.create({
+            name: 'ticket-hub',
+            type: ChannelType.GuildText,
+            permissionOverwrites: [
+              {
+                id: guild.id,
+                deny: [PermissionsBitField.Flags.SendMessages],
+                allow: [PermissionsBitField.Flags.ViewChannel]
+              },
+              ...config.staffRoles.filter(roleId => guild.roles.cache.has(roleId)).map(roleId => ({
+                id: roleId,
+                allow: [
+                  PermissionsBitField.Flags.ViewChannel,
+                  PermissionsBitField.Flags.SendMessages,
+                  PermissionsBitField.Flags.ManageThreads
+                ]
+              }))
+            ]
+          });
+
+          await hubChannel.send({
+            embeds: [{
+              color: 0x2F3136,
+              title: '🎫 Ticket Hub',
+              description: 'All support tickets are created as threads in this channel.',
+              fields: [
+                {
+                  name: 'For Users',
+                  value: 'Your ticket thread will appear below when created.'
+                },
+                {
+                  name: 'For Staff',
+                  value: 'All active ticket threads are visible here.'
+                }
+              ]
+            }]
+          });
+        }
       }
 
       if (!hubChannel) {
-        throw new Error('No suitable hub channel found');
+        throw new Error('Failed to create or find hub channel for tickets');
       }
 
       // Create thread
@@ -183,8 +245,21 @@ export class TicketContainerService {
     try {
       let parent: CategoryChannel | null = null;
 
+      // Try to load category if specified
       if (config.supportCategoryId) {
-        parent = await guild.channels.fetch(config.supportCategoryId) as CategoryChannel;
+        try {
+          const fetchedChannel = await guild.channels.fetch(config.supportCategoryId).catch(() => null);
+
+          if (!fetchedChannel) {
+            console.warn(`[TicketContainerService] Support category ${config.supportCategoryId} not found, creating ticket without category`);
+          } else if (fetchedChannel.type !== ChannelType.GuildCategory) {
+            console.warn(`[TicketContainerService] Channel ${config.supportCategoryId} is not a category (type: ${fetchedChannel.type}), creating ticket without category`);
+          } else {
+            parent = fetchedChannel as CategoryChannel;
+          }
+        } catch (error) {
+          console.error(`[TicketContainerService] Error fetching category:`, error);
+        }
       }
 
       // Build permission overwrites
@@ -205,19 +280,24 @@ export class TicketContainerService {
         }
       ];
 
-      // Add staff permissions
+      // Add staff permissions - only for roles that exist
       for (const roleId of config.staffRoles) {
-        overwrites.push({
-          id: roleId,
-          allow: [
-            PermissionsBitField.Flags.ViewChannel,
-            PermissionsBitField.Flags.SendMessages,
-            PermissionsBitField.Flags.ReadMessageHistory,
-            PermissionsBitField.Flags.ManageMessages,
-            PermissionsBitField.Flags.AttachFiles,
-            PermissionsBitField.Flags.EmbedLinks
-          ]
-        });
+        // Verify role exists before adding permissions
+        if (guild.roles.cache.has(roleId)) {
+          overwrites.push({
+            id: roleId,
+            allow: [
+              PermissionsBitField.Flags.ViewChannel,
+              PermissionsBitField.Flags.SendMessages,
+              PermissionsBitField.Flags.ReadMessageHistory,
+              PermissionsBitField.Flags.ManageMessages,
+              PermissionsBitField.Flags.AttachFiles,
+              PermissionsBitField.Flags.EmbedLinks
+            ]
+          });
+        } else {
+          console.warn(`[TicketContainerService] Staff role ${roleId} not found in guild, skipping`);
+        }
       }
 
       const channel = await guild.channels.create({
