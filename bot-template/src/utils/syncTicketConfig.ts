@@ -65,16 +65,55 @@ export async function syncTicketConfigFromDashboard(guildId: string, botId: stri
     });
 
     if (existingConfig) {
-      // Update existing config with dashboard data
-      await prisma.ticketConfig.update({
-        where: { guildId },
-        data: syncData
-      });
-      console.log(`✅ Synced ticket config for guild ${guildId} from dashboard`);
+      // Only update if the config hasn't been customized (no categories or panels)
+      // This prevents overwriting user configurations on every restart
+      const hasCustomConfig = existingConfig.categories || existingConfig.panels;
+
+      if (!hasCustomConfig) {
+        // Safe to update - config hasn't been customized yet
+        await prisma.ticketConfig.update({
+          where: { guildId },
+          data: syncData
+        });
+        console.log(`✅ Synced ticket config for guild ${guildId} from dashboard (uncustomized config)`);
+      } else {
+        // Only update specific fields that should sync from dashboard
+        // Don't overwrite categories, panels, or naming that users configured
+        const safeUpdateData: any = {
+          botId: syncData.botId
+        };
+
+        // Only update these if they're not already set in the config
+        if (!existingConfig.staffRoleId && syncData.staffRoleId) {
+          safeUpdateData.staffRoleId = syncData.staffRoleId;
+        }
+        if (!existingConfig.categoryId && syncData.categoryId) {
+          safeUpdateData.categoryId = syncData.categoryId;
+        }
+        if (!existingConfig.transcriptChannelId && syncData.transcriptChannelId) {
+          safeUpdateData.transcriptChannelId = syncData.transcriptChannelId;
+        }
+
+        // Merge staff roles instead of overwriting
+        if (staffRoles.length > 0) {
+          const existingStaffRoles = existingConfig.staffRoles as string[] || [];
+          const mergedStaffRoles = [...new Set([...existingStaffRoles, ...staffRoles])];
+          safeUpdateData.staffRoles = mergedStaffRoles;
+        }
+
+        await prisma.ticketConfig.update({
+          where: { guildId },
+          data: safeUpdateData
+        });
+        console.log(`✅ Safely merged ticket config for guild ${guildId} (preserved custom config)`);
+      }
     } else {
       // Create new config with dashboard data
       await prisma.ticketConfig.create({
-        data: syncData
+        data: {
+          ...syncData,
+          staffRoles: staffRoles.length > 0 ? staffRoles : null
+        }
       });
       console.log(`✅ Created ticket config for guild ${guildId} with dashboard data`);
     }
