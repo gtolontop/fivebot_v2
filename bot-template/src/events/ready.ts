@@ -66,7 +66,7 @@ export async function ready(client: Client, prisma: PrismaClient, botId: string,
     
     // Restore ticket panels ONLY if ticket system is enabled
     if (ticketEnabled) {
-      await restoreTicketPanels(client, prisma);
+      await restoreTicketPanels(client, prisma, botId);
     }
     
   } catch (error) {
@@ -154,25 +154,32 @@ async function deployCommands(client: Client) {
   }
 }
 
-async function restoreTicketPanels(client: Client, prisma: PrismaClient) {
+async function restoreTicketPanels(client: Client, prisma: PrismaClient, botId: string) {
   try {
     console.log('Restoring ticket panels...');
     
     // Get list of guilds this bot is in
     const botGuildIds = Array.from(client.guilds.cache.keys());
     console.log(`Bot is in ${botGuildIds.length} guilds:`, botGuildIds);
-    
+
     // Only get panels for guilds this bot is actually in
     let panels = [];
     try {
-      // TODO: Implement ticket panel restoration when TicketPanel model is added
-      console.log('Ticket panel restoration not yet implemented');
-      return;
+      // Load panels from database for this bot's guilds
+      panels = await prisma.ticketPanel.findMany({
+        where: {
+          botId,
+          guildId: { in: botGuildIds },
+          active: true
+        }
+      });
+      console.log(`Loaded ${panels.length} active ticket panels for restoration`);
     } catch (error: any) {
       if (error.code === 'P2021' || error.message?.includes("doesn't exist") || error.message?.includes("Table")) {
-        console.log('Ticket system not initialized - no panels to restore');
+        console.log('TicketPanel table not found - no panels to restore');
         return;
       }
+      console.error('Error loading ticket panels:', error);
       throw error;
     }
 
