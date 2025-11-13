@@ -118,25 +118,43 @@ async function handleSetup(
   try {
     // Check if config already exists
     let config = await ticketService.getConfig(interaction.guildId);
-    
+
+    const configData = {
+      staffRoles: [staffRole!.id],
+      supportCategoryId: category?.id,
+      enabled: true // Ensure the config is enabled when setup is run
+    };
+
     if (!config) {
-      // Create new config
+      // Create new config - need to get botId
+      const botId = process.env.BOT_ID || (interaction.client.user?.id as string);
       config = await ticketService.createConfig(interaction.guildId, {
-        staffRoles: [staffRole!.id],
-        supportCategoryId: category?.id
+        ...configData,
+        botId
       });
     } else {
       // Update existing config
-      config = await ticketService.updateConfig(interaction.guildId, {
-        staffRoles: [staffRole!.id],
-        supportCategoryId: category?.id
+      config = await ticketService.updateConfig(interaction.guildId, configData);
+    }
+
+    // Also ensure BotConfig has ticketEnabled set to true
+    try {
+      const prisma = ticketService.prismaClient;
+      const botId = process.env.BOT_ID || (interaction.client.user?.id as string);
+
+      await prisma.botConfig.updateMany({
+        where: { botId },
+        data: { ticketEnabled: true }
       });
+      console.log('✅ Enabled ticket system in BotConfig');
+    } catch (err) {
+      console.warn('⚠️ Could not update BotConfig ticketEnabled flag:', err);
     }
 
     const embed = new EmbedBuilder()
       .setColor(0x00FF00)
-      .setTitle('✅ Ticket System Setup')
-      .setDescription('The ticket system has been configured successfully.')
+      .setTitle('✅ Ticket System Setup Complete')
+      .setDescription('The ticket system has been configured and enabled successfully.\n\n**Note:** You may need to restart the bot for full functionality.')
       .addFields(
         {
           name: 'Staff Role',
@@ -145,12 +163,17 @@ async function handleSetup(
         },
         {
           name: 'Support Category',
-          value: category ? `<#${category.id}>` : 'Using threads',
+          value: category ? `<#${category.id}>` : 'No category (will use channels)',
+          inline: true
+        },
+        {
+          name: 'Status',
+          value: '✅ Enabled',
           inline: true
         }
       )
       .setFooter({
-        text: 'Use /ticket panel to create a ticket panel'
+        text: 'Next step: Use /ticket panel to create a ticket panel'
       });
 
     await interaction.editReply({ embeds: [embed] });
