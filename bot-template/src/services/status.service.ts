@@ -142,7 +142,14 @@ export class StatusService {
     if (!statusItem) return;
 
     // Replace variables in text
-    const text = await this.replaceVariables(statusItem.text);
+    let text = await this.replaceVariables(statusItem.text);
+
+    // Validate and truncate text to Discord's 128 character limit
+    const MAX_STATUS_LENGTH = 128;
+    if (text.length > MAX_STATUS_LENGTH) {
+      console.warn(`Status text exceeds ${MAX_STATUS_LENGTH} characters (${text.length}), truncating...`);
+      text = text.substring(0, MAX_STATUS_LENGTH - 3) + '...';
+    }
 
     // Map activity type
     const activityType = this.getActivityType(statusItem.type);
