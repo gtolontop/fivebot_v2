@@ -435,14 +435,21 @@ model TicketLog {
 
 // Modèles supplémentaires pour le système de tickets avancé
 model TicketCategory {
-  id        String   @id @default(uuid())
-  guildId   String   @map("guild_id")
-  botId     String   @map("bot_id")
-  name      String
-  emoji     String?
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id                String   @id @default(uuid())
+  guildId           String   @map("guild_id")
+  botId             String   @map("bot_id")
+  name              String
+  description       String?  @db.Text
+  emoji             String?
+  active            Boolean  @default(true)
+  useCustomModal    Boolean  @default(false) @map("use_custom_modal")
+  modalFields       Json?    @map("modal_fields") // Array of custom fields
+  spawnCategoryId   String?  @map("spawn_category_id") // Where to spawn tickets for this category
+  staffRoles        Json?    @map("staff_roles") // Category-specific staff roles
+  autoAssign        Boolean  @default(false) @map("auto_assign")
+  maxTicketsPerUser Int?     @map("max_tickets_per_user") // Override global setting
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
 
   @@index([guildId])
   @@index([botId])
