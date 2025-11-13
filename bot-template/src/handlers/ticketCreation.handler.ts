@@ -122,24 +122,28 @@ export class TicketCreationHandler {
     let category: any = null;
     
     if (categoryId !== 'general') {
-      // First try to get categories from stored panel data
+      // Get categories from panel service (with database fallback)
       if (this.ticketPanelService) {
-        const storedCategories = (this.ticketPanelService as any).getStoredCategories?.(interaction.guildId!);
-        if (storedCategories) {
-          category = storedCategories.find((c: any) => c.id === categoryId);
-          console.log(`[TicketCreationHandler] Found category from stored data:`, {
-            id: category?.id,
-            name: category?.name,
-            useCustomModal: category?.useCustomModal,
-            useCustomModalType: typeof category?.useCustomModal,
-            modalFields: category?.modalFields?.length || 0
-          });
-        } else {
-          console.log(`[TicketCreationHandler] No stored categories found for guild ${interaction.guildId}`);
+        try {
+          const storedCategories = await (this.ticketPanelService as any).getStoredCategories?.(interaction.guildId!);
+          if (storedCategories && storedCategories.length > 0) {
+            category = storedCategories.find((c: any) => c.id === categoryId);
+            console.log(`[TicketCreationHandler] Found category from stored data:`, {
+              id: category?.id,
+              name: category?.name,
+              useCustomModal: category?.useCustomModal,
+              useCustomModalType: typeof category?.useCustomModal,
+              modalFields: category?.modalFields?.length || 0
+            });
+          } else {
+            console.log(`[TicketCreationHandler] No stored categories found for guild ${interaction.guildId}`);
+          }
+        } catch (error) {
+          console.error(`[TicketCreationHandler] Error loading categories:`, error);
         }
       }
-      
-      // Fallback to config categories if not found
+
+      // Double fallback to config categories if not found
       if (!category) {
         console.log(`[TicketCreationHandler] Falling back to config categories`);
         const config = await this.ticketService.getConfig(interaction.guildId!);
