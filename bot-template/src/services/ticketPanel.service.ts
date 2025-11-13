@@ -36,8 +36,31 @@ export class TicketPanelService {
     this.ticketService = ticketService;
   }
   
-  // Get stored categories for a guild
-  getStoredCategories(guildId: string): any[] | undefined {
+  // Get stored categories for a guild - with database fallback
+  async getStoredCategories(guildId: string): Promise<any[]> {
+    // First check in-memory cache
+    const cached = this.panelCategories.get(guildId);
+    if (cached && cached.length > 0) {
+      return cached;
+    }
+
+    // Fallback to database
+    try {
+      const config = await this.ticketService.getConfig(guildId);
+      if (config && config.categories && config.categories.length > 0) {
+        // Cache for future use
+        this.panelCategories.set(guildId, config.categories);
+        return config.categories;
+      }
+    } catch (error) {
+      console.error(`Failed to load categories from database for guild ${guildId}:`, error);
+    }
+
+    return [];
+  }
+
+  // Synchronous version for backwards compatibility
+  getStoredCategoriesSync(guildId: string): any[] | undefined {
     return this.panelCategories.get(guildId);
   }
 
