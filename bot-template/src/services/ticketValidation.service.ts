@@ -226,28 +226,43 @@ export class TicketValidationService {
 
     // Validate each category
     for (const category of activeCategories) {
-      // Note: channelId and staffRoleId don't exist in TicketCategory schema
-      // These validations are skipped - add these fields to schema if needed
+      // Validate spawn category if specified
+      if (category.spawnCategoryId) {
+        const guild = this.client.guilds.cache.get(guildId);
+        if (guild) {
+          try {
+            const spawnCategory = await guild.channels.fetch(category.spawnCategoryId).catch(() => null);
+            if (!spawnCategory) {
+              warnings.push({
+                field: `category.${category.id}.spawnCategoryId`,
+                message: `Category "${category.name}" has a spawn category configured, but the channel was not found.`,
+                messageFr: `La catégorie "${category.name}" a une catégorie de spawn configurée, mais le canal est introuvable.`
+              });
+            }
+          } catch (error) {
+            // Silently skip if we can't validate
+          }
+        }
+      }
 
       // Validate custom modal fields
-      // TODO: Add support for custom modal fields in the schema
-      // if (category.useCustomModal && category.modalFields) {
-      //   const fields = category.modalFields as any[];
-      //   if (fields.length === 0) {
-      //     warnings.push({
-      //       field: `category.${category.id}.modalFields`,
-      //       message: `Category "${category.name}" has custom modal enabled but no fields configured.`,
-      //       messageFr: `La catégorie "${category.name}" a le modal personnalisé activé mais aucun champ configuré.`
-      //     });
-      //   } else if (fields.length > 5) {
-      //     errors.push({
-      //       field: `category.${category.id}.modalFields`,
-      //       message: `Category "${category.name}" has too many modal fields (${fields.length}). Maximum allowed is 5.`,
-      //       messageFr: `La catégorie "${category.name}" a trop de champs modaux (${fields.length}). Le maximum autorisé est 5.`,
-      //       severity: 'error'
-      //     });
-      //   }
-      // }
+      if (category.useCustomModal && category.modalFields) {
+        const fields = category.modalFields as any[];
+        if (fields.length === 0) {
+          warnings.push({
+            field: `category.${category.id}.modalFields`,
+            message: `Category "${category.name}" has custom modal enabled but no fields configured.`,
+            messageFr: `La catégorie "${category.name}" a le modal personnalisé activé mais aucun champ configuré.`
+          });
+        } else if (fields.length > 5) {
+          errors.push({
+            field: `category.${category.id}.modalFields`,
+            message: `Category "${category.name}" has too many modal fields (${fields.length}). Maximum allowed is 5.`,
+            messageFr: `La catégorie "${category.name}" a trop de champs modaux (${fields.length}). Le maximum autorisé est 5.`,
+            severity: 'error'
+          });
+        }
+      }
     }
   }
 
