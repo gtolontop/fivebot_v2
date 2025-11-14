@@ -445,7 +445,14 @@ model TicketCategory {
   description       String?  @db.Text
   emoji             String?
   active            Boolean  @default(true)
+  order             Int?
+  priority          Int?
+  color             String?
+  requiredRoles     Json?    @map("required_roles")
+  welcomeMessage    String?  @map("welcome_message") @db.Text
   useCustomModal    Boolean  @default(false) @map("use_custom_modal")
+  modalTitle        String?  @map("modal_title")
+  modalDescription  String?  @map("modal_description") @db.Text
   modalFields       Json?    @map("modal_fields") // Array of custom fields
   spawnCategoryId   String?  @map("spawn_category_id") // Where to spawn tickets for this category
   staffRoles        Json?    @map("staff_roles") // Category-specific staff roles
