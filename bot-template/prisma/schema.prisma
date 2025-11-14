@@ -390,15 +390,15 @@ model TicketConfig {
   botId                String          @map("bot_id")
   enabled              Boolean         @default(true)
   containerType        ContainerType   @default(CHANNEL) @map("container_type")
-  categoryId           String?         @map("category_id")
+  categoryId           String?         @map("category_id") // DEPRECATED: Use supportCategoryId
   supportCategoryId    String?         @map("support_category_id")
-  staffRoleId          String?         @map("staff_role_id")
+  staffRoleId          String?         @map("staff_role_id") // DEPRECATED: Use staffRoles array
   staffRoles           Json?           @map("staff_roles")
   transcriptChannelId  String?         @map("transcript_channel_id")
   logChannelId         String?         @map("log_channel_id")
-  namingFormat         String?         @map("naming_format")
+  namingFormat         String?         @map("naming_format") // DEPRECATED: Use namingPattern
   namingPattern        String?         @map("naming_pattern")
-  maxTickets           Int             @default(3) @map("max_tickets")
+  maxTickets           Int             @default(3) @map("max_tickets") // DEPRECATED: Use maxTicketsPerUser
   maxTicketsPerUser    Int             @default(3) @map("max_tickets_per_user")
   cooldownMinutes      Int             @default(5) @map("cooldown_minutes")
   warningHours         Int             @default(24) @map("warning_hours")
