@@ -336,10 +336,13 @@ model Ticket {
   assignedStaffId String?             @map("assigned_staff_id")
   type            String
   category        String?
-  priority        String              @default("medium")
-  state           String              @default("open")
+  priority        TicketPriority      @default(NORMAL)
+  state           TicketState         @default(OPEN)
   activityState   String              @default("active") @map("activity_state")
-  containerType   String              @default("channel") @map("container_type")
+  containerType   ContainerType       @default(CHANNEL) @map("container_type")
+  locked          Boolean             @default(false)
+  allowReopen     Boolean             @default(false) @map("allow_reopen")
+  warningSentAt   DateTime?           @map("warning_sent_at")
   lastActivity    DateTime            @default(now()) @map("last_activity")
   feedbackRating  Int?                @map("feedback_rating")
   createdAt       DateTime            @default(now()) @map("created_at")
