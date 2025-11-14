@@ -2,6 +2,7 @@ import { Client } from 'discord.js';
 import { PrismaClient } from '@prisma/client';
 import { TicketPanelService } from './ticketPanel.service';
 import { TicketWebhookService } from './ticketWebhook.service';
+import { TicketService } from './ticket.service';
 
 interface BotCommand {
   id: string;
@@ -16,13 +17,14 @@ export class CommandService {
   private ticketPanelService: TicketPanelService | null = null;
   private webhookService: TicketWebhookService;
   private pollInterval: NodeJS.Timeout | null = null;
-  private ticketService: any = null; // Will be set if needed
+  private ticketService: TicketService;
 
   constructor(client: Client, prisma: PrismaClient, botId: string) {
     this.client = client;
     this.prisma = prisma;
     this.botId = botId;
     this.webhookService = new TicketWebhookService(client);
+    this.ticketService = new TicketService(client);
   }
 
   setTicketPanelService(service: TicketPanelService) {
@@ -252,10 +254,7 @@ export class CommandService {
 
     // Save message to database with real user ID (not webhook ID)
     if (ticketId) {
-      const TicketService = require('./ticket.service').TicketService;
-      const ticketService = new TicketService(this.client);
-
-      await ticketService.addMessage({
+      await this.ticketService.addMessage({
         ticketId,
         messageId: `webhook-${Date.now()}`,
         authorId: userId,
