@@ -127,7 +127,7 @@ export class TicketStateManager {
     }
 
     // Check for warning
-    if (timeSinceActivity >= timerConfig.warningThreshold && !ticket.warningsentAt) {
+    if (timeSinceActivity >= timerConfig.warningThreshold && !ticket.warningSentAt) {
       await this.sendWarning(ticket);
       return;
     }
