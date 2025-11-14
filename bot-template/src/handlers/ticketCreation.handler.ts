@@ -338,15 +338,15 @@ export class TicketCreationHandler {
         creatorId: interaction.user.id,
         type: categoryId === 'general' ? 'support' : 'categorized',
         category: categoryId !== 'general' ? categoryId : undefined,
-        priority: priority as any,
-        containerType: config.containerType as any,
+        priority: priority,
+        containerType: config.containerType,
         channelId: container.isThread() ? container.parentId : container.id,
         threadId: container.isThread() ? container.id : undefined
       });
 
       // Send initial message in ticket
       const initialEmbed = new EmbedBuilder()
-        .setColor(this.stateManager.getActivityColor('GRAY' as any))
+        .setColor(this.stateManager.getActivityColor('GRAY'))
         .setTitle(`Ticket #${ticket.ticketNumber} - ${subject}`)
         .setDescription(description)
         .setFields([
@@ -362,7 +362,7 @@ export class TicketCreationHandler {
           },
           {
             name: 'Status',
-            value: `${this.stateManager.getStateEmoji('GRAY' as any)} New Ticket`,
+            value: `${this.stateManager.getStateEmoji('GRAY')} New Ticket`,
             inline: true
           }
         ])
@@ -728,15 +728,15 @@ export class TicketCreationHandler {
         creatorId: interaction.user.id,
         type: categoryId === 'general' ? 'support' : 'categorized',
         category: categoryId !== 'general' ? categoryId : undefined,
-        priority: priority as any,
-        containerType: config.containerType as any,
+        priority: priority,
+        containerType: config.containerType,
         channelId: container.isThread() ? container.parentId : container.id,
         threadId: container.isThread() ? container.id : undefined
       });
 
       // Send initial message in ticket
       const initialEmbed = new EmbedBuilder()
-        .setColor(this.stateManager.getActivityColor('GRAY' as any))
+        .setColor(this.stateManager.getActivityColor('GRAY'))
         .setTitle(`Ticket #${ticket.ticketNumber} - ${subject}`)
         .setDescription(description)
         .setFields([
@@ -752,7 +752,7 @@ export class TicketCreationHandler {
           },
           {
             name: 'Status',
-            value: `${this.stateManager.getStateEmoji('GRAY' as any)} Open`,
+            value: `${this.stateManager.getStateEmoji('GRAY')} Open`,
             inline: true
           }
         ])
