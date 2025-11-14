@@ -557,7 +557,7 @@ export class TicketService {
 
     if (state === 'RED') {
       await this.updateTicket(ticketId, {
-        warningsentAt: new Date()
+        warningSentAt: new Date()
       });
     }
   }
