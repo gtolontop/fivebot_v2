@@ -326,6 +326,16 @@ enum TicketState {
   ARCHIVED
 }
 
+enum ActivityState {
+  ACTIVE
+  INACTIVE
+  WARNING
+  GRAY
+  GREEN
+  ORANGE
+  RED
+}
+
 model Ticket {
   id              String              @id @default(uuid())
   guildId         String              @map("guild_id")
@@ -338,7 +348,7 @@ model Ticket {
   category        String?
   priority        TicketPriority      @default(NORMAL)
   state           TicketState         @default(OPEN)
-  activityState   String              @default("active") @map("activity_state")
+  activityState   ActivityState       @default(ACTIVE) @map("activity_state")
   containerType   ContainerType       @default(CHANNEL) @map("container_type")
   locked          Boolean             @default(false)
   allowReopen     Boolean             @default(false) @map("allow_reopen")
