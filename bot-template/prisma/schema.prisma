@@ -632,3 +632,165 @@ enum TransactionStatus {
   FAILED
   REFUNDED
 }
+
+// ==================== AI SYSTEM ====================
+
+enum AIModel {
+  GPT_4
+  GPT_4_TURBO
+  GPT_5_NANO
+  GPT_35_TURBO
+}
+
+enum AIResponseMode {
+  ALWAYS // Répond à tous les messages dans les channels configurés
+  MENTION // Répond uniquement quand mentionné
+  KEYWORD // Répond sur certains mots-clés
+  SMART // Mode intelligent (détecte les questions)
+  TICKET_ONLY // Uniquement dans les tickets
+}
+
+enum AIPersonality {
+  PROFESSIONAL // Formel et professionnel
+  FRIENDLY // Amical et casual
+  TECHNICAL // Technique et précis
+  CUSTOM // Personnalité custom définie par l'utilisateur
+}
+
+model AIConfig {
+  id                  String          @id @default(uuid())
+  guildId             String          @unique @map("guild_id")
+  botId               String          @map("bot_id")
+  enabled             Boolean         @default(false)
+  apiKey              String?         @map("api_key") @db.Text // Encrypted
+  model               AIModel         @default(GPT_5_NANO)
+  responseMode        AIResponseMode  @default(MENTION) @map("response_mode")
+  personality         AIPersonality   @default(FRIENDLY)
+  customPersonality   String?         @map("custom_personality") @db.Text
+  systemPrompt        String?         @map("system_prompt") @db.Text
+  temperature         Float           @default(0.7)
+  maxTokens           Int             @default(500) @map("max_tokens")
+
+  // Channels & Integration
+  enabledChannels     Json?           @map("enabled_channels") // Array of channel IDs
+  disabledChannels    Json?           @map("disabled_channels") // Blacklist channels
+  enableInTickets     Boolean         @default(true) @map("enable_in_tickets")
+  enableInThreads     Boolean         @default(false) @map("enable_in_threads")
+
+  // Trigger Configuration
+  triggerKeywords     Json?           @map("trigger_keywords") // Array of keywords
+  ignorePrefixes      Json?           @map("ignore_prefixes") // Array of prefixes to ignore (like !)
+  requireMention      Boolean         @default(false) @map("require_mention")
+
+  // Response Settings
+  typingIndicator     Boolean         @default(true) @map("typing_indicator")
+  responseDelay       Int             @default(0) @map("response_delay") // Delay in ms
+  maxResponseLength   Int             @default(2000) @map("max_response_length")
+  useEmbeds           Boolean         @default(true) @map("use_embeds")
+  embedColor          String?         @map("embed_color")
+  showThinking        Boolean         @default(false) @map("show_thinking") // Show "thinking..." message
+
+  // Context & Memory
+  conversationHistory Boolean         @default(true) @map("conversation_history")
+  contextWindow       Int             @default(10) @map("context_window") // Number of messages to remember
+  useRAG              Boolean         @default(false) @map("use_rag") // Use Retrieval Augmented Generation
+
+  // Moderation & Limits
+  rateLimitPerUser    Int             @default(10) @map("rate_limit_per_user") // Messages per hour
+  rateLimitPerChannel Int             @default(50) @map("rate_limit_per_channel")
+  blockNSFW           Boolean         @default(true) @map("block_nsfw")
+  contentFilter       Boolean         @default(true) @map("content_filter")
+
+  // Usage Tracking
+  monthlyTokenLimit   Int?            @map("monthly_token_limit")
+  alertOnLimit        Boolean         @default(true) @map("alert_on_limit")
+  alertChannelId      String?         @map("alert_channel_id")
+
+  // Advanced
+  functionCalling     Boolean         @default(false) @map("function_calling")
+  allowedFunctions    Json?           @map("allowed_functions")
+  logConversations    Boolean         @default(true) @map("log_conversations")
+
+  createdAt           DateTime        @default(now()) @map("created_at")
+  updatedAt           DateTime        @updatedAt @map("updated_at")
+
+  documents           AIDocument[]
+  usage               AIUsage[]
+  conversations       AIConversation[]
+
+  @@index([botId])
+  @@index([guildId])
+  @@map("ai_configs")
+}
+
+model AIDocument {
+  id          String   @id @default(uuid())
+  configId    String   @map("config_id")
+  title       String
+  content     String   @db.Text
+  category    String?  // Pour organiser les docs
+  tags        Json?    // Array of tags
+  embedding   Json?    // Vector embedding pour RAG
+  priority    Int      @default(0) // Higher priority = used first
+  enabled     Boolean  @default(true)
+  metadata    Json?    // Extra metadata
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  config      AIConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  @@index([configId])
+  @@index([category])
+  @@index([enabled])
+  @@map("ai_documents")
+}
+
+model AIUsage {
+  id              String   @id @default(uuid())
+  configId        String   @map("config_id")
+  guildId         String   @map("guild_id")
+  userId          String   @map("user_id")
+  channelId       String   @map("channel_id")
+  messageId       String   @map("message_id")
+  model           String
+  promptTokens    Int      @map("prompt_tokens")
+  completionTokens Int     @map("completion_tokens")
+  totalTokens     Int      @map("total_tokens")
+  cost            Float    @default(0) // Estimated cost in USD
+  responseTime    Int      @map("response_time") // In milliseconds
+  cached          Boolean  @default(false) // Si la réponse vient du cache
+  error           String?  @db.Text
+  createdAt       DateTime @default(now()) @map("created_at")
+  config          AIConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  @@index([configId])
+  @@index([guildId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("ai_usage")
+}
+
+model AIConversation {
+  id              String   @id @default(uuid())
+  configId        String   @map("config_id")
+  guildId         String   @map("guild_id")
+  channelId       String   @map("channel_id")
+  userId          String   @map("user_id")
+  userMessage     String   @map("user_message") @db.Text
+  aiResponse      String   @map("ai_response") @db.Text
+  context         Json?    // Context used for this response
+  documentsUsed   Json?    @map("documents_used") // RAG documents used
+  tokens          Int      @default(0)
+  model           String
+  temperature     Float
+  responseTime    Int      @map("response_time")
+  wasHelpful      Boolean? @map("was_helpful") // User feedback
+  createdAt       DateTime @default(now()) @map("created_at")
+  config          AIConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  @@index([configId])
+  @@index([guildId])
+  @@index([channelId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("ai_conversations")
+}
