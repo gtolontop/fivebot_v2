@@ -62,13 +62,13 @@ export class WelcomeService {
       const messageOptions: any = { embeds: [embed] };
 
       // Add logo attachment if configured
-      if (this.config.welcomeLogoUrl) {
+      if (this.config.welcomeLogoUrl && this.isValidUrl(this.config.welcomeLogoUrl)) {
         try {
           const logoAttachment = new AttachmentBuilder(this.config.welcomeLogoUrl, {
             name: 'welcome-logo.png'
           });
           messageOptions.files = [logoAttachment];
-          
+
           // Update embed to use attachment
           embed.setThumbnail('attachment://welcome-logo.png');
         } catch (logoError) {
@@ -305,5 +305,15 @@ export class WelcomeService {
       .setTimestamp();
 
     return embed;
+  }
+
+  private isValidUrl(url: string): boolean {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      console.warn(`Invalid URL provided for welcome logo: ${url}`);
+      return false;
+    }
   }
 }
