@@ -125,8 +125,9 @@ export class AIService {
       thinkingMessage = await message.reply('🤔 Thinking...');
     }
 
+    const startTime = Date.now();
+
     try {
-      const startTime = Date.now();
 
       // Get conversation context
       const context = await this.getConversationContext(message, config);
