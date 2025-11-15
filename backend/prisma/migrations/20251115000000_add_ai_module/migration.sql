@@ -189,3 +189,43 @@ ALTER TABLE "AIConversationMessage" ADD CONSTRAINT "AIConversationMessage_conver
 
 -- AddForeignKey
 ALTER TABLE "AIDocument" ADD CONSTRAINT "AIDocument_configId_fkey" FOREIGN KEY ("configId") REFERENCES "AIConfig"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Add AI category to ModuleCategory enum
+ALTER TYPE "ModuleCategory" ADD VALUE IF NOT EXISTS 'AI';
+
+-- Insert AI module into modules table
+INSERT INTO "modules" (
+  "id",
+  "slug",
+  "name",
+  "description",
+  "longDescription",
+  "category",
+  "price",
+  "icon",
+  "version",
+  "author",
+  "tags",
+  "features",
+  "isCore",
+  "isActive",
+  "created_at",
+  "updated_at"
+) VALUES (
+  gen_random_uuid(),
+  'ai-assistant',
+  'AI Assistant',
+  'Advanced AI-powered chatbot with GPT-4, Claude, and custom models. Conversation memory, RAG knowledge base, and intelligent responses.',
+  'Transform your Discord server with cutting-edge AI technology. The AI Assistant module provides intelligent conversation capabilities using state-of-the-art language models including GPT-4, Claude 3.5, and more. Features include conversation memory, RAG (Retrieval-Augmented Generation) for custom knowledge bases, content moderation, rate limiting, and extensive customization options. Perfect for support servers, community engagement, and automated assistance.',
+  'AI',
+  0,
+  '🤖',
+  '1.0.0',
+  'FiveBot',
+  '["AI", "Chatbot", "GPT", "Claude", "OpenAI", "Assistant", "Conversation", "Machine Learning"]',
+  '["Multiple AI Models (GPT-4, Claude, etc.)", "Conversation Memory & Context", "RAG Knowledge Base", "Content Moderation", "Rate Limiting & Cooldowns", "Channel & Role Permissions", "Custom System Prompts", "Typing Indicators", "Thread Support", "DM Support", "Usage Analytics", "Token Tracking"]',
+  false,
+  true,
+  NOW(),
+  NOW()
+) ON CONFLICT (slug) DO NOTHING;
