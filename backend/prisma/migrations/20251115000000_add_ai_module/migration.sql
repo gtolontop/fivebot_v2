@@ -176,7 +176,7 @@ CREATE INDEX IF NOT EXISTS "AIDocument_configId_idx" ON "AIDocument"("configId")
 CREATE INDEX IF NOT EXISTS "AIDocument_guildId_idx" ON "AIDocument"("guildId");
 
 -- AddForeignKey
-ALTER TABLE "AIConfig" ADD CONSTRAINT "AIConfig_botId_fkey" FOREIGN KEY ("botId") REFERENCES "Bot"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "AIConfig" ADD CONSTRAINT "AIConfig_botId_fkey" FOREIGN KEY ("botId") REFERENCES "bots"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "AIUsage" ADD CONSTRAINT "AIUsage_configId_fkey" FOREIGN KEY ("configId") REFERENCES "AIConfig"("id") ON DELETE CASCADE ON UPDATE CASCADE;
