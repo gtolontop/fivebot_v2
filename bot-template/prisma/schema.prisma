@@ -595,6 +595,7 @@ enum ModuleCategory {
   ECONOMY // Virtual currency
   LEVELING // XP/levels
   CUSTOM // Custom commands
+  AI // Artificial Intelligence
 }
 
 // ==================== TRANSACTIONS ====================
