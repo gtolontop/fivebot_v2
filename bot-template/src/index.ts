@@ -16,6 +16,7 @@ import { TicketService } from './services/ticket.service';
 import { TicketStateManager } from './services/ticketStateManager.service';
 import { StatusService } from './services/status.service';
 import { ModuleLoaderService } from './services/module-loader.service';
+import { AIHandler } from './handlers/ai.handler';
 
 dotenv.config();
 
@@ -55,6 +56,7 @@ class ChildBot {
   private ticketStateManager?: TicketStateManager;
   private statusService?: StatusService;
   private moduleLoader?: ModuleLoaderService;
+  private aiHandler?: AIHandler;
 
   constructor() {
     // Force immediate console output
@@ -225,6 +227,14 @@ class ChildBot {
           this.commandService = new CommandService(this.client, this.prisma, this.botId);
         } catch (error) {
           console.error('⚠️ Failed to initialize command service:', error);
+        }
+
+        // Initialize AI handler
+        try {
+          this.aiHandler = new AIHandler(this.client, this.prisma);
+          await this.aiHandler.initialize();
+        } catch (error) {
+          console.error('⚠️ Failed to initialize AI handler:', error);
         }
 
         if (ticketEnabled) {
