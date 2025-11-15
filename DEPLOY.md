@@ -57,10 +57,38 @@ pm2 logs
 ## 2️⃣ Commandes rapides
 
 ```bash
-# Tout en une fois
+# Déploiement standard
 cd ~/app && git pull && \
 cd backend && npx prisma generate && npx prisma migrate deploy && npm run build && \
 cd ../bot-template && npm install && npx prisma generate && npm run build && \
 cd ../frontend && npm run build && \
 pm2 restart all
 ```
+
+## 3️⃣ Déploiement du Module AI (première fois)
+
+Si la migration AI a échoué ou pour un déploiement initial du module AI:
+
+```bash
+cd ~/app && git pull && \
+cd backend && \
+npx prisma migrate resolve --applied 20251115000000_add_ai_module && \
+npx prisma migrate deploy && \
+npx prisma generate && \
+npm run build && \
+cd ../bot-template && npx prisma generate && npm run build && \
+pm2 restart all
+```
+
+**Ce que cette commande fait:**
+- Résout la migration AI échouée (`migrate resolve`)
+- Applique toutes les migrations en attente
+- Génère les clients Prisma avec les nouveaux modèles AI
+- Rebuild le backend et bot-template
+- Redémarre tous les services
+
+**Résultat attendu:**
+- ✅ Tables AI créées (AIConfig, AIUsage, AIConversation, etc.)
+- ✅ Module AI disponible sur /browse
+- ✅ Fix du double lancement des bots
+- ✅ API endpoints AI accessibles
