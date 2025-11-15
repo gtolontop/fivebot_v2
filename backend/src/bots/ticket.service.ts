@@ -241,11 +241,11 @@ export class TicketService {
       }
 
       // Safety check: if no guilds, return empty array
-      if (guildIds.length === 0) {
+      if (!guildIds || guildIds.length === 0) {
         return [];
       }
 
-      const placeholders = guildIds.map(() => '?').join(', ');
+      const placeholders = guildIds.map((_, index) => `$${index + 1}`).join(', ');
 
       const tickets = await this.prisma.$queryRawUnsafe<any[]>(`
         SELECT
@@ -375,11 +375,11 @@ export class TicketService {
       
       // Create placeholders for SQL IN clause
       // Safety check: if no guilds, return empty array
-      if (guildIds.length === 0) {
+      if (!guildIds || guildIds.length === 0) {
         return this.getDefaultTicketStats();
       }
 
-      const placeholders = guildIds.map(() => '?').join(', ');
+      const placeholders = guildIds.map((_, index) => `$${index + 1}`).join(', ');
 
       // Get ticket statistics filtered by guild_id
       const stats = await this.prisma.$queryRawUnsafe<any[]>(`
