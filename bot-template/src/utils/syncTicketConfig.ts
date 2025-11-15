@@ -109,11 +109,12 @@ export async function syncTicketConfigFromDashboard(guildId: string, botId: stri
       }
     } else {
       // Create new config with dashboard data
+      const createData: any = { ...syncData };
+      if (staffRoles.length > 0) {
+        createData.staffRoles = staffRoles;
+      }
       await prisma.ticketConfig.create({
-        data: {
-          ...syncData,
-          staffRoles: staffRoles.length > 0 ? staffRoles : null
-        }
+        data: createData
       });
       console.log(`✅ Created ticket config for guild ${guildId} with dashboard data`);
     }
