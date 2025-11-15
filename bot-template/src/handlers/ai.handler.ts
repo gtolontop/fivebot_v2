@@ -6,6 +6,7 @@ export class AIHandler {
   private client: Client;
   private aiService: AIService;
   private prisma: PrismaClient;
+  private initialized: boolean = false;
 
   constructor(client: Client, prisma?: PrismaClient) {
     this.client = client;
@@ -14,13 +15,17 @@ export class AIHandler {
   }
 
   async initialize(): Promise<void> {
+    if (this.initialized) {
+      console.log('[AI Handler] Already initialized, skipping...');
+      return;
+    }
+
     console.log('[AI Handler] Initializing AI handler...');
 
-    // Setup message handler
-    this.client.on(Events.MessageCreate, async (message: Message) => {
-      await this.handleMessage(message);
-    });
+    // Setup message handler (bind to prevent multiple registrations)
+    this.client.on(Events.MessageCreate, this.handleMessage.bind(this));
 
+    this.initialized = true;
     console.log('[AI Handler] ✅ AI handler initialized');
   }
 
