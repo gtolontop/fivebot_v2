@@ -238,7 +238,45 @@ export class BotsController {
   @Get(':id')
   @UseGuards(AuthGuard('jwt'))
   async findOne(@Param('id') id: string, @Req() req: any) {
-    return this.botsService.findOne(id, req.user.id);
+    const bot = await this.botsService.findOne(id, req.user.id);
+
+    // Enrichir avec les guilds, channels et roles pour le dashboard
+    try {
+      const guilds = await this.botsService.getDiscordGuilds(id, req.user.id);
+
+      // Enrichir chaque guild avec ses channels et rôles
+      const enrichedGuilds = await Promise.all(
+        guilds.map(async (guild: any) => {
+          try {
+            const [channels, roles] = await Promise.all([
+              this.botsService.getGuildChannels(id, guild.id, req.user.id),
+              this.botsService.getGuildRoles(id, guild.id, req.user.id)
+            ]);
+
+            return {
+              ...guild,
+              channels,
+              roles
+            };
+          } catch (error) {
+            console.error(`Error enriching guild ${guild.id}:`, error);
+            return {
+              ...guild,
+              channels: [],
+              roles: []
+            };
+          }
+        })
+      );
+
+      return {
+        ...bot,
+        guilds: enrichedGuilds
+      };
+    } catch (error) {
+      console.error('Error fetching guilds:', error);
+      return bot; // Retourner le bot sans les guilds en cas d'erreur
+    }
   }
 
   @Get(':id/config')
