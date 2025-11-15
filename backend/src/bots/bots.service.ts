@@ -412,6 +412,13 @@ export class BotsService {
     return bot;
   }
 
+  async validateBotOwnership(botId: string, userId: string): Promise<void> {
+    const bot = await this.findOne(botId, userId);
+    if (!bot) {
+      throw new NotFoundException('Bot not found or you do not have permission to access it');
+    }
+  }
+
   async getConfig(botId: string, ownerId: string): Promise<BotConfig> {
     // Verify ownership
     const bot = await this.findOne(botId, ownerId);
