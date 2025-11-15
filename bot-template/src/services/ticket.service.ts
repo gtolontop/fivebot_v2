@@ -636,7 +636,7 @@ export class TicketService {
   async updateCategory(categoryId: string, data: Partial<PrismaTicketCategory>): Promise<PrismaTicketCategory> {
     return await prisma.ticketCategory.update({
       where: { id: categoryId },
-      data
+      data: data as any
     });
   }
 
