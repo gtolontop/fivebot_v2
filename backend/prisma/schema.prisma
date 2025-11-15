@@ -606,3 +606,135 @@ enum TransactionStatus {
   FAILED
   REFUNDED
 }
+
+// ==================== AI SYSTEM ====================
+
+model AIConfig {
+  id                   String            @id @default(uuid())
+  guildId              String            @unique @map("guild_id")
+  botId                String            @map("bot_id")
+  enabled              Boolean           @default(false)
+  apiKey               String?           @map("api_key") @db.Text
+  model                String            @default("GPT_5_NANO")
+  responseMode         String            @default("MENTION") @map("response_mode")
+  personality          String            @default("FRIENDLY")
+  customPersonality    String?           @map("custom_personality") @db.Text
+  systemPrompt         String?           @map("system_prompt") @db.Text
+  temperature          Float             @default(0.7)
+  maxTokens            Int               @default(500) @map("max_tokens")
+  enabledChannels      String?           @map("enabled_channels") @db.Text
+  disabledChannels     String?           @map("disabled_channels") @db.Text
+  enableInTickets      Boolean           @default(true) @map("enable_in_tickets")
+  enableInThreads      Boolean           @default(false) @map("enable_in_threads")
+  triggerKeywords      String?           @map("trigger_keywords") @db.Text
+  ignorePrefixes       String?           @map("ignore_prefixes") @db.Text
+  requireMention       Boolean           @default(false) @map("require_mention")
+  typingIndicator      Boolean           @default(true) @map("typing_indicator")
+  responseDelay        Int               @default(0) @map("response_delay")
+  maxResponseLength    Int               @default(2000) @map("max_response_length")
+  useEmbeds            Boolean           @default(true) @map("use_embeds")
+  embedColor           String?           @map("embed_color")
+  showThinking         Boolean           @default(false) @map("show_thinking")
+  conversationHistory  Boolean           @default(true) @map("conversation_history")
+  contextWindow        Int               @default(10) @map("context_window")
+  useRAG               Boolean           @default(false) @map("use_rag")
+  rateLimitPerUser     Int               @default(10) @map("rate_limit_per_user")
+  rateLimitPerChannel  Int               @default(50) @map("rate_limit_per_channel")
+  blockNSFW            Boolean           @default(true) @map("block_nsfw")
+  contentFilter        Boolean           @default(true) @map("content_filter")
+  monthlyTokenLimit    Int?              @map("monthly_token_limit")
+  alertOnLimit         Boolean           @default(true) @map("alert_on_limit")
+  alertChannelId       String?           @map("alert_channel_id")
+  functionCalling      Boolean           @default(false) @map("function_calling")
+  allowedFunctions     String?           @map("allowed_functions") @db.Text
+  logConversations     Boolean           @default(true) @map("log_conversations")
+  createdAt            DateTime          @default(now()) @map("created_at")
+  updatedAt            DateTime          @updatedAt @map("updated_at")
+  usage                AIUsage[]
+  conversations        AIConversation[]
+  documents            AIDocument[]
+
+  @@index([botId])
+  @@map("ai_configs")
+}
+
+model AIUsage {
+  id               String    @id @default(uuid())
+  configId         String    @map("config_id")
+  userId           String    @map("user_id")
+  guildId          String?   @map("guild_id")
+  model            String
+  promptTokens     Int       @map("prompt_tokens")
+  completionTokens Int       @map("completion_tokens")
+  totalTokens      Int       @map("total_tokens")
+  cost             Float     @default(0)
+  responseTime     Int       @map("response_time")
+  error            String?   @db.Text
+  createdAt        DateTime  @default(now()) @map("created_at")
+  config           AIConfig  @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  @@index([configId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("ai_usage")
+}
+
+model AIConversation {
+  id            String            @id @default(uuid())
+  configId      String            @map("config_id")
+  userId        String            @map("user_id")
+  guildId       String?           @map("guild_id")
+  channelId     String            @map("channel_id")
+  title         String?
+  summary       String?           @db.Text
+  context       String?           @db.Text
+  documentsUsed String?           @map("documents_used") @db.Text
+  active        Boolean           @default(true)
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+  messages      AIConversationMessage[]
+  config        AIConfig          @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  @@index([configId])
+  @@index([userId])
+  @@index([channelId])
+  @@index([active])
+  @@map("ai_conversations")
+}
+
+model AIConversationMessage {
+  id              String          @id @default(uuid())
+  conversationId  String          @map("conversation_id")
+  role            String
+  content         String          @db.Text
+  tokens          Int             @default(0)
+  metadata        String?         @db.Text
+  createdAt       DateTime        @default(now()) @map("created_at")
+  conversation    AIConversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([createdAt])
+  @@map("ai_conversation_messages")
+}
+
+model AIDocument {
+  id          String    @id @default(uuid())
+  configId    String    @map("config_id")
+  title       String
+  content     String    @db.Text
+  type        String    @default("text")
+  category    String?
+  tags        String?   @db.Text
+  priority    Int       @default(0)
+  metadata    String?   @db.Text
+  embedding   String?   @db.Text
+  enabled     Boolean   @default(true)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  config      AIConfig  @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  @@index([configId])
+  @@index([enabled])
+  @@index([priority])
+  @@map("ai_documents")
+}
