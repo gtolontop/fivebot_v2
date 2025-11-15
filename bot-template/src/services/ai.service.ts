@@ -150,16 +150,28 @@ export class AIService {
         });
       }
 
-      const response = await this.openai.chat.completions.create({
-        model: this.getModelName(config.model),
+      // GPT-5-nano uses max_completion_tokens instead of max_tokens
+      const modelName = this.getModelName(config.model);
+      const isGPT5Nano = modelName === 'gpt-5-nano';
+
+      const completionParams: any = {
+        model: modelName,
         messages: [
           { role: 'system', content: systemPrompt },
           ...context,
           { role: 'user', content: message.content },
         ],
         temperature: config.temperature,
-        max_tokens: config.maxTokens,
-      });
+      };
+
+      // Use correct token parameter based on model
+      if (isGPT5Nano) {
+        completionParams.max_completion_tokens = config.maxTokens;
+      } else {
+        completionParams.max_tokens = config.maxTokens;
+      }
+
+      const response = await this.openai.chat.completions.create(completionParams);
 
       const aiResponse = response.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
       const responseTime = Date.now() - startTime;
@@ -248,7 +260,7 @@ export class AIService {
         completionTokens: 0,
         totalTokens: 0,
         cost: 0,
-        responseTime: Date.now(),
+        responseTime: Date.now() - startTime,
         error: error.message,
       });
 
