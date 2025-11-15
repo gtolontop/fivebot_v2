@@ -75,7 +75,7 @@ export default function SettingsPage() {
   if (!user) return null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 overflow-y-auto max-h-[calc(100vh-8rem)] pr-2" style={{ scrollbarWidth: 'thin' }}>
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
@@ -84,7 +84,7 @@ export default function SettingsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Sidebar Navigation */}
-          <div className="space-y-1">
+          <div className="space-y-1 sticky top-0">
             <button className="w-full text-left px-4 py-2.5 rounded-lg bg-gray-800 text-white font-medium">
               Profile
             </button>
@@ -128,8 +128,8 @@ export default function SettingsPage() {
 
           {/* Main Content */}
           <div className="lg:col-span-3">
-            <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50 overflow-hidden">
-              <div className="p-6">
+            <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-200/50">
+              <div className="p-6 overflow-y-auto max-h-[calc(100vh-12rem)]" style={{ scrollbarWidth: 'thin' }}>
                 <div className="space-y-6">
                     {/* Avatar Section */}
                     <div className="bg-gradient-to-br from-primary-50 to-blue-50 rounded-xl p-6 border border-primary-100">
