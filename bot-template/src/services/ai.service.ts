@@ -151,7 +151,7 @@ export class AIService {
         });
       }
 
-      // GPT-5-nano uses max_completion_tokens instead of max_tokens
+      // GPT-5-nano has specific requirements
       const modelName = this.getModelName(config.model);
       const isGPT5Nano = modelName === 'gpt-5-nano';
 
@@ -162,8 +162,12 @@ export class AIService {
           ...context,
           { role: 'user', content: message.content },
         ],
-        temperature: config.temperature,
       };
+
+      // GPT-5-nano doesn't support custom temperature (only default value 1)
+      if (!isGPT5Nano) {
+        completionParams.temperature = config.temperature;
+      }
 
       // Use correct token parameter based on model
       if (isGPT5Nano) {
