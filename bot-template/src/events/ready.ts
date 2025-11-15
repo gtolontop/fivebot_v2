@@ -191,9 +191,10 @@ async function restoreTicketPanels(client: Client, prisma: PrismaClient, botId: 
     for (const panel of panels) {
       try {
         console.log(`Processing panel ${panel.id}:`);
-        console.log(`  - Config ID: ${panel.configId}`);
+        console.log(`  - Bot ID: ${panel.botId}`);
         console.log(`  - Type: ${panel.type}`);
-        console.log(`  - Categories: ${panel.config?.categories?.length || 0}`);
+        const config = panel.config as any;
+        console.log(`  - Categories: ${config?.categories?.length || 0}`);
         
         if (!panel.config) {
           console.error(`No config found for panel ${panel.id}`);
@@ -254,13 +255,14 @@ async function restoreTicketPanels(client: Client, prisma: PrismaClient, botId: 
             let currentRow = new ActionRowBuilder<ButtonBuilder>();
             let buttonCount = 0;
 
-            console.log(`Creating buttons for ${panel.config.categories.length} categories`);
-            
-            if (panel.config.categories.length === 0) {
+            const panelConfig = panel.config as any;
+            console.log(`Creating buttons for ${panelConfig.categories?.length || 0} categories`);
+
+            if (!panelConfig.categories || panelConfig.categories.length === 0) {
               console.warn(`No categories found for panel ${panel.id}`);
             }
 
-            for (const category of panel.config.categories) {
+            for (const category of (panelConfig.categories || [])) {
               const button = new ButtonBuilder()
                 .setCustomId(`ticket:create:${category.id}`)
                 .setLabel(category.name)
@@ -286,11 +288,12 @@ async function restoreTicketPanels(client: Client, prisma: PrismaClient, botId: 
           }
           
           if (panel.type === 'DROPDOWN' || panel.type === 'HYBRID') {
+            const panelConfig = panel.config as any;
             const dropdown = new StringSelectMenuBuilder()
               .setCustomId('ticket:category:select')
               .setPlaceholder('Select a category...')
               .addOptions(
-                panel.config.categories.map((category: any) => ({
+                (panelConfig.categories || []).map((category: any) => ({
                   label: category.name,
                   description: category.description?.substring(0, 100),
                   value: category.id,
