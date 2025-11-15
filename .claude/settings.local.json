@@ -65,7 +65,11 @@
       "Bash(npx tsx:*)",
       "Read(//tmp/scp35540/home/fivebot/app/**)",
       "Read(//tmp/scp33614/home/fivebot/app/bot-template/**)",
-      "Bash(del \"c:\\Users\\teamr\\Desktop\\ReactProject\\fivebot_v2\\bot-template\\src\\bot.ts\")"
+      "Bash(del \"c:\\Users\\teamr\\Desktop\\ReactProject\\fivebot_v2\\bot-template\\src\\bot.ts\")",
+      "Bash(tasklist:*)",
+      "Bash(git log:*)",
+      "Bash(nul)",
+      "Bash(tree:*)"
     ],
     "deny": [],
     "ask": [],

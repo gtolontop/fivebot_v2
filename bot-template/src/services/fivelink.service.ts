@@ -95,8 +95,51 @@ export class FiveLinkService {
         'Authorization': `Bearer ${config.apiKey}`,
         'Content-Type': 'application/json',
       },
-      timeout: 10000,
+      timeout: 30000, // Increased to 30s
+      // Force IPv4 and add retry logic
+      httpAgent: new (require('http').Agent)({
+        family: 4,
+        keepAlive: true,
+        keepAliveMsecs: 1000,
+      }),
+      httpsAgent: new (require('https').Agent)({
+        family: 4,
+        keepAlive: true,
+        keepAliveMsecs: 1000,
+        rejectUnauthorized: true,
+      }),
     });
+
+    // Add response interceptor for better error handling
+    this.api.interceptors.response.use(
+      response => response,
+      async error => {
+        const config = error.config;
+
+        // Retry on network errors (max 3 attempts)
+        if (!config || !config.retry) {
+          config.retry = 0;
+        }
+
+        const shouldRetry =
+          error.code === 'ETIMEDOUT' ||
+          error.code === 'ENETUNREACH' ||
+          error.code === 'ECONNREFUSED' ||
+          error.code === 'ENOTFOUND';
+
+        if (shouldRetry && config.retry < 3) {
+          config.retry += 1;
+          console.log(`[FiveLink] Retry attempt ${config.retry}/3 for ${config.url}`);
+
+          // Wait before retry (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, 1000 * config.retry));
+
+          return this.api.request(config);
+        }
+
+        return Promise.reject(error);
+      }
+    );
   }
 
   /**
