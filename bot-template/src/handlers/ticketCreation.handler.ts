@@ -661,17 +661,17 @@ export class TicketCreationHandler {
   }
 
   // Parse priority from text
-  private parsePriority(text: string): string {
+  private parsePriority(text: string): TicketPriority {
     const normalized = text.toLowerCase().trim();
     switch (normalized) {
       case 'low':
-        return 'LOW';
+        return TicketPriority.LOW;
       case 'high':
-        return 'HIGH';
+        return TicketPriority.HIGH;
       case 'urgent':
-        return 'URGENT';
+        return TicketPriority.URGENT;
       default:
-        return 'NORMAL';
+        return TicketPriority.NORMAL;
     }
   }
 
@@ -708,7 +708,7 @@ export class TicketCreationHandler {
       // Default values for direct creation
       const subject = `${categoryName} Ticket`;
       const description = `Ticket created by <@${interaction.user.id}>`;
-      const priority = 'NORMAL';
+      const priority = TicketPriority.NORMAL;
 
       // Create ticket container (thread or channel)
       const container = await this.createTicketContainer(
