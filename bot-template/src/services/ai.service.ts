@@ -115,7 +115,7 @@ export class AIService {
     }
 
     // Show typing indicator
-    if (config.typingIndicator) {
+    if (config.typingIndicator && 'sendTyping' in message.channel) {
       await message.channel.sendTyping();
     }
 
@@ -488,7 +488,7 @@ export class AIService {
     if (config.useEmbeds) {
       const embed = new EmbedBuilder()
         .setDescription(truncatedResponse)
-        .setColor(config.embedColor || '#5865F2')
+        .setColor((config.embedColor as any) || '#5865F2')
         .setFooter({
           text: `${metadata.tokens} tokens • ${metadata.responseTime}ms • $${metadata.cost.toFixed(6)}`,
         })
@@ -596,7 +596,9 @@ export class AIService {
           )
           .setTimestamp();
 
-        await channel.send({ embeds: [embed] });
+        if ('send' in channel) {
+          await channel.send({ embeds: [embed] });
+        }
       }
     }
   }
