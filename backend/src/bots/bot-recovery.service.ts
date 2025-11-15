@@ -18,6 +18,16 @@ export class BotRecoveryService implements OnApplicationBootstrap {
   ) {}
 
   async onApplicationBootstrap() {
+    // Only run recovery on worker process, not API process
+    const processType = process.env.PROCESS_TYPE;
+
+    if (processType !== 'worker') {
+      this.logger.log(`⏭️ Skipping bot recovery - running as ${processType || 'api'} process (recovery only runs on worker)`);
+      return;
+    }
+
+    this.logger.log('✅ Running bot recovery on worker process');
+
     // Wait a bit for the application to fully initialize
     setTimeout(() => {
       this.performRecovery().catch((error) => {
