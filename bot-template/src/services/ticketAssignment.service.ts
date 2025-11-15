@@ -314,7 +314,7 @@ export class TicketAssignmentService {
     let responseCount = 0;
 
     for (const ticket of tickets) {
-      if (ticket.assignedStaffId && ticket.state !== 'NEW') {
+      if (ticket.assignedStaffId && ticket.state !== 'OPEN') {
         const firstResponse = await prisma.ticketMessage.findFirst({
           where: {
             ticketId: ticket.id,
