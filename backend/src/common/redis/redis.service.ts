@@ -100,6 +100,27 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     await this.client.del(`fivebot:bot:${botId}`);
   }
 
+  // Distributed lock for preventing race conditions
+  async acquireLock(lockKey: string, ttlMs: number = 30000): Promise<boolean> {
+    try {
+      // SET with NX (only set if not exists) and PX (expire in milliseconds)
+      // Returns 'OK' if lock acquired, null if lock already exists
+      const result = await this.client.set(lockKey, '1', 'PX', ttlMs, 'NX');
+      return result === 'OK';
+    } catch (error) {
+      console.error(`Failed to acquire lock ${lockKey}:`, error);
+      return false;
+    }
+  }
+
+  async releaseLock(lockKey: string): Promise<void> {
+    try {
+      await this.client.del(lockKey);
+    } catch (error) {
+      console.error(`Failed to release lock ${lockKey}:`, error);
+    }
+  }
+
   // Bot state persistence for crash recovery
   async saveBotState(botId: string, state: {
     status: 'ONLINE' | 'OFFLINE' | 'STARTING' | 'RESTARTING';

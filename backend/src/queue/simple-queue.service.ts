@@ -184,8 +184,31 @@ export class SimpleQueueService implements IQueueService {
 
       console.log(`🚀 Starting bot "${bot.name}" (owner: ${bot.owner.username})`);
 
-      // CRITICAL: Check Redis FIRST (shared across all workers) before checking local Map
-      const isRunningInRedis = await this.redisService.isRunningBot(botId);
+      // CRITICAL: Acquire distributed lock to prevent race conditions
+      const lockKey = `fivebot:lock:start:${botId}`;
+      const lockAcquired = await this.redisService.acquireLock(lockKey, 30000);
+
+      if (!lockAcquired) {
+        console.log(`🔒 Another worker is already starting bot "${bot.name}" - waiting for completion...`);
+
+        // Wait a bit for the other worker to complete
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        // Check if bot was started by the other worker
+        const isNowRunning = await this.redisService.isRunningBot(botId);
+        if (isNowRunning) {
+          console.log(`✅ Bot "${bot.name}" was started by another worker`);
+          await this.updateBotStatusSafe(botId, BotStatus.ONLINE);
+          return;
+        } else {
+          console.log(`⚠️ Bot "${bot.name}" was not started by other worker, will retry`);
+          throw new Error('Bot start lock timeout - please retry');
+        }
+      }
+
+      try {
+        // CRITICAL: Check Redis FIRST (shared across all workers) before checking local Map
+        const isRunningInRedis = await this.redisService.isRunningBot(botId);
 
       if (isRunningInRedis) {
         console.log(`⚠️ Bot "${bot.name}" is already running in another worker - skipping duplicate start`);
@@ -551,6 +574,15 @@ export class SimpleQueueService implements IQueueService {
       // Update bot status to error
       await this.updateBotStatusSafe(botId, BotStatus.ERROR);
 
+      throw error;
+      } finally {
+        // Always release the lock, even if there was an error
+        await this.redisService.releaseLock(lockKey);
+        console.log(`🔓 Released start lock for bot "${botName}"`);
+      }
+    } catch (error) {
+      // Outer catch for the entire function (lock acquisition failure, etc.)
+      console.error(`❌ Fatal error starting bot "${botName}":`, error);
       throw error;
     }
   }
