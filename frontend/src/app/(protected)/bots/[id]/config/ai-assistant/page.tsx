@@ -164,8 +164,23 @@ export default function AIAssistantConfig() {
 
         // Check if we got actual config data
         if (configRes.data && configRes.data.id) {
-          // Config exists - set it and select its guild
-          setConfig(configRes.data);
+          // Config exists - merge with frontend defaults and select its guild
+          const mergedConfig = {
+            ...configRes.data,
+            // Frontend-only fields with defaults
+            replyToMentions: true,
+            replyToReplies: true,
+            replyToKeywords: false,
+            conversationHistoryLimit: 10,
+            respondToEveryone: false,
+            everyoneContextDepth: 10,
+            detectContextType: true,
+            followReplyChains: true,
+            rateLimitWindow: 60,
+            useEmbedding: false,
+            maxDocumentChunks: 5,
+          };
+          setConfig(mergedConfig);
           setSelectedGuild(configRes.data.guildId);
         } else {
           // No config exists - select first guild
@@ -201,7 +216,23 @@ export default function AIAssistantConfig() {
 
       // Check if we got actual config data
       if (configRes.data && configRes.data.id) {
-        setConfig(configRes.data);
+        // Merge backend data with frontend-only default values
+        const mergedConfig = {
+          ...configRes.data,
+          // Frontend-only fields with defaults
+          replyToMentions: true,
+          replyToReplies: true,
+          replyToKeywords: false,
+          conversationHistoryLimit: 10,
+          respondToEveryone: false,
+          everyoneContextDepth: 10,
+          detectContextType: true,
+          followReplyChains: true,
+          rateLimitWindow: 60,
+          useEmbedding: false,
+          maxDocumentChunks: 5,
+        };
+        setConfig(mergedConfig);
       } else {
         // No config exists for this guild
         setConfig(null);
@@ -241,13 +272,15 @@ export default function AIAssistantConfig() {
         guildId: selectedGuild,
       };
 
+      let savedConfig;
       if (config.id) {
         // Update
-        await axios.put(
+        const res = await axios.put(
           `${process.env.NEXT_PUBLIC_API_URL}/api/bots/${botId}/ai/config`,
           payload,
           { headers: { Authorization: `Bearer ${token}` } }
         );
+        savedConfig = res.data;
         toast.success('AI configuration updated successfully');
       } else {
         // Create
@@ -256,14 +289,27 @@ export default function AIAssistantConfig() {
           payload,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        setConfig(res.data);
+        savedConfig = res.data;
         toast.success('AI configuration created successfully');
       }
 
-      // Re-fetch the config for the current guild to ensure we have the latest data
-      if (selectedGuild) {
-        await fetchConfig(selectedGuild);
-      }
+      // Merge saved config with current config to preserve frontend-only fields
+      const mergedConfig = {
+        ...savedConfig,
+        // Preserve frontend-only fields from current config
+        replyToMentions: config.replyToMentions,
+        replyToReplies: config.replyToReplies,
+        replyToKeywords: config.replyToKeywords,
+        conversationHistoryLimit: config.conversationHistoryLimit,
+        respondToEveryone: config.respondToEveryone,
+        everyoneContextDepth: config.everyoneContextDepth,
+        detectContextType: config.detectContextType,
+        followReplyChains: config.followReplyChains,
+        rateLimitWindow: config.rateLimitWindow,
+        useEmbedding: config.useEmbedding,
+        maxDocumentChunks: config.maxDocumentChunks,
+      };
+      setConfig(mergedConfig);
     } catch (error: any) {
       console.error('Error saving config:', error);
       toast.error(error.response?.data?.message || 'Failed to save configuration');
