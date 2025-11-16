@@ -101,6 +101,7 @@ export default function AIAssistantConfig() {
   useEffect(() => {
     if (selectedGuild) {
       fetchChannels(selectedGuild);
+      fetchConfig(selectedGuild);
     }
   }, [selectedGuild]);
 
@@ -154,7 +155,7 @@ export default function AIAssistantConfig() {
       );
       setGuilds(guildsRes.data);
 
-      // Try to fetch existing AI config
+      // Try to fetch existing AI config (without guildId to get first available)
       try {
         const configRes = await axios.get(
           `${process.env.NEXT_PUBLIC_API_URL}/api/bots/${botId}/ai/config`,
@@ -163,19 +164,18 @@ export default function AIAssistantConfig() {
 
         // Check if we got actual config data
         if (configRes.data && configRes.data.id) {
+          // Config exists - set it and select its guild
           setConfig(configRes.data);
           setSelectedGuild(configRes.data.guildId);
         } else {
-          // No config exists (empty response or 204)
-          setConfig(null);
+          // No config exists - select first guild
           if (guildsRes.data.length > 0) {
             setSelectedGuild(guildsRes.data[0].id);
           }
         }
       } catch (error: any) {
         if (error.response?.status === 404 || error.response?.status === 204) {
-          // No config yet
-          setConfig(null);
+          // No config yet - select first guild
           if (guildsRes.data.length > 0) {
             setSelectedGuild(guildsRes.data[0].id);
           }
@@ -188,6 +188,31 @@ export default function AIAssistantConfig() {
       toast.error('Failed to load AI configuration');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchConfig = async (guildId: string) => {
+    try {
+      const token = Cookies.get('token');
+      const configRes = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/bots/${botId}/ai/config?guildId=${guildId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Check if we got actual config data
+      if (configRes.data && configRes.data.id) {
+        setConfig(configRes.data);
+      } else {
+        // No config exists for this guild
+        setConfig(null);
+      }
+    } catch (error: any) {
+      if (error.response?.status === 404 || error.response?.status === 204) {
+        // No config yet for this guild
+        setConfig(null);
+      } else {
+        console.error('Error fetching config:', error);
+      }
     }
   };
 
@@ -235,7 +260,10 @@ export default function AIAssistantConfig() {
         toast.success('AI configuration created successfully');
       }
 
-      await fetchData();
+      // Re-fetch the config for the current guild to ensure we have the latest data
+      if (selectedGuild) {
+        await fetchConfig(selectedGuild);
+      }
     } catch (error: any) {
       console.error('Error saving config:', error);
       toast.error(error.response?.data?.message || 'Failed to save configuration');

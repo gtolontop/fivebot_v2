@@ -19,8 +19,12 @@ export class AIController {
   constructor(private readonly aiService: AIService) {}
 
   @Get('config')
-  async getConfig(@Param('botId') botId: string, @Request() req: any) {
-    return this.aiService.getConfig(botId, req.user.id);
+  async getConfig(
+    @Param('botId') botId: string,
+    @Query('guildId') guildId: string,
+    @Request() req: any
+  ) {
+    return this.aiService.getConfig(botId, req.user.id, guildId);
   }
 
   @Post('config')
