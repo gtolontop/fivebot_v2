@@ -104,6 +104,38 @@ export default function AIAssistantConfig() {
     }
   }, [selectedGuild]);
 
+  // Initialize config when no config exists but we have a selected guild
+  useEffect(() => {
+    if (!loading && !config && selectedGuild && guilds.length > 0) {
+      setConfig({
+        botId,
+        guildId: selectedGuild,
+        enabled: false,
+        apiKey: '',
+        model: 'gpt-4o-mini',
+        enableVision: false,
+        includeUserContext: true,
+        includeChannelContext: true,
+        respondToEveryone: false,
+        everyoneContextDepth: 10,
+        followReplyChains: true,
+        detectContextType: true,
+        responseMode: 'mention',
+        replyToMentions: true,
+        replyToReplies: true,
+        replyToKeywords: false,
+        temperature: 0.7,
+        maxTokens: 2000,
+        conversationHistoryLimit: 10,
+        rateLimitPerUser: 999,
+        rateLimitPerChannel: 9999,
+        rateLimitWindow: 60,
+        useEmbedding: false,
+        maxDocumentChunks: 5,
+      });
+    }
+  }, [loading, config, selectedGuild, guilds, botId]);
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -128,10 +160,20 @@ export default function AIAssistantConfig() {
           `${process.env.NEXT_PUBLIC_API_URL}/api/bots/${botId}/ai/config`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        setConfig(configRes.data);
-        setSelectedGuild(configRes.data.guildId);
+
+        // Check if we got actual config data
+        if (configRes.data && configRes.data.id) {
+          setConfig(configRes.data);
+          setSelectedGuild(configRes.data.guildId);
+        } else {
+          // No config exists (empty response or 204)
+          setConfig(null);
+          if (guildsRes.data.length > 0) {
+            setSelectedGuild(guildsRes.data[0].id);
+          }
+        }
       } catch (error: any) {
-        if (error.response?.status === 404) {
+        if (error.response?.status === 404 || error.response?.status === 204) {
           // No config yet
           setConfig(null);
           if (guildsRes.data.length > 0) {
@@ -217,41 +259,10 @@ export default function AIAssistantConfig() {
     );
   }
 
-  // Initialize config if it doesn't exist
-  if (!config && selectedGuild) {
-    setConfig({
-      botId,
-      guildId: selectedGuild,
-      enabled: false,
-      apiKey: '',
-      model: 'gpt-4o-mini',
-      enableVision: false,
-      includeUserContext: true,
-      includeChannelContext: true,
-      respondToEveryone: false,
-      everyoneContextDepth: 10,
-      followReplyChains: true,
-      detectContextType: true,
-      responseMode: 'mention',
-      replyToMentions: true,
-      replyToReplies: true,
-      replyToKeywords: false,
-      temperature: 0.7,
-      maxTokens: 2000,
-      conversationHistoryLimit: 10,
-      rateLimitPerUser: 999,
-      rateLimitPerChannel: 9999,
-      rateLimitWindow: 60,
-      useEmbedding: false,
-      maxDocumentChunks: 5,
-    });
-    return null;
-  }
-
   if (!config) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">Loading configuration...</p>
+      <div className="flex justify-center py-12">
+        <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
