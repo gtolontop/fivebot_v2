@@ -157,12 +157,27 @@ export class AIService {
   }
 
   /**
-   * Check if a URL is accessible
+   * Extract title from HTML content
    */
-  private async checkUrl(url: string): Promise<{ accessible: boolean; status?: number; error?: string }> {
+  private extractTitle(html: string): string | null {
+    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    return titleMatch ? titleMatch[1].trim() : null;
+  }
+
+  /**
+   * Check if a URL is accessible and get page info
+   */
+  private async checkUrl(url: string): Promise<{
+    accessible: boolean;
+    status?: number;
+    title?: string;
+    isError?: boolean;
+    isProtected?: boolean;
+    error?: string;
+  }> {
     try {
       const response = await fetch(url, {
-        method: 'HEAD',
+        method: 'GET',
         headers: {
           'User-Agent': 'FiveLink-Bot/2.0',
         },
@@ -170,9 +185,27 @@ export class AIService {
         signal: AbortSignal.timeout(5000), // 5 second timeout
       });
 
+      const status = response.status;
+
+      // Determine if it's a protected or error page
+      const isProtected = status === 401 || status === 403;
+      const isError = status >= 400 && status < 600;
+
+      // Try to get title from HTML
+      let title: string | undefined;
+      try {
+        const html = await response.text();
+        title = this.extractTitle(html) || undefined;
+      } catch {
+        // Ignore if we can't read the body
+      }
+
       return {
         accessible: response.ok,
-        status: response.status,
+        status,
+        title,
+        isError,
+        isProtected,
       };
     } catch (error: any) {
       return {
@@ -183,7 +216,7 @@ export class AIService {
   }
 
   /**
-   * Check all URLs in a message and return verification results
+   * Check all URLs in a message and return verification results with rich details
    */
   private async verifyUrls(text: string): Promise<string | null> {
     const urls = this.extractUrls(text);
@@ -194,10 +227,20 @@ export class AIService {
     for (const url of urls) {
       const check = await this.checkUrl(url);
 
-      if (!check.accessible) {
-        results.push(`- ${url}: ${check.status ? `HTTP ${check.status}` : 'Not accessible'} ${check.error ? `(${check.error})` : ''}`);
+      if (check.error) {
+        // Network error - couldn't reach the URL
+        results.push(`❌ ${url}: Not accessible (${check.error})`);
+      } else if (check.isProtected) {
+        // Authentication required
+        results.push(`🔒 ${url}: Protected - Requires authentication (HTTP ${check.status})`);
+      } else if (check.isError) {
+        // HTTP error (404, 500, etc.)
+        const errorInfo = check.title ? ` - ${check.title}` : '';
+        results.push(`❌ ${url}: Error ${check.status}${errorInfo}`);
       } else {
-        results.push(`- ${url}: Accessible (HTTP ${check.status})`);
+        // Success
+        const pageInfo = check.title ? ` - "${check.title}"` : '';
+        results.push(`✅ ${url}: Accessible (HTTP ${check.status})${pageInfo}`);
       }
     }
 
