@@ -712,10 +712,19 @@ export class AIService {
     prompt += `\n\n## Current Context`;
 
     if (!isDM) {
+      // Server description (if available)
+      if (message.guild?.description) {
+        prompt += `\n- Server: ${serverName} - "${message.guild.description}"`;
+      } else {
+        prompt += `\n- Server: ${serverName}`;
+      }
+
       // Channel info
       const channelName = (message.channel as any).name || 'unknown';
+      const channelTopic = (message.channel as any).topic;
+
       if (isThread) {
-        prompt += `\n- Location: Thread "${channelName}"`;
+        prompt += `\n- Channel: Thread "${channelName}"`;
         const thread = message.channel;
         if (thread.parentId) {
           const parentChannel = message.guild?.channels.cache.get(thread.parentId);
@@ -724,7 +733,10 @@ export class AIService {
           }
         }
       } else {
-        prompt += `\n- Location: #${channelName}`;
+        prompt += `\n- Channel: #${channelName}`;
+        if (channelTopic) {
+          prompt += ` (Topic: ${channelTopic})`;
+        }
       }
 
       // User context with enhanced role detection
