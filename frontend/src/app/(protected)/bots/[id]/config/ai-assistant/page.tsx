@@ -479,10 +479,10 @@ export default function AIAssistantConfig() {
             <Field label="Keywords (comma-separated)">
               <input
                 type="text"
-                value={config.keywords?.join(', ') || ''}
+                value={config.triggerKeywords?.join(', ') || ''}
                 onChange={(e) =>
                   updateConfig(
-                    'keywords',
+                    'triggerKeywords',
                     e.target.value.split(',').map((k) => k.trim()).filter(Boolean)
                   )
                 }
