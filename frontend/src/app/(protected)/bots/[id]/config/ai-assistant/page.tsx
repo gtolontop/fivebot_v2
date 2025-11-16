@@ -188,23 +188,8 @@ export default function AIAssistantConfig() {
 
         // Check if we got actual config data
         if (configRes.data && configRes.data.id) {
-          // Config exists - merge with frontend defaults and select its guild
-          const mergedConfig = {
-            ...configRes.data,
-            // Frontend-only fields with defaults
-            replyToMentions: true,
-            replyToReplies: true,
-            replyToKeywords: false,
-            conversationHistoryLimit: 10,
-            respondToEveryone: false,
-            everyoneContextDepth: 10,
-            detectContextType: true,
-            followReplyChains: true,
-            rateLimitWindow: 60,
-            useEmbedding: false,
-            maxDocumentChunks: 5,
-          };
-          setConfig(mergedConfig);
+          // Config exists - backend now includes all fields
+          setConfig(configRes.data);
           setSelectedGuild(configRes.data.guildId);
         } else {
           // No config exists - select first guild
@@ -240,23 +225,8 @@ export default function AIAssistantConfig() {
 
       // Check if we got actual config data
       if (configRes.data && configRes.data.id) {
-        // Merge backend data with frontend-only default values
-        const mergedConfig = {
-          ...configRes.data,
-          // Frontend-only fields with defaults
-          replyToMentions: true,
-          replyToReplies: true,
-          replyToKeywords: false,
-          conversationHistoryLimit: 10,
-          respondToEveryone: false,
-          everyoneContextDepth: 10,
-          detectContextType: true,
-          followReplyChains: true,
-          rateLimitWindow: 60,
-          useEmbedding: false,
-          maxDocumentChunks: 5,
-        };
-        setConfig(mergedConfig);
+        // Backend now includes all fields, no need to merge with defaults
+        setConfig(configRes.data);
       } else {
         // No config exists for this guild
         setConfig(null);
@@ -317,23 +287,8 @@ export default function AIAssistantConfig() {
         toast.success('AI configuration created successfully');
       }
 
-      // Merge saved config with current config to preserve frontend-only fields
-      const mergedConfig = {
-        ...savedConfig,
-        // Preserve frontend-only fields from current config
-        replyToMentions: config.replyToMentions,
-        replyToReplies: config.replyToReplies,
-        replyToKeywords: config.replyToKeywords,
-        conversationHistoryLimit: config.conversationHistoryLimit,
-        respondToEveryone: config.respondToEveryone,
-        everyoneContextDepth: config.everyoneContextDepth,
-        detectContextType: config.detectContextType,
-        followReplyChains: config.followReplyChains,
-        rateLimitWindow: config.rateLimitWindow,
-        useEmbedding: config.useEmbedding,
-        maxDocumentChunks: config.maxDocumentChunks,
-      };
-      setConfig(mergedConfig);
+      // Backend now returns all fields including previously frontend-only fields
+      setConfig(savedConfig);
     } catch (error: any) {
       console.error('Error saving config:', error);
       toast.error(error.response?.data?.message || 'Failed to save configuration');
