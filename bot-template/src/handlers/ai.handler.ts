@@ -30,10 +30,7 @@ export class AIHandler {
   }
 
   private async handleMessage(message: Message): Promise<void> {
-    // Ignore DMs
-    if (!message.guildId) return;
-
-    // Ignore bots (except when testing)
+    // Ignore bots
     if (message.author.bot) return;
 
     try {
