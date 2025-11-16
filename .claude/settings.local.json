@@ -80,7 +80,8 @@
       "Bash(plink:*)",
       "Bash(deploy-ai-update.bat)",
       "Bash(sshpass -p 'P#%7_HwS' ssh -o StrictHostKeyChecking=no root@83.150.218.68 \"su - fivebot -c ''cd ~/app && git pull''\")",
-      "Bash(git revert:*)"
+      "Bash(git revert:*)",
+      "Bash(prisma/schema.prisma.old)"
     ],
     "deny": [],
     "ask": [],
