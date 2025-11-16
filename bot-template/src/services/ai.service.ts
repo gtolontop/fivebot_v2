@@ -348,6 +348,11 @@ export class AIService {
   }
 
   private checkRateLimit(message: Message, config: AIConfig): boolean {
+    // Rate limit désactivé si les valeurs sont très élevées (>500)
+    if (config.rateLimitPerUser > 500) {
+      return true;
+    }
+
     const now = Date.now();
     const hourAgo = now - 3600000;
 
