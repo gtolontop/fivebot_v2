@@ -69,7 +69,15 @@
       "Bash(tasklist:*)",
       "Bash(git log:*)",
       "Bash(nul)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(ssh root@83.150.218.68 \"su - fivebot -c ''cd ~/app/backend && npx prisma migrate status''\")",
+      "Bash(ssh root@83.150.218.68 \"su - fivebot -c ''cd ~/app/backend && ls -la prisma/migrations/''\")",
+      "Bash(ssh root@83.150.218.68:*)",
+      "Bash(scp:*)",
+      "Bash(sshpass -p 'P#%7_HwS' ssh -o StrictHostKeyChecking=no root@83.150.218.68 \"su - fivebot -c ''cd ~/app && git pull && cd bot-template && npm run build && pm2 restart all''\")",
+      "Bash(ssh -o BatchMode=yes -o ConnectTimeout=5 root@83.150.218.68 \"su - fivebot -c ''cd ~/app && git pull && cd bot-template && npm run build && pm2 restart all''\")",
+      "Bash(where:*)",
+      "Bash(plink:*)"
     ],
     "deny": [],
     "ask": [],
