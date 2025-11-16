@@ -63,6 +63,12 @@ export class AIService {
         personality: data.personality ?? 'FRIENDLY',
         customPersonality: data.customPersonality,
         systemPrompt: data.systemPrompt,
+        dmSystemPrompt: data.dmSystemPrompt,
+        channelPrompts: data.channelPrompts ? JSON.stringify(data.channelPrompts) : null,
+        threadPrompts: data.threadPrompts ? JSON.stringify(data.threadPrompts) : null,
+        enableVision: data.enableVision ?? false,
+        includeUserContext: data.includeUserContext ?? true,
+        includeChannelContext: data.includeChannelContext ?? true,
         temperature: data.temperature ?? 0.7,
         maxTokens: data.maxTokens ?? 500,
         enabledChannels: data.enabledChannels ? JSON.stringify(data.enabledChannels) : null,
@@ -118,6 +124,8 @@ export class AIService {
     if (data.triggerKeywords) updateData.triggerKeywords = JSON.stringify(data.triggerKeywords);
     if (data.ignorePrefixes) updateData.ignorePrefixes = JSON.stringify(data.ignorePrefixes);
     if (data.allowedFunctions) updateData.allowedFunctions = JSON.stringify(data.allowedFunctions);
+    if (data.channelPrompts) updateData.channelPrompts = JSON.stringify(data.channelPrompts);
+    if (data.threadPrompts) updateData.threadPrompts = JSON.stringify(data.threadPrompts);
 
     const updated = await this.prisma.aIConfig.update({
       where: { id: config.id },

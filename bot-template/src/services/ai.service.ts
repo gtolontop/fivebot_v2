@@ -12,6 +12,12 @@ interface AIConfig {
   personality: string;
   customPersonality?: string;
   systemPrompt?: string;
+  dmSystemPrompt?: string;
+  channelPrompts?: { [channelId: string]: string };
+  threadPrompts?: { [threadId: string]: string };
+  enableVision: boolean;
+  includeUserContext: boolean;
+  includeChannelContext: boolean;
   temperature: number;
   maxTokens: number;
   enabledChannels?: string[];
@@ -44,7 +50,7 @@ interface AIConfig {
 
 interface ConversationContext {
   role: 'system' | 'user' | 'assistant';
-  content: string;
+  content: string | Array<{ type: 'text' | 'image_url'; text?: string; image_url?: { url: string } }>;
 }
 
 export class AIService {
@@ -96,6 +102,11 @@ export class AIService {
       triggerKeywords: config.triggerKeywords ? JSON.parse(config.triggerKeywords as string) : [],
       ignorePrefixes: config.ignorePrefixes ? JSON.parse(config.ignorePrefixes as string) : ['!', '/', '.'],
       allowedFunctions: config.allowedFunctions ? JSON.parse(config.allowedFunctions as string) : [],
+      channelPrompts: config.channelPrompts ? JSON.parse(config.channelPrompts as string) : {},
+      threadPrompts: config.threadPrompts ? JSON.parse(config.threadPrompts as string) : {},
+      enableVision: config.enableVision ?? false,
+      includeUserContext: config.includeUserContext ?? true,
+      includeChannelContext: config.includeChannelContext ?? true,
     } as AIConfig;
   }
 
@@ -110,7 +121,7 @@ export class AIService {
 
     // Check rate limits
     if (!this.checkRateLimit(message, config)) {
-      console.log(`[AI] Rate limit exceeded for user ${message.author.id}`);
+      // Silent rate limiting - no spam in logs
       return;
     }
 
@@ -141,8 +152,8 @@ export class AIService {
         documentsUsed = ragResult.documents;
       }
 
-      // Build system prompt
-      const systemPrompt = this.buildSystemPrompt(config, ragContext);
+      // Build contextual system prompt
+      const systemPrompt = await this.buildContextualSystemPrompt(message, config, ragContext);
 
       // Call OpenAI
       if (!this.openai) {
@@ -155,12 +166,15 @@ export class AIService {
       const modelName = this.getModelName(config.model);
       const isGPT5Nano = modelName === 'gpt-5-nano';
 
+      // Build user message with images if vision is enabled
+      const userMessageContent = await this.buildMessageContent(message, config);
+
       const completionParams: any = {
         model: modelName,
         messages: [
           { role: 'system', content: systemPrompt },
           ...context,
-          { role: 'user', content: message.content },
+          { role: 'user', content: userMessageContent },
         ],
       };
 
@@ -452,6 +466,94 @@ export class AIService {
     }
   }
 
+  private async buildContextualSystemPrompt(message: Message, config: AIConfig, ragContext: string): Promise<string> {
+    let prompt = '';
+
+    // Add personality
+    if (config.personality === 'CUSTOM' && config.customPersonality) {
+      prompt = config.customPersonality;
+    } else if (config.personality in this.PERSONALITY_PROMPTS) {
+      prompt = this.PERSONALITY_PROMPTS[config.personality as keyof typeof this.PERSONALITY_PROMPTS];
+    }
+
+    // Choose contextual system prompt
+    let contextualPrompt = '';
+
+    // Check if it's a DM
+    if (!message.guildId) {
+      contextualPrompt = config.dmSystemPrompt || '';
+    }
+    // Check if it's a thread with custom prompt
+    else if (message.channel.isThread() && config.threadPrompts?.[message.channelId]) {
+      contextualPrompt = config.threadPrompts[message.channelId];
+    }
+    // Check if it's a channel with custom prompt
+    else if (config.channelPrompts?.[message.channelId]) {
+      contextualPrompt = config.channelPrompts[message.channelId];
+    }
+    // Fallback to general system prompt
+    else if (config.systemPrompt) {
+      contextualPrompt = config.systemPrompt;
+    }
+
+    if (contextualPrompt) {
+      prompt += '\n\n' + contextualPrompt;
+    }
+
+    // Add user context if enabled
+    if (config.includeUserContext && message.guild) {
+      const member = message.member;
+      if (member) {
+        prompt += '\n\n## User Context\n';
+        prompt += `- Username: ${message.author.username}\n`;
+        prompt += `- Display Name: ${member.displayName}\n`;
+        prompt += `- User ID: ${message.author.id}\n`;
+
+        const roles = member.roles.cache
+          .filter(role => role.name !== '@everyone')
+          .map(role => role.name)
+          .join(', ');
+        if (roles) {
+          prompt += `- Roles: ${roles}\n`;
+        }
+      }
+    }
+
+    // Add channel context if enabled
+    if (config.includeChannelContext && message.guild) {
+      prompt += '\n\n## Channel Context\n';
+      prompt += `- Server: ${message.guild.name}\n`;
+      prompt += `- Channel: ${message.channel.isThread() ? 'Thread' : 'Channel'} - #${(message.channel as any).name || 'DM'}\n`;
+      prompt += `- Channel ID: ${message.channelId}\n`;
+
+      if (message.channel.isThread()) {
+        prompt += `- Parent Channel: <#${message.channel.parentId}>\n`;
+        const thread = message.channel;
+        if (thread.ownerId) {
+          prompt += `- Thread Creator: <@${thread.ownerId}>\n`;
+        }
+      }
+    }
+
+    // Add RAG context
+    if (ragContext) {
+      prompt += '\n\n' + ragContext;
+    }
+
+    // Add general guidelines
+    prompt += '\n\n## General Guidelines\n';
+    prompt += `- Keep responses under ${config.maxResponseLength} characters\n`;
+    prompt += '- Be helpful and accurate\n';
+    prompt += '- If you don\'t know something, admit it\n';
+    prompt += `- Address the user as "${message.member?.displayName || message.author.username}"\n`;
+
+    if (config.blockNSFW) {
+      prompt += '- Do not generate NSFW or inappropriate content\n';
+    }
+
+    return prompt;
+  }
+
   private buildSystemPrompt(config: AIConfig, ragContext: string): string {
     let prompt = '';
 
@@ -483,6 +585,49 @@ export class AIService {
     }
 
     return prompt;
+  }
+
+  private async buildMessageContent(
+    message: Message,
+    config: AIConfig
+  ): Promise<string | Array<{ type: 'text' | 'image_url'; text?: string; image_url?: { url: string } }>> {
+    // If vision is not enabled or no attachments, return text only
+    if (!config.enableVision || message.attachments.size === 0) {
+      return message.content;
+    }
+
+    // Check if message has images
+    const images = message.attachments.filter(attachment =>
+      attachment.contentType?.startsWith('image/')
+    );
+
+    // If no images, return text only
+    if (images.size === 0) {
+      return message.content;
+    }
+
+    // Build content array with text and images
+    const content: Array<{ type: 'text' | 'image_url'; text?: string; image_url?: { url: string } }> = [];
+
+    // Add text first if exists
+    if (message.content) {
+      content.push({
+        type: 'text',
+        text: message.content,
+      });
+    }
+
+    // Add images
+    images.forEach(image => {
+      content.push({
+        type: 'image_url',
+        image_url: {
+          url: image.url,
+        },
+      });
+    });
+
+    return content;
   }
 
   private updateConversationCache(channelId: string, messages: ConversationContext[]): void {
