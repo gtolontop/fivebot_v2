@@ -60,6 +60,7 @@ export class AIService {
   private rateLimitCache: Map<string, number[]> = new Map();
   private tokenUsageCache: Map<string, { tokens: number; resetAt: number }> = new Map();
   private conversationCache: Map<string, ConversationContext[]> = new Map();
+  private processedMessages: Map<string, number> = new Map(); // messageId -> timestamp
 
   // Model pricing per 1M tokens (input/output)
   private readonly MODEL_PRICING = {
@@ -115,6 +116,24 @@ export class AIService {
 
   async processMessage(message: Message): Promise<void> {
     if (message.author.bot) return;
+
+    // Deduplication - prevent processing the same message multiple times
+    const now = Date.now();
+    if (this.processedMessages.has(message.id)) {
+      const lastProcessed = this.processedMessages.get(message.id)!;
+      if (now - lastProcessed < 5000) { // 5 second window
+        console.log(`[AI] Skipping duplicate message ${message.id}`);
+        return;
+      }
+    }
+    this.processedMessages.set(message.id, now);
+
+    // Clean up old entries (keep last 1000 messages)
+    if (this.processedMessages.size > 1000) {
+      const entries = Array.from(this.processedMessages.entries());
+      entries.sort((a, b) => b[1] - a[1]); // Sort by timestamp desc
+      this.processedMessages = new Map(entries.slice(0, 1000));
+    }
 
     // Handle DMs - find a guild with AI config enabled where both user and bot are members
     let config: AIConfig | null = null;
@@ -242,8 +261,6 @@ export class AIService {
         configId: config.id,
         guildId: effectiveGuildId!,
         userId: message.author.id,
-        channelId: message.channelId,
-        messageId: message.id,
         model: config.model,
         promptTokens: response.usage?.prompt_tokens || 0,
         completionTokens: response.usage?.completion_tokens || 0,
@@ -262,14 +279,8 @@ export class AIService {
           guildId: effectiveGuildId!,
           channelId: message.channelId,
           userId: message.author.id,
-          userMessage: message.content,
-          aiResponse,
-          context: context.slice(-config.contextWindow),
-          documentsUsed,
-          tokens: response.usage?.total_tokens || 0,
-          model: config.model,
-          temperature: config.temperature,
-          responseTime,
+          context: JSON.stringify(context.slice(-config.contextWindow)),
+          documentsUsed: JSON.stringify(documentsUsed),
         });
       }
 
@@ -310,8 +321,6 @@ export class AIService {
         configId: config.id,
         guildId: effectiveGuildId!,
         userId: message.author.id,
-        channelId: message.channelId,
-        messageId: message.id,
         model: config.model,
         promptTokens: 0,
         completionTokens: 0,
@@ -818,11 +827,7 @@ export class AIService {
   private async logConversation(data: any): Promise<void> {
     try {
       await this.prisma.aIConversation.create({
-        data: {
-          ...data,
-          context: JSON.stringify(data.context),
-          documentsUsed: JSON.stringify(data.documentsUsed),
-        },
+        data,
       });
     } catch (error) {
       console.error('[AI] Error logging conversation:', error);
