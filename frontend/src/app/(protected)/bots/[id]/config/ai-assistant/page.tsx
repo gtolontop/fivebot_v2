@@ -158,7 +158,8 @@ export default function AIAssistantConfig() {
         maxDocumentChunks: 5,
       });
     }
-  }, [loading, config, selectedGuild, guilds, botId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, selectedGuild, guilds.length, botId]);
 
   const fetchData = async () => {
     try {
