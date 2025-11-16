@@ -53,6 +53,29 @@ interface ConversationContext {
   content: string | Array<{ type: 'text' | 'image_url'; text?: string; image_url?: { url: string } }>;
 }
 
+interface UserPreferences {
+  userId: string;
+  preferredLanguage?: string;
+  preferredTone?: 'formal' | 'casual' | 'technical';
+  topicsOfInterest?: string[];
+  lastInteraction?: Date;
+  conversationCount?: number;
+  responseStyle?: 'concise' | 'detailed';
+  learningData?: {
+    commonQuestions?: string[];
+    preferredExamples?: string[];
+    feedbackHistory?: Array<{ positive: boolean; topic: string }>;
+  };
+}
+
+interface SentimentAnalysis {
+  sentiment: 'positive' | 'negative' | 'neutral';
+  emotions?: string[];
+  urgency?: 'low' | 'medium' | 'high';
+  isQuestion?: boolean;
+  requiresSupport?: boolean;
+}
+
 export class AIService {
   private client: Client;
   private prisma: PrismaClient;
@@ -61,6 +84,11 @@ export class AIService {
   private tokenUsageCache: Map<string, { tokens: number; resetAt: number }> = new Map();
   private conversationCache: Map<string, ConversationContext[]> = new Map();
   private processedMessages: Map<string, number> = new Map(); // messageId -> timestamp
+
+  // Advanced features
+  private userPreferencesCache: Map<string, UserPreferences> = new Map();
+  private conversationTopics: Map<string, string[]> = new Map(); // channelId -> topics discussed
+  private userInteractionStats: Map<string, { count: number; lastSeen: Date }> = new Map();
 
   // Model pricing per 1M tokens (input/output)
   private readonly MODEL_PRICING = {
@@ -81,6 +109,11 @@ export class AIService {
   constructor(client: Client, prisma?: PrismaClient) {
     this.client = client;
     this.prisma = prisma || new PrismaClient();
+
+    // Initialize advanced learning features automatically
+    this.initializeAdvancedFeatures().catch(err => {
+      console.error('[AI] Failed to initialize advanced features:', err);
+    });
   }
 
   async initialize(guildId: string): Promise<void> {
@@ -184,6 +217,26 @@ export class AIService {
       return;
     }
 
+    // ADVANCED INTELLIGENCE: Analyze sentiment and user preferences
+    const sentiment = this.analyzeSentiment(message);
+    const userPrefs = await this.getUserPreferences(message.author.id);
+
+    console.log(`[AI] Sentiment: ${sentiment.sentiment}, Urgency: ${sentiment.urgency}, Question: ${sentiment.isQuestion}`);
+    console.log(`[AI] User prefs: ${userPrefs.conversationCount} convs, tone: ${userPrefs.preferredTone}, style: ${userPrefs.responseStyle}`);
+
+    // Track conversation topics for better context
+    this.trackConversationTopic(message.channelId, message.content);
+
+    // Use SMART rate limiting that adapts to user behavior
+    const rateLimitPassed = await this.smartRateLimit(message.author.id, message.channelId, config);
+    if (!rateLimitPassed) {
+      // Friendly rate limit message based on sentiment
+      if (sentiment.urgency === 'high') {
+        await message.reply('⏱️ Doucement! Je reçois trop de messages. Laisse-moi une seconde pour respirer.');
+      }
+      return;
+    }
+
     // Check token-based rate limits
     if (!this.checkTokenRateLimit(message, config)) {
       // Silent rate limiting - user has exceeded token quota
@@ -205,8 +258,8 @@ export class AIService {
 
     try {
 
-      // Get conversation context
-      const context = await this.getConversationContext(message, config);
+      // Get ENHANCED conversation context with user preferences
+      const context = await this.getEnhancedConversationContext(message, config, userPrefs);
 
       // Get RAG documents if enabled
       let ragContext = '';
@@ -217,10 +270,11 @@ export class AIService {
         documentsUsed = ragResult.documents;
       }
 
-      // Build contextual system prompt
-      const systemPrompt = await this.buildContextualSystemPrompt(message, config, ragContext);
+      // Build contextual system prompt with SENTIMENT & USER PREFERENCES
+      const systemPrompt = await this.buildContextualSystemPrompt(message, config, ragContext, sentiment, userPrefs);
       console.log('[AI] Config personality:', config.personality);
-      console.log('[AI] System prompt:', systemPrompt.substring(0, 500) + '...');
+      console.log('[AI] System prompt length:', systemPrompt.length, 'chars');
+      console.log('[AI] System prompt preview:', systemPrompt.substring(0, 300) + '...');
 
       // Call OpenAI
       if (!this.openai) {
@@ -322,6 +376,10 @@ export class AIService {
         responseTime,
         documentsUsed: documentsUsed.length,
       });
+
+      // LEARNING: Update user preferences based on this interaction
+      await this.updateUserPreferences(message.author.id, message, sentiment);
+      console.log('[AI] ✅ Updated user preferences for', message.author.username);
 
       // Check token limits
       await this.checkTokenLimits(config);
@@ -581,7 +639,13 @@ export class AIService {
     }
   }
 
-  private async buildContextualSystemPrompt(message: Message, config: AIConfig, ragContext: string): Promise<string> {
+  private async buildContextualSystemPrompt(
+    message: Message,
+    config: AIConfig,
+    ragContext: string,
+    sentiment?: SentimentAnalysis,
+    userPrefs?: UserPreferences
+  ): Promise<string> {
     const isDM = !message.guildId;
     const isThread = message.channel.isThread();
     const userName = message.member?.displayName || message.author.username;
@@ -590,11 +654,19 @@ export class AIService {
     // Build intelligent base prompt
     let prompt = '';
 
-    // 1. WHO ARE YOU - Clear identity with personality
+    // 1. WHO ARE YOU - Clear identity with personality (adapted to user preferences)
+    const preferredTone = userPrefs?.preferredTone || 'casual';
+
     if (!isDM) {
-      prompt = `You are a helpful and intelligent AI assistant for the ${serverName} Discord server. Your goal is to provide accurate, relevant, and thoughtful responses.`;
+      if (preferredTone === 'technical') {
+        prompt = `You are a highly skilled technical assistant for the ${serverName} Discord server. Provide precise, detailed technical information with examples.`;
+      } else if (preferredTone === 'formal') {
+        prompt = `You are a professional AI assistant for the ${serverName} Discord server. Be respectful, precise, and maintain a formal tone.`;
+      } else {
+        prompt = `You are a friendly and helpful AI assistant for the ${serverName} Discord server. Be warm, approachable, and conversational.`;
+      }
     } else {
-      prompt = `You are a personal AI assistant chatting with ${userName}. Be friendly, helpful, and attentive to their needs.`;
+      prompt = `You are a personal AI assistant chatting with ${userName}. Be ${preferredTone === 'technical' ? 'precise and technical' : preferredTone === 'formal' ? 'professional and courteous' : 'friendly and casual'}.`;
     }
 
     // 2. CUSTOM PERSONALITY OR DEFAULTS
@@ -678,17 +750,50 @@ export class AIService {
       prompt += `\n\n## Knowledge Base\n${ragContext}`;
     }
 
-    // 6. INTELLIGENT BEHAVIOR GUIDELINES
+    // 6. INTELLIGENT BEHAVIOR GUIDELINES (adapted to sentiment & user preferences)
     prompt += `\n\n## Response Guidelines`;
-    prompt += `\n1. **Understand Intent**: Carefully analyze what ${userName} is really asking or saying`;
-    prompt += `\n2. **Be Relevant**: Respond directly to their question or statement, don't go off-topic`;
-    prompt += `\n3. **Be Concise**: Keep responses under ${config.maxResponseLength} characters unless more detail is explicitly requested`;
-    prompt += `\n4. **Be Natural**: Write like a friendly person, not a robot. No technical jargon unless relevant`;
-    prompt += `\n5. **Be Helpful**: If you don't know something, admit it and suggest alternatives`;
-    prompt += `\n6. **Context Matters**: Use the conversation history and user's roles to inform your response`;
+
+    // Adapt response style based on sentiment and user preferences
+    if (sentiment) {
+      if (sentiment.urgency === 'high') {
+        prompt += `\n- **URGENT MATTER**: The user needs quick, direct help. Be concise and action-oriented.`;
+      }
+      if (sentiment.isQuestion) {
+        prompt += `\n- **This is a question**: Provide a clear, direct answer first, then add details if needed.`;
+      }
+      if (sentiment.requiresSupport) {
+        prompt += `\n- **Support needed**: Be patient, empathetic, and provide step-by-step guidance.`;
+      }
+      if (sentiment.sentiment === 'negative' || sentiment.emotions?.includes('frustrated')) {
+        prompt += `\n- **User seems frustrated**: Be extra patient and understanding. Acknowledge their concern.`;
+      }
+      if (sentiment.sentiment === 'positive') {
+        prompt += `\n- **Positive vibe**: Match their energy! Be enthusiastic and encouraging.`;
+      }
+    }
+
+    // Adapt detail level to user preferences
+    const responseStyle = userPrefs?.responseStyle || 'concise';
+    if (responseStyle === 'detailed') {
+      prompt += `\n1. **Be Thorough**: This user prefers detailed explanations with examples`;
+    } else {
+      prompt += `\n1. **Be Concise**: This user prefers short, direct responses`;
+    }
+
+    prompt += `\n2. **Understand Intent**: Carefully analyze what ${userName} is really asking or saying`;
+    prompt += `\n3. **Be Relevant**: Respond directly to their question or statement, don't go off-topic`;
+    prompt += `\n4. **Stay Under Limit**: Keep responses under ${config.maxResponseLength} characters`;
+    prompt += `\n5. **Be Natural**: Write like a friendly person, not a robot. No technical jargon unless relevant`;
+    prompt += `\n6. **Be Helpful**: If you don't know something, admit it and suggest alternatives`;
+    prompt += `\n7. **Context Matters**: Use the conversation history and user's roles to inform your response`;
+
+    // Add user's topics of interest if known
+    if (userPrefs?.topicsOfInterest && userPrefs.topicsOfInterest.length > 0) {
+      prompt += `\n- **User interests**: ${userPrefs.topicsOfInterest.slice(0, 3).join(', ')} - reference these when relevant`;
+    }
 
     if (config.blockNSFW) {
-      prompt += `\n7. **Stay Appropriate**: Keep all content safe for work`;
+      prompt += `\n8. **Stay Appropriate**: Keep all content safe for work`;
     }
 
     // 7. IMPORTANT REMINDERS
@@ -1283,5 +1388,333 @@ export class AIService {
     );
 
     return isAdmin || isModerator || hasStaffRole;
+  }
+
+  /**
+   * ADVANCED LEARNING & INTELLIGENCE SYSTEM
+   */
+
+  /**
+   * Analyze sentiment of user message to adapt response tone
+   */
+  private analyzeSentiment(message: Message): SentimentAnalysis {
+    const content = message.content.toLowerCase();
+
+    // Detect urgency
+    const urgentWords = ['urgent', 'important', 'asap', 'maintenant', 'vite', 'rapide', 'problème', 'erreur', 'bug', 'aide'];
+    const urgency = urgentWords.some(word => content.includes(word)) ? 'high' :
+                    content.includes('?') ? 'medium' : 'low';
+
+    // Detect sentiment
+    const positiveWords = ['merci', 'super', 'génial', 'cool', 'parfait', 'excellent', 'bien', 'bravo', 'top'];
+    const negativeWords = ['merde', 'nul', 'mauvais', 'pas bien', 'erreur', 'problème', 'bug', 'casse', 'chiant'];
+
+    const positiveCount = positiveWords.filter(word => content.includes(word)).length;
+    const negativeCount = negativeWords.filter(word => content.includes(word)).length;
+
+    let sentiment: 'positive' | 'negative' | 'neutral' = 'neutral';
+    if (positiveCount > negativeCount) sentiment = 'positive';
+    else if (negativeCount > positiveCount) sentiment = 'negative';
+
+    // Detect emotions
+    const emotions: string[] = [];
+    if (content.includes('!')) emotions.push('excited');
+    if (content.includes('?') && urgency === 'high') emotions.push('confused');
+    if (negativeCount > 0) emotions.push('frustrated');
+    if (positiveCount > 0) emotions.push('happy');
+
+    // Detect if it's a question
+    const isQuestion = content.includes('?') ||
+                      content.startsWith('comment') ||
+                      content.startsWith('pourquoi') ||
+                      content.startsWith('quoi') ||
+                      content.startsWith('qui') ||
+                      content.startsWith('quand') ||
+                      content.startsWith('où');
+
+    // Detect if requires support
+    const requiresSupport = content.includes('aide') ||
+                           content.includes('help') ||
+                           content.includes('problème') ||
+                           content.includes('bug') ||
+                           (isQuestion && urgency === 'high');
+
+    return {
+      sentiment,
+      emotions,
+      urgency,
+      isQuestion,
+      requiresSupport
+    };
+  }
+
+  /**
+   * Get or create user preferences with learning
+   */
+  private async getUserPreferences(userId: string): Promise<UserPreferences> {
+    // Check cache first
+    if (this.userPreferencesCache.has(userId)) {
+      return this.userPreferencesCache.get(userId)!;
+    }
+
+    // Try to load from database
+    try {
+      const userData = await this.prisma.aIConversation.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+        select: {
+          context: true,
+          createdAt: true,
+        }
+      });
+
+      const preferences: UserPreferences = {
+        userId,
+        lastInteraction: userData[0]?.createdAt || new Date(),
+        conversationCount: userData.length,
+        learningData: {
+          commonQuestions: [],
+          preferredExamples: [],
+          feedbackHistory: []
+        }
+      };
+
+      // Analyze user's conversation patterns
+      const allContext = userData.map(d => d.context).filter(Boolean).join(' ');
+
+      // Detect preferred language (FR vs EN)
+      const frenchWords = (allContext.match(/\b(le|la|les|un|une|des|et|de|à|en)\b/gi) || []).length;
+      const englishWords = (allContext.match(/\b(the|a|an|and|of|to|in|is)\b/gi) || []).length;
+      preferences.preferredLanguage = frenchWords > englishWords ? 'fr' : 'en';
+
+      // Detect preferred tone
+      const casualWords = (allContext.match(/\b(mec|gars|cool|genre|ouais|bah)\b/gi) || []).length;
+      const formalWords = (allContext.match(/\b(monsieur|madame|veuillez|cordialement)\b/gi) || []).length;
+      const technicalWords = (allContext.match(/\b(api|database|function|code|server|deploy)\b/gi) || []).length;
+
+      if (technicalWords > 10) preferences.preferredTone = 'technical';
+      else if (casualWords > formalWords) preferences.preferredTone = 'casual';
+      else preferences.preferredTone = 'formal';
+
+      // Cache it
+      this.userPreferencesCache.set(userId, preferences);
+
+      return preferences;
+    } catch (error) {
+      // Return default preferences if database fails
+      const defaultPrefs: UserPreferences = {
+        userId,
+        preferredLanguage: 'fr',
+        preferredTone: 'casual',
+        conversationCount: 0
+      };
+      this.userPreferencesCache.set(userId, defaultPrefs);
+      return defaultPrefs;
+    }
+  }
+
+  /**
+   * Update user preferences based on interaction
+   */
+  private async updateUserPreferences(userId: string, message: Message, sentiment: SentimentAnalysis): Promise<void> {
+    const prefs = await this.getUserPreferences(userId);
+
+    prefs.lastInteraction = new Date();
+    prefs.conversationCount = (prefs.conversationCount || 0) + 1;
+
+    // Track topics of interest
+    const content = message.content.toLowerCase();
+    const topics: string[] = [];
+
+    // Extract topics from message
+    if (content.includes('code') || content.includes('programming')) topics.push('programming');
+    if (content.includes('discord') || content.includes('bot')) topics.push('discord-bots');
+    if (content.includes('game') || content.includes('jeu')) topics.push('gaming');
+    if (content.includes('music') || content.includes('musique')) topics.push('music');
+    if (content.includes('ai') || content.includes('intelligence')) topics.push('ai');
+
+    if (topics.length > 0) {
+      prefs.topicsOfInterest = [...new Set([...(prefs.topicsOfInterest || []), ...topics])].slice(0, 10);
+    }
+
+    // Detect response style preference based on message length
+    if (message.content.length > 200) {
+      prefs.responseStyle = 'detailed';
+    } else if (message.content.length < 50) {
+      prefs.responseStyle = 'concise';
+    }
+
+    // Update stats
+    this.userInteractionStats.set(userId, {
+      count: (this.userInteractionStats.get(userId)?.count || 0) + 1,
+      lastSeen: new Date()
+    });
+
+    // Update cache
+    this.userPreferencesCache.set(userId, prefs);
+  }
+
+  /**
+   * Track conversation topics for better context
+   */
+  private trackConversationTopic(channelId: string, message: string): void {
+    const topics = this.conversationTopics.get(channelId) || [];
+
+    // Extract key phrases (simple implementation)
+    const words = message.toLowerCase().split(/\s+/);
+    const keywords = words.filter(word =>
+      word.length > 4 &&
+      !['about', 'with', 'from', 'that', 'this', 'have', 'been'].includes(word)
+    );
+
+    // Add new keywords, keep last 20
+    const updatedTopics = [...new Set([...topics, ...keywords])].slice(-20);
+    this.conversationTopics.set(channelId, updatedTopics);
+  }
+
+  /**
+   * Smart rate limiting that adapts to user behavior
+   */
+  private async smartRateLimit(userId: string, channelId: string, config: AIConfig): Promise<boolean> {
+    const now = Date.now();
+    const userKey = `user:${userId}`;
+    const channelKey = `channel:${channelId}`;
+
+    // Get user stats
+    const stats = this.userInteractionStats.get(userId);
+    const isRegularUser = stats && stats.count > 10;
+
+    // Regular users get more lenient rate limits
+    const userLimit = isRegularUser ? config.rateLimitPerUser * 1.5 : config.rateLimitPerUser;
+    const timeWindow = 60000; // 1 minute
+
+    // Check user rate limit
+    const userTimestamps = this.rateLimitCache.get(userKey) || [];
+    const recentUserRequests = userTimestamps.filter(ts => now - ts < timeWindow);
+
+    if (recentUserRequests.length >= userLimit) {
+      console.log(`[AI] Rate limit exceeded for user ${userId} (${recentUserRequests.length}/${userLimit})`);
+      return false;
+    }
+
+    // Check channel rate limit
+    const channelTimestamps = this.rateLimitCache.get(channelKey) || [];
+    const recentChannelRequests = channelTimestamps.filter(ts => now - ts < timeWindow);
+
+    if (recentChannelRequests.length >= config.rateLimitPerChannel) {
+      console.log(`[AI] Rate limit exceeded for channel ${channelId} (${recentChannelRequests.length}/${config.rateLimitPerChannel})`);
+      return false;
+    }
+
+    // Update rate limit caches
+    this.rateLimitCache.set(userKey, [...recentUserRequests, now]);
+    this.rateLimitCache.set(channelKey, [...recentChannelRequests, now]);
+
+    return true;
+  }
+
+  /**
+   * Enhanced conversation context with intelligent summarization
+   */
+  private async getEnhancedConversationContext(
+    message: Message,
+    config: AIConfig,
+    userPrefs: UserPreferences
+  ): Promise<ConversationContext[]> {
+    const channelId = message.channelId;
+    const existingContext = this.conversationCache.get(channelId) || [];
+
+    // Smart context window based on user preferences
+    const contextSize = userPrefs.responseStyle === 'detailed' ?
+      Math.min(config.contextWindow, 15) :
+      Math.min(config.contextWindow, 8);
+
+    // Get recent messages with intelligent filtering
+    const recentContext = existingContext.slice(-contextSize);
+
+    // If context is getting long, summarize older messages
+    if (recentContext.length > 10) {
+      const olderMessages = recentContext.slice(0, -5);
+      const recentMessages = recentContext.slice(-5);
+
+      // Create a summary of older messages
+      const summary = this.summarizeConversation(olderMessages);
+
+      return [
+        {
+          role: 'system' as const,
+          content: `Résumé de la conversation précédente: ${summary}`
+        },
+        ...recentMessages
+      ];
+    }
+
+    return recentContext;
+  }
+
+  /**
+   * Summarize older conversation context
+   */
+  private summarizeConversation(messages: ConversationContext[]): string {
+    const userMessages = messages
+      .filter(m => m.role === 'user')
+      .map(m => typeof m.content === 'string' ? m.content : m.content.find(c => c.type === 'text')?.text || '')
+      .filter(Boolean);
+
+    if (userMessages.length === 0) return 'Pas de contexte précédent.';
+
+    // Extract key topics
+    const allText = userMessages.join(' ').toLowerCase();
+    const topics = this.conversationTopics.get('summary') || [];
+
+    const mainTopics = topics.slice(0, 3).join(', ') || 'conversation générale';
+
+    return `L'utilisateur a discuté de: ${mainTopics}. ${userMessages.length} messages échangés.`;
+  }
+
+  /**
+   * Clean up old caches periodically
+   */
+  private startCacheCleanup(): void {
+    // Clean up every 10 minutes
+    setInterval(() => {
+      const now = Date.now();
+      const maxAge = 30 * 60 * 1000; // 30 minutes
+
+      // Clean processed messages cache
+      for (const [messageId, timestamp] of this.processedMessages.entries()) {
+        if (now - timestamp > maxAge) {
+          this.processedMessages.delete(messageId);
+        }
+      }
+
+      // Clean user preferences cache (keep active users)
+      for (const [userId, prefs] of this.userPreferencesCache.entries()) {
+        const lastInteraction = prefs.lastInteraction?.getTime() || 0;
+        if (now - lastInteraction > 24 * 60 * 60 * 1000) { // 24 hours
+          this.userPreferencesCache.delete(userId);
+        }
+      }
+
+      // Clean conversation topics (keep recent channels only)
+      if (this.conversationTopics.size > 100) {
+        const entries = Array.from(this.conversationTopics.entries());
+        const toKeep = entries.slice(-50);
+        this.conversationTopics.clear();
+        toKeep.forEach(([k, v]) => this.conversationTopics.set(k, v));
+      }
+
+      console.log('[AI] Cache cleanup completed');
+    }, 10 * 60 * 1000);
+  }
+
+  /**
+   * Initialize advanced features
+   */
+  async initializeAdvancedFeatures(): Promise<void> {
+    console.log('[AI] Initializing advanced learning features...');
+    this.startCacheCleanup();
+    console.log('[AI] ✅ Advanced features initialized');
   }
 }
