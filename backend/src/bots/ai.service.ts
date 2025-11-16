@@ -196,15 +196,35 @@ export class AIService {
       data.apiKey = data.apiKey;
     }
 
-    // Convert arrays to JSON strings
-    const updateData: any = { ...data };
-    if (data.enabledChannels) updateData.enabledChannels = JSON.stringify(data.enabledChannels);
-    if (data.disabledChannels) updateData.disabledChannels = JSON.stringify(data.disabledChannels);
-    if (data.triggerKeywords) updateData.triggerKeywords = JSON.stringify(data.triggerKeywords);
-    if (data.ignorePrefixes) updateData.ignorePrefixes = JSON.stringify(data.ignorePrefixes);
-    if (data.allowedFunctions) updateData.allowedFunctions = JSON.stringify(data.allowedFunctions);
-    if (data.channelPrompts) updateData.channelPrompts = JSON.stringify(data.channelPrompts);
-    if (data.threadPrompts) updateData.threadPrompts = JSON.stringify(data.threadPrompts);
+    // List of valid fields in the AIConfig model
+    const validFields = [
+      'guildId', 'botId', 'enabled', 'apiKey', 'model', 'responseMode', 'personality',
+      'customPersonality', 'systemPrompt', 'dmSystemPrompt', 'channelPrompts', 'threadPrompts',
+      'enableVision', 'includeUserContext', 'includeChannelContext', 'temperature', 'maxTokens',
+      'enabledChannels', 'disabledChannels', 'enableInTickets', 'enableInThreads',
+      'triggerKeywords', 'ignorePrefixes', 'requireMention', 'typingIndicator', 'responseDelay',
+      'maxResponseLength', 'useEmbeds', 'embedColor', 'showThinking', 'conversationHistory',
+      'contextWindow', 'useRAG', 'rateLimitPerUser', 'rateLimitPerChannel', 'blockNSFW',
+      'contentFilter', 'monthlyTokenLimit', 'alertOnLimit', 'alertChannelId', 'functionCalling',
+      'allowedFunctions', 'logConversations'
+    ];
+
+    // Filter out invalid fields and convert arrays to JSON strings
+    const updateData: any = {};
+    for (const field of validFields) {
+      if (data.hasOwnProperty(field)) {
+        // Convert arrays to JSON strings
+        if (['enabledChannels', 'disabledChannels', 'triggerKeywords', 'ignorePrefixes', 'allowedFunctions', 'channelPrompts', 'threadPrompts'].includes(field)) {
+          if (data[field]) {
+            updateData[field] = JSON.stringify(data[field]);
+          } else {
+            updateData[field] = null;
+          }
+        } else {
+          updateData[field] = data[field];
+        }
+      }
+    }
 
     const updated = await this.prisma.aIConfig.update({
       where: { id: config.id },
