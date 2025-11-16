@@ -10,22 +10,28 @@ export class AIService {
     private botsService: BotsService
   ) {}
 
-  async getConfig(botId: string, userId: string) {
+  async getConfig(botId: string, userId: string, guildId?: string) {
     await this.botsService.validateBotOwnership(botId, userId);
 
     const bot = await this.prisma.bot.findUnique({
       where: { id: botId },
-      include: {
-        config: true,
-      },
     });
 
     if (!bot) {
       throw new NotFoundException('Bot not found');
     }
 
-    const config = await this.prisma.aIConfig.findUnique({
-      where: { guildId: bot.config?.ticketCategoryId || '' },
+    // If guildId is provided, get config for that specific guild
+    if (guildId) {
+      const config = await this.prisma.aIConfig.findUnique({
+        where: { guildId },
+      });
+      return config;
+    }
+
+    // Otherwise, return the first config for this bot
+    const config = await this.prisma.aIConfig.findFirst({
+      where: { botId },
     });
 
     return config;
