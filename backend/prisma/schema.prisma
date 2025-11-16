@@ -627,6 +627,10 @@ model AIConfig {
   enableVision         Boolean           @default(false) @map("enable_vision")
   includeUserContext   Boolean           @default(true) @map("include_user_context")
   includeChannelContext Boolean          @default(true) @map("include_channel_context")
+  respondToEveryone    Boolean           @default(false) @map("respond_to_everyone")
+  everyoneContextDepth Int               @default(10) @map("everyone_context_depth")
+  followReplyChains    Boolean           @default(true) @map("follow_reply_chains")
+  detectContextType    Boolean           @default(true) @map("detect_context_type")
   temperature          Float             @default(0.7)
   maxTokens            Int               @default(500) @map("max_tokens")
   enabledChannels      String?           @map("enabled_channels") @db.Text
