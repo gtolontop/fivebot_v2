@@ -184,12 +184,11 @@ export class SimpleQueueService implements IQueueService {
 
       console.log(`🚀 Starting bot "${bot.name}" (owner: ${bot.owner.username})`);
 
-      // Check if bot is REALLY running (verify process exists, not just Redis state)
-      const isRunningLocally = this.runningBots.has(botId);
-      const processExists = isRunningLocally && this.runningBots.get(botId)?.killed === false;
+      // CRITICAL: Check Redis FIRST (shared across all workers) before checking local Map
+      const isRunningInRedis = await this.redisService.isRunningBot(botId);
 
-      if (processExists) {
-        console.log(`✅ Bot "${bot.name}" is already running - resynchronizing status to ONLINE`);
+      if (isRunningInRedis) {
+        console.log(`⚠️ Bot "${bot.name}" is already running in another worker - skipping duplicate start`);
 
         // Resynchronize status to ONLINE instead of failing silently
         await this.updateBotStatusSafe(botId, BotStatus.ONLINE);
@@ -199,18 +198,33 @@ export class SimpleQueueService implements IQueueService {
           status: 'ONLINE',
           userAction: 'start',
           timestamp: new Date(),
-          metadata: { confirmed: true, resynchronized: true, crashCount: 0 }
+          metadata: { confirmed: true, alreadyRunning: true, crashCount: 0 }
         });
 
         return;
       }
 
-      // If Redis says running but no process exists, clean up Redis
-      const isRunningInRedis = await this.redisService.isRunningBot(botId);
-      if (isRunningInRedis && !processExists) {
-        console.log(`⚠️ Bot "${bot.name}" marked as running in Redis but process doesn't exist - cleaning up`);
-        await this.redisService.removeRunningBot(botId);
-        this.runningBots.delete(botId);
+      // Check if bot is running locally (in THIS worker process)
+      const isRunningLocally = this.runningBots.has(botId);
+      const processExists = isRunningLocally && this.runningBots.get(botId)?.killed === false;
+
+      if (processExists) {
+        console.log(`✅ Bot "${bot.name}" is already running locally - resynchronizing Redis state`);
+
+        // Add to Redis if missing (should not happen but be safe)
+        await this.redisService.addRunningBot(botId);
+
+        // Resynchronize status to ONLINE
+        await this.updateBotStatusSafe(botId, BotStatus.ONLINE);
+
+        await this.redisService.saveBotState(botId, {
+          status: 'ONLINE',
+          userAction: 'start',
+          timestamp: new Date(),
+          metadata: { confirmed: true, resynchronized: true, crashCount: 0 }
+        });
+
+        return;
       }
 
       // Decrypt bot token
