@@ -112,7 +112,7 @@ export default function AIAssistantConfig() {
         guildId: selectedGuild,
         enabled: false,
         apiKey: '',
-        model: 'gpt-4o-mini',
+        model: 'gpt-5-nano',
         enableVision: false,
         includeUserContext: true,
         includeChannelContext: true,
