@@ -618,7 +618,7 @@ model AIConfig {
   apiKey               String?           @map("api_key") @db.Text
   model                String            @default("gpt-5-nano")
   responseMode         String            @default("mention") @map("response_mode")
-  personality          String            @default("FRIENDLY")
+  personality          String            @default("friendly")
   customPersonality    String?           @map("custom_personality") @db.Text
   systemPrompt         String?           @map("system_prompt") @db.Text
   dmSystemPrompt       String?           @map("dm_system_prompt") @db.Text
