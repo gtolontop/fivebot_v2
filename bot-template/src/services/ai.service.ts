@@ -355,19 +355,23 @@ export class AIService {
 
     // Response mode logic
     switch (config.responseMode) {
+      case 'always':
       case 'ALWAYS':
         return true;
 
+      case 'mention':
       case 'MENTION':
         return message.mentions.has(this.client.user!.id) ||
                content.includes(this.client.user!.username.toLowerCase());
 
+      case 'keyword':
       case 'KEYWORD':
         if (!config.triggerKeywords || config.triggerKeywords.length === 0) return false;
         return config.triggerKeywords.some(keyword =>
           content.includes(keyword.toLowerCase())
         );
 
+      case 'smart':
       case 'SMART':
         // Detect questions or commands
         const questionWords = ['what', 'why', 'how', 'when', 'where', 'who', 'can you', 'could you', 'would you', 'help'];
