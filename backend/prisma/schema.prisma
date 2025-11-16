@@ -611,55 +611,67 @@ enum TransactionStatus {
 // ==================== AI SYSTEM ====================
 
 model AIConfig {
-  id                   String            @id @default(uuid())
-  guildId              String            @unique @map("guild_id")
-  botId                String            @map("bot_id")
-  enabled              Boolean           @default(false)
-  apiKey               String?           @map("api_key") @db.Text
-  model                String            @default("gpt-5-nano")
-  responseMode         String            @default("mention") @map("response_mode")
-  personality          String            @default("friendly")
-  customPersonality    String?           @map("custom_personality") @db.Text
-  systemPrompt         String?           @map("system_prompt") @db.Text
-  dmSystemPrompt       String?           @map("dm_system_prompt") @db.Text
-  channelPrompts       String?           @map("channel_prompts") @db.Text
-  threadPrompts        String?           @map("thread_prompts") @db.Text
-  enableVision         Boolean           @default(false) @map("enable_vision")
-  includeUserContext   Boolean           @default(true) @map("include_user_context")
-  includeChannelContext Boolean          @default(true) @map("include_channel_context")
-  temperature          Float             @default(0.7)
-  maxTokens            Int               @default(500) @map("max_tokens")
-  enabledChannels      String?           @map("enabled_channels") @db.Text
-  disabledChannels     String?           @map("disabled_channels") @db.Text
-  enableInTickets      Boolean           @default(true) @map("enable_in_tickets")
-  enableInThreads      Boolean           @default(false) @map("enable_in_threads")
-  triggerKeywords      String?           @map("trigger_keywords") @db.Text
-  ignorePrefixes       String?           @map("ignore_prefixes") @db.Text
-  requireMention       Boolean           @default(false) @map("require_mention")
-  typingIndicator      Boolean           @default(true) @map("typing_indicator")
-  responseDelay        Int               @default(0) @map("response_delay")
-  maxResponseLength    Int               @default(2000) @map("max_response_length")
-  useEmbeds            Boolean           @default(true) @map("use_embeds")
-  embedColor           String?           @map("embed_color")
-  showThinking         Boolean           @default(false) @map("show_thinking")
-  conversationHistory  Boolean           @default(true) @map("conversation_history")
-  contextWindow        Int               @default(10) @map("context_window")
-  useRAG               Boolean           @default(false) @map("use_rag")
-  rateLimitPerUser     Int               @default(10) @map("rate_limit_per_user")
-  rateLimitPerChannel  Int               @default(50) @map("rate_limit_per_channel")
-  blockNSFW            Boolean           @default(true) @map("block_nsfw")
-  contentFilter        Boolean           @default(true) @map("content_filter")
-  monthlyTokenLimit    Int?              @map("monthly_token_limit")
-  alertOnLimit         Boolean           @default(true) @map("alert_on_limit")
-  alertChannelId       String?           @map("alert_channel_id")
-  functionCalling      Boolean           @default(false) @map("function_calling")
-  allowedFunctions     String?           @map("allowed_functions") @db.Text
-  logConversations     Boolean           @default(true) @map("log_conversations")
-  createdAt            DateTime          @default(now()) @map("created_at")
-  updatedAt            DateTime          @updatedAt @map("updated_at")
-  usage                AIUsage[]
-  conversations        AIConversation[]
-  documents            AIDocument[]
+  id                      String            @id @default(uuid())
+  guildId                 String            @unique @map("guild_id")
+  botId                   String            @map("bot_id")
+  enabled                 Boolean           @default(false)
+  apiKey                  String?           @map("api_key") @db.Text
+  model                   String            @default("gpt-5-nano")
+  responseMode            String            @default("mention") @map("response_mode")
+  personality             String            @default("friendly")
+  customPersonality       String?           @map("custom_personality") @db.Text
+  systemPrompt            String?           @map("system_prompt") @db.Text
+  dmSystemPrompt          String?           @map("dm_system_prompt") @db.Text
+  channelPrompts          String?           @map("channel_prompts") @db.Text
+  threadPrompts           String?           @map("thread_prompts") @db.Text
+  enableVision            Boolean           @default(false) @map("enable_vision")
+  includeUserContext      Boolean           @default(true) @map("include_user_context")
+  includeChannelContext   Boolean           @default(true) @map("include_channel_context")
+  temperature             Float             @default(0.7)
+  maxTokens               Int               @default(500) @map("max_tokens")
+  enabledChannels         String?           @map("enabled_channels") @db.Text
+  disabledChannels        String?           @map("disabled_channels") @db.Text
+  enableInTickets         Boolean           @default(true) @map("enable_in_tickets")
+  enableInThreads         Boolean           @default(false) @map("enable_in_threads")
+  triggerKeywords         String?           @map("trigger_keywords") @db.Text
+  ignorePrefixes          String?           @map("ignore_prefixes") @db.Text
+  requireMention          Boolean           @default(false) @map("require_mention")
+  typingIndicator         Boolean           @default(true) @map("typing_indicator")
+  responseDelay           Int               @default(0) @map("response_delay")
+  maxResponseLength       Int               @default(2000) @map("max_response_length")
+  useEmbeds               Boolean           @default(true) @map("use_embeds")
+  embedColor              String?           @map("embed_color")
+  showThinking            Boolean           @default(false) @map("show_thinking")
+  conversationHistory     Boolean           @default(true) @map("conversation_history")
+  contextWindow           Int               @default(10) @map("context_window")
+  useRAG                  Boolean           @default(false) @map("use_rag")
+  rateLimitPerUser        Int               @default(10) @map("rate_limit_per_user")
+  rateLimitPerChannel     Int               @default(50) @map("rate_limit_per_channel")
+  blockNSFW               Boolean           @default(true) @map("block_nsfw")
+  contentFilter           Boolean           @default(true) @map("content_filter")
+  monthlyTokenLimit       Int?              @map("monthly_token_limit")
+  alertOnLimit            Boolean           @default(true) @map("alert_on_limit")
+  alertChannelId          String?           @map("alert_channel_id")
+  functionCalling         Boolean           @default(false) @map("function_calling")
+  allowedFunctions        String?           @map("allowed_functions") @db.Text
+  logConversations        Boolean           @default(true) @map("log_conversations")
+  // Previously frontend-only fields - now persisted
+  respondToEveryone       Boolean           @default(false) @map("respond_to_everyone")
+  everyoneContextDepth    Int               @default(10) @map("everyone_context_depth")
+  followReplyChains       Boolean           @default(true) @map("follow_reply_chains")
+  detectContextType       Boolean           @default(true) @map("detect_context_type")
+  replyToMentions         Boolean           @default(true) @map("reply_to_mentions")
+  replyToReplies          Boolean           @default(true) @map("reply_to_replies")
+  replyToKeywords         Boolean           @default(false) @map("reply_to_keywords")
+  conversationHistoryLimit Int              @default(10) @map("conversation_history_limit")
+  rateLimitWindow         Int               @default(60) @map("rate_limit_window")
+  useEmbedding            Boolean           @default(false) @map("use_embedding")
+  maxDocumentChunks       Int               @default(5) @map("max_document_chunks")
+  createdAt               DateTime          @default(now()) @map("created_at")
+  updatedAt               DateTime          @updatedAt @map("updated_at")
+  usage                   AIUsage[]
+  conversations           AIConversation[]
+  documents               AIDocument[]
 
   @@index([botId])
   @@map("ai_configs")

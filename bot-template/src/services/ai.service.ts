@@ -64,8 +64,10 @@ export class AIService {
   // Model pricing per 1M tokens (input/output)
   private readonly MODEL_PRICING = {
     'gpt-4': { input: 30, output: 60 },
+    'gpt-4o': { input: 2.5, output: 10 },
+    'gpt-4o-mini': { input: 0.15, output: 0.6 },
     'gpt-4-turbo': { input: 10, output: 30 },
-    'gpt-5-nano': { input: 0.15, output: 0.3 }, // Hypothetical pricing
+    'gpt-5-nano': { input: 0.15, output: 0.3 },
     'gpt-3.5-turbo': { input: 0.5, output: 1.5 },
   };
 
@@ -126,7 +128,7 @@ export class AIService {
 
       for (const [guildId, guild] of mutualGuilds) {
         const guildConfig = await this.getConfig(guildId);
-        if (guildConfig && guildConfig.enabled && guildConfig.apiKey) {
+        if (guildConfig && guildConfig.enabled) {
           config = guildConfig;
           effectiveGuildId = guildId;
           console.log(`[AI] Using config from guild ${guild.name} for DM with ${message.author.tag}`);
@@ -140,11 +142,17 @@ export class AIService {
       }
     } else {
       config = await this.getConfig(message.guildId);
-      if (!config || !config.enabled || !config.apiKey) return;
+      if (!config || !config.enabled) return;
     }
 
-    // Check if should respond
+    // Check if should respond BEFORE validating API key
     if (!await this.shouldRespond(message, config)) return;
+
+    // Now validate API key after we know we should respond
+    if (!config.apiKey) {
+      await message.reply('⚠️ AI Assistant is not configured. Please add an API key in the dashboard.');
+      return;
+    }
 
     // Check token-based rate limits
     if (!this.checkTokenRateLimit(message, config)) {
@@ -768,16 +776,26 @@ export class AIService {
   }
 
   private getModelName(model: string): string {
+    // Support both old format (GPT_4) and new format (gpt-4o)
     const modelMap: { [key: string]: string } = {
+      // Old uppercase format
       GPT_4: 'gpt-4',
       GPT_4_TURBO: 'gpt-4-turbo-preview',
-      GPT_5_NANO: 'gpt-5-nano', // Placeholder
+      GPT_5_NANO: 'gpt-5-nano',
       GPT_35_TURBO: 'gpt-3.5-turbo',
+      // New lowercase format (from frontend)
+      'gpt-4o': 'gpt-4o',
+      'gpt-4o-mini': 'gpt-4o-mini',
+      'gpt-4-turbo': 'gpt-4-turbo-preview',
+      'gpt-3.5-turbo': 'gpt-3.5-turbo',
+      'gpt-5-nano': 'gpt-5-nano',
     };
-    return modelMap[model] || 'gpt-3.5-turbo';
+    return modelMap[model] || model; // Return as-is if not found
   }
 
   private getModelKey(model: string): string {
+    if (model.includes('gpt-4o-mini')) return 'gpt-4o-mini';
+    if (model.includes('gpt-4o')) return 'gpt-4o';
     if (model.includes('gpt-4-turbo')) return 'gpt-4-turbo';
     if (model.includes('gpt-4')) return 'gpt-4';
     if (model.includes('gpt-5-nano')) return 'gpt-5-nano';
