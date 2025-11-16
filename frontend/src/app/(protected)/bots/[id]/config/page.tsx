@@ -144,6 +144,14 @@ export default function BotConfigHomePage() {
             badgeColor="bg-purple-100 text-purple-800"
           />
           <ConfigCard
+            icon="🤖"
+            title="AI Assistant"
+            description="Configure intelligent AI responses with contextual understanding"
+            onClick={() => router.push(`/bots/${botId}/config/ai-assistant`)}
+            badge="Advanced"
+            badgeColor="bg-green-100 text-green-800"
+          />
+          <ConfigCard
             icon="🧩"
             title="Modules"
             description="Manage installed modules"
