@@ -208,6 +208,8 @@ export class AIService {
 
       // Build contextual system prompt
       const systemPrompt = await this.buildContextualSystemPrompt(message, config, ragContext);
+      console.log('[AI] Config personality:', config.personality);
+      console.log('[AI] System prompt:', systemPrompt.substring(0, 500) + '...');
 
       // Call OpenAI
       if (!this.openai) {
