@@ -147,6 +147,67 @@ export class AIService {
     } as AIConfig;
   }
 
+  /**
+   * Extract URLs from a message
+   */
+  private extractUrls(text: string): string[] {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const matches = text.match(urlRegex);
+    return matches || [];
+  }
+
+  /**
+   * Check if a URL is accessible
+   */
+  private async checkUrl(url: string): Promise<{ accessible: boolean; status?: number; error?: string }> {
+    try {
+      const response = await fetch(url, {
+        method: 'HEAD',
+        headers: {
+          'User-Agent': 'FiveLink-Bot/2.0',
+        },
+        redirect: 'follow',
+        signal: AbortSignal.timeout(5000), // 5 second timeout
+      });
+
+      return {
+        accessible: response.ok,
+        status: response.status,
+      };
+    } catch (error: any) {
+      return {
+        accessible: false,
+        error: error?.message || 'Unknown error',
+      };
+    }
+  }
+
+  /**
+   * Check all URLs in a message and return verification results
+   */
+  private async verifyUrls(text: string): Promise<string | null> {
+    const urls = this.extractUrls(text);
+    if (urls.length === 0) return null;
+
+    const results: string[] = [];
+
+    for (const url of urls) {
+      const check = await this.checkUrl(url);
+
+      if (!check.accessible) {
+        results.push(`- ${url}: ${check.status ? `HTTP ${check.status}` : 'Not accessible'} ${check.error ? `(${check.error})` : ''}`);
+      } else {
+        results.push(`- ${url}: Accessible (HTTP ${check.status})`);
+      }
+    }
+
+    if (results.length > 0) {
+      return `\n\nURL Verification Results:\n${results.join('\n')}`;
+    }
+
+    return null;
+  }
+
   async processMessage(message: Message): Promise<void> {
     if (message.author.bot) return;
 
@@ -268,6 +329,12 @@ export class AIService {
         const ragResult = await this.getRAGContext(message.content, config.id);
         ragContext = ragResult.context;
         documentsUsed = ragResult.documents;
+      }
+
+      // Verify URLs if message contains any
+      const urlVerification = await this.verifyUrls(message.content);
+      if (urlVerification) {
+        ragContext += urlVerification;
       }
 
       // Build contextual system prompt with SENTIMENT & USER PREFERENCES
