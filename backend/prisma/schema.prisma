@@ -616,7 +616,7 @@ model AIConfig {
   botId                String            @map("bot_id")
   enabled              Boolean           @default(false)
   apiKey               String?           @map("api_key") @db.Text
-  model                String            @default("GPT_5_NANO")
+  model                String            @default("gpt-4o-mini")
   responseMode         String            @default("MENTION") @map("response_mode")
   personality          String            @default("FRIENDLY")
   customPersonality    String?           @map("custom_personality") @db.Text
