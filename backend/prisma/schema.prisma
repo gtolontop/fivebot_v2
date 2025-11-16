@@ -617,7 +617,7 @@ model AIConfig {
   enabled              Boolean           @default(false)
   apiKey               String?           @map("api_key") @db.Text
   model                String            @default("gpt-4o-mini")
-  responseMode         String            @default("MENTION") @map("response_mode")
+  responseMode         String            @default("mention") @map("response_mode")
   personality          String            @default("FRIENDLY")
   customPersonality    String?           @map("custom_personality") @db.Text
   systemPrompt         String?           @map("system_prompt") @db.Text
