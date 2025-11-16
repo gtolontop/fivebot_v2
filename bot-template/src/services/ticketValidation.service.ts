@@ -303,10 +303,11 @@ export class TicketValidationService {
     errors: ValidationError[],
     warnings: ValidationWarning[]
   ): void {
-    // Validate inactivity timeout
-    if (!config.inactivityTimeout || config.inactivityTimeout <= 0) {
+    // Validate inactivity timeout (using autoCloseHours from database)
+    const autoCloseHours = (config as any).autoCloseHours || 0;
+    if (!autoCloseHours || autoCloseHours <= 0) {
       warnings.push({
-        field: 'inactivityTimeout',
+        field: 'autoCloseHours',
         message: 'Inactivity timeout is not set. Tickets will never be automatically closed due to inactivity.',
         messageFr: 'Le délai d\'inactivité n\'est pas défini. Les tickets ne seront jamais fermés automatiquement pour cause d\'inactivité.'
       });
@@ -321,12 +322,13 @@ export class TicketValidationService {
       });
     }
 
-    // Validate ticket limits
-    if (config.maxActiveTickets && config.maxActiveTickets > 0 && config.maxActiveTickets <= 10) {
+    // Validate ticket limits (using maxTickets from database)
+    const maxTickets = (config as any).maxTickets || 0;
+    if (maxTickets > 0 && maxTickets <= 10) {
       warnings.push({
-        field: 'maxActiveTickets',
-        message: `Maximum active tickets is set to ${config.maxActiveTickets}, which might be too low for busy servers.`,
-        messageFr: `Le maximum de tickets actifs est fixé à ${config.maxActiveTickets}, ce qui pourrait être trop bas pour les serveurs occupés.`
+        field: 'maxTickets',
+        message: `Maximum active tickets is set to ${maxTickets}, which might be too low for busy servers.`,
+        messageFr: `Le maximum de tickets actifs est fixé à ${maxTickets}, ce qui pourrait être trop bas pour les serveurs occupés.`
       });
     }
   }

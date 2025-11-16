@@ -47,17 +47,21 @@ export async function syncTicketConfigFromDashboard(guildId: string, botId: stri
     }
 
     // Prepare sync data
-    const syncData = {
+    const syncData: any = {
       guildId,
       botId,
-      categoryId: botConfig.ticketCategoryId || ticketData.supportCategoryId || null,
-      staffRoleId: botConfig.ticketStaffRoleId || null,
+      supportCategoryId: botConfig.ticketCategoryId || ticketData.supportCategoryId || null,
       transcriptChannelId: botConfig.ticketTranscriptChannelId || ticketData.transcriptChannelId || null,
-      namingFormat: ticketData.namingPattern || 'ticket-{counter}',
-      maxTickets: ticketData.maxTicketsPerUser || 3,
+      namingPattern: ticketData.namingPattern || 'ticket-{counter}',
+      maxTicketsPerUser: ticketData.maxTicketsPerUser || 3,
       categories: ticketData.categories ? JSON.stringify(ticketData.categories) : null,
       panels: ticketData.panels ? JSON.stringify(ticketData.panels) : null
     };
+
+    // Add staffRoles only if there are values (JSON fields can't be null in Prisma)
+    if (staffRoles.length > 0) {
+      syncData.staffRoles = staffRoles;
+    }
 
     // Check if ticket config exists
     const existingConfig = await prisma.ticketConfig.findUnique({
@@ -84,14 +88,14 @@ export async function syncTicketConfigFromDashboard(guildId: string, botId: stri
         };
 
         // Only update these if they're not already set in the config
-        if (!existingConfig.staffRoleId && syncData.staffRoleId) {
-          safeUpdateData.staffRoleId = syncData.staffRoleId;
-        }
-        if (!existingConfig.categoryId && syncData.categoryId) {
-          safeUpdateData.categoryId = syncData.categoryId;
+        if (!existingConfig.supportCategoryId && syncData.supportCategoryId) {
+          safeUpdateData.supportCategoryId = syncData.supportCategoryId;
         }
         if (!existingConfig.transcriptChannelId && syncData.transcriptChannelId) {
           safeUpdateData.transcriptChannelId = syncData.transcriptChannelId;
+        }
+        if (!existingConfig.namingPattern && syncData.namingPattern) {
+          safeUpdateData.namingPattern = syncData.namingPattern;
         }
 
         // Merge staff roles instead of overwriting
@@ -109,12 +113,8 @@ export async function syncTicketConfigFromDashboard(guildId: string, botId: stri
       }
     } else {
       // Create new config with dashboard data
-      const createData: any = { ...syncData };
-      if (staffRoles.length > 0) {
-        createData.staffRoles = staffRoles;
-      }
       await prisma.ticketConfig.create({
-        data: createData
+        data: syncData
       });
       console.log(`✅ Created ticket config for guild ${guildId} with dashboard data`);
     }
