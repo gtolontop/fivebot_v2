@@ -58,6 +58,7 @@ export class AIService {
   private prisma: PrismaClient;
   private openai: OpenAI | null = null;
   private rateLimitCache: Map<string, number[]> = new Map();
+  private tokenUsageCache: Map<string, { tokens: number; resetAt: number }> = new Map();
   private conversationCache: Map<string, ConversationContext[]> = new Map();
 
   // Model pricing per 1M tokens (input/output)
@@ -119,9 +120,9 @@ export class AIService {
     // Check if should respond
     if (!await this.shouldRespond(message, config)) return;
 
-    // Check rate limits
-    if (!this.checkRateLimit(message, config)) {
-      // Silent rate limiting - no spam in logs
+    // Check token-based rate limits
+    if (!this.checkTokenRateLimit(message, config)) {
+      // Silent rate limiting - user has exceeded token quota
       return;
     }
 
@@ -216,6 +217,9 @@ export class AIService {
         cost,
         responseTime,
       });
+
+      // Update token usage for rate limiting
+      this.updateTokenUsage(message.author.id, response.usage?.total_tokens || 0);
 
       // Log conversation
       if (config.logConversations) {
@@ -344,6 +348,46 @@ export class AIService {
 
       default:
         return false;
+    }
+  }
+
+  private checkTokenRateLimit(message: Message, config: AIConfig): boolean {
+    // Si pas de limite mensuelle définie, pas de rate limit
+    if (!config.monthlyTokenLimit || config.monthlyTokenLimit <= 0) {
+      return true;
+    }
+
+    const now = Date.now();
+    const userKey = `tokens:${message.author.id}`;
+    const cached = this.tokenUsageCache.get(userKey);
+
+    // Reset tous les mois (30 jours)
+    const monthInMs = 30 * 24 * 60 * 60 * 1000;
+
+    if (!cached || now > cached.resetAt) {
+      // Nouveau mois, reset le compteur
+      this.tokenUsageCache.set(userKey, {
+        tokens: 0,
+        resetAt: now + monthInMs,
+      });
+      return true;
+    }
+
+    // Vérifier si l'utilisateur a dépassé sa limite mensuelle
+    if (cached.tokens >= config.monthlyTokenLimit) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private updateTokenUsage(userId: string, tokensUsed: number): void {
+    const userKey = `tokens:${userId}`;
+    const cached = this.tokenUsageCache.get(userKey);
+
+    if (cached) {
+      cached.tokens += tokensUsed;
+      this.tokenUsageCache.set(userKey, cached);
     }
   }
 

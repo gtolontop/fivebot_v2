@@ -11,6 +11,7 @@ async function updateRateLimits() {
       data: {
         rateLimitPerUser: 999,
         rateLimitPerChannel: 9999,
+        monthlyTokenLimit: null, // Pas de limite de tokens
       },
     });
 
@@ -25,11 +26,14 @@ async function updateRateLimits() {
         guildId: true,
         rateLimitPerUser: true,
         rateLimitPerChannel: true,
+        monthlyTokenLimit: true,
       },
     });
 
     console.log('\n📝 Config actuelle:', config);
-    console.log('\n🎉 Rate limits pratiquement désactivés (999/h par user, 9999/h par canal)');
+    console.log('\n🎉 Rate limits désactivés:');
+    console.log('   - Messages: 999/h par user, 9999/h par canal');
+    console.log('   - Tokens: illimités (null)');
 
     await prisma.$disconnect();
   } catch (error) {
