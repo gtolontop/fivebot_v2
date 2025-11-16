@@ -92,7 +92,14 @@
       "Bash(ssh -o StrictHostKeyChecking=no root@83.150.218.68 \"su - fivebot -c ''cd ~/app/frontend && NEXT_TELEMETRY_DISABLED=1 npm run build 2>&1 | grep -E \"\"(Creating|Compiled|Route|Build)\"\" | head -50''\")",
       "Bash(ssh -o StrictHostKeyChecking=no root@83.150.218.68 \"su - fivebot -c ''pm2 list''\")",
       "Bash(ssh -o StrictHostKeyChecking=no root@83.150.218.68 \"su - fivebot -c ''cd ~/app && git pull && cd backend && npm run build && pm2 restart all''\")",
-      "Bash(ssh -o StrictHostKeyChecking=no root@83.150.218.68 \"su - fivebot -c ''cd ~/app/backend && npx prisma generate && npm run build && pm2 restart all''\")"
+      "Bash(ssh -o StrictHostKeyChecking=no root@83.150.218.68 \"su - fivebot -c ''cd ~/app/backend && npx prisma generate && npm run build && pm2 restart all''\")",
+      "Bash(ssh -o StrictHostKeyChecking=no root@83.150.218.68 \"su - fivebot -c ''cd ~/app/backend && npx prisma migrate deploy''\")",
+      "Bash(ssh -o StrictHostKeyChecking=no root@83.150.218.68 \"su - fivebot -c ''cd ~/app/backend && psql -U fivebot -d fivebot -c \"\"\\d ai_configs\"\" | head -50''\")",
+      "Bash(ssh -o StrictHostKeyChecking=no root@83.150.218.68 \"su - fivebot -c ''cd ~/app/backend && ls -la prisma/migrations/ | tail -10''\")",
+      "Bash(ssh -o StrictHostKeyChecking=no root@83.150.218.68 \"su - fivebot -c ''cd ~/app/backend && cat prisma/migrations/20251116014637_add_everyone_context/migration.sql''\")",
+      "Bash(ssh -o StrictHostKeyChecking=no root@83.150.218.68 \"su - fivebot -c ''cd ~/app && git pull && cd backend && npx prisma migrate deploy && npx prisma generate && npm run build && pm2 restart all''\")",
+      "Bash(ssh -o StrictHostKeyChecking=no root@83.150.218.68 \"su - fivebot -c ''pm2 logs fivebot-api --lines 20 --nostream''\")",
+      "Bash(ssh:*)"
     ],
     "deny": [],
     "ask": [],
