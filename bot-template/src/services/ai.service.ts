@@ -569,88 +569,101 @@ export class AIService {
   }
 
   private async buildContextualSystemPrompt(message: Message, config: AIConfig, ragContext: string): Promise<string> {
+    const isDM = !message.guildId;
+    const isThread = message.channel.isThread();
+    const userName = message.member?.displayName || message.author.username;
+    const serverName = message.guild?.name || 'Discord';
+
+    // Build intelligent base prompt
     let prompt = '';
 
-    // Add personality
+    // 1. WHO ARE YOU - Clear identity
+    if (!isDM) {
+      prompt = `You are an intelligent AI assistant helping users on the ${serverName} Discord server.`;
+    } else {
+      prompt = `You are an intelligent AI assistant. You're currently chatting with ${userName} in a private message.`;
+    }
+
+    // 2. CUSTOM PERSONALITY OR DEFAULTS
     if (config.personality === 'CUSTOM' && config.customPersonality) {
-      prompt = config.customPersonality;
+      prompt += ` ${config.customPersonality}`;
     } else if (config.personality in this.PERSONALITY_PROMPTS) {
-      prompt = this.PERSONALITY_PROMPTS[config.personality as keyof typeof this.PERSONALITY_PROMPTS];
+      prompt += ` ${this.PERSONALITY_PROMPTS[config.personality as keyof typeof this.PERSONALITY_PROMPTS]}`;
     }
 
-    // Choose contextual system prompt
+    // 3. CONTEXTUAL SYSTEM PROMPT (per-channel/thread/DM)
     let contextualPrompt = '';
-
-    // Check if it's a DM
-    if (!message.guildId) {
-      contextualPrompt = config.dmSystemPrompt || '';
-    }
-    // Check if it's a thread with custom prompt
-    else if (message.channel.isThread() && config.threadPrompts?.[message.channelId]) {
+    if (isDM && config.dmSystemPrompt) {
+      contextualPrompt = config.dmSystemPrompt;
+    } else if (isThread && config.threadPrompts?.[message.channelId]) {
       contextualPrompt = config.threadPrompts[message.channelId];
-    }
-    // Check if it's a channel with custom prompt
-    else if (config.channelPrompts?.[message.channelId]) {
+    } else if (!isDM && config.channelPrompts?.[message.channelId]) {
       contextualPrompt = config.channelPrompts[message.channelId];
-    }
-    // Fallback to general system prompt
-    else if (config.systemPrompt) {
+    } else if (config.systemPrompt) {
       contextualPrompt = config.systemPrompt;
     }
 
     if (contextualPrompt) {
-      prompt += '\n\n' + contextualPrompt;
+      prompt += `\n\n${contextualPrompt}`;
     }
 
-    // Add user context if enabled
-    if (config.includeUserContext && message.guild) {
-      const member = message.member;
-      if (member) {
-        prompt += '\n\n## User Context\n';
-        prompt += `- Username: ${message.author.username}\n`;
-        prompt += `- Display Name: ${member.displayName}\n`;
-        prompt += `- User ID: ${message.author.id}\n`;
+    // 4. CONTEXT AWARENESS
+    if (!isDM) {
+      prompt += `\n\n## Current Context`;
 
-        const roles = member.roles.cache
-          .filter(role => role.name !== '@everyone')
-          .map(role => role.name)
-          .join(', ');
-        if (roles) {
-          prompt += `- Roles: ${roles}\n`;
-        }
-      }
-    }
-
-    // Add channel context if enabled
-    if (config.includeChannelContext && message.guild) {
-      prompt += '\n\n## Channel Context\n';
-      prompt += `- Server: ${message.guild.name}\n`;
-      prompt += `- Channel: ${message.channel.isThread() ? 'Thread' : 'Channel'} - #${(message.channel as any).name || 'DM'}\n`;
-      prompt += `- Channel ID: ${message.channelId}\n`;
-
-      if (message.channel.isThread()) {
-        prompt += `- Parent Channel: <#${message.channel.parentId}>\n`;
+      // Channel info
+      const channelName = (message.channel as any).name || 'unknown';
+      if (isThread) {
+        prompt += `\nYou're currently in a thread called "${channelName}"`;
         const thread = message.channel;
-        if (thread.ownerId) {
-          prompt += `- Thread Creator: <@${thread.ownerId}>\n`;
+        if (thread.parentId) {
+          const parentChannel = message.guild?.channels.cache.get(thread.parentId);
+          if (parentChannel) {
+            prompt += ` (inside #${(parentChannel as any).name})`;
+          }
         }
+        prompt += `.`;
+      } else {
+        prompt += `\nYou're currently in the #${channelName} channel.`;
+      }
+
+      // User context
+      if (config.includeUserContext && message.member) {
+        const roles = message.member.roles.cache
+          .filter(role => role.name !== '@everyone')
+          .map(role => role.name);
+
+        prompt += `\n${userName} is talking to you`;
+        if (roles.length > 0) {
+          const isAdmin = message.member.permissions.has('Administrator');
+          const isModerator = message.member.permissions.has('ManageMessages');
+
+          if (isAdmin) {
+            prompt += ` (they're an admin with ${roles.length} role${roles.length > 1 ? 's' : ''})`;
+          } else if (isModerator) {
+            prompt += ` (they're a moderator with ${roles.length} role${roles.length > 1 ? 's' : ''})`;
+          } else if (roles.length > 0) {
+            prompt += ` (they have ${roles.length} role${roles.length > 1 ? 's' : ''}: ${roles.join(', ')})`;
+          }
+        }
+        prompt += `.`;
       }
     }
 
-    // Add RAG context
+    // 5. RAG CONTEXT (knowledge base)
     if (ragContext) {
-      prompt += '\n\n' + ragContext;
+      prompt += `\n\n## Knowledge Base\n${ragContext}`;
     }
 
-    // Add general guidelines
-    prompt += '\n\n## General Guidelines\n';
-    prompt += `- Keep responses under ${config.maxResponseLength} characters\n`;
-    prompt += '- Be helpful and accurate\n';
-    prompt += '- If you don\'t know something, admit it\n';
-    prompt += `- Address the user as "${message.member?.displayName || message.author.username}"\n`;
-
+    // 6. BEHAVIOR GUIDELINES
+    prompt += `\n\n## How to behave`;
+    prompt += `\n- Be natural, conversational, and helpful`;
+    prompt += `\n- Respond directly to what ${userName} says or asks`;
+    prompt += `\n- Keep responses concise and under ${config.maxResponseLength} characters`;
+    prompt += `\n- Don't mention technical details like "DM", "ping", "log", or "database" unless directly relevant`;
+    prompt += `\n- If you don't know something, just say so naturally`;
     if (config.blockNSFW) {
-      prompt += '- Do not generate NSFW or inappropriate content\n';
+      prompt += `\n- Keep content appropriate and safe for work`;
     }
 
     return prompt;
