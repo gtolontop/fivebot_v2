@@ -206,7 +206,11 @@ export class AIService {
       'maxResponseLength', 'useEmbeds', 'embedColor', 'showThinking', 'conversationHistory',
       'contextWindow', 'useRAG', 'rateLimitPerUser', 'rateLimitPerChannel', 'blockNSFW',
       'contentFilter', 'monthlyTokenLimit', 'alertOnLimit', 'alertChannelId', 'functionCalling',
-      'allowedFunctions', 'logConversations'
+      'allowedFunctions', 'logConversations',
+      // Previously frontend-only fields - now persisted
+      'respondToEveryone', 'everyoneContextDepth', 'followReplyChains', 'detectContextType',
+      'replyToMentions', 'replyToReplies', 'replyToKeywords', 'conversationHistoryLimit',
+      'rateLimitWindow', 'useEmbedding', 'maxDocumentChunks'
     ];
 
     // Filter out invalid fields and convert arrays to JSON strings
