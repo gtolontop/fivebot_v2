@@ -224,6 +224,10 @@ export class SimpleQueueService implements IQueueService {
           metadata: { confirmed: true, alreadyRunning: true, crashCount: 0 }
         });
 
+        // Release lock before returning
+        await this.redisService.releaseLock(lockKey);
+        console.log(`🔓 Released start lock for bot "${bot.name}" (already running)`);
+
         return;
       }
 
@@ -246,6 +250,10 @@ export class SimpleQueueService implements IQueueService {
           timestamp: new Date(),
           metadata: { confirmed: true, resynchronized: true, crashCount: 0 }
         });
+
+        // Release lock before returning
+        await this.redisService.releaseLock(lockKey);
+        console.log(`🔓 Released start lock for bot "${bot.name}" (already running locally)`);
 
         return;
       }
@@ -275,15 +283,13 @@ export class SimpleQueueService implements IQueueService {
         detached: process.platform !== 'win32', // Detach on Unix systems
       });
 
-      // Store the process locally and in Redis
+      // Store the process locally and in Redis IMMEDIATELY
       this.runningBots.set(botId, botProcess);
       await this.redisService.addRunningBot(botId);
       await this.redisService.setBotMetadata(botId, {
         pid: botProcess.pid,
         startedAt: new Date(),
       });
-
-      // Startup log is already added in bots.service.ts, no need to duplicate it here
 
       // Save bot state in Redis for crash recovery
       await this.redisService.saveBotState(botId, {
@@ -292,6 +298,13 @@ export class SimpleQueueService implements IQueueService {
         timestamp: new Date(),
         metadata: { pid: botProcess.pid }
       });
+
+      // CRITICAL: Release lock NOW that bot is registered in Redis
+      // This prevents other workers from starting the same bot
+      await this.redisService.releaseLock(lockKey);
+      console.log(`🔓 Released start lock for bot "${bot.name}" (bot registered in Redis)`);
+
+      // Startup log is already added in bots.service.ts, no need to duplicate it here
 
       // Handle process errors
       botProcess.on('error', async (error) => {
@@ -574,11 +587,11 @@ export class SimpleQueueService implements IQueueService {
       // Update bot status to error
       await this.updateBotStatusSafe(botId, BotStatus.ERROR);
 
+      // Release lock on error
+      await this.redisService.releaseLock(lockKey);
+      console.log(`🔓 Released start lock for bot "${botName}" (after error)`);
+
       throw error;
-      } finally {
-        // Always release the lock, even if there was an error
-        await this.redisService.releaseLock(lockKey);
-        console.log(`🔓 Released start lock for bot "${botName}"`);
       }
     } catch (error) {
       // Outer catch for the entire function (lock acquisition failure, etc.)
