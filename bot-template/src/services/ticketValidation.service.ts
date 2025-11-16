@@ -226,12 +226,14 @@ export class TicketValidationService {
 
     // Validate each category
     for (const category of activeCategories) {
+      const cat = category as any; // Temporary fix for missing Prisma fields
+
       // Validate spawn category if specified
-      if (category.spawnCategoryId) {
+      if (cat.spawnCategoryId) {
         const guild = this.client.guilds.cache.get(guildId);
         if (guild) {
           try {
-            const spawnCategory = await guild.channels.fetch(category.spawnCategoryId).catch(() => null);
+            const spawnCategory = await guild.channels.fetch(cat.spawnCategoryId).catch(() => null);
             if (!spawnCategory) {
               warnings.push({
                 field: `category.${category.id}.spawnCategoryId`,
@@ -246,8 +248,8 @@ export class TicketValidationService {
       }
 
       // Validate custom modal fields
-      if (category.useCustomModal && category.modalFields) {
-        const fields = category.modalFields as any[];
+      if (cat.useCustomModal && cat.modalFields) {
+        const fields = cat.modalFields as any[];
         if (fields.length === 0) {
           warnings.push({
             field: `category.${category.id}.modalFields`,
