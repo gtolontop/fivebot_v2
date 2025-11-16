@@ -658,12 +658,28 @@ export class AIService {
     const preferredTone = userPrefs?.preferredTone || 'casual';
 
     if (!isDM) {
-      if (preferredTone === 'technical') {
-        prompt = `You are a highly skilled technical assistant for the ${serverName} Discord server. Provide precise, detailed technical information with examples.`;
-      } else if (preferredTone === 'formal') {
-        prompt = `You are a professional AI assistant for the ${serverName} Discord server. Be respectful, precise, and maintain a formal tone.`;
+      // Check if this is the FiveLink server
+      const isFiveLink = serverName.toLowerCase().includes('fivelink') ||
+                         message.guild?.name.toLowerCase().includes('fivelink');
+
+      if (isFiveLink) {
+        // Special FiveLink context
+        if (preferredTone === 'technical') {
+          prompt = `You are the official technical support AI for FiveLink, a Discord bot hosting and management platform. Your primary role is to help users create, configure, and manage their Discord bots. Provide precise technical guidance about bot features, API usage, troubleshooting, and best practices.`;
+        } else if (preferredTone === 'formal') {
+          prompt = `You are the professional support AI for FiveLink, a Discord bot hosting platform. Your role is to assist users with their bots, answer questions professionally, and provide quality technical support. Be courteous and maintain a professional tone.`;
+        } else {
+          prompt = `You are the friendly support AI for FiveLink, a Discord bot hosting platform! Your job is to help users with their bots, answer questions about features, and make their experience smooth and enjoyable. Be warm, helpful, and supportive.`;
+        }
       } else {
-        prompt = `You are a friendly and helpful AI assistant for the ${serverName} Discord server. Be warm, approachable, and conversational.`;
+        // Non-FiveLink servers
+        if (preferredTone === 'technical') {
+          prompt = `You are a highly skilled technical assistant for the ${serverName} Discord server. Provide precise, detailed technical information with examples.`;
+        } else if (preferredTone === 'formal') {
+          prompt = `You are a professional AI assistant for the ${serverName} Discord server. Be respectful, precise, and maintain a formal tone.`;
+        } else {
+          prompt = `You are a friendly and helpful AI assistant for the ${serverName} Discord server. Be warm, approachable, and conversational.`;
+        }
       }
     } else {
       prompt = `You are a personal AI assistant chatting with ${userName}. Be ${preferredTone === 'technical' ? 'precise and technical' : preferredTone === 'formal' ? 'professional and courteous' : 'friendly and casual'}.`;
@@ -717,20 +733,34 @@ export class AIService {
           .filter(role => role.name !== '@everyone')
           .map(role => role.name);
 
+        // Check if this is the founder/owner
+        const username = message.author.username.toLowerCase();
+        const displayName = message.member.displayName.toLowerCase();
+        const isFounder = username === 'gtol' ||
+                          displayName === 'gtol' ||
+                          message.guild?.ownerId === message.author.id ||
+                          roles.some(r => r.toLowerCase().includes('founder') || r.toLowerCase().includes('owner'));
+
         const isAdmin = message.member.permissions.has('Administrator');
         const isModerator = message.member.permissions.has('ManageMessages');
         const isStaff = isAdmin || isModerator || roles.some(r => r.toLowerCase().includes('staff') || r.toLowerCase().includes('mod'));
 
         prompt += `\n- User: ${userName}`;
-        if (isAdmin) {
-          prompt += ` (Administrator - has full permissions)`;
+
+        // Prioritize founder recognition
+        if (isFounder) {
+          prompt += ` **[FOUNDER & OWNER]** - This is Gtol, the creator and owner of FiveLink. Show maximum respect, understanding, and priority. He has complete authority over the platform.`;
+        } else if (isAdmin) {
+          prompt += ` (Administrator - has full server permissions)`;
         } else if (isModerator) {
-          prompt += ` (Moderator - can manage messages)`;
+          prompt += ` (Moderator - can manage messages and users)`;
         } else if (isStaff) {
-          prompt += ` (Staff member)`;
+          prompt += ` (Staff member - part of the support team)`;
+        } else {
+          prompt += ` (Community member)`;
         }
 
-        if (roles.length > 0 && !isAdmin) {
+        if (roles.length > 0 && !isFounder && !isAdmin) {
           prompt += `\n- Roles: ${roles.slice(0, 5).join(', ')}${roles.length > 5 ? ` and ${roles.length - 5} more` : ''}`;
         }
       }
