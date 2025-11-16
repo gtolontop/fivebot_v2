@@ -33,7 +33,35 @@ export class SimpleQueueService implements IQueueService {
     private botLogsService: BotLogsService,
     @Inject(forwardRef(() => ConsoleBufferService))
     private consoleBufferService: ConsoleBufferService,
-  ) {}
+  ) {
+    // Worker process: Listen for jobs from Redis
+    if (process.env.PROCESS_TYPE === 'worker') {
+      this.startRedisJobListener();
+    }
+  }
+
+  private async startRedisJobListener(): Promise<void> {
+    console.log('🔧 Worker started and listening for jobs...');
+
+    // Poll for jobs from Redis every second
+    setInterval(async () => {
+      try {
+        const jobStr = await this.redisService.getClient().lpop('fivebot:jobs');
+        if (jobStr) {
+          const job: QueuedJob = JSON.parse(jobStr);
+          this.jobs.push(job);
+          this.jobs.sort((a, b) => b.priority - a.priority);
+          console.log(`📥 Received job from Redis: ${job.type}`, job.data);
+
+          if (!this.processing) {
+            setImmediate(() => this.processJobs());
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error fetching job from Redis:', error);
+      }
+    }, 1000);
+  }
 
   // Safe method to update bot status with retry logic
   private async updateBotStatusSafe(botId: string, status: BotStatus): Promise<void> {
@@ -90,6 +118,14 @@ export class SimpleQueueService implements IQueueService {
       status: 'waiting',
     };
 
+    // If called from API process, store in Redis for worker to pick up
+    if (process.env.PROCESS_TYPE !== 'worker') {
+      console.log(`📤 Forwarding job to worker via Redis: ${jobType}`, data);
+      await this.redisService.getClient().rpush('fivebot:jobs', JSON.stringify(job));
+      await this.redisService.getClient().publish('fivebot:jobs:notify', job.id);
+      return;
+    }
+
     this.jobs.push(job);
     this.jobs.sort((a, b) => b.priority - a.priority); // Higher priority first
 
@@ -102,6 +138,14 @@ export class SimpleQueueService implements IQueueService {
   }
 
   private async processJobs(): Promise<void> {
+    // CRITICAL: Only process jobs in worker process
+    // API process should only queue jobs, not execute them
+    if (process.env.PROCESS_TYPE !== 'worker') {
+      console.log('⏭️ Skipping job processing - jobs only execute in worker process');
+      this.processing = false;
+      return;
+    }
+
     if (this.processing) return;
     this.processing = true;
 
