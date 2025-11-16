@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "ai_configs"
+ADD COLUMN IF NOT EXISTS "respond_to_everyone" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN IF NOT EXISTS "everyone_context_depth" INTEGER NOT NULL DEFAULT 10,
+ADD COLUMN IF NOT EXISTS "follow_reply_chains" BOOLEAN NOT NULL DEFAULT true,
+ADD COLUMN IF NOT EXISTS "detect_context_type" BOOLEAN NOT NULL DEFAULT true;
