@@ -10,6 +10,35 @@ export class AIService {
     private botsService: BotsService
   ) {}
 
+  private parseConfigJsonFields(config: any) {
+    if (!config) return null;
+
+    // Parse JSON string fields to arrays/objects
+    const jsonFields = [
+      'channelPrompts',
+      'threadPrompts',
+      'enabledChannels',
+      'disabledChannels',
+      'triggerKeywords',
+      'ignorePrefixes',
+      'allowedFunctions',
+    ];
+
+    const parsed = { ...config };
+    for (const field of jsonFields) {
+      if (parsed[field] && typeof parsed[field] === 'string') {
+        try {
+          parsed[field] = JSON.parse(parsed[field]);
+        } catch (error) {
+          console.error(`Failed to parse ${field}:`, error);
+          parsed[field] = null;
+        }
+      }
+    }
+
+    return parsed;
+  }
+
   async getConfig(botId: string, userId: string, guildId?: string) {
     await this.botsService.validateBotOwnership(botId, userId);
 
@@ -26,7 +55,7 @@ export class AIService {
       const config = await this.prisma.aIConfig.findUnique({
         where: { guildId },
       });
-      return config;
+      return this.parseConfigJsonFields(config);
     }
 
     // Otherwise, return the first config for this bot
@@ -34,7 +63,7 @@ export class AIService {
       where: { botId },
     });
 
-    return config;
+    return this.parseConfigJsonFields(config);
   }
 
   async createConfig(botId: string, userId: string, data: any) {
@@ -150,7 +179,7 @@ export class AIService {
       },
     });
 
-    return config;
+    return this.parseConfigJsonFields(config);
   }
 
   async updateConfig(botId: string, userId: string, data: any) {
@@ -182,7 +211,7 @@ export class AIService {
       data: updateData,
     });
 
-    return updated;
+    return this.parseConfigJsonFields(updated);
   }
 
   async deleteConfig(botId: string, userId: string) {
