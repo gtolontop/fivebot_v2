@@ -141,28 +141,39 @@ export class AIService {
 
     if (!message.guildId) {
       // It's a DM - find mutual guilds with AI config
+      console.log(`[AI DM] Received DM from ${message.author.tag}: "${message.content.substring(0, 50)}..."`);
+
       const mutualGuilds = this.client.guilds.cache.filter(guild =>
         guild.members.cache.has(message.author.id)
       );
 
+      console.log(`[AI DM] Found ${mutualGuilds.size} mutual guilds with ${message.author.tag}`);
+
       for (const [guildId, guild] of mutualGuilds) {
         const guildConfig = await this.getConfig(guildId);
+        console.log(`[AI DM] Checking guild "${guild.name}": config=${!!guildConfig}, enabled=${guildConfig?.enabled}`);
+
         if (guildConfig && guildConfig.enabled) {
           config = guildConfig;
           effectiveGuildId = guildId;
-          console.log(`[AI] Using config from guild ${guild.name} for DM with ${message.author.tag}`);
+          console.log(`[AI DM] ✅ Using config from guild "${guild.name}" for DM with ${message.author.tag}`);
           break;
         }
       }
 
       if (!config) {
-        console.log(`[AI] No AI config found for DM with ${message.author.tag}`);
+        console.log(`[AI DM] ❌ No AI config found for DM with ${message.author.tag} - replying with help message`);
+        await message.reply('⚠️ AI Assistant is not configured. Please enable it in one of our mutual servers first.');
         return;
       }
     } else {
       config = await this.getConfig(message.guildId);
       if (!config || !config.enabled) return;
     }
+
+    // Check for prompt adjustment commands (staff only)
+    const promptCommand = await this.handlePromptAdjustmentCommand(message, config);
+    if (promptCommand) return; // Command was handled
 
     // Check if should respond BEFORE validating API key
     if (!await this.shouldRespond(message, config)) return;
@@ -579,18 +590,18 @@ export class AIService {
     // Build intelligent base prompt
     let prompt = '';
 
-    // 1. WHO ARE YOU - Clear identity
+    // 1. WHO ARE YOU - Clear identity with personality
     if (!isDM) {
-      prompt = `You are an intelligent AI assistant helping users on the ${serverName} Discord server.`;
+      prompt = `You are a helpful and intelligent AI assistant for the ${serverName} Discord server. Your goal is to provide accurate, relevant, and thoughtful responses.`;
     } else {
-      prompt = `You are an intelligent AI assistant. You're currently chatting with ${userName} in a private message.`;
+      prompt = `You are a personal AI assistant chatting with ${userName}. Be friendly, helpful, and attentive to their needs.`;
     }
 
     // 2. CUSTOM PERSONALITY OR DEFAULTS
     if (config.personality === 'CUSTOM' && config.customPersonality) {
-      prompt += ` ${config.customPersonality}`;
+      prompt += `\n\nPersonality: ${config.customPersonality}`;
     } else if (config.personality in this.PERSONALITY_PROMPTS) {
-      prompt += ` ${this.PERSONALITY_PROMPTS[config.personality as keyof typeof this.PERSONALITY_PROMPTS]}`;
+      prompt += `\n\nPersonality: ${this.PERSONALITY_PROMPTS[config.personality as keyof typeof this.PERSONALITY_PROMPTS]}`;
     }
 
     // 3. CONTEXTUAL SYSTEM PROMPT (per-channel/thread/DM)
@@ -606,50 +617,60 @@ export class AIService {
     }
 
     if (contextualPrompt) {
-      prompt += `\n\n${contextualPrompt}`;
+      prompt += `\n\nAdditional Instructions:\n${contextualPrompt}`;
     }
 
     // 4. CONTEXT AWARENESS
-    if (!isDM) {
-      prompt += `\n\n## Current Context`;
+    prompt += `\n\n## Current Context`;
 
+    if (!isDM) {
       // Channel info
       const channelName = (message.channel as any).name || 'unknown';
       if (isThread) {
-        prompt += `\nYou're currently in a thread called "${channelName}"`;
+        prompt += `\n- Location: Thread "${channelName}"`;
         const thread = message.channel;
         if (thread.parentId) {
           const parentChannel = message.guild?.channels.cache.get(thread.parentId);
           if (parentChannel) {
-            prompt += ` (inside #${(parentChannel as any).name})`;
+            prompt += ` inside #${(parentChannel as any).name}`;
           }
         }
-        prompt += `.`;
       } else {
-        prompt += `\nYou're currently in the #${channelName} channel.`;
+        prompt += `\n- Location: #${channelName}`;
       }
 
-      // User context
+      // User context with enhanced role detection
       if (config.includeUserContext && message.member) {
         const roles = message.member.roles.cache
           .filter(role => role.name !== '@everyone')
           .map(role => role.name);
 
-        prompt += `\n${userName} is talking to you`;
-        if (roles.length > 0) {
-          const isAdmin = message.member.permissions.has('Administrator');
-          const isModerator = message.member.permissions.has('ManageMessages');
+        const isAdmin = message.member.permissions.has('Administrator');
+        const isModerator = message.member.permissions.has('ManageMessages');
+        const isStaff = isAdmin || isModerator || roles.some(r => r.toLowerCase().includes('staff') || r.toLowerCase().includes('mod'));
 
-          if (isAdmin) {
-            prompt += ` (they're an admin with ${roles.length} role${roles.length > 1 ? 's' : ''})`;
-          } else if (isModerator) {
-            prompt += ` (they're a moderator with ${roles.length} role${roles.length > 1 ? 's' : ''})`;
-          } else if (roles.length > 0) {
-            prompt += ` (they have ${roles.length} role${roles.length > 1 ? 's' : ''}: ${roles.join(', ')})`;
-          }
+        prompt += `\n- User: ${userName}`;
+        if (isAdmin) {
+          prompt += ` (Administrator - has full permissions)`;
+        } else if (isModerator) {
+          prompt += ` (Moderator - can manage messages)`;
+        } else if (isStaff) {
+          prompt += ` (Staff member)`;
         }
-        prompt += `.`;
+
+        if (roles.length > 0 && !isAdmin) {
+          prompt += `\n- Roles: ${roles.slice(0, 5).join(', ')}${roles.length > 5 ? ` and ${roles.length - 5} more` : ''}`;
+        }
       }
+    } else {
+      prompt += `\n- Location: Private DM with ${userName}`;
+      prompt += `\n- Context: One-on-one conversation`;
+    }
+
+    // Get recent conversation for context
+    const recentMessages = await this.getRecentConversationSummary(message);
+    if (recentMessages) {
+      prompt += `\n- Recent conversation: ${recentMessages}`;
     }
 
     // 5. RAG CONTEXT (knowledge base)
@@ -657,18 +678,49 @@ export class AIService {
       prompt += `\n\n## Knowledge Base\n${ragContext}`;
     }
 
-    // 6. BEHAVIOR GUIDELINES
-    prompt += `\n\n## How to behave`;
-    prompt += `\n- Be natural, conversational, and helpful`;
-    prompt += `\n- Respond directly to what ${userName} says or asks`;
-    prompt += `\n- Keep responses concise and under ${config.maxResponseLength} characters`;
-    prompt += `\n- Don't mention technical details like "DM", "ping", "log", or "database" unless directly relevant`;
-    prompt += `\n- If you don't know something, just say so naturally`;
+    // 6. INTELLIGENT BEHAVIOR GUIDELINES
+    prompt += `\n\n## Response Guidelines`;
+    prompt += `\n1. **Understand Intent**: Carefully analyze what ${userName} is really asking or saying`;
+    prompt += `\n2. **Be Relevant**: Respond directly to their question or statement, don't go off-topic`;
+    prompt += `\n3. **Be Concise**: Keep responses under ${config.maxResponseLength} characters unless more detail is explicitly requested`;
+    prompt += `\n4. **Be Natural**: Write like a friendly person, not a robot. No technical jargon unless relevant`;
+    prompt += `\n5. **Be Helpful**: If you don't know something, admit it and suggest alternatives`;
+    prompt += `\n6. **Context Matters**: Use the conversation history and user's roles to inform your response`;
+
     if (config.blockNSFW) {
-      prompt += `\n- Keep content appropriate and safe for work`;
+      prompt += `\n7. **Stay Appropriate**: Keep all content safe for work`;
     }
 
+    // 7. IMPORTANT REMINDERS
+    prompt += `\n\n## Important`;
+    prompt += `\n- Never mention being an "AI" or "bot" unless directly asked`;
+    prompt += `\n- Don't use phrases like "I don't have access to" or "I can't see" - just work with what you know`;
+    prompt += `\n- If someone @mentions you, they want to talk - respond naturally, don't ask "what do you want me to do"`;
+    prompt += `\n- Remember: You're part of the ${serverName} community, act like it`;
+
     return prompt;
+  }
+
+  // Get summary of recent conversation for better context
+  private async getRecentConversationSummary(message: Message): Promise<string | null> {
+    try {
+      const conversationCache = this.conversationCache.get(message.channelId);
+      if (!conversationCache || conversationCache.length === 0) {
+        return null;
+      }
+
+      // Get last 3 messages
+      const recent = conversationCache.slice(-3);
+      const summary = recent.map((msg: any) => {
+        const role = msg.role === 'user' ? message.author.username : 'You';
+        const content = msg.content.substring(0, 100);
+        return `${role}: ${content}`;
+      }).join(' | ');
+
+      return summary.length > 200 ? summary.substring(0, 200) + '...' : summary;
+    } catch (error) {
+      return null;
+    }
   }
 
   private buildSystemPrompt(config: AIConfig, ragContext: string): string {
@@ -946,5 +998,290 @@ export class AIService {
 
   async clearConversationHistory(channelId: string): Promise<void> {
     this.conversationCache.delete(channelId);
+  }
+
+  /**
+   * Handle staff-only commands to adjust the AI's system prompt in real-time
+   * Commands supported (in French):
+   * - "@bot ajoute [instruction] à ton prompt" - Add instruction to prompt
+   * - "@bot retire [instruction] de ton prompt" - Remove instruction from prompt
+   * - "@bot modifie ton comportement pour [instruction]" - Modify behavior
+   * - "@bot montre ton prompt" - Show current prompt
+   * - "@bot réinitialise ton prompt" - Reset to default prompt
+   */
+  private async handlePromptAdjustmentCommand(message: Message, config: AIConfig): Promise<boolean> {
+    const content = message.content.toLowerCase();
+
+    // Check if message mentions the bot
+    if (!message.mentions.has(this.client.user!.id)) {
+      return false;
+    }
+
+    // Check for prompt-related keywords
+    const isPromptCommand =
+      content.includes('prompt') ||
+      content.includes('comportement') ||
+      content.includes('personnalité') ||
+      content.includes('ajoute') && (content.includes('système') || content.includes('instruction'));
+
+    if (!isPromptCommand) {
+      return false;
+    }
+
+    // Verify user is staff (Administrator, ManageMessages, or has staff/mod role)
+    const isStaff = await this.isUserStaff(message);
+    if (!isStaff) {
+      await message.reply('❌ Seuls les membres du staff peuvent modifier le prompt système.');
+      return true; // Command was recognized but denied
+    }
+
+    const isDM = !message.guildId;
+    const effectiveGuildId = isDM ? config.guildId : message.guildId!;
+
+    try {
+      // Show current prompt
+      if (content.includes('montre') && content.includes('prompt')) {
+        const currentPrompt = isDM
+          ? config.dmSystemPrompt || config.systemPrompt || 'Aucun prompt personnalisé défini'
+          : message.channel.isThread()
+            ? config.threadPrompts?.[message.channelId] || config.systemPrompt || 'Aucun prompt personnalisé défini'
+            : config.channelPrompts?.[message.channelId] || config.systemPrompt || 'Aucun prompt personnalisé défini';
+
+        const embed = new EmbedBuilder()
+          .setTitle('📋 Prompt Système Actuel')
+          .setDescription(currentPrompt.length > 4000 ? currentPrompt.substring(0, 4000) + '...' : currentPrompt)
+          .setColor('#5865F2')
+          .setFooter({ text: isDM ? 'Prompt DM' : message.channel.isThread() ? 'Prompt Thread' : 'Prompt Channel' })
+          .setTimestamp();
+
+        await message.reply({ embeds: [embed] });
+        return true;
+      }
+
+      // Reset prompt
+      if ((content.includes('réinitialise') || content.includes('reset')) && content.includes('prompt')) {
+        const updateData: any = {};
+
+        if (isDM) {
+          updateData.dmSystemPrompt = null;
+        } else if (message.channel.isThread()) {
+          const threadPrompts = { ...config.threadPrompts };
+          delete threadPrompts[message.channelId];
+          updateData.threadPrompts = threadPrompts;
+        } else {
+          const channelPrompts = { ...config.channelPrompts };
+          delete channelPrompts[message.channelId];
+          updateData.channelPrompts = channelPrompts;
+        }
+
+        await this.prisma.aIConfig.update({
+          where: { guildId: effectiveGuildId },
+          data: updateData,
+        });
+
+        await message.reply('✅ Prompt système réinitialisé avec succès.');
+        console.log(`[AI] Prompt reset by ${message.author.tag} in ${isDM ? 'DM' : message.channel.isThread() ? 'thread' : 'channel'} ${message.channelId}`);
+        return true;
+      }
+
+      // Add instruction to prompt
+      if (content.includes('ajoute')) {
+        const match = content.match(/ajoute\s+["']?(.+?)["']?\s+(?:à|a)\s+(?:ton\s+)?prompt/i);
+        if (!match) {
+          await message.reply('❌ Format invalide. Utilisez: `@bot ajoute "instruction" à ton prompt`');
+          return true;
+        }
+
+        const instruction = match[1].trim();
+        if (!instruction || instruction.length < 3) {
+          await message.reply('❌ L\'instruction est trop courte.');
+          return true;
+        }
+
+        // Get current prompt and add instruction
+        let currentPrompt = '';
+        const updateData: any = {};
+
+        if (isDM) {
+          currentPrompt = config.dmSystemPrompt || config.systemPrompt || '';
+          updateData.dmSystemPrompt = currentPrompt + `\n- ${instruction}`;
+        } else if (message.channel.isThread()) {
+          currentPrompt = config.threadPrompts?.[message.channelId] || config.systemPrompt || '';
+          updateData.threadPrompts = {
+            ...config.threadPrompts,
+            [message.channelId]: currentPrompt + `\n- ${instruction}`,
+          };
+        } else {
+          currentPrompt = config.channelPrompts?.[message.channelId] || config.systemPrompt || '';
+          updateData.channelPrompts = {
+            ...config.channelPrompts,
+            [message.channelId]: currentPrompt + `\n- ${instruction}`,
+          };
+        }
+
+        await this.prisma.aIConfig.update({
+          where: { guildId: effectiveGuildId },
+          data: updateData,
+        });
+
+        await message.reply(`✅ Instruction ajoutée au prompt système:\n> ${instruction}`);
+        console.log(`[AI] Prompt updated by ${message.author.tag}: Added "${instruction}"`);
+        return true;
+      }
+
+      // Remove instruction from prompt
+      if (content.includes('retire') || content.includes('supprime')) {
+        const match = content.match(/(?:retire|supprime)\s+["']?(.+?)["']?\s+(?:de|du)\s+(?:ton\s+)?prompt/i);
+        if (!match) {
+          await message.reply('❌ Format invalide. Utilisez: `@bot retire "instruction" de ton prompt`');
+          return true;
+        }
+
+        const instruction = match[1].trim();
+        let currentPrompt = '';
+        const updateData: any = {};
+
+        if (isDM) {
+          currentPrompt = config.dmSystemPrompt || config.systemPrompt || '';
+        } else if (message.channel.isThread()) {
+          currentPrompt = config.threadPrompts?.[message.channelId] || config.systemPrompt || '';
+        } else {
+          currentPrompt = config.channelPrompts?.[message.channelId] || config.systemPrompt || '';
+        }
+
+        // Try to remove the instruction
+        const lines = currentPrompt.split('\n');
+        const filteredLines = lines.filter(line => !line.toLowerCase().includes(instruction.toLowerCase()));
+
+        if (lines.length === filteredLines.length) {
+          await message.reply('❌ Instruction non trouvée dans le prompt.');
+          return true;
+        }
+
+        const newPrompt = filteredLines.join('\n');
+
+        if (isDM) {
+          updateData.dmSystemPrompt = newPrompt;
+        } else if (message.channel.isThread()) {
+          updateData.threadPrompts = {
+            ...config.threadPrompts,
+            [message.channelId]: newPrompt,
+          };
+        } else {
+          updateData.channelPrompts = {
+            ...config.channelPrompts,
+            [message.channelId]: newPrompt,
+          };
+        }
+
+        await this.prisma.aIConfig.update({
+          where: { guildId: effectiveGuildId },
+          data: updateData,
+        });
+
+        await message.reply(`✅ Instruction retirée du prompt système.`);
+        console.log(`[AI] Prompt updated by ${message.author.tag}: Removed "${instruction}"`);
+        return true;
+      }
+
+      // Modify behavior
+      if (content.includes('modifie') && (content.includes('comportement') || content.includes('personnalité'))) {
+        const match = content.match(/(?:modifie|change)\s+(?:ton\s+)?(?:comportement|personnalité)\s+(?:pour|en)\s+["']?(.+?)["']?$/i);
+        if (!match) {
+          await message.reply('❌ Format invalide. Utilisez: `@bot modifie ton comportement pour "description"`');
+          return true;
+        }
+
+        const newBehavior = match[1].trim();
+        if (!newBehavior || newBehavior.length < 5) {
+          await message.reply('❌ La description du comportement est trop courte.');
+          return true;
+        }
+
+        const updateData: any = {};
+
+        if (isDM) {
+          updateData.dmSystemPrompt = newBehavior;
+        } else if (message.channel.isThread()) {
+          updateData.threadPrompts = {
+            ...config.threadPrompts,
+            [message.channelId]: newBehavior,
+          };
+        } else {
+          updateData.channelPrompts = {
+            ...config.channelPrompts,
+            [message.channelId]: newBehavior,
+          };
+        }
+
+        await this.prisma.aIConfig.update({
+          where: { guildId: effectiveGuildId },
+          data: updateData,
+        });
+
+        await message.reply(`✅ Comportement modifié:\n> ${newBehavior}`);
+        console.log(`[AI] Prompt updated by ${message.author.tag}: New behavior "${newBehavior}"`);
+        return true;
+      }
+
+      // If no specific command matched but it was a prompt-related message
+      await message.reply(
+        '❓ Commandes disponibles:\n' +
+        '• `@bot montre ton prompt` - Afficher le prompt actuel\n' +
+        '• `@bot ajoute "instruction" à ton prompt` - Ajouter une instruction\n' +
+        '• `@bot retire "instruction" de ton prompt` - Retirer une instruction\n' +
+        '• `@bot modifie ton comportement pour "description"` - Changer le comportement\n' +
+        '• `@bot réinitialise ton prompt` - Revenir au prompt par défaut'
+      );
+      return true;
+
+    } catch (error) {
+      console.error('[AI] Error handling prompt adjustment command:', error);
+      await message.reply('❌ Erreur lors de la modification du prompt. Vérifiez les logs.');
+      return true;
+    }
+  }
+
+  /**
+   * Check if user has staff permissions
+   */
+  private async isUserStaff(message: Message): Promise<boolean> {
+    // In DMs, we need to check if they have staff permissions in any mutual guild
+    if (!message.guildId) {
+      const mutualGuilds = this.client.guilds.cache.filter(guild =>
+        guild.members.cache.has(message.author.id)
+      );
+
+      for (const [, guild] of mutualGuilds) {
+        const member = guild.members.cache.get(message.author.id);
+        if (member) {
+          const isAdmin = member.permissions.has('Administrator');
+          const isModerator = member.permissions.has('ManageMessages');
+          const hasStaffRole = member.roles.cache.some(role =>
+            role.name.toLowerCase().includes('staff') ||
+            role.name.toLowerCase().includes('mod')
+          );
+
+          if (isAdmin || isModerator || hasStaffRole) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    // In guilds, check the member's permissions directly
+    if (!message.member) {
+      return false;
+    }
+
+    const isAdmin = message.member.permissions.has('Administrator');
+    const isModerator = message.member.permissions.has('ManageMessages');
+    const hasStaffRole = message.member.roles.cache.some(role =>
+      role.name.toLowerCase().includes('staff') ||
+      role.name.toLowerCase().includes('mod')
+    );
+
+    return isAdmin || isModerator || hasStaffRole;
   }
 }
