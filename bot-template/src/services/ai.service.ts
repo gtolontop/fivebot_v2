@@ -114,8 +114,34 @@ export class AIService {
   async processMessage(message: Message): Promise<void> {
     if (message.author.bot) return;
 
-    const config = await this.getConfig(message.guildId!);
-    if (!config || !config.enabled || !config.apiKey) return;
+    // Handle DMs - find a guild with AI config enabled where both user and bot are members
+    let config: AIConfig | null = null;
+    let effectiveGuildId: string | null = message.guildId;
+
+    if (!message.guildId) {
+      // It's a DM - find mutual guilds with AI config
+      const mutualGuilds = this.client.guilds.cache.filter(guild =>
+        guild.members.cache.has(message.author.id)
+      );
+
+      for (const [guildId, guild] of mutualGuilds) {
+        const guildConfig = await this.getConfig(guildId);
+        if (guildConfig && guildConfig.enabled && guildConfig.apiKey) {
+          config = guildConfig;
+          effectiveGuildId = guildId;
+          console.log(`[AI] Using config from guild ${guild.name} for DM with ${message.author.tag}`);
+          break;
+        }
+      }
+
+      if (!config) {
+        console.log(`[AI] No AI config found for DM with ${message.author.tag}`);
+        return;
+      }
+    } else {
+      config = await this.getConfig(message.guildId);
+      if (!config || !config.enabled || !config.apiKey) return;
+    }
 
     // Check if should respond
     if (!await this.shouldRespond(message, config)) return;
@@ -206,7 +232,7 @@ export class AIService {
       // Log usage
       await this.logUsage({
         configId: config.id,
-        guildId: message.guildId!,
+        guildId: effectiveGuildId!,
         userId: message.author.id,
         channelId: message.channelId,
         messageId: message.id,
@@ -225,7 +251,7 @@ export class AIService {
       if (config.logConversations) {
         await this.logConversation({
           configId: config.id,
-          guildId: message.guildId!,
+          guildId: effectiveGuildId!,
           channelId: message.channelId,
           userId: message.author.id,
           userMessage: message.content,
@@ -274,7 +300,7 @@ export class AIService {
       // Log error
       await this.logUsage({
         configId: config.id,
-        guildId: message.guildId!,
+        guildId: effectiveGuildId!,
         userId: message.author.id,
         channelId: message.channelId,
         messageId: message.id,
