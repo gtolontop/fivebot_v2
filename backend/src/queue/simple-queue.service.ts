@@ -49,6 +49,9 @@ export class SimpleQueueService implements IQueueService {
         const jobStr = await this.redisService.getClient().lpop('fivebot:jobs');
         if (jobStr) {
           const job: QueuedJob = JSON.parse(jobStr);
+          // Convert createdAt from string to Date object
+          job.createdAt = new Date(job.createdAt);
+
           this.jobs.push(job);
           this.jobs.sort((a, b) => b.priority - a.priority);
           console.log(`📥 Received job from Redis: ${job.type}`, job.data);
