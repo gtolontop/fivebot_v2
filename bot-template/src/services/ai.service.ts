@@ -303,7 +303,13 @@ export class AIService {
       return false;
     }
 
-    // Check channel filters
+    // DMs - Always respond in DMs (bypass channel filters)
+    const isDM = !message.guildId;
+    if (isDM) {
+      return true; // Always respond in DMs
+    }
+
+    // Check channel filters (only for guild messages)
     if (config.enabledChannels && config.enabledChannels.length > 0) {
       if (!config.enabledChannels.includes(message.channelId)) return false;
     }
