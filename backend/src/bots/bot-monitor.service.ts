@@ -116,6 +116,17 @@ export class BotMonitorService {
           } catch (error) {
             console.error(`❌ Failed to correct bot "${bot.name}" status in heartbeat check:`, error);
           }
+        } else if (bot.status === 'STARTING' && !isProcessRunning) {
+          console.log(`💓 Heartbeat correcting bot "${bot.name}" (owner: ${bot.owner.username}): STARTING → OFFLINE (stuck in starting state)`);
+          try {
+            await this.updateBotWithRetry(bot.id, {
+              status: 'OFFLINE',
+              updatedAt: new Date()
+            });
+            corrections++;
+          } catch (error) {
+            console.error(`❌ Failed to correct bot "${bot.name}" status in heartbeat check:`, error);
+          }
         } else if (bot.status === 'OFFLINE' && isProcessRunning) {
           // Only auto-correct to ONLINE if user didn't intentionally stop the bot
           if (userAction === 'stop') {
