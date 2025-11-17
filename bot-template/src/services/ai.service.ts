@@ -1967,7 +1967,7 @@ Your job is to help users with their FiveLink profiles, Discord bots, and make t
         where: {
           userId_guildId: {
             userId,
-            guildId: guildId ?? null,
+            guildId: (guildId ?? null) as any,
           },
         },
         include: {
