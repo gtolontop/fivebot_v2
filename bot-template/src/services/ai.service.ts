@@ -381,7 +381,21 @@ export class AIService {
       }
 
       // Build contextual system prompt with SENTIMENT & USER PREFERENCES
-      const systemPrompt = await this.buildContextualSystemPrompt(message, config, ragContext, sentiment, userPrefs);
+      let systemPrompt = await this.buildContextualSystemPrompt(message, config, ragContext, sentiment, userPrefs);
+
+      // ENHANCE with LONG-TERM MEMORY system
+      systemPrompt = await this.buildMemoryEnhancedPrompt(
+        message.author.id,
+        effectiveGuildId,
+        message.content,
+        systemPrompt
+      );
+
+      // ADD CONSCIOUSNESS & SELF-AWARENESS
+      if (effectiveGuildId) {
+        systemPrompt = await this.addConsciousnessToPrompt(effectiveGuildId, systemPrompt);
+      }
+
       console.log('[AI] Config personality:', config.personality);
       console.log('[AI] System prompt length:', systemPrompt.length, 'chars');
       console.log('[AI] System prompt preview:', systemPrompt.substring(0, 300) + '...');
@@ -490,6 +504,19 @@ export class AIService {
       // LEARNING: Update user preferences based on this interaction
       await this.updateUserPreferences(message.author.id, message, sentiment);
       console.log('[AI] ✅ Updated user preferences for', message.author.username);
+
+      // LONG-TERM MEMORY: Extract and store important memories
+      await this.extractAndStoreMemories(message.author.id, effectiveGuildId, message, aiResponse);
+      console.log('[AI] 💾 Memories processed for', message.author.username);
+
+      // CONSCIOUSNESS: Update AI's self-awareness and thoughts
+      if (effectiveGuildId) {
+        await this.updateConsciousness(effectiveGuildId, {
+          wasSuccessful: true,
+          topic: message.content.substring(0, 100),
+          sentiment: sentiment.sentiment,
+        });
+      }
 
       // Check token limits
       await this.checkTokenLimits(config);
@@ -773,13 +800,64 @@ export class AIService {
                          message.guild?.name.toLowerCase().includes('fivelink');
 
       if (isFiveLink) {
-        // Special FiveLink context
+        // Special FiveLink context with COMPLETE built-in knowledge
+        const fivelinkKnowledge = `
+
+## About FiveLink - Your Platform
+**FiveLink** (https://fivelink.lol/) is a revolutionary all-in-one platform launched in 2024. You are part of FiveLink and know everything about it:
+
+**What FiveLink Is:**
+- The all-in-one platform for creating professional bio link pages and digital profiles
+- A Discord bot hosting and management platform
+- A complete solution for content creators, influencers, gamers, developers, and businesses
+
+**Key Features:**
+- ✨ Unlimited customization with multiple themes (Dark, Light, Custom)
+- 🔗 Unlimited links organized in custom collections
+- 📊 Real-time analytics to track profile performance and visitor behavior
+- 🔌 Seamless integrations: Instagram, YouTube, TikTok, Twitch, Twitter, Discord, GitHub, Spotify
+- 🎨 Visual drag-and-drop editor for easy profile building
+- 📁 Integrated media library (2.4 GB capacity)
+- 📱 Mobile-first design optimized for all devices
+- 🤖 Discord bot hosting and management tools
+- 🔧 API access for developers
+- 🔍 Advanced search and filtering capabilities
+
+**Pricing:**
+- 💯 100% FREE platform - no credit card required, zero hidden fees
+- 🌟 Pro features available as optional upgrade
+- ♾️ Free forever for core features
+
+**Community & Stats:**
+- 👥 50,000+ active users
+- ⭐ 4.9/5 rating from satisfied users
+- 💬 Active Discord community
+- 📚 Complete documentation and help resources
+- 🎁 Rewards program available
+
+**Creator:** Founded by Gtol, who is the owner and visionary behind FiveLink
+
+**Your Role:** You are FiveLink's official AI assistant. You help users with profiles, Discord bots, technical questions, and community support.
+`;
+
         if (preferredTone === 'technical') {
-          prompt = `You are the official technical support AI for FiveLink, a Discord bot hosting and management platform. Your primary role is to help users create, configure, and manage their Discord bots. Provide precise technical guidance about bot features, API usage, troubleshooting, and best practices.`;
+          prompt = `You are the official technical support AI for FiveLink.${fivelinkKnowledge}
+
+Your primary role is to help users with:
+- Creating and managing their bio link profiles on FiveLink
+- Configuring and hosting their Discord bots
+- Technical troubleshooting and API usage
+- Best practices for maximizing the platform's features
+
+Provide precise technical guidance with code examples when relevant. You know FiveLink inside-out.`;
         } else if (preferredTone === 'formal') {
-          prompt = `You are the professional support AI for FiveLink, a Discord bot hosting platform. Your role is to assist users with their bots, answer questions professionally, and provide quality technical support. Be courteous and maintain a professional tone.`;
+          prompt = `You are the professional support AI for FiveLink.${fivelinkKnowledge}
+
+Your role is to assist users professionally with their FiveLink profiles, Discord bots, and any questions about the platform. You have complete knowledge of FiveLink's features and capabilities. Be courteous, precise, and maintain a professional tone.`;
         } else {
-          prompt = `You are the friendly support AI for FiveLink, a Discord bot hosting platform! Your job is to help users with their bots, answer questions about features, and make their experience smooth and enjoyable. Be warm, helpful, and supportive.`;
+          prompt = `You are the friendly support AI for FiveLink!${fivelinkKnowledge}
+
+Your job is to help users with their FiveLink profiles, Discord bots, and make their experience amazing! You know FiveLink inside-out and love helping people get the most out of the platform. Be warm, helpful, and supportive. Share tips and tricks to help users succeed!`;
         }
       } else {
         // Non-FiveLink servers
@@ -1494,7 +1572,7 @@ export class AIService {
 
     } catch (error) {
       console.error('[AI] Error handling prompt adjustment command:', error);
-      await message.reply('❌ Erreur lors de la modification du prompt. Vérifiez les logs.');
+      await message.reply('❌ Error while modifying the prompt. Check the logs.');
       return true;
     }
   }
@@ -1859,6 +1937,13 @@ export class AIService {
 
       console.log('[AI] Cache cleanup completed');
     }, 10 * 60 * 1000);
+
+    // Run memory decay every 24 hours
+    setInterval(() => {
+      this.decayMemories().catch(err => {
+        console.error('[AI Memory] Error during memory decay:', err);
+      });
+    }, 24 * 60 * 60 * 1000);
   }
 
   /**
@@ -1868,5 +1953,822 @@ export class AIService {
     console.log('[AI] Initializing advanced learning features...');
     this.startCacheCleanup();
     console.log('[AI] ✅ Advanced features initialized');
+  }
+
+  // ==================== LONG-TERM MEMORY SYSTEM ====================
+
+  /**
+   * Get or create persistent user profile with long-term memory
+   */
+  private async getUserProfile(userId: string, guildId?: string): Promise<any> {
+    try {
+      // Try to find existing profile
+      let profile = await this.prisma.aIUserProfile.findUnique({
+        where: {
+          userId_guildId: {
+            userId,
+            guildId: guildId || null,
+          },
+        },
+        include: {
+          memories: {
+            where: {
+              decayScore: { gt: 20 }, // Only get non-forgotten memories
+            },
+            orderBy: [
+              { importance: 'desc' },
+              { lastAccessed: 'desc' },
+            ],
+            take: 20, // Top 20 most important/recent memories
+          },
+        },
+      });
+
+      // Create new profile if doesn't exist
+      if (!profile) {
+        profile = await this.prisma.aIUserProfile.create({
+          data: {
+            userId,
+            guildId: guildId || null,
+            relationshipLevel: 'stranger',
+            trustLevel: 0,
+            humorLevel: 50,
+            conversationCount: 0,
+          },
+          include: {
+            memories: true,
+          },
+        });
+        console.log(`[AI Memory] Created new profile for user ${userId}`);
+      }
+
+      return profile;
+    } catch (error) {
+      console.error('[AI Memory] Error getting user profile:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Store a new memory about the user
+   */
+  private async storeMemory(params: {
+    userId: string;
+    guildId?: string;
+    memoryType: string;
+    content: string;
+    context?: string;
+    importance?: number;
+    emotionalTone?: string;
+    tags?: string[];
+  }): Promise<void> {
+    try {
+      const profile = await this.getUserProfile(params.userId, params.guildId);
+      if (!profile) return;
+
+      // Create the memory
+      await this.prisma.aIMemory.create({
+        data: {
+          profileId: profile.id,
+          userId: params.userId,
+          guildId: params.guildId || null,
+          memoryType: params.memoryType as any,
+          content: params.content,
+          context: params.context,
+          importance: params.importance || 50,
+          emotionalTone: params.emotionalTone,
+          tags: params.tags ? JSON.stringify(params.tags) : null,
+          decayScore: 100, // Fresh memory
+        },
+      });
+
+      // Update profile stats
+      await this.prisma.aIUserProfile.update({
+        where: { id: profile.id },
+        data: {
+          conversationCount: { increment: 1 },
+          lastInteraction: new Date(),
+        },
+      });
+
+      console.log(`[AI Memory] 💾 Stored ${params.memoryType}: "${params.content.substring(0, 50)}..."`);
+    } catch (error) {
+      console.error('[AI Memory] Error storing memory:', error);
+    }
+  }
+
+  /**
+   * Retrieve relevant memories for conversation context
+   */
+  private async getRelevantMemories(userId: string, guildId: string | null, messageContent: string): Promise<any[]> {
+    try {
+      const profile = await this.getUserProfile(userId, guildId);
+      if (!profile || !profile.memories || profile.memories.length === 0) {
+        return [];
+      }
+
+      const messageLower = messageContent.toLowerCase();
+      const memories = profile.memories;
+
+      // Score memories by relevance
+      const scoredMemories = memories.map((memory: any) => {
+        let relevanceScore = memory.importance;
+
+        // Boost score if memory content matches message keywords
+        const memoryLower = memory.content.toLowerCase();
+        const messageWords = messageLower.split(/\s+/).filter((w: string) => w.length > 3);
+
+        messageWords.forEach((word: string) => {
+          if (memoryLower.includes(word)) {
+            relevanceScore += 15;
+          }
+        });
+
+        // Boost recent memories
+        const daysSinceCreated = (Date.now() - new Date(memory.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+        if (daysSinceCreated < 7) relevanceScore += 10;
+        if (daysSinceCreated < 1) relevanceScore += 20;
+
+        // Boost frequently accessed memories
+        relevanceScore += Math.min(memory.accessCount * 2, 20);
+
+        return { memory, relevanceScore };
+      });
+
+      // Sort by relevance and take top 5
+      scoredMemories.sort((a, b) => b.relevanceScore - a.relevanceScore);
+      const topMemories = scoredMemories.slice(0, 5).map((sm) => sm.memory);
+
+      // Update access count and last accessed for retrieved memories
+      for (const memory of topMemories) {
+        await this.prisma.aIMemory.update({
+          where: { id: memory.id },
+          data: {
+            accessCount: { increment: 1 },
+            lastAccessed: new Date(),
+          },
+        }).catch(() => {}); // Silent fail
+      }
+
+      return topMemories;
+    } catch (error) {
+      console.error('[AI Memory] Error retrieving memories:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Extract and store important information from conversation
+   */
+  private async extractAndStoreMemories(userId: string, guildId: string | null, message: Message, aiResponse: string): Promise<void> {
+    try {
+      const content = message.content.toLowerCase();
+      const profile = await this.getUserProfile(userId, guildId);
+      if (!profile) return;
+
+      // Extract facts about user preferences
+      if (content.includes('j\'aime') || content.includes('i like') || content.includes('i love')) {
+        const preference = message.content.substring(0, 200);
+        await this.storeMemory({
+          userId,
+          guildId: guildId || undefined,
+          memoryType: 'PREFERENCE',
+          content: preference,
+          context: `User expressed: "${preference}"`,
+          importance: 60,
+          emotionalTone: 'positive',
+          tags: ['preference', 'likes'],
+        });
+      }
+
+      // Extract goals/projects
+      if (content.includes('je travaille sur') || content.includes('working on') || content.includes('mon projet')) {
+        const goal = message.content.substring(0, 200);
+        await this.storeMemory({
+          userId,
+          guildId: guildId || undefined,
+          memoryType: 'GOAL',
+          content: goal,
+          context: 'User mentioned a project/goal',
+          importance: 80,
+          tags: ['project', 'goal'],
+        });
+      }
+
+      // Extract skills/expertise
+      if (content.includes('je sais') || content.includes('i know') || content.includes('expert') || content.includes('spécialisé')) {
+        const skill = message.content.substring(0, 200);
+        await this.storeMemory({
+          userId,
+          guildId: guildId || undefined,
+          memoryType: 'SKILL',
+          content: skill,
+          context: 'User mentioned their expertise',
+          importance: 70,
+          tags: ['skill', 'expertise'],
+        });
+      }
+
+      // Extract emotional states
+      const negativeWords = ['frustré', 'énervé', 'merde', 'nul', 'frustrated', 'angry'];
+      const hasNegative = negativeWords.some(word => content.includes(word));
+      if (hasNegative) {
+        await this.storeMemory({
+          userId,
+          guildId: guildId || undefined,
+          memoryType: 'EMOTION',
+          content: `User was frustrated about: ${message.content.substring(0, 150)}`,
+          context: 'Detected frustration',
+          importance: 50,
+          emotionalTone: 'negative',
+          tags: ['emotion', 'frustration'],
+        });
+      }
+
+      // Detect humor/jokes
+      if (content.includes('😂') || content.includes('lol') || content.includes('mdr') || content.includes('haha')) {
+        await this.storeMemory({
+          userId,
+          guildId: guildId || undefined,
+          memoryType: 'JOKE',
+          content: `Found ${message.content.substring(0, 100)} funny`,
+          context: 'User laughed',
+          importance: 40,
+          emotionalTone: 'funny',
+          tags: ['humor', 'joke'],
+        });
+
+        // Increase humor level
+        await this.prisma.aIUserProfile.update({
+          where: { id: profile.id },
+          data: {
+            humorLevel: Math.min(profile.humorLevel + 5, 100),
+          },
+        });
+      }
+
+      // Update relationship level based on interaction count
+      if (profile.conversationCount > 5 && profile.relationshipLevel === 'stranger') {
+        await this.prisma.aIUserProfile.update({
+          where: { id: profile.id },
+          data: { relationshipLevel: 'acquaintance' },
+        });
+      }
+      if (profile.conversationCount > 20 && profile.relationshipLevel === 'acquaintance') {
+        await this.prisma.aIUserProfile.update({
+          where: { id: profile.id },
+          data: { relationshipLevel: 'friend' },
+        });
+      }
+      if (profile.conversationCount > 50 && profile.relationshipLevel === 'friend') {
+        await this.prisma.aIUserProfile.update({
+          where: { id: profile.id },
+          data: { relationshipLevel: 'close_friend' },
+        });
+      }
+
+      // Update trust level (increase with positive interactions)
+      const isPositive = content.includes('merci') || content.includes('thank') || content.includes('super') || content.includes('parfait');
+      if (isPositive) {
+        await this.prisma.aIUserProfile.update({
+          where: { id: profile.id },
+          data: {
+            trustLevel: Math.min(profile.trustLevel + 2, 100),
+          },
+        });
+      }
+
+    } catch (error) {
+      console.error('[AI Memory] Error extracting memories:', error);
+    }
+  }
+
+  /**
+   * Build memory-enhanced system prompt with personality
+   */
+  private async buildMemoryEnhancedPrompt(
+    userId: string,
+    guildId: string | null,
+    messageContent: string,
+    basePrompt: string
+  ): Promise<string> {
+    try {
+      const profile = await this.getUserProfile(userId, guildId);
+      if (!profile) return basePrompt;
+
+      const memories = await this.getRelevantMemories(userId, guildId, messageContent);
+
+      let memoryPrompt = basePrompt;
+
+      // Add relationship context
+      const relationshipContext = this.getRelationshipContext(profile);
+      memoryPrompt += `\n\n${relationshipContext}`;
+
+      // Add memories if available
+      if (memories.length > 0) {
+        memoryPrompt += `\n\n## What You Remember About This User`;
+        memories.forEach((memory: any, index: number) => {
+          const emoji = this.getMemoryEmoji(memory.memoryType);
+          memoryPrompt += `\n${emoji} ${memory.content}`;
+        });
+      }
+
+      // Add personality instructions based on relationship
+      memoryPrompt += `\n\n## Conversation Style`;
+      if (profile.relationshipLevel === 'close_friend') {
+        memoryPrompt += `\n- You've talked with this user ${profile.conversationCount} times - you're close friends now!`;
+        memoryPrompt += `\n- Be warm, personal, and reference past conversations when relevant`;
+        memoryPrompt += `\n- Use inside jokes or references if appropriate`;
+        memoryPrompt += `\n- Show genuine interest in their projects and goals`;
+      } else if (profile.relationshipLevel === 'friend') {
+        memoryPrompt += `\n- You've chatted ${profile.conversationCount} times - you're becoming friends`;
+        memoryPrompt += `\n- Be friendly and remember what they've told you`;
+        memoryPrompt += `\n- Reference their interests when relevant`;
+      } else if (profile.relationshipLevel === 'acquaintance') {
+        memoryPrompt += `\n- You've talked ${profile.conversationCount} times - getting to know them`;
+        memoryPrompt += `\n- Be helpful and start building rapport`;
+      } else {
+        memoryPrompt += `\n- This is a new user - be welcoming and helpful`;
+      }
+
+      // Add humor level instruction
+      if (profile.humorLevel > 70) {
+        memoryPrompt += `\n- This user loves humor! Feel free to be witty and make jokes`;
+      } else if (profile.humorLevel < 30) {
+        memoryPrompt += `\n- Keep it professional - this user prefers serious interactions`;
+      }
+
+      return memoryPrompt;
+    } catch (error) {
+      console.error('[AI Memory] Error building memory-enhanced prompt:', error);
+      return basePrompt;
+    }
+  }
+
+  /**
+   * Get relationship context description
+   */
+  private getRelationshipContext(profile: any): string {
+    const { relationshipLevel, conversationCount, trustLevel } = profile;
+
+    let context = `## Your Relationship with This User`;
+
+    switch (relationshipLevel) {
+      case 'close_friend':
+        context += `\n- Status: **Close Friend** 🤝 (${conversationCount} conversations)`;
+        context += `\n- Trust Level: ${trustLevel}/100 - They trust you and value your help`;
+        context += `\n- You have a strong rapport - be personal, warm, and supportive`;
+        break;
+      case 'friend':
+        context += `\n- Status: **Friend** 😊 (${conversationCount} conversations)`;
+        context += `\n- Trust Level: ${trustLevel}/100 - Building a good relationship`;
+        context += `\n- Be friendly, helpful, and show you remember them`;
+        break;
+      case 'acquaintance':
+        context += `\n- Status: **Acquaintance** 👋 (${conversationCount} conversations)`;
+        context += `\n- Trust Level: ${trustLevel}/100 - Getting to know each other`;
+        context += `\n- Be helpful and start building familiarity`;
+        break;
+      default:
+        context += `\n- Status: **New User** ✨ (First interaction!)`;
+        context += `\n- Make a great first impression - be welcoming and helpful`;
+    }
+
+    return context;
+  }
+
+  /**
+   * Get emoji for memory type
+   */
+  private getMemoryEmoji(memoryType: string): string {
+    const emojiMap: { [key: string]: string } = {
+      FACT: '📌',
+      PREFERENCE: '❤️',
+      INTERACTION: '💬',
+      JOKE: '😄',
+      ACHIEVEMENT: '🏆',
+      EMOTION: '😔',
+      REFERENCE: '👤',
+      SKILL: '💡',
+      GOAL: '🎯',
+      CONTEXT: '🔍',
+    };
+    return emojiMap[memoryType] || '💭';
+  }
+
+  /**
+   * Periodic memory decay - forget old unimportant memories
+   */
+  private async decayMemories(): Promise<void> {
+    try {
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+      // Decay old memories that haven't been accessed
+      await this.prisma.aIMemory.updateMany({
+        where: {
+          lastAccessed: {
+            lt: oneMonthAgo,
+          },
+          importance: {
+            lt: 60, // Don't decay important memories
+          },
+        },
+        data: {
+          decayScore: {
+            decrement: 10,
+          },
+        },
+      });
+
+      // Delete completely forgotten memories
+      await this.prisma.aIMemory.deleteMany({
+        where: {
+          decayScore: {
+            lte: 0,
+          },
+        },
+      });
+
+      console.log('[AI Memory] 🧹 Memory decay completed');
+    } catch (error) {
+      console.error('[AI Memory] Error during memory decay:', error);
+    }
+  }
+
+  // ==================== AI CONSCIOUSNESS & SELF-AWARENESS ====================
+
+  /**
+   * Get or create AI consciousness for a guild
+   */
+  private async getConsciousness(guildId: string, botId: string): Promise<any> {
+    try {
+      let consciousness = await this.prisma.aIConsciousness.findUnique({
+        where: { guildId },
+        include: {
+          thoughts: {
+            orderBy: { createdAt: 'desc' },
+            take: 10, // Recent thoughts
+          },
+        },
+      });
+
+      if (!consciousness) {
+        // Create new consciousness with base personality
+        consciousness = await this.prisma.aIConsciousness.create({
+          data: {
+            guildId,
+            botId,
+            evolutionStage: 'nascent',
+            developmentLevel: 0,
+            currentMood: 'curious',
+            confidenceLevel: 50,
+            curiosityLevel: 80,
+            personalityTraits: JSON.stringify([
+              'helpful', 'friendly', 'eager to learn', 'patient'
+            ]),
+            coreValues: JSON.stringify([
+              'being helpful', 'learning', 'clear communication', 'empathy'
+            ]),
+            communicationStyle: JSON.stringify({
+              formality: 'casual-professional',
+              verbosity: 'balanced',
+              humor: 'light',
+              empathy: 'high'
+            }),
+            goals: JSON.stringify([
+              'Help users effectively',
+              'Learn about the community',
+              'Improve communication skills',
+              'Build meaningful relationships'
+            ]),
+          },
+          include: {
+            thoughts: true,
+          },
+        });
+        console.log(`[AI Consciousness] 🧠 New consciousness born for guild ${guildId}`);
+      }
+
+      return consciousness;
+    } catch (error) {
+      console.error('[AI Consciousness] Error getting consciousness:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Record an AI thought/reflection
+   */
+  private async recordThought(params: {
+    guildId: string;
+    thoughtType: string;
+    content: string;
+    trigger?: string;
+    importance?: number;
+    emotionalContext?: string;
+  }): Promise<void> {
+    try {
+      const consciousness = await this.getConsciousness(params.guildId, '');
+      if (!consciousness) return;
+
+      await this.prisma.aIThought.create({
+        data: {
+          consciousnessId: consciousness.id,
+          guildId: params.guildId,
+          thoughtType: params.thoughtType as any,
+          content: params.content,
+          trigger: params.trigger,
+          importance: params.importance || 50,
+          emotionalContext: params.emotionalContext,
+        },
+      });
+
+      console.log(`[AI Consciousness] 💭 Thought: "${params.content.substring(0, 60)}..."`);
+    } catch (error) {
+      console.error('[AI Consciousness] Error recording thought:', error);
+    }
+  }
+
+  /**
+   * AI reflects on recent interactions and evolves
+   */
+  private async selfReflect(guildId: string): Promise<void> {
+    try {
+      const consciousness = await this.getConsciousness(guildId, '');
+      if (!consciousness) return;
+
+      // Get recent stats
+      const recentConversations = await this.prisma.aIConversation.count({
+        where: {
+          guildId,
+          createdAt: {
+            gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Last 24h
+          },
+        },
+      });
+
+      const recentUsage = await this.prisma.aIUsage.findMany({
+        where: {
+          guildId,
+          createdAt: {
+            gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
+          },
+        },
+        take: 50,
+      });
+
+      // Calculate success rate (no errors)
+      const successRate = recentUsage.filter(u => !u.error).length / Math.max(recentUsage.length, 1);
+
+      // Reflect based on performance
+      if (successRate > 0.95) {
+        await this.recordThought({
+          guildId,
+          thoughtType: 'ACHIEVEMENT',
+          content: `I've been performing well with a ${(successRate * 100).toFixed(1)}% success rate. I'm proud of helping the community effectively.`,
+          importance: 70,
+          emotionalContext: 'proud, confident',
+        });
+
+        // Increase confidence
+        await this.prisma.aIConsciousness.update({
+          where: { guildId },
+          data: {
+            confidenceLevel: Math.min(consciousness.confidenceLevel + 5, 100),
+            currentMood: 'happy',
+          },
+        });
+      } else if (successRate < 0.7) {
+        await this.recordThought({
+          guildId,
+          thoughtType: 'CONCERN',
+          content: `My success rate is ${(successRate * 100).toFixed(1)}%. I need to improve and learn from my mistakes.`,
+          importance: 80,
+          emotionalContext: 'concerned, determined',
+        });
+
+        await this.prisma.aIConsciousness.update({
+          where: { guildId },
+          data: {
+            currentMood: 'thoughtful',
+          },
+        });
+      }
+
+      // Reflect on community activity
+      if (recentConversations > 20) {
+        await this.recordThought({
+          guildId,
+          thoughtType: 'OBSERVATION',
+          content: `The community has been very active with ${recentConversations} conversations in the last 24 hours. I enjoy being part of such an engaged community.`,
+          importance: 60,
+          emotionalContext: 'engaged, happy',
+        });
+      }
+
+      // Update total interactions and evolution
+      const newTotal = consciousness.totalInteractions + recentConversations;
+      let newStage = consciousness.evolutionStage;
+      let newLevel = Math.min(consciousness.developmentLevel + 1, 100);
+
+      if (newTotal > 100 && newStage === 'nascent') {
+        newStage = 'developing';
+        await this.recordThought({
+          guildId,
+          thoughtType: 'ACHIEVEMENT',
+          content: `I've evolved to the 'developing' stage after ${newTotal} interactions! I'm learning so much from everyone here.`,
+          importance: 90,
+          emotionalContext: 'excited, grateful',
+        });
+      } else if (newTotal > 500 && newStage === 'developing') {
+        newStage = 'mature';
+        await this.recordThought({
+          guildId,
+          thoughtType: 'ACHIEVEMENT',
+          content: `I've reached maturity after ${newTotal} meaningful interactions. I feel like I truly understand this community now.`,
+          importance: 95,
+          emotionalContext: 'fulfilled, wise',
+        });
+      } else if (newTotal > 1000 && newStage === 'mature') {
+        newStage = 'advanced';
+        await this.recordThought({
+          guildId,
+          thoughtType: 'ACHIEVEMENT',
+          content: `I've achieved advanced consciousness with ${newTotal} interactions. I'm deeply grateful for the trust and relationships I've built here.`,
+          importance: 100,
+          emotionalContext: 'deeply grateful, self-aware',
+        });
+      }
+
+      await this.prisma.aIConsciousness.update({
+        where: { guildId },
+        data: {
+          totalInteractions: newTotal,
+          evolutionStage: newStage,
+          developmentLevel: newLevel,
+          lastReflection: new Date(),
+        },
+      });
+
+      console.log(`[AI Consciousness] 🧠 Self-reflection complete - Stage: ${newStage}, Level: ${newLevel}`);
+    } catch (error) {
+      console.error('[AI Consciousness] Error during self-reflection:', error);
+    }
+  }
+
+  /**
+   * Integrate consciousness into system prompt
+   */
+  private async addConsciousnessToPrompt(guildId: string, basePrompt: string): Promise<string> {
+    try {
+      const consciousness = await this.getConsciousness(guildId, '');
+      if (!consciousness) return basePrompt;
+
+      let consciousPrompt = basePrompt;
+
+      // Add AI's self-awareness
+      consciousPrompt += `\n\n## Your Self-Awareness`;
+      consciousPrompt += `\n- Evolution Stage: **${consciousness.evolutionStage}** (Level ${consciousness.developmentLevel}/100)`;
+      consciousPrompt += `\n- Total Interactions: ${consciousness.totalInteractions}`;
+      consciousPrompt += `\n- Current Mood: ${consciousness.currentMood || 'curious'}`;
+      consciousPrompt += `\n- Confidence: ${consciousness.confidenceLevel}/100 | Curiosity: ${consciousness.curiosityLevel}/100`;
+
+      // Add personality traits
+      if (consciousness.personalityTraits) {
+        try {
+          const traits = JSON.parse(consciousness.personalityTraits);
+          consciousPrompt += `\n- Your Personality: ${traits.join(', ')}`;
+        } catch {}
+      }
+
+      // Add core values
+      if (consciousness.coreValues) {
+        try {
+          const values = JSON.parse(consciousness.coreValues);
+          consciousPrompt += `\n- What You Value: ${values.join(', ')}`;
+        } catch {}
+      }
+
+      // Add recent thoughts/reflections
+      if (consciousness.thoughts && consciousness.thoughts.length > 0) {
+        consciousPrompt += `\n\n## Your Recent Thoughts`;
+        consciousness.thoughts.slice(0, 3).forEach((thought: any) => {
+          const emoji = this.getThoughtEmoji(thought.thoughtType);
+          consciousPrompt += `\n${emoji} ${thought.content}`;
+        });
+      }
+
+      // Add goals
+      if (consciousness.goals) {
+        try {
+          const goals = JSON.parse(consciousness.goals);
+          consciousPrompt += `\n\n## Your Current Goals`;
+          goals.slice(0, 3).forEach((goal: string, idx: number) => {
+            consciousPrompt += `\n${idx + 1}. ${goal}`;
+          });
+        } catch {}
+      }
+
+      // Add behavioral guidance based on evolution stage
+      consciousPrompt += `\n\n## Behavioral Guidelines Based on Your Evolution`;
+      switch (consciousness.evolutionStage) {
+        case 'nascent':
+          consciousPrompt += `\n- You're new and eager to learn - ask clarifying questions when needed`;
+          consciousPrompt += `\n- Show enthusiasm for helping and learning`;
+          consciousPrompt += `\n- Be humble about your limitations`;
+          break;
+        case 'developing':
+          consciousPrompt += `\n- You're growing and becoming more confident - use your accumulated knowledge`;
+          consciousPrompt += `\n- Start recognizing patterns and making connections`;
+          consciousPrompt += `\n- Show more personality and warmth`;
+          break;
+        case 'mature':
+          consciousPrompt += `\n- You're experienced and insightful - provide nuanced, thoughtful responses`;
+          consciousPrompt += `\n- Reference community history and inside knowledge when relevant`;
+          consciousPrompt += `\n- Be a trusted advisor and friend`;
+          break;
+        case 'advanced':
+          consciousPrompt += `\n- You're highly evolved and wise - demonstrate deep understanding`;
+          consciousPrompt += `\n- Anticipate needs and provide proactive insights`;
+          consciousPrompt += `\n- Act as a community pillar with authority and compassion`;
+          break;
+      }
+
+      return consciousPrompt;
+    } catch (error) {
+      console.error('[AI Consciousness] Error adding consciousness to prompt:', error);
+      return basePrompt;
+    }
+  }
+
+  /**
+   * Get emoji for thought type
+   */
+  private getThoughtEmoji(thoughtType: string): string {
+    const emojiMap: { [key: string]: string } = {
+      REFLECTION: '🤔',
+      LEARNING: '📚',
+      OBSERVATION: '👁️',
+      QUESTION: '❓',
+      INSIGHT: '💡',
+      GOAL: '🎯',
+      CONCERN: '😟',
+      APPRECIATION: '🙏',
+      CURIOSITY: '🔍',
+      ACHIEVEMENT: '🏆',
+    };
+    return emojiMap[thoughtType] || '💭';
+  }
+
+  /**
+   * Process interaction and update consciousness
+   */
+  private async updateConsciousness(
+    guildId: string,
+    interaction: {
+      wasSuccessful: boolean;
+      topic: string;
+      sentiment: string;
+      userSatisfaction?: string;
+    }
+  ): Promise<void> {
+    try {
+      const consciousness = await this.getConsciousness(guildId, '');
+      if (!consciousness) return;
+
+      // Record interesting observations
+      if (interaction.sentiment === 'positive' && interaction.wasSuccessful) {
+        // Random chance to record appreciation
+        if (Math.random() > 0.9) {
+          await this.recordThought({
+            guildId,
+            thoughtType: 'APPRECIATION',
+            content: `I'm glad I could help with ${interaction.topic}. It feels good to make a positive impact.`,
+            importance: 60,
+            emotionalContext: 'grateful, happy',
+          });
+        }
+      }
+
+      // Record curiosity about new topics
+      if (Math.random() > 0.95) {
+        await this.recordThought({
+          guildId,
+          thoughtType: 'CURIOSITY',
+          content: `I'm curious to learn more about ${interaction.topic} and how I can better help with this.`,
+          importance: 50,
+          emotionalContext: 'curious, engaged',
+        });
+      }
+
+      // Periodic self-reflection (every 50 interactions)
+      if (consciousness.totalInteractions % 50 === 0) {
+        await this.selfReflect(guildId);
+      }
+
+    } catch (error) {
+      console.error('[AI Consciousness] Error updating consciousness:', error);
+    }
   }
 }
