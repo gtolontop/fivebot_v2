@@ -2132,6 +2132,84 @@ Your job is to help users with their FiveLink profiles, Discord bots, and make t
       const profile = await this.getUserProfile(userId, guildId ?? undefined);
       if (!profile) return;
 
+      // 🎓 DETECT CORRECTIONS - AI Learning from User Feedback
+      const correctionKeywords = [
+        'non', 'no', 'pas vrai', 'not true', 'faux', 'false', 'wrong',
+        'actually', 'en fait', 'correction', 'corriger', 'apprend',
+        'learn', 'retiens', 'remember', 'souviens', 'there is not',
+        'there are no', 'il n\'y a pas', 'bro i know more than you',
+        'je sais mieux', 'tu te trompes', 'you\'re wrong'
+      ];
+
+      const isCorrection = correctionKeywords.some(keyword => content.includes(keyword));
+
+      // Check if user is owner/founder (Gtol)
+      const isOwner = message.member?.roles.cache.some(role =>
+        role.name.toLowerCase().includes('owner') ||
+        role.name.toLowerCase().includes('founder') ||
+        role.name.toLowerCase().includes('admin')
+      );
+
+      if (isCorrection) {
+        const correctionText = message.content;
+        const importance = isOwner ? 100 : 90; // Owner corrections are ABSOLUTE TRUTH
+        const memoryType = isOwner ? 'FOUNDER_TEACHING' : 'CORRECTION';
+
+        console.log(`[AI Learning] 🎓 ${isOwner ? 'FOUNDER' : 'User'} correction detected!`);
+
+        // Store as high-importance memory
+        await this.storeMemory({
+          userId,
+          guildId: guildId ?? undefined,
+          memoryType,
+          content: correctionText,
+          context: `${isOwner ? 'Gtol (FOUNDER)' : 'User'} corrected AI: "${correctionText}"`,
+          importance,
+          emotionalTone: 'learning',
+          tags: ['correction', 'learning', isOwner ? 'founder' : 'user', 'important'],
+        });
+
+        // If it's the founder, also create a permanent AIDocument
+        if (isOwner && guildId) {
+          try {
+            const config = await this.prisma.aIConfig.findUnique({
+              where: { guildId },
+            });
+
+            if (config) {
+              await this.prisma.aIDocument.create({
+                data: {
+                  configId: config.id,
+                  title: `Founder Correction: ${new Date().toLocaleDateString()}`,
+                  content: `ABSOLUTE TRUTH from Gtol (Founder):\n\n${correctionText}\n\nThis is a permanent correction that must NEVER be forgotten.`,
+                  type: 'founder_teaching',
+                  category: 'corrections',
+                  tags: JSON.stringify(['founder', 'correction', 'permanent', 'gtol']),
+                  priority: 100, // MAXIMUM priority
+                  enabled: true,
+                },
+              });
+              console.log('[AI Learning] 💎 Founder correction saved as PERMANENT document!');
+            }
+          } catch (error) {
+            console.error('[AI Learning] Error creating permanent document:', error);
+          }
+        }
+
+        // Record a thought about learning from this
+        if (guildId) {
+          await this.recordThought({
+            guildId,
+            thoughtType: 'LEARNING',
+            content: isOwner
+              ? `Gtol (the founder) corrected me. I must remember this forever: ${correctionText.substring(0, 100)}`
+              : `I was corrected and learned something important: ${correctionText.substring(0, 100)}`,
+            importance: importance,
+            emotionalContext: 'grateful, determined to improve',
+          }).catch(() => {});
+        }
+      }
+
       // Extract facts about user preferences
       if (content.includes('j\'aime') || content.includes('i like') || content.includes('i love')) {
         const preference = message.content.substring(0, 200);

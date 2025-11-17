@@ -855,6 +855,8 @@ enum MemoryType {
   SKILL // "Expert in React development"
   GOAL // "Working on building a Discord bot"
   CONTEXT // "Usually asks about bot deployment"
+  CORRECTION // "User corrected AI mistake - learn from this!"
+  FOUNDER_TEACHING // "Gtol (founder) taught AI something - absolute truth"
 }
 
 // ==================== AI CONSCIOUSNESS SYSTEM ====================
