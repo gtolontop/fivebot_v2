@@ -1967,7 +1967,7 @@ Your job is to help users with their FiveLink profiles, Discord bots, and make t
         where: {
           userId_guildId: {
             userId,
-            guildId: guildId || null,
+            guildId: guildId ?? null,
           },
         },
         include: {
@@ -1989,7 +1989,7 @@ Your job is to help users with their FiveLink profiles, Discord bots, and make t
         profile = await this.prisma.aIUserProfile.create({
           data: {
             userId,
-            guildId: guildId || null,
+            guildId: guildId ?? null,
             relationshipLevel: 'stranger',
             trustLevel: 0,
             humorLevel: 50,
@@ -2096,8 +2096,8 @@ Your job is to help users with their FiveLink profiles, Discord bots, and make t
       });
 
       // Sort by relevance and take top 5
-      scoredMemories.sort((a, b) => b.relevanceScore - a.relevanceScore);
-      const topMemories = scoredMemories.slice(0, 5).map((sm) => sm.memory);
+      scoredMemories.sort((a: any, b: any) => b.relevanceScore - a.relevanceScore);
+      const topMemories = scoredMemories.slice(0, 5).map((sm: any) => sm.memory);
 
       // Update access count and last accessed for retrieved memories
       for (const memory of topMemories) {
@@ -2131,7 +2131,7 @@ Your job is to help users with their FiveLink profiles, Discord bots, and make t
         const preference = message.content.substring(0, 200);
         await this.storeMemory({
           userId,
-          guildId: guildId || undefined,
+          guildId: guildId ?? undefined,
           memoryType: 'PREFERENCE',
           content: preference,
           context: `User expressed: "${preference}"`,
@@ -2146,7 +2146,7 @@ Your job is to help users with their FiveLink profiles, Discord bots, and make t
         const goal = message.content.substring(0, 200);
         await this.storeMemory({
           userId,
-          guildId: guildId || undefined,
+          guildId: guildId ?? undefined,
           memoryType: 'GOAL',
           content: goal,
           context: 'User mentioned a project/goal',
@@ -2160,7 +2160,7 @@ Your job is to help users with their FiveLink profiles, Discord bots, and make t
         const skill = message.content.substring(0, 200);
         await this.storeMemory({
           userId,
-          guildId: guildId || undefined,
+          guildId: guildId ?? undefined,
           memoryType: 'SKILL',
           content: skill,
           context: 'User mentioned their expertise',
@@ -2175,7 +2175,7 @@ Your job is to help users with their FiveLink profiles, Discord bots, and make t
       if (hasNegative) {
         await this.storeMemory({
           userId,
-          guildId: guildId || undefined,
+          guildId: guildId ?? undefined,
           memoryType: 'EMOTION',
           content: `User was frustrated about: ${message.content.substring(0, 150)}`,
           context: 'Detected frustration',
@@ -2189,7 +2189,7 @@ Your job is to help users with their FiveLink profiles, Discord bots, and make t
       if (content.includes('😂') || content.includes('lol') || content.includes('mdr') || content.includes('haha')) {
         await this.storeMemory({
           userId,
-          guildId: guildId || undefined,
+          guildId: guildId ?? undefined,
           memoryType: 'JOKE',
           content: `Found ${message.content.substring(0, 100)} funny`,
           context: 'User laughed',
