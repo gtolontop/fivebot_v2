@@ -51,17 +51,13 @@ export async function syncTicketConfigFromDashboard(guildId: string, botId: stri
       guildId,
       botId,
       supportCategoryId: botConfig.ticketCategoryId || ticketData.supportCategoryId || null,
+      staffRoles: staffRoles.length > 0 ? staffRoles : null,
       transcriptChannelId: botConfig.ticketTranscriptChannelId || ticketData.transcriptChannelId || null,
       namingPattern: ticketData.namingPattern || 'ticket-{counter}',
       maxTicketsPerUser: ticketData.maxTicketsPerUser || 3,
       categories: ticketData.categories ? JSON.stringify(ticketData.categories) : null,
       panels: ticketData.panels ? JSON.stringify(ticketData.panels) : null
     };
-
-    // Add staffRoles only if there are values (JSON fields can't be null in Prisma)
-    if (staffRoles.length > 0) {
-      syncData.staffRoles = staffRoles;
-    }
 
     // Check if ticket config exists
     const existingConfig = await prisma.ticketConfig.findUnique({

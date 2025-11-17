@@ -100,7 +100,9 @@
       "Bash(ssh -o StrictHostKeyChecking=no root@83.150.218.68 \"su - fivebot -c ''cd ~/app && git pull && cd backend && npx prisma migrate deploy && npx prisma generate && npm run build && pm2 restart all''\")",
       "Bash(ssh -o StrictHostKeyChecking=no root@83.150.218.68 \"su - fivebot -c ''pm2 logs fivebot-api --lines 20 --nostream''\")",
       "Bash(ssh:*)",
-      "Bash(fi)"
+      "Bash(fi)",
+      "Bash(git checkout:*)",
+      "Bash(sshpass -p 'P#%7_HwS' ssh -o StrictHostKeyChecking=no root@83.150.218.68 \"su - fivebot -c ''cd ~/app && git pull && cd backend && npx prisma migrate deploy && cd ../bot-template && npm run build && pm2 restart all''\")"
     ],
     "deny": [],
     "ask": [],
