@@ -2062,7 +2062,7 @@ Your job is to help users with their FiveLink profiles, Discord bots, and make t
    */
   private async getRelevantMemories(userId: string, guildId: string | null, messageContent: string): Promise<any[]> {
     try {
-      const profile = await this.getUserProfile(userId, guildId);
+      const profile = await this.getUserProfile(userId, guildId ?? undefined);
       if (!profile || !profile.memories || profile.memories.length === 0) {
         return [];
       }
@@ -2123,7 +2123,7 @@ Your job is to help users with their FiveLink profiles, Discord bots, and make t
   private async extractAndStoreMemories(userId: string, guildId: string | null, message: Message, aiResponse: string): Promise<void> {
     try {
       const content = message.content.toLowerCase();
-      const profile = await this.getUserProfile(userId, guildId);
+      const profile = await this.getUserProfile(userId, guildId ?? undefined);
       if (!profile) return;
 
       // Extract facts about user preferences
@@ -2253,7 +2253,7 @@ Your job is to help users with their FiveLink profiles, Discord bots, and make t
     basePrompt: string
   ): Promise<string> {
     try {
-      const profile = await this.getUserProfile(userId, guildId);
+      const profile = await this.getUserProfile(userId, guildId ?? undefined);
       if (!profile) return basePrompt;
 
       const memories = await this.getRelevantMemories(userId, guildId, messageContent);
