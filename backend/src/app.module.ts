@@ -4,6 +4,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { ScheduleModule } from '@nestjs/schedule';
 
 import { AppService } from './app.service';
+import { LoggerModule } from './common/logger';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { CacheModule } from './common/cache/cache.module';
 import { RedisModule } from './common/redis/redis.module';
@@ -31,6 +32,7 @@ import { AdminModule } from './modules/admin/admin.module';
       limit: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
     }),
     ScheduleModule.forRoot(),
+    LoggerModule,
     PrismaModule,
     CacheModule,
     RedisModule, // Already imported - Redis for shared bot state

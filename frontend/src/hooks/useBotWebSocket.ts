@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import Cookies from 'js-cookie';
+import logger from '@/utils/logger';
 
 export interface LogEntry {
   botId: string;
@@ -59,11 +60,11 @@ export function useBotWebSocket(options: UseBotWebSocketOptions): UseBotWebSocke
 
     const token = Cookies.get('token');
     if (!token) {
-      console.warn('No auth token available for WebSocket');
+      logger.warn('No auth token available for WebSocket');
       return;
     }
 
-    console.log(`[WS] Connecting to ${WS_URL}/ws`);
+    logger.log(`[WS] Connecting to ${WS_URL}/ws`);
 
     const socket = io(`${WS_URL}/ws`, {
       transports: ['websocket', 'polling'],
@@ -77,7 +78,7 @@ export function useBotWebSocket(options: UseBotWebSocketOptions): UseBotWebSocke
     });
 
     socket.on('connect', () => {
-      console.log('[WS] Connected');
+      logger.log('[WS] Connected');
       setConnected(true);
       reconnectAttempts.current = 0;
       onConnect?.();
@@ -89,22 +90,22 @@ export function useBotWebSocket(options: UseBotWebSocketOptions): UseBotWebSocke
     });
 
     socket.on('connected', (data) => {
-      console.log('[WS] Server confirmed connection:', data);
+      logger.log('[WS] Server confirmed connection:', data);
     });
 
     socket.on('disconnect', (reason) => {
-      console.log('[WS] Disconnected:', reason);
+      logger.log('[WS] Disconnected:', reason);
       setConnected(false);
       onDisconnect?.();
     });
 
     socket.on('connect_error', (error) => {
-      console.error('[WS] Connection error:', error);
+      logger.error('[WS] Connection error:', error);
       reconnectAttempts.current++;
       onError?.(error);
 
       if (reconnectAttempts.current >= maxReconnectAttempts) {
-        console.log('[WS] Max reconnection attempts reached, falling back to polling');
+        logger.log('[WS] Max reconnection attempts reached, falling back to polling');
       }
     });
 
@@ -127,7 +128,7 @@ export function useBotWebSocket(options: UseBotWebSocketOptions): UseBotWebSocke
     });
 
     socket.on('error', (error: { message: string }) => {
-      console.error('[WS] Server error:', error.message);
+      logger.error('[WS] Server error:', error.message);
       onError?.(new Error(error.message));
     });
 
@@ -137,7 +138,7 @@ export function useBotWebSocket(options: UseBotWebSocketOptions): UseBotWebSocke
   // Subscribe to a bot
   const subscribe = useCallback(() => {
     if (!socketRef.current?.connected) {
-      console.log('[WS] Not connected, will subscribe after connection');
+      logger.log('[WS] Not connected, will subscribe after connection');
       isSubscribed.current = true;
       initSocket();
       return;
@@ -147,7 +148,7 @@ export function useBotWebSocket(options: UseBotWebSocketOptions): UseBotWebSocke
 
     socketRef.current.emit('subscribe:bot', { botId }, (response: any) => {
       if (response.success) {
-        console.log(`[WS] Subscribed to bot ${botId}`);
+        logger.log(`[WS] Subscribed to bot ${botId}`);
         setStatus(response.status || 'offline');
 
         // Load initial logs if provided
@@ -159,7 +160,7 @@ export function useBotWebSocket(options: UseBotWebSocketOptions): UseBotWebSocke
           setLogs(normalizedLogs);
         }
       } else {
-        console.error('[WS] Failed to subscribe:', response.error);
+        logger.error('[WS] Failed to subscribe:', response.error);
       }
     });
   }, [botId, initSocket]);
@@ -172,7 +173,7 @@ export function useBotWebSocket(options: UseBotWebSocketOptions): UseBotWebSocke
 
     socketRef.current.emit('unsubscribe:bot', { botId }, (response: any) => {
       if (response.success) {
-        console.log(`[WS] Unsubscribed from bot ${botId}`);
+        logger.log(`[WS] Unsubscribed from bot ${botId}`);
       }
     });
   }, [botId]);
@@ -290,7 +291,7 @@ export function useBotPolling(botId: string, interval = 3000) {
         }
       }
     } catch (error) {
-      console.error('Failed to fetch logs:', error);
+      logger.error('Failed to fetch logs:', error);
     } finally {
       setLoading(false);
     }
