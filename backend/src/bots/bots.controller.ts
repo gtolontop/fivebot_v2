@@ -32,51 +32,12 @@ import { CollaboratorsService } from './collaborators.service';
 import { EventsService } from '../common/events/events.service';
 import { PermissionsGuard, RequirePermissions, Permissions } from '../common/guards/permissions.guard';
 import { LogLevel } from '@prisma/client';
-
-interface CreateBotDto {
-  name: string;
-  token: string;
-}
-
-interface UpdateBotConfigDto {
-  welcomeEnabled?: boolean;
-  welcomeChannelId?: string;
-  welcomeEmbedJson?: any;
-  welcomeLogoUrl?: string;
-  welcomeThumbnailUrl?: string;
-  goodbyeEnabled?: boolean;
-  goodbyeChannelId?: string;
-  moderationEnabled?: boolean;
-  autoRoleEnabled?: boolean;
-  autoRoleId?: string;
-  autoRoleIds?: string[];
-  loggingChannelId?: string;
-  customCommands?: any;
-  ticketEnabled?: boolean;
-  ticketCategoryId?: string;
-  ticketStaffRoleId?: string;
-  ticketTranscriptChannelId?: string;
-  ticketNamingFormat?: string;
-  maxTicketsPerUser?: number;
-  autoCloseHours?: number;
-  inactivityWarningHours?: number;
-  ticketThreads?: boolean;
-  ticketMentionStaff?: boolean;
-  ticketDMNotifications?: boolean;
-  ticketRequireReason?: boolean;
-  autoSaveTranscripts?: boolean;
-  sendTranscriptToUser?: boolean;
-  includeAttachments?: boolean;
-  autoWelcomeEnabled?: boolean;
-  autoWelcomeMessage?: string;
-  inactivityWarningEnabled?: boolean;
-  inactivityWarningMessage?: string;
-  autoAssignStaff?: boolean;
-  autoTagUrgent?: boolean;
-  autoEscalate?: boolean;
-  statusRotation?: string;
-  embedV2Commands?: string;
-}
+import {
+  AuthenticatedRequest,
+  CreateBotDto,
+  UpdateBotConfigDto,
+  DiscordGuild,
+} from '../common/types';
 
 @Controller('bots')
 export class BotsController {

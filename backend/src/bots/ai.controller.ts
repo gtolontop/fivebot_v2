@@ -8,10 +8,11 @@ import {
   Param,
   Query,
   UseGuards,
-  Request,
+  Req,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AIService } from './ai.service';
+import { AuthenticatedRequest, AIConfigDto, AIDocumentDto } from '../common/types';
 
 @Controller('bots/:botId/ai')
 @UseGuards(JwtAuthGuard)
@@ -22,23 +23,31 @@ export class AIController {
   async getConfig(
     @Param('botId') botId: string,
     @Query('guildId') guildId: string,
-    @Request() req: any
+    @Req() req: AuthenticatedRequest
   ) {
     return this.aiService.getConfig(botId, req.user.id, guildId);
   }
 
   @Post('config')
-  async createConfig(@Param('botId') botId: string, @Body() data: any, @Request() req: any) {
+  async createConfig(
+    @Param('botId') botId: string,
+    @Body() data: AIConfigDto,
+    @Req() req: AuthenticatedRequest
+  ) {
     return this.aiService.createConfig(botId, req.user.id, data);
   }
 
   @Put('config')
-  async updateConfig(@Param('botId') botId: string, @Body() data: any, @Request() req: any) {
+  async updateConfig(
+    @Param('botId') botId: string,
+    @Body() data: Partial<AIConfigDto>,
+    @Req() req: AuthenticatedRequest
+  ) {
     return this.aiService.updateConfig(botId, req.user.id, data);
   }
 
   @Delete('config')
-  async deleteConfig(@Param('botId') botId: string, @Request() req: any) {
+  async deleteConfig(@Param('botId') botId: string, @Req() req: AuthenticatedRequest) {
     return this.aiService.deleteConfig(botId, req.user.id);
   }
 
@@ -46,7 +55,7 @@ export class AIController {
   async getUsageStats(
     @Param('botId') botId: string,
     @Query('days') days: string,
-    @Request() req: any
+    @Req() req: AuthenticatedRequest
   ) {
     return this.aiService.getUsageStats(botId, req.user.id, parseInt(days) || 30);
   }
@@ -56,7 +65,7 @@ export class AIController {
     @Param('botId') botId: string,
     @Query('limit') limit: string,
     @Query('offset') offset: string,
-    @Request() req: any
+    @Req() req: AuthenticatedRequest
   ) {
     return this.aiService.getUsage(
       botId,
@@ -72,7 +81,7 @@ export class AIController {
     @Query('limit') limit: string,
     @Query('offset') offset: string,
     @Query('channelId') channelId: string,
-    @Request() req: any
+    @Req() req: AuthenticatedRequest
   ) {
     return this.aiService.getConversations(
       botId,
@@ -84,12 +93,16 @@ export class AIController {
   }
 
   @Get('documents')
-  async getDocuments(@Param('botId') botId: string, @Request() req: any) {
+  async getDocuments(@Param('botId') botId: string, @Req() req: AuthenticatedRequest) {
     return this.aiService.getDocuments(botId, req.user.id);
   }
 
   @Post('documents')
-  async createDocument(@Param('botId') botId: string, @Body() data: any, @Request() req: any) {
+  async createDocument(
+    @Param('botId') botId: string,
+    @Body() data: AIDocumentDto,
+    @Req() req: AuthenticatedRequest
+  ) {
     return this.aiService.createDocument(botId, req.user.id, data);
   }
 
@@ -97,8 +110,8 @@ export class AIController {
   async updateDocument(
     @Param('botId') botId: string,
     @Param('docId') docId: string,
-    @Body() data: any,
-    @Request() req: any
+    @Body() data: Partial<AIDocumentDto>,
+    @Req() req: AuthenticatedRequest
   ) {
     return this.aiService.updateDocument(botId, req.user.id, docId, data);
   }
@@ -107,13 +120,17 @@ export class AIController {
   async deleteDocument(
     @Param('botId') botId: string,
     @Param('docId') docId: string,
-    @Request() req: any
+    @Req() req: AuthenticatedRequest
   ) {
     return this.aiService.deleteDocument(botId, req.user.id, docId);
   }
 
   @Post('test')
-  async testConfig(@Param('botId') botId: string, @Body() data: any, @Request() req: any) {
+  async testConfig(
+    @Param('botId') botId: string,
+    @Body() data: { message: string },
+    @Req() req: AuthenticatedRequest
+  ) {
     return this.aiService.testConfiguration(botId, req.user.id, data);
   }
 }

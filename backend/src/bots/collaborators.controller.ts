@@ -17,19 +17,11 @@ import { CollaboratorsService } from './collaborators.service';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '@prisma/client';
-
-interface InviteCollaboratorDto {
-  userDiscordId: string;
-  role: 'VIEWER' | 'MODERATOR' | 'DEVELOPER' | 'ADMIN';
-  permissions?: any;
-  message?: string;
-}
-
-interface UpdateCollaboratorDto {
-  role?: 'VIEWER' | 'MODERATOR' | 'DEVELOPER' | 'ADMIN';
-  permissions?: any;
-  status?: 'ACTIVE' | 'SUSPENDED' | 'REVOKED';
-}
+import {
+  AuthenticatedRequest,
+  InviteCollaboratorDto,
+  UpdateCollaboratorDto,
+} from '../common/types';
 
 @Controller('bots')
 @UseGuards(AuthGuard('jwt'))
@@ -41,7 +33,7 @@ export class CollaboratorsController {
   ) {}
 
   @Get(':botId/collaborators')
-  async getCollaborators(@Param('botId') botId: string, @Req() req: any) {
+  async getCollaborators(@Param('botId') botId: string, @Req() req: AuthenticatedRequest) {
     // Vérifier que l'utilisateur a accès au bot
     await this.verifyBotAccess(botId, req.user.id);
 
@@ -70,12 +62,10 @@ export class CollaboratorsController {
   async inviteCollaborator(
     @Param('botId') botId: string,
     @Body() dto: InviteCollaboratorDto,
-    @Req() req: any,
+    @Req() req: AuthenticatedRequest,
   ) {
     // Vérifier que l'utilisateur est propriétaire ou admin du bot
     await this.verifyBotOwnerOrAdmin(botId, req.user.id);
-
-    console.log('[COLLABORATOR INVITE] Searching for Discord ID:', dto.userDiscordId);
 
     // Normaliser le Discord ID (enlever les espaces)
     const normalizedDiscordId = dto.userDiscordId.trim();
@@ -98,15 +88,7 @@ export class CollaboratorsController {
       });
     }
 
-    console.log('[COLLABORATOR INVITE] Target user found:', targetUser ? `${targetUser.username} (${targetUser.id})` : 'NOT FOUND');
-
     if (!targetUser) {
-      // List all users to help debug
-      const allUsers = await this.prisma.user.findMany({
-        select: { id: true, username: true, discordId: true },
-        take: 10,
-      });
-      console.log('[COLLABORATOR INVITE] Available users:', allUsers);
       throw new NotFoundException(`User not found on the platform. Discord ID searched: ${normalizedDiscordId}`);
     }
 
