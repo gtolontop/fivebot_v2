@@ -165,6 +165,14 @@ export class CommandService {
           await this.handleDeleteTicket(command.data);
           break;
 
+        case 'UPDATE_TICKET_PANEL':
+          await this.handleUpdateTicketPanel(command.data);
+          break;
+
+        case 'DELETE_TICKET_PANEL':
+          await this.handleDeleteTicketPanel(command.data);
+          break;
+
         case 'UPDATE_CONFIG':
           await this.handleUpdateConfig(command.data);
           break;
@@ -460,5 +468,80 @@ export class CommandService {
         state: 'CLOSED'
       }
     });
+  }
+
+  private async handleUpdateTicketPanel(data: any) {
+    if (!this.ticketPanelService) {
+      console.warn('[CommandService] Ticket panel service not initialized');
+      return;
+    }
+
+    const guild = this.client.guilds.cache.first();
+    if (!guild) {
+      throw new Error('Bot is not in any guild');
+    }
+
+    console.log('[CommandService] Updating ticket panel:', data.id);
+
+    // Get the panel from database
+    const panel = await this.prisma.ticketPanel.findUnique({
+      where: { id: data.id }
+    });
+
+    if (!panel) {
+      // Panel might be stored in config JSON, try to update via service
+      await this.ticketPanelService.createPanel(
+        guild,
+        data.channelId,
+        data.type || 'BUTTON',
+        {
+          title: data.title,
+          description: data.description,
+          color: data.color
+        },
+        data.categories || []
+      );
+      return;
+    }
+
+    // Update existing panel
+    const success = await this.ticketPanelService.updatePanel(panel, guild);
+    if (!success) {
+      throw new Error('Failed to update panel in Discord');
+    }
+
+    console.log('[CommandService] Panel updated successfully');
+  }
+
+  private async handleDeleteTicketPanel(data: any) {
+    const { panelId, channelId, messageId } = data;
+
+    console.log('[CommandService] Deleting ticket panel:', panelId);
+
+    // Try to delete the message from Discord
+    if (channelId && messageId) {
+      try {
+        const channel = this.client.channels.cache.get(channelId);
+        if (channel && channel.isTextBased()) {
+          const message = await (channel as any).messages.fetch(messageId);
+          if (message) {
+            await message.delete();
+            console.log('[CommandService] Panel message deleted from Discord');
+          }
+        }
+      } catch (error) {
+        console.warn('[CommandService] Could not delete panel message:', error);
+      }
+    }
+
+    // Delete from database if it exists there
+    try {
+      await this.prisma.ticketPanel.delete({
+        where: { id: panelId }
+      });
+    } catch (error) {
+      // Panel might be stored in config JSON, not as separate record
+      console.log('[CommandService] Panel not found in database (may be in config JSON)');
+    }
   }
 }

@@ -17,10 +17,33 @@ export default function AccountPage() {
     logout();
   };
 
-  const handleDeleteAccount = () => {
-    if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-      // TODO: Implement account deletion
-      alert('Account deletion will be implemented soon');
+  const handleDeleteAccount = async () => {
+    if (confirm('Are you sure you want to delete your account? This action cannot be undone. All your bots and data will be permanently deleted.')) {
+      const confirmation = prompt('Type DELETE to confirm account deletion:');
+      if (confirmation !== 'DELETE') {
+        alert('Account deletion cancelled.');
+        return;
+      }
+
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to delete account');
+        }
+
+        alert('Account deleted successfully. You will be redirected to the login page.');
+        logout();
+      } catch (error) {
+        console.error('Error deleting account:', error);
+        alert('Failed to delete account. Please try again later.');
+      }
     }
   };
 

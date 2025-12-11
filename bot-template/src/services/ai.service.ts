@@ -1,6 +1,7 @@
 import { Client, Message, EmbedBuilder } from 'discord.js';
 import OpenAI from 'openai';
 import { PrismaClient } from '@prisma/client';
+import * as crypto from 'crypto';
 
 interface AIConfig {
   id: string;
@@ -1298,14 +1299,57 @@ Your job is to help users with their FiveLink profiles, Discord bots, and make t
   }
 
   private decryptApiKey(encryptedKey: string): string {
-    // TODO: Implement actual encryption/decryption
-    // For now, return as-is (should be encrypted in production)
-    return encryptedKey;
+    // If key doesn't contain ':', it's not encrypted - return as-is
+    if (!encryptedKey.includes(':')) {
+      return encryptedKey;
+    }
+
+    try {
+      const encryptionKey = process.env.ENCRYPTION_KEY;
+      if (!encryptionKey) {
+        console.warn('[AIService] ENCRYPTION_KEY not set, returning key as-is');
+        return encryptedKey;
+      }
+
+      const [ivHex, encryptedHex] = encryptedKey.split(':');
+      const iv = Buffer.from(ivHex, 'hex');
+      const encrypted = Buffer.from(encryptedHex, 'hex');
+
+      // Create key from ENCRYPTION_KEY (must be 32 bytes for AES-256)
+      const key = crypto.scryptSync(encryptionKey, 'salt', 32);
+
+      const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+      let decrypted = decipher.update(encrypted);
+      decrypted = Buffer.concat([decrypted, decipher.final()]);
+
+      return decrypted.toString('utf8');
+    } catch (error) {
+      console.error('[AIService] Decryption failed:', error);
+      // Return the key as-is if decryption fails (might not be encrypted)
+      return encryptedKey;
+    }
   }
 
   private encryptApiKey(plainKey: string): string {
-    // TODO: Implement actual encryption
-    return plainKey;
+    try {
+      const encryptionKey = process.env.ENCRYPTION_KEY;
+      if (!encryptionKey) {
+        console.warn('[AIService] ENCRYPTION_KEY not set, returning key as-is');
+        return plainKey;
+      }
+
+      const iv = crypto.randomBytes(16);
+      const key = crypto.scryptSync(encryptionKey, 'salt', 32);
+
+      const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+      let encrypted = cipher.update(plainKey, 'utf8');
+      encrypted = Buffer.concat([encrypted, cipher.final()]);
+
+      return `${iv.toString('hex')}:${encrypted.toString('hex')}`;
+    } catch (error) {
+      console.error('[AIService] Encryption failed:', error);
+      return plainKey;
+    }
   }
 
   async getUsageStats(configId: string, days: number = 30): Promise<any> {
