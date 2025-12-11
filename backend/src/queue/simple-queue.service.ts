@@ -305,6 +305,9 @@ export class SimpleQueueService implements IQueueService {
         return;
       }
 
+      // Notify console buffer that bot is starting
+      this.consoleBufferService.onBotStarting(botId);
+
       // Decrypt bot token
       const decryptedToken = this.encryptionService.decrypt(bot.tokenEncrypted);
 
@@ -535,14 +538,11 @@ export class SimpleQueueService implements IQueueService {
           }
         }
 
-        // Clear console buffer since bot is offline
+        // Notify console buffer that bot is offline (keeps logs, doesn't clear)
         try {
-          const consoleBufferService = this.botLogsService['consoleBufferService'];
-          if (consoleBufferService) {
-            consoleBufferService.onBotOffline(botId);
-          }
+          this.consoleBufferService.onBotOffline(botId);
         } catch (error) {
-          console.error('Failed to clear console buffer:', error);
+          console.error('Failed to notify console buffer:', error);
         }
       });
 
@@ -572,6 +572,9 @@ export class SimpleQueueService implements IQueueService {
         });
 
         console.log(`✅ Bot "${bot.name}" (owner: ${bot.owner.username}) started successfully`);
+
+        // Notify console buffer that bot is now online
+        this.consoleBufferService.onBotOnline(botId);
 
         // Add Pterodactyl-style server online message (after bot logs "fully operational")
         // Wait a bit more to ensure bot's final log is captured first
@@ -807,14 +810,8 @@ export class SimpleQueueService implements IQueueService {
 
       console.log(`✅ Bot "${botName}" stopped successfully and status updated to OFFLINE`);
 
-      // NOW clear console and add offline message (after process is killed)
-      this.consoleBufferService.clearBuffer(botId);
-      await this.botLogsService.addLog(
-        botId,
-        LogLevel.INFO,
-        'Server marked as offline',
-        'container'
-      );
+      // Notify console buffer that bot is offline (keeps logs for debugging)
+      this.consoleBufferService.onBotOffline(botId);
       
     } catch (error) {
       console.error(`❌ Failed to stop bot ${botId}:`, error);

@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { EncryptionService } from '../common/encryption/encryption.service';
 import { BotsService } from './bots.service';
 import OpenAI from 'openai';
 
@@ -7,6 +8,7 @@ import OpenAI from 'openai';
 export class AIService {
   constructor(
     private prisma: PrismaService,
+    private encryptionService: EncryptionService,
     private botsService: BotsService
   ) {}
 
@@ -82,9 +84,14 @@ export class AIService {
 
     // Encrypt API key if provided
     let encryptedApiKey = data.apiKey;
-    if (data.apiKey) {
-      // TODO: Implement proper encryption
-      encryptedApiKey = data.apiKey;
+    if (data.apiKey && !data.apiKey.includes(':')) {
+      // Only encrypt if not already encrypted (encrypted format is iv:encrypted)
+      try {
+        encryptedApiKey = this.encryptionService.encrypt(data.apiKey);
+      } catch (error) {
+        console.error('Failed to encrypt API key:', error);
+        throw new Error('Failed to encrypt API key');
+      }
     }
 
     const config = await this.prisma.aIConfig.upsert({
@@ -191,9 +198,14 @@ export class AIService {
     }
 
     // Encrypt API key if provided
-    if (data.apiKey) {
-      // TODO: Implement proper encryption
-      data.apiKey = data.apiKey;
+    if (data.apiKey && !data.apiKey.includes(':')) {
+      // Only encrypt if not already encrypted
+      try {
+        data.apiKey = this.encryptionService.encrypt(data.apiKey);
+      } catch (error) {
+        console.error('Failed to encrypt API key:', error);
+        throw new Error('Failed to encrypt API key');
+      }
     }
 
     // List of valid fields in the AIConfig model

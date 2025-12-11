@@ -661,8 +661,8 @@ export class BotsService {
       }
     }
 
-    // Clear console buffer before starting
-    this.consoleBufferService.clearBuffer(botId);
+    // Soft clear console buffer before starting (keeps some history)
+    this.consoleBufferService.softClearBuffer(botId);
 
     // Only add the starting log after validation checks pass
     await this.botLogsService.addLog(
@@ -839,8 +839,8 @@ export class BotsService {
     // Update status to RESTARTING
     await this.updateStatus(botId, BotStatus.RESTARTING);
 
-    // Clear console buffer
-    this.consoleBufferService.clearBuffer(botId);
+    // Soft clear console buffer (keeps some history for debugging)
+    this.consoleBufferService.softClearBuffer(botId);
 
     // Create job log for restart
     await this.prisma.jobLog.create({
