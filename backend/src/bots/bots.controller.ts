@@ -30,6 +30,7 @@ import { BotRealtimeMetricsService } from './bot-realtime-metrics.service';
 import { BotProcessMetricsService } from './bot-process-metrics.service';
 import { CollaboratorsService } from './collaborators.service';
 import { EventsService } from '../common/events/events.service';
+import { BotHealthService, SystemHealthOverview, BotHealthMetrics } from './bot-health.service';
 import { PermissionsGuard, RequirePermissions, Permissions } from '../common/guards/permissions.guard';
 import { LogLevel } from '@prisma/client';
 import { LoggerService } from '../common/logger/logger.service';
@@ -58,6 +59,7 @@ export class BotsController {
     private ticketService: TicketService,
     private collaboratorsService: CollaboratorsService,
     private eventsService: EventsService,
+    private botHealthService: BotHealthService,
   ) {}
 
   @Post()
@@ -99,6 +101,28 @@ export class BotsController {
   @UseGuards(AuthGuard('jwt'))
   async getDashboardStats(@Req() req: any): Promise<DashboardStats> {
     return this.botMetricsService.getDashboardStats(req.user.id);
+  }
+
+  @Get('health/overview')
+  @UseGuards(AuthGuard('jwt'))
+  async getHealthOverview(@Req() req: any): Promise<SystemHealthOverview> {
+    return this.botHealthService.getUserBotsHealthOverview(req.user.id);
+  }
+
+  @Get('health/all')
+  @UseGuards(AuthGuard('jwt'))
+  async getAllBotsHealth(@Req() req: any): Promise<BotHealthMetrics[]> {
+    return this.botHealthService.getAllBotsHealth(req.user.id);
+  }
+
+  @Get(':id/health')
+  @UseGuards(AuthGuard('jwt'))
+  async getBotHealth(@Req() req: any, @Param('id') id: string): Promise<BotHealthMetrics> {
+    const health = await this.botHealthService.getBotHealth(id);
+    if (!health) {
+      throw new NotFoundException('Bot not found');
+    }
+    return health;
   }
 
   @Get('debug/running')

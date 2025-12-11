@@ -3,6 +3,7 @@ import {
   Get,
   Patch,
   Post,
+  Delete,
   Body,
   Param,
   Query,
@@ -48,6 +49,11 @@ export class UsersController {
   @Get('me/guilds')
   async getMyGuilds(@Req() req: any) {
     return this.usersService.getUserGuilds(req.user.id);
+  }
+
+  @Delete('me')
+  async deleteMyAccount(@Req() req: any) {
+    return this.usersService.deleteAccount(req.user.id);
   }
 
   @Get()
