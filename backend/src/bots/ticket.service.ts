@@ -533,7 +533,7 @@ export class TicketService {
     try {
       const data = await this.getTicketData(botId);
       const selectedCategories = data.categories.filter(c =>
-        panel.categoryIds?.includes(c.id)
+        panel.categories?.includes(c.id)
       );
 
       await this.botsService.sendCommandToBot(botId, {
