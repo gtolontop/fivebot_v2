@@ -15,6 +15,8 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { CollaboratorsService } from './collaborators.service';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '@prisma/client';
 
 interface InviteCollaboratorDto {
   userDiscordId: string;
@@ -35,6 +37,7 @@ export class CollaboratorsController {
   constructor(
     private readonly collaboratorsService: CollaboratorsService,
     private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   @Get(':botId/collaborators')
@@ -115,6 +118,7 @@ export class CollaboratorsController {
     // Vérifier que l'utilisateur n'est pas déjà le propriétaire
     const bot = await this.prisma.bot.findUnique({
       where: { id: botId },
+      select: { ownerId: true, name: true },
     });
 
     if (bot?.ownerId === targetUser.id) {
@@ -157,7 +161,14 @@ export class CollaboratorsController {
       },
     });
 
-    // TODO: Send notification to invited user
+    // Send notification to invited user (reuse bot variable from earlier)
+    await this.notificationsService.createNotification(
+      targetUser.id,
+      NotificationType.INFO,
+      'New Collaboration Invitation',
+      `You have been invited to collaborate on bot "${bot?.name || 'Unknown'}" as ${dto.role}.`,
+      { botId, collaboratorId: collaborator.id, invitedBy: req.user.username || req.user.id },
+    );
 
     return {
       ...collaborator,
@@ -227,9 +238,24 @@ export class CollaboratorsController {
 
     const removedUserId = collaborator.userId;
 
+    // Get bot info for notification
+    const bot = await this.prisma.bot.findUnique({
+      where: { id: botId },
+      select: { name: true },
+    });
+
     await this.prisma.botCollaborator.delete({
       where: { id: collaboratorId },
     });
+
+    // Notify the removed collaborator
+    await this.notificationsService.createNotification(
+      removedUserId,
+      NotificationType.WARNING,
+      'Collaboration Revoked',
+      `Your collaboration access to bot "${bot?.name || 'Unknown'}" has been revoked.`,
+      { botId, removedBy: req.user.username || req.user.id },
+    );
 
     return { success: true, message: 'Collaborator removed', removedUserId };
   }
@@ -274,6 +300,22 @@ export class CollaboratorsController {
       },
     });
 
+    // Notify the bot owner that the invitation was accepted
+    const bot = await this.prisma.bot.findUnique({
+      where: { id: botId },
+      select: { name: true, ownerId: true },
+    });
+
+    if (bot?.ownerId) {
+      await this.notificationsService.createNotification(
+        bot.ownerId,
+        NotificationType.SUCCESS,
+        'Collaboration Accepted',
+        `${req.user.username || 'A user'} has accepted your invitation to collaborate on "${bot.name}".`,
+        { botId, collaboratorId, userId: req.user.id },
+      );
+    }
+
     return {
       ...updated,
       permissions: updated.permissions ? JSON.parse(updated.permissions) : undefined,
@@ -302,9 +344,26 @@ export class CollaboratorsController {
       throw new BadRequestException('This invitation has already been processed');
     }
 
+    // Get bot info for notification
+    const bot = await this.prisma.bot.findUnique({
+      where: { id: botId },
+      select: { name: true, ownerId: true },
+    });
+
     await this.prisma.botCollaborator.delete({
       where: { id: collaboratorId },
     });
+
+    // Notify the bot owner that the invitation was declined
+    if (bot?.ownerId) {
+      await this.notificationsService.createNotification(
+        bot.ownerId,
+        NotificationType.INFO,
+        'Collaboration Declined',
+        `${req.user.username || 'A user'} has declined your invitation to collaborate on "${bot.name}".`,
+        { botId, userId: req.user.id },
+      );
+    }
 
     return { success: true, message: 'Invitation declined' };
   }

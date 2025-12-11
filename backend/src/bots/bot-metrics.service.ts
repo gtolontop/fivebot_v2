@@ -26,6 +26,7 @@ export interface DashboardStats {
   topBots: { name: string; servers: number; users: number }[];
   avgResponseTime: number;
   uptime: number;
+  activeModules: number;
 }
 
 @Injectable()
@@ -175,6 +176,7 @@ export class BotMetricsService {
           topBots: [],
           avgResponseTime: 45,
           uptime: 0,
+          activeModules: 0,
         };
       }
 
@@ -382,6 +384,23 @@ export class BotMetricsService {
     // Frontend will add the current active session time for real-time display
     const totalUptime = user?.cumulativeUptime || 0;
 
+    // Count active modules across all user's bots
+    let activeModulesCount = 0;
+    if (bots.length > 0) {
+      try {
+        const botIds = bots.map(bot => bot.id);
+        const modulesCount = await this.prisma.botModule.count({
+          where: {
+            botId: { in: botIds },
+            enabled: true,
+          },
+        });
+        activeModulesCount = modulesCount;
+      } catch (error) {
+        console.log('Failed to count active modules:', error.message);
+      }
+    }
+
       return {
         totalBots,
         activeBots,
@@ -394,6 +413,7 @@ export class BotMetricsService {
         topBots,
         avgResponseTime,
         uptime: totalUptime,
+        activeModules: activeModulesCount,
       };
     } catch (error) {
       console.error('Error in getDashboardStats:', error);
@@ -410,6 +430,7 @@ export class BotMetricsService {
         topBots: [],
         avgResponseTime: 45,
         uptime: 0,
+        activeModules: 0,
       };
     }
   }

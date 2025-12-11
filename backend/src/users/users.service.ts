@@ -157,6 +157,69 @@ export class UsersService {
     };
   }
 
+  async deleteAccount(userId: string): Promise<void> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Use a transaction to delete all user data
+    await this.prisma.$transaction(async (tx) => {
+      // Get all user's bots
+      const bots = await tx.bot.findMany({
+        where: { ownerId: userId },
+        select: { id: true }
+      });
+
+      const botIds = bots.map(b => b.id);
+
+      if (botIds.length > 0) {
+        // Delete bot-related data
+        await tx.botLog.deleteMany({ where: { botId: { in: botIds } } });
+        await tx.botMetrics.deleteMany({ where: { botId: { in: botIds } } });
+        await tx.botCommand.deleteMany({ where: { botId: { in: botIds } } });
+        await tx.botCollaborator.deleteMany({ where: { botId: { in: botIds } } });
+        await tx.botModule.deleteMany({ where: { botId: { in: botIds } } });
+        await tx.botConfig.deleteMany({ where: { botId: { in: botIds } } });
+
+        // Delete tickets and related data
+        const tickets = await tx.ticket.findMany({
+          where: { creatorId: userId },
+          select: { id: true }
+        });
+        const ticketIds = tickets.map(t => t.id);
+
+        if (ticketIds.length > 0) {
+          await tx.ticketMessage.deleteMany({ where: { ticketId: { in: ticketIds } } });
+          await tx.ticketParticipant.deleteMany({ where: { ticketId: { in: ticketIds } } });
+          await tx.ticketLog.deleteMany({ where: { ticketId: { in: ticketIds } } });
+          await tx.ticket.deleteMany({ where: { id: { in: ticketIds } } });
+        }
+
+        // Delete bots
+        await tx.bot.deleteMany({ where: { id: { in: botIds } } });
+      }
+
+      // Delete user modules
+      await tx.userModule.deleteMany({ where: { userId } });
+
+      // Delete credits history
+      await tx.creditsHistory.deleteMany({ where: { userId } });
+
+      // Delete notifications
+      await tx.notification.deleteMany({ where: { userId } });
+
+      // Delete audit logs
+      await tx.auditLog.deleteMany({ where: { userId } });
+
+      // Finally delete the user
+      await tx.user.delete({ where: { id: userId } });
+    }, {
+      maxWait: 30000,
+      timeout: 60000,
+    });
+  }
+
   async getUserGuilds(userId: string): Promise<any[]> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },

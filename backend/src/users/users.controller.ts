@@ -3,6 +3,7 @@ import {
   Get,
   Patch,
   Post,
+  Delete,
   Body,
   Param,
   Query,
@@ -43,6 +44,12 @@ export class UsersController {
     // Users can only update their own avatar (username/email are synced from Discord)
     const allowedFields = { avatar: updateData.avatar };
     return this.usersService.update(req.user.id, allowedFields);
+  }
+
+  @Delete('me')
+  async deleteMyAccount(@Req() req: any) {
+    await this.usersService.deleteAccount(req.user.id);
+    return { message: 'Account deleted successfully' };
   }
 
   @Get('me/guilds')
