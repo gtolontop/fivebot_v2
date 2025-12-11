@@ -8,6 +8,7 @@ import { UsersService } from '../users/users.service';
 import { BotLogsService } from './bot-logs.service';
 import { RedisService } from '../common/redis/redis.service';
 import { ConsoleBufferService } from './console-buffer.service';
+import { LoggerService } from '../common/logger/logger.service';
 
 interface CreateBotDto {
   name: string;
@@ -55,6 +56,8 @@ interface UpdateBotConfigDto {
 
 @Injectable()
 export class BotsService {
+  private readonly logger = new LoggerService('BotsService');
+
   constructor(
     private prisma: PrismaService,
     private encryptionService: EncryptionService,
@@ -67,12 +70,12 @@ export class BotsService {
   ) {}
 
   async create(ownerId: string, data: CreateBotDto): Promise<Bot> {
-    console.log('=== Début création bot backend ===');
-    console.log('Owner ID:', ownerId);
-    console.log('Bot data:', { name: data.name, tokenLength: data.token?.length });
+    this.logger.log('=== Début création bot backend ===');
+    this.logger.log('Owner ID:', ownerId);
+    this.logger.log('Bot data:', { name: data.name, tokenLength: data.token?.length });
 
     // Check if this token is already used by ANY user (not just current user)
-    console.log('Vérification des tokens dupliqués globalement...');
+    this.logger.log('Vérification des tokens dupliqués globalement...');
     const encryptedTokenToCheck = this.encryptionService.encrypt(data.token);
     const existingBotWithToken = await this.prisma.bot.findFirst({
       where: {
@@ -87,7 +90,7 @@ export class BotsService {
     });
 
     if (existingBotWithToken) {
-      console.log('Token déjà utilisé, arrêt');
+      this.logger.log('Token déjà utilisé, arrêt');
       // If it's the same user, different message
       if (existingBotWithToken.ownerId === ownerId) {
         throw new BadRequestException(`You already have a bot with this token: "${existingBotWithToken.name}"`);
@@ -97,12 +100,12 @@ export class BotsService {
     }
 
     // Validate bot token with Discord API
-    console.log('Validation du token Discord...');
+    this.logger.log('Validation du token Discord...');
     const tokenValidation = await this.discordService.validateBotToken(data.token);
-    console.log('Résultat validation:', { isValid: tokenValidation.isValid, error: tokenValidation.error });
+    this.logger.log('Résultat validation:', { isValid: tokenValidation.isValid, error: tokenValidation.error });
     
     if (!tokenValidation.isValid) {
-      console.log('Token invalide, arrêt');
+      this.logger.log('Token invalide, arrêt');
       throw new BadRequestException(tokenValidation.error || 'Invalid bot token');
     }
 
@@ -170,7 +173,7 @@ export class BotsService {
     });
 
     // Install core framework module automatically
-    console.log('Installation du module framework...');
+    this.logger.log('Installation du module framework...');
     try {
       const frameworkModule = await this.prisma.module.findUnique({
         where: { slug: 'framework' },
@@ -184,35 +187,35 @@ export class BotsService {
             enabled: true,
           },
         });
-        console.log('Module framework installé avec succès');
+        this.logger.log('Module framework installé avec succès');
       } else {
-        console.warn('Module framework non trouvé dans la base de données');
+        this.logger.warn('Module framework non trouvé dans la base de données');
       }
     } catch (error) {
-      console.error('Erreur lors de l\'installation du module framework:', error);
+      this.logger.error('Erreur lors de l\'installation du module framework:', error);
       // Continue anyway, non-critical
     }
 
     // Spend user credits
-    console.log('Déduction des crédits...');
+    this.logger.log('Déduction des crédits...');
     await this.usersService.spendCredits(ownerId, creditCost, `Created bot: ${data.name}`);
-    console.log('Crédits déduits');
+    this.logger.log('Crédits déduits');
 
     // Queue bot creation job (non-blocking)
-    console.log('Ajout du job en queue...');
+    this.logger.log('Ajout du job en queue...');
     try {
       await this.queueService.addJob('create-bot', {
         botId: bot.id,
         ownerId,
       });
-      console.log('Job queued successfully');
+      this.logger.log('Job queued successfully');
     } catch (error) {
-      console.error('Failed to queue job (non-critical):', error);
+      this.logger.error('Failed to queue job (non-critical):', error);
       // Continue anyway, the job queue is not critical for bot creation
     }
 
     // Log the action
-    console.log('Création du log d\'audit...');
+    this.logger.log('Création du log d\'audit...');
     await this.prisma.auditLog.create({
       data: {
         userId: ownerId,
@@ -225,9 +228,9 @@ export class BotsService {
         }),
       },
     });
-    console.log('Log d\'audit créé');
+    this.logger.log('Log d\'audit créé');
 
-    console.log('=== Bot créé avec succès ===');
+    this.logger.log('=== Bot créé avec succès ===');
     return bot;
   }
 
@@ -238,21 +241,21 @@ export class BotsService {
       try {
         config.welcomeEmbedJson = JSON.parse(config.welcomeEmbedJson);
       } catch (e) {
-        console.error('Failed to parse welcomeEmbedJson:', e);
+        this.logger.error('Failed to parse welcomeEmbedJson:', e);
       }
     }
     if (config.customCommands && typeof config.customCommands === 'string') {
       try {
         config.customCommands = JSON.parse(config.customCommands);
       } catch (e) {
-        console.error('Failed to parse customCommands:', e);
+        this.logger.error('Failed to parse customCommands:', e);
       }
     }
     if (config.ticketData && typeof config.ticketData === 'string') {
       try {
         config.ticketData = JSON.parse(config.ticketData);
       } catch (e) {
-        console.error('Failed to parse ticketData:', e);
+        this.logger.error('Failed to parse ticketData:', e);
       }
     }
   }
@@ -311,7 +314,7 @@ export class BotsService {
     // Only refresh if any bot is missing avatar or banner
     const needsRefresh = bots.some(bot => !bot.avatar || !bot.banner);
     if (needsRefresh) {
-      console.log('⚡ Some bots missing assets, refreshing...');
+      this.logger.log('⚡ Some bots missing assets, refreshing...');
       await this.refreshAllBotsAssetsSync(bots);
     }
 
@@ -350,13 +353,13 @@ export class BotsService {
 
             // If marked ONLINE but no process, quick sync
             if (bot.status === 'ONLINE' && !isProcessRunning) {
-              console.log(`🔄 Auto-syncing bot ${bot.id} (${bot.name}) - marked ONLINE but no process`);
+              this.logger.log(`🔄 Auto-syncing bot ${bot.id} (${bot.name}) - marked ONLINE but no process`);
               await this.forceSyncBotStatus(bot.id);
             }
           }
         } catch (error) {
           // Silently fail background sync to not affect user experience
-          console.error(`❌ Background sync failed for bot ${bot.id}:`, error.message);
+          this.logger.error(`❌ Background sync failed for bot ${bot.id}:`, error.message);
         }
       }
     });
@@ -544,20 +547,20 @@ export class BotsService {
     }
 
     // Validate the new token with Discord API
-    console.log('Validating new bot token with Discord...');
+    this.logger.log('Validating new bot token with Discord...');
     const tokenValidation = await this.discordService.validateBotToken(newToken);
 
     if (!tokenValidation.isValid) {
-      console.log('New token validation failed:', tokenValidation.error);
+      this.logger.log('New token validation failed:', tokenValidation.error);
       throw new BadRequestException(tokenValidation.error || 'Invalid bot token');
     }
 
-    console.log('New token validated successfully');
+    this.logger.log('New token validated successfully');
 
     // Stop the bot if it's running
     const wasRunning = bot.status === BotStatus.ONLINE;
     if (wasRunning) {
-      console.log(`Stopping bot ${botId} before token update...`);
+      this.logger.log(`Stopping bot ${botId} before token update...`);
       await this.queueService.addJob('stop-bot', { botId });
 
       // Wait a bit for the bot to stop
@@ -599,7 +602,7 @@ export class BotsService {
 
     // Restart the bot if it was running
     if (wasRunning) {
-      console.log(`Restarting bot ${botId} with new token...`);
+      this.logger.log(`Restarting bot ${botId} with new token...`);
       await this.botLogsService.addLog(
         botId,
         LogLevel.INFO,
@@ -633,7 +636,7 @@ export class BotsService {
 
     // If process is already running, just resynchronize the status
     if (isProcessRunning) {
-      console.log(`✅ Bot "${bot.name}" (owner: ${ownerUsername}) process is already running - resynchronizing status to ONLINE`);
+      this.logger.log(`✅ Bot "${bot.name}" (owner: ${ownerUsername}) process is already running - resynchronizing status to ONLINE`);
 
       // Update status to ONLINE
       await this.updateStatus(botId, BotStatus.ONLINE);
@@ -644,7 +647,7 @@ export class BotsService {
 
     // Check if bot is marked as ONLINE but process is not running
     if (bot.status === BotStatus.ONLINE && !isProcessRunning) {
-      console.log(`⚠️ Bot "${bot.name}" is marked as ONLINE but process not found - allowing restart`);
+      this.logger.log(`⚠️ Bot "${bot.name}" is marked as ONLINE but process not found - allowing restart`);
     }
 
     // If already in STARTING state, check if it's stuck
@@ -657,7 +660,7 @@ export class BotsService {
         throw new BadRequestException('Bot is already starting, please wait...');
       } else {
         // Stuck in STARTING for more than 30 seconds - allow restart
-        console.log(`⚠️ Bot "${bot.name}" stuck in STARTING state for ${timeSinceUpdate}ms - allowing restart`);
+        this.logger.log(`⚠️ Bot "${bot.name}" stuck in STARTING state for ${timeSinceUpdate}ms - allowing restart`);
       }
     }
 
@@ -672,7 +675,7 @@ export class BotsService {
       'System'
     );
 
-    console.log(`🚀 Starting bot "${bot.name}" (owner: ${ownerUsername}) - requested by user ${ownerId}`);
+    this.logger.log(`🚀 Starting bot "${bot.name}" (owner: ${ownerUsername}) - requested by user ${ownerId}`);
 
     await this.updateStatus(botId, BotStatus.STARTING);
 
@@ -708,10 +711,10 @@ export class BotsService {
         )
       ]);
     } catch (error) {
-      console.error('Warning: Queue operation delayed, continuing anyway:', error.message);
+      this.logger.error('Warning: Queue operation delayed, continuing anyway:', error.message);
       // Still try to add the job in background
-      this.queueService.addJob('start-bot', { botId }).catch(e => 
-        console.error('Background queue add failed:', e)
+      this.queueService.addJob('start-bot', { botId }).catch(e =>
+        this.logger.error('Background queue add failed:', e)
       );
     }
 
@@ -723,7 +726,7 @@ export class BotsService {
         action: 'BOT_STARTED',
         resource: 'bot',
       },
-    }).catch(error => console.error('Failed to create audit log:', error));
+    }).catch(error => this.logger.error('Failed to create audit log:', error));
 
     // Invalidate cache
     await this.invalidateBotsCache(ownerId);
@@ -738,7 +741,7 @@ export class BotsService {
     }
 
     // Force sync status before stopping to ensure accurate state
-    console.log(`🔄 Pre-stop sync for bot ${botId}`);
+    this.logger.log(`🔄 Pre-stop sync for bot ${botId}`);
     const currentStatus = await this.forceSyncBotStatus(botId);
 
     // Add simple stopping message
@@ -750,7 +753,7 @@ export class BotsService {
     );
 
     if (currentStatus === BotStatus.OFFLINE) {
-      console.log(`⚠️ Bot ${botId} was already OFFLINE after sync - skipping stop`);
+      this.logger.log(`⚠️ Bot ${botId} was already OFFLINE after sync - skipping stop`);
       // Don't add confusing log message, just return
       return bot;
     }
@@ -826,7 +829,7 @@ export class BotsService {
     });
     const ownerUsername = owner?.username || 'unknown';
 
-    console.log(`🔄 Restarting bot "${bot.name}" (owner: ${ownerUsername})`);
+    this.logger.log(`🔄 Restarting bot "${bot.name}" (owner: ${ownerUsername})`);
 
     // Add restarting log
     await this.botLogsService.addLog(
@@ -867,10 +870,10 @@ export class BotsService {
         )
       ]);
     } catch (error) {
-      console.error('Warning: Queue operation delayed, continuing anyway:', error.message);
+      this.logger.error('Warning: Queue operation delayed, continuing anyway:', error.message);
       // Still try to add the job in background
       this.queueService.addJob('restart-bot', { botId }).catch(e =>
-        console.error('Background queue add failed:', e)
+        this.logger.error('Background queue add failed:', e)
       );
     }
 
@@ -882,7 +885,7 @@ export class BotsService {
         action: 'BOT_RESTARTED',
         resource: 'bot',
       },
-    }).catch(error => console.error('Failed to create audit log:', error));
+    }).catch(error => this.logger.error('Failed to create audit log:', error));
 
     // Invalidate cache
     await this.invalidateBotsCache(ownerId);
@@ -990,7 +993,7 @@ export class BotsService {
   async updateStatus(botId: string, status: BotStatus, metadata?: any): Promise<void> {
     // Check if status updates are disabled
     if (process.env.DISABLE_STATUS_UPDATES === 'true') {
-      console.log(`[STATUS UPDATES DISABLED] Would update bot ${botId} to ${status}`);
+      this.logger.log(`[STATUS UPDATES DISABLED] Would update bot ${botId} to ${status}`);
       return;
     }
     
@@ -1005,13 +1008,13 @@ export class BotsService {
         });
 
         if (!currentBot) {
-          console.error(`Bot ${botId} not found`);
+          this.logger.error(`Bot ${botId} not found`);
           return;
         }
 
         // Skip update if status hasn't changed
         if (currentBot.status === status) {
-          console.log(`Bot ${botId} already has status ${status}, skipping update`);
+          this.logger.log(`Bot ${botId} already has status ${status}, skipping update`);
           return;
         }
 
@@ -1026,7 +1029,7 @@ export class BotsService {
             },
           });
 
-          console.log(`✅ Successfully updated bot ${botId} status to ${status}`);
+          this.logger.log(`✅ Successfully updated bot ${botId} status to ${status}`);
 
           // Invalidate Discord cache when bot becomes ONLINE (fresh data available)
           if (status === BotStatus.ONLINE) {
@@ -1040,7 +1043,7 @@ export class BotsService {
                 this.discordService.invalidateBotCache(decryptedToken);
               }
             } catch (error) {
-              console.error('Failed to invalidate cache (non-critical):', error);
+              this.logger.error('Failed to invalidate cache (non-critical):', error);
             }
           }
 
@@ -1074,14 +1077,14 @@ export class BotsService {
           
         if (isConcurrencyError && retries > 1) {
           retries--;
-          console.log(`⚠️ Lock/concurrency issue, retrying... (${retries} retries left)`);
+          this.logger.log(`⚠️ Lock/concurrency issue, retrying... (${retries} retries left)`);
           
           // Simple delay before retry
           await new Promise(resolve => setTimeout(resolve, 1000));
           continue;
         } else {
           // Give up on error
-          console.error(`❌ Failed to update bot ${botId} status to ${status}:`, error.message || error);
+          this.logger.error(`❌ Failed to update bot ${botId} status to ${status}:`, error.message || error);
           return;
         }
       }
@@ -1129,7 +1132,7 @@ export class BotsService {
           },
         });
       } catch (error) {
-        console.error('Failed to create status log (non-critical):', error);
+        this.logger.error('Failed to create status log (non-critical):', error);
       }
     }
   }
@@ -1159,13 +1162,13 @@ export class BotsService {
         }
 
         if (!bot) {
-          console.error(`Bot ${botId} not found for status update after retries`);
+          this.logger.error(`Bot ${botId} not found for status update after retries`);
           return false;
         }
 
         // If bot is in STOPPING state, don't override
         if (bot.status === 'STOPPING' && status === 'ONLINE') {
-          console.log(`🚫 Bot ${bot.name} is stopping - not setting to ONLINE`);
+          this.logger.log(`🚫 Bot ${bot.name} is stopping - not setting to ONLINE`);
           return false;
         }
       }
@@ -1174,7 +1177,7 @@ export class BotsService {
       await this.updateStatus(botId, status);
       return true;
     } catch (error) {
-      console.error(`❌ Error in updateStatusSafe for bot ${botId}:`, error);
+      this.logger.error(`❌ Error in updateStatusSafe for bot ${botId}:`, error);
       return false;
     }
   }
@@ -1189,7 +1192,7 @@ export class BotsService {
       const decryptedToken = this.encryptionService.decrypt(bot.tokenEncrypted);
       return await this.discordService.getBotGuilds(decryptedToken);
     } catch (error) {
-      console.error('Error fetching Discord guilds:', error);
+      this.logger.error('Error fetching Discord guilds:', error);
       throw new BadRequestException('Failed to fetch Discord guilds');
     }
   }
@@ -1204,7 +1207,7 @@ export class BotsService {
       const decryptedToken = this.encryptionService.decrypt(bot.tokenEncrypted);
       return await this.discordService.getGuildChannels(decryptedToken, guildId);
     } catch (error) {
-      console.error('Error fetching guild channels:', error);
+      this.logger.error('Error fetching guild channels:', error);
       throw new BadRequestException('Failed to fetch guild channels');
     }
   }
@@ -1219,7 +1222,7 @@ export class BotsService {
       const decryptedToken = this.encryptionService.decrypt(bot.tokenEncrypted);
       return await this.discordService.getGuildRoles(decryptedToken, guildId);
     } catch (error) {
-      console.error('Error fetching guild roles:', error);
+      this.logger.error('Error fetching guild roles:', error);
       throw new BadRequestException('Failed to fetch guild roles');
     }
   }
@@ -1254,7 +1257,7 @@ export class BotsService {
         return { isConnected: false };
       }
     } catch (error) {
-      console.error(`Error checking Discord connection for bot ${botId}:`, error);
+      this.logger.error(`Error checking Discord connection for bot ${botId}:`, error);
       return { isConnected: false };
     }
   }
@@ -1273,7 +1276,7 @@ export class BotsService {
         });
 
         if (!currentBot) {
-          console.warn(`⚠️ Bot ${botId} not found during force sync`);
+          this.logger.warn(`⚠️ Bot ${botId} not found during force sync`);
           return BotStatus.ERROR;
         }
 
@@ -1294,7 +1297,7 @@ export class BotsService {
 
         // Only update if status has actually changed
         if (currentBot.status === newStatus) {
-          console.log(`🔄 Bot ${botId} status already synced as ${newStatus}`);
+          this.logger.log(`🔄 Bot ${botId} status already synced as ${newStatus}`);
           return newStatus;
         }
 
@@ -1308,7 +1311,7 @@ export class BotsService {
           }
         });
 
-        console.log(`🔄 Force synced bot ${botId} status: ${currentBot.status} → ${newStatus} (Discord: ${connectionStatus.isConnected}, Process: ${isProcessRunning})`);
+        this.logger.log(`🔄 Force synced bot ${botId} status: ${currentBot.status} → ${newStatus} (Discord: ${connectionStatus.isConnected}, Process: ${isProcessRunning})`);
         
         return newStatus;
         
@@ -1330,7 +1333,7 @@ export class BotsService {
           
         if (isConcurrencyError) {
           retries--;
-          console.log(`⚠️ Concurrency conflict during force sync for bot ${botId}, retrying... (${retries} retries left)`);
+          this.logger.log(`⚠️ Concurrency conflict during force sync for bot ${botId}, retrying... (${retries} retries left)`);
           
           if (retries > 0) {
             // Exponential backoff with jitter
@@ -1343,14 +1346,14 @@ export class BotsService {
           }
         } else {
           // Non-concurrency error, log and exit
-          console.error(`❌ Failed to force sync bot ${botId} status due to non-concurrency error:`, error.message || error);
+          this.logger.error(`❌ Failed to force sync bot ${botId} status due to non-concurrency error:`, error.message || error);
           break;
         }
       }
     }
 
     // If all retries failed, attempt to mark as error with retry logic
-    console.error(`❌ Failed to force sync bot ${botId} status after all retries. Last error:`, lastError?.message || lastError);
+    this.logger.error(`❌ Failed to force sync bot ${botId} status after all retries. Last error:`, lastError?.message || lastError);
     
     // Try to update to ERROR status with separate retry logic
     let errorRetries = 3;
@@ -1376,7 +1379,7 @@ export class BotsService {
           }
         });
         
-        console.log(`⚠️ Set bot ${botId} status to ERROR after force sync failure`);
+        this.logger.log(`⚠️ Set bot ${botId} status to ERROR after force sync failure`);
         return BotStatus.ERROR;
         
       } catch (errorUpdateError: any) {
@@ -1413,7 +1416,7 @@ export class BotsService {
 
   private async sendBotCommand(botId: string, command: any): Promise<void> {
     // Store command in database for bot to pick up
-    console.log(`Sending command to bot ${botId}:`, command);
+    this.logger.log(`Sending command to bot ${botId}:`, command);
 
     // @ts-ignore - botCommand will exist after prisma generate
     await this.prisma.botCommand?.create({
@@ -1486,7 +1489,7 @@ export class BotsService {
   // Refresh assets for multiple bots SYNCHRONOUSLY (blocks until done)
   private async refreshAllBotsAssetsSync(bots: any[]): Promise<void> {
     try {
-      console.log(`🔄 Refreshing assets for ${bots.length} bots...`);
+      this.logger.log(`🔄 Refreshing assets for ${bots.length} bots...`);
 
       // Process bots in batches to avoid overwhelming Discord API
       const batchSize = 5;
@@ -1535,9 +1538,9 @@ export class BotsService {
               bot.avatar = avatarUrl;
               bot.banner = bannerUrl;
 
-              console.log(`✅ Refreshed ${bot.name}: avatar=${!!avatarUrl}, banner=${!!bannerUrl}`);
+              this.logger.log(`✅ Refreshed ${bot.name}: avatar=${!!avatarUrl}, banner=${!!bannerUrl}`);
             } catch (error) {
-              console.error(`❌ Failed to refresh assets for bot ${bot.id}:`, error.message);
+              this.logger.error(`❌ Failed to refresh assets for bot ${bot.id}:`, error.message);
             }
           })
         );
@@ -1548,9 +1551,9 @@ export class BotsService {
         }
       }
 
-      console.log(`✨ Assets refresh completed for all bots`);
+      this.logger.log(`✨ Assets refresh completed for all bots`);
     } catch (error) {
-      console.error('Error in refreshAllBotsAssetsSync:', error);
+      this.logger.error('Error in refreshAllBotsAssetsSync:', error);
     }
   }
 
@@ -1600,10 +1603,10 @@ export class BotsService {
                     banner: bannerUrl,
                   },
                 });
-                console.log(`✅ Refreshed assets for bot ${bot.name}`);
+                this.logger.log(`✅ Refreshed assets for bot ${bot.name}`);
               }
             } catch (error) {
-              console.error(`Failed to refresh assets for bot ${bot.id}:`, error.message);
+              this.logger.error(`Failed to refresh assets for bot ${bot.id}:`, error.message);
             }
           })
         );
@@ -1614,7 +1617,7 @@ export class BotsService {
         }
       }
     } catch (error) {
-      console.error('Error in refreshAllBotsAssetsInBackground:', error);
+      this.logger.error('Error in refreshAllBotsAssetsInBackground:', error);
     }
   }
 }

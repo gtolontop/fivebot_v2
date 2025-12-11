@@ -5,6 +5,7 @@ import { EncryptionService } from '../common/encryption/encryption.service';
 import { BotLogsService } from '../bots/bot-logs.service';
 import { RedisService } from '../common/redis/redis.service';
 import { ConsoleBufferService } from '../bots/console-buffer.service';
+import { LoggerService } from '../common/logger/logger.service';
 import { spawn, ChildProcess } from 'child_process';
 import * as path from 'path';
 import { BotStatus, LogLevel } from '@prisma/client';
@@ -24,6 +25,7 @@ export class SimpleQueueService implements IQueueService {
   private jobs: QueuedJob[] = [];
   private processing = false;
   private runningBots = new Map<string, ChildProcess>(); // botId -> process
+  private readonly logger = new LoggerService('SimpleQueueService');
 
   constructor(
     private prisma: PrismaService,
@@ -41,7 +43,7 @@ export class SimpleQueueService implements IQueueService {
   }
 
   private async startRedisJobListener(): Promise<void> {
-    console.log('🔧 Worker started and listening for jobs...');
+    this.logger.log('🔧 Worker started and listening for jobs...');
 
     // Poll for jobs from Redis every second
     setInterval(async () => {
@@ -54,14 +56,14 @@ export class SimpleQueueService implements IQueueService {
 
           this.jobs.push(job);
           this.jobs.sort((a, b) => b.priority - a.priority);
-          console.log(`📥 Received job from Redis: ${job.type}`, job.data);
+          this.logger.log(`📥 Received job from Redis: ${job.type}`, job.data);
 
           if (!this.processing) {
             setImmediate(() => this.processJobs());
           }
         }
       } catch (error) {
-        console.error('❌ Error fetching job from Redis:', error);
+        this.logger.error('❌ Error fetching job from Redis:', error);
       }
     }, 1000);
   }
@@ -70,7 +72,7 @@ export class SimpleQueueService implements IQueueService {
   private async updateBotStatusSafe(botId: string, status: BotStatus): Promise<void> {
     // Check if status updates are disabled
     if (process.env.DISABLE_STATUS_UPDATES === 'true') {
-      console.log(`[STATUS UPDATES DISABLED] Would update bot ${botId} to ${status} (from queue)`);
+      this.logger.log(`[STATUS UPDATES DISABLED] Would update bot ${botId} to ${status} (from queue)`);
       return;
     }
     
@@ -98,13 +100,13 @@ export class SimpleQueueService implements IQueueService {
           
         if (isConcurrencyError && retries > 1) {
           retries--;
-          console.log(`⚠️ Concurrency conflict updating bot ${botId} status to ${status} in queue, retrying... (${retries} retries left)`);
+          this.logger.log(`⚠️ Concurrency conflict updating bot ${botId} status to ${status} in queue, retrying... (${retries} retries left)`);
           
           const delay = Math.min(1000, (6 - retries) * 200 + Math.random() * 300);
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         } else {
-          console.error(`❌ Failed to update bot ${botId} status to ${status} in queue:`, error.message || error);
+          this.logger.error(`❌ Failed to update bot ${botId} status to ${status} in queue:`, error.message || error);
           return;
         }
       }
@@ -123,7 +125,7 @@ export class SimpleQueueService implements IQueueService {
 
     // If called from API process, store in Redis for worker to pick up
     if (process.env.PROCESS_TYPE !== 'worker') {
-      console.log(`📤 Forwarding job to worker via Redis: ${jobType}`, data);
+      this.logger.log(`📤 Forwarding job to worker via Redis: ${jobType}`, data);
       await this.redisService.getClient().rpush('fivebot:jobs', JSON.stringify(job));
       await this.redisService.getClient().publish('fivebot:jobs:notify', job.id);
       return;
@@ -132,7 +134,7 @@ export class SimpleQueueService implements IQueueService {
     this.jobs.push(job);
     this.jobs.sort((a, b) => b.priority - a.priority); // Higher priority first
 
-    console.log(`📋 Queued job: ${jobType}`, data);
+    this.logger.log(`📋 Queued job: ${jobType}`, data);
 
     // Start processing if not already processing
     if (!this.processing) {
@@ -144,7 +146,7 @@ export class SimpleQueueService implements IQueueService {
     // CRITICAL: Only process jobs in worker process
     // API process should only queue jobs, not execute them
     if (process.env.PROCESS_TYPE !== 'worker') {
-      console.log('⏭️ Skipping job processing - jobs only execute in worker process');
+      this.logger.log('⏭️ Skipping job processing - jobs only execute in worker process');
       this.processing = false;
       return;
     }
@@ -157,16 +159,16 @@ export class SimpleQueueService implements IQueueService {
       if (!job) break;
 
       job.status = 'processing';
-      console.log(`🔄 Processing job: ${job.type}`, job.data);
+      this.logger.log(`🔄 Processing job: ${job.type}`, job.data);
 
       try {
         await this.executeJob(job);
         job.status = 'completed';
-        console.log(`✅ Job completed: ${job.type}`);
+        this.logger.log(`✅ Job completed: ${job.type}`);
       } catch (error) {
         job.status = 'failed';
         job.error = error.message;
-        console.error(`❌ Job failed: ${job.type}`, error.message);
+        this.logger.error(`❌ Job failed: ${job.type}`, error.message);
       }
 
       // Remove completed/failed jobs after 1 hour
@@ -201,13 +203,13 @@ export class SimpleQueueService implements IQueueService {
         await this.handleUpdateBotConfig(job.data);
         break;
       default:
-        console.log(`Unknown job type: ${job.type}`);
+        this.logger.log(`Unknown job type: ${job.type}`);
     }
   }
 
   private async handleCreateBot(data: JobData): Promise<void> {
     // Bot creation logic would go here
-    console.log(`Creating bot container for bot ${data.botId}`);
+    this.logger.log(`Creating bot container for bot ${data.botId}`);
     // Simulate work
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
@@ -229,14 +231,14 @@ export class SimpleQueueService implements IQueueService {
 
       botName = bot.name; // Update botName for error logging
 
-      console.log(`🚀 Starting bot "${bot.name}" (owner: ${bot.owner.username})`);
+      this.logger.log(`🚀 Starting bot "${bot.name}" (owner: ${bot.owner.username})`);
 
       // CRITICAL: Acquire distributed lock to prevent race conditions
       const lockKey = `fivebot:lock:start:${botId}`;
       const lockAcquired = await this.redisService.acquireLock(lockKey, 30000);
 
       if (!lockAcquired) {
-        console.log(`🔒 Another worker is already starting bot "${bot.name}" - waiting for completion...`);
+        this.logger.log(`🔒 Another worker is already starting bot "${bot.name}" - waiting for completion...`);
 
         // Wait a bit for the other worker to complete
         await new Promise(resolve => setTimeout(resolve, 2000));
@@ -244,11 +246,11 @@ export class SimpleQueueService implements IQueueService {
         // Check if bot was started by the other worker
         const isNowRunning = await this.redisService.isRunningBot(botId);
         if (isNowRunning) {
-          console.log(`✅ Bot "${bot.name}" was started by another worker`);
+          this.logger.log(`✅ Bot "${bot.name}" was started by another worker`);
           await this.updateBotStatusSafe(botId, BotStatus.ONLINE);
           return;
         } else {
-          console.log(`⚠️ Bot "${bot.name}" was not started by other worker, will retry`);
+          this.logger.log(`⚠️ Bot "${bot.name}" was not started by other worker, will retry`);
           throw new Error('Bot start lock timeout - please retry');
         }
       }
@@ -258,7 +260,7 @@ export class SimpleQueueService implements IQueueService {
         const isRunningInRedis = await this.redisService.isRunningBot(botId);
 
       if (isRunningInRedis) {
-        console.log(`⚠️ Bot "${bot.name}" is already running in another worker - skipping duplicate start`);
+        this.logger.log(`⚠️ Bot "${bot.name}" is already running in another worker - skipping duplicate start`);
 
         // Resynchronize status to ONLINE instead of failing silently
         await this.updateBotStatusSafe(botId, BotStatus.ONLINE);
@@ -273,7 +275,7 @@ export class SimpleQueueService implements IQueueService {
 
         // Release lock before returning
         await this.redisService.releaseLock(lockKey);
-        console.log(`🔓 Released start lock for bot "${bot.name}" (already running)`);
+        this.logger.log(`🔓 Released start lock for bot "${bot.name}" (already running)`);
 
         return;
       }
@@ -283,7 +285,7 @@ export class SimpleQueueService implements IQueueService {
       const processExists = isRunningLocally && this.runningBots.get(botId)?.killed === false;
 
       if (processExists) {
-        console.log(`✅ Bot "${bot.name}" is already running locally - resynchronizing Redis state`);
+        this.logger.log(`✅ Bot "${bot.name}" is already running locally - resynchronizing Redis state`);
 
         // Add to Redis if missing (should not happen but be safe)
         await this.redisService.addRunningBot(botId);
@@ -300,7 +302,7 @@ export class SimpleQueueService implements IQueueService {
 
         // Release lock before returning
         await this.redisService.releaseLock(lockKey);
-        console.log(`🔓 Released start lock for bot "${bot.name}" (already running locally)`);
+        this.logger.log(`🔓 Released start lock for bot "${bot.name}" (already running locally)`);
 
         return;
       }
@@ -352,13 +354,13 @@ export class SimpleQueueService implements IQueueService {
       // CRITICAL: Release lock NOW that bot is registered in Redis
       // This prevents other workers from starting the same bot
       await this.redisService.releaseLock(lockKey);
-      console.log(`🔓 Released start lock for bot "${bot.name}" (bot registered in Redis)`);
+      this.logger.log(`🔓 Released start lock for bot "${bot.name}" (bot registered in Redis)`);
 
       // Startup log is already added in bots.service.ts, no need to duplicate it here
 
       // Handle process errors
       botProcess.on('error', async (error) => {
-        console.error(`[Bot "${bot.name}"] Process error:`, error);
+        this.logger.error(`[Bot "${bot.name}"] Process error:`, error);
         this.runningBots.delete(botId);
         await this.redisService.removeRunningBot(botId);
         await this.redisService.deleteBotMetadata(botId);
@@ -380,7 +382,7 @@ export class SimpleQueueService implements IQueueService {
           }
         });
 
-        console.error(`💥 Bot "${bot.name}" crashed (crash count: ${crashCount})`);
+        this.logger.error(`💥 Bot "${bot.name}" crashed (crash count: ${crashCount})`);
 
         // Update bot status to error
         await this.updateBotStatusSafe(botId, BotStatus.ERROR);
@@ -389,7 +391,7 @@ export class SimpleQueueService implements IQueueService {
       // Handle process output
       botProcess.stdout?.on('data', async (data) => {
         const output = data.toString();
-        console.log(`[Bot ${botId}] ${output.trim()}`);
+        this.logger.log(`[Bot ${botId}] ${output.trim()}`);
         
         // Split output by lines and send each line to live console
         const lines = output.split('\n').filter(line => line.trim());
@@ -402,14 +404,14 @@ export class SimpleQueueService implements IQueueService {
               'Bot'
             );
           } catch (error) {
-            console.error('Failed to log bot output:', error);
+            this.logger.error('Failed to log bot output:', error);
           }
         }
       });
 
       botProcess.stderr?.on('data', async (data) => {
         const output = data.toString();
-        console.error(`[Bot ${botId} ERROR] ${output.trim()}`);
+        this.logger.error(`[Bot ${botId} ERROR] ${output.trim()}`);
 
         // Split output by lines and send each line to live console
         const lines = output.split('\n').filter(line => line.trim());
@@ -458,15 +460,15 @@ export class SimpleQueueService implements IQueueService {
               'Bot'
             );
           } catch (error) {
-            console.error('Failed to log bot error:', error);
+            this.logger.error('Failed to log bot error:', error);
           }
         }
       });
 
       // Handle process exit
       botProcess.on('exit', async (code, signal) => {
-        console.log(`[Bot "${bot.name}"] Process exited with code ${code}, signal ${signal}`);
-        console.log(`🗂️ Removing bot "${bot.name}" from running processes list`);
+        this.logger.log(`[Bot "${bot.name}"] Process exited with code ${code}, signal ${signal}`);
+        this.logger.log(`🗂️ Removing bot "${bot.name}" from running processes list`);
         this.runningBots.delete(botId);
         await this.redisService.removeRunningBot(botId);
         await this.redisService.deleteBotMetadata(botId);
@@ -483,14 +485,14 @@ export class SimpleQueueService implements IQueueService {
 
         if (wasUserStop) {
           // User stopped the bot - mark as OFFLINE
-          console.log(`🛑 Bot "${bot.name}" stopped by user`);
+          this.logger.log(`🛑 Bot "${bot.name}" stopped by user`);
 
           await this.updateBotStatusSafe(botId, BotStatus.OFFLINE);
           await this.redisService.deleteBotState(botId);
         } else if (wasGracefulShutdown) {
           // Graceful shutdown (probably backend restart) - DON'T change DB status
           // Keep status as ONLINE so recovery will restart it
-          console.log(`✅ Bot "${bot.name}" stopped gracefully (backend restart) - keeping ONLINE status for auto-recovery`);
+          this.logger.log(`✅ Bot "${bot.name}" stopped gracefully (backend restart) - keeping ONLINE status for auto-recovery`);
 
           // Don't update database status - let it stay ONLINE for recovery
           // Just log it
@@ -502,12 +504,12 @@ export class SimpleQueueService implements IQueueService {
               'System'
             );
           } catch (logError) {
-            console.error('Failed to add restart log:', logError);
+            this.logger.error('Failed to add restart log:', logError);
           }
         } else {
           // Crash - mark for recovery
           const crashCount = (savedState?.metadata?.crashCount || 0) + 1;
-          console.log(`💥 Bot "${bot.name}" crashed unexpectedly (crash count: ${crashCount}) - marking for recovery`);
+          this.logger.log(`💥 Bot "${bot.name}" crashed unexpectedly (crash count: ${crashCount}) - marking for recovery`);
 
           await this.redisService.saveBotState(botId, {
             status: 'OFFLINE',
@@ -534,7 +536,7 @@ export class SimpleQueueService implements IQueueService {
               'System'
             );
           } catch (logError) {
-            console.error('Failed to add crash log:', logError);
+            this.logger.error('Failed to add crash log:', logError);
           }
         }
 
@@ -542,7 +544,7 @@ export class SimpleQueueService implements IQueueService {
         try {
           this.consoleBufferService.onBotOffline(botId);
         } catch (error) {
-          console.error('Failed to notify console buffer:', error);
+          this.logger.error('Failed to notify console buffer:', error);
         }
       });
 
@@ -571,7 +573,7 @@ export class SimpleQueueService implements IQueueService {
           metadata: { confirmed: true, crashCount: 0 }
         });
 
-        console.log(`✅ Bot "${bot.name}" (owner: ${bot.owner.username}) started successfully`);
+        this.logger.log(`✅ Bot "${bot.name}" (owner: ${bot.owner.username}) started successfully`);
 
         // Notify console buffer that bot is now online
         this.consoleBufferService.onBotOnline(botId);
@@ -588,14 +590,14 @@ export class SimpleQueueService implements IQueueService {
             'System'
           );
         } catch (logError) {
-          console.error('Failed to add online log:', logError);
+          this.logger.error('Failed to add online log:', logError);
         }
         
         // Schedule a verification check after 10 seconds to ensure it's still online
         setTimeout(async () => {
           try {
             if (!this.runningBots.has(botId)) {
-              console.log(`⚠️ Bot ${botId} verification failed - process no longer running`);
+              this.logger.log(`⚠️ Bot ${botId} verification failed - process no longer running`);
               await this.prisma.bot.update({
                 where: { id: botId },
                 data: { 
@@ -605,7 +607,7 @@ export class SimpleQueueService implements IQueueService {
               });
             }
           } catch (verifyError) {
-            console.error(`❌ Failed to verify bot ${botId} start:`, verifyError);
+            this.logger.error(`❌ Failed to verify bot ${botId} start:`, verifyError);
           }
         }, 10000);
       } else {
@@ -613,7 +615,7 @@ export class SimpleQueueService implements IQueueService {
       }
 
     } catch (error) {
-      console.error(`❌ Failed to start bot "${botName}":`, error);
+      this.logger.error(`❌ Failed to start bot "${botName}":`, error);
 
       // Mark as crash for potential recovery
       const previousState = await this.redisService.getBotState(botId);
@@ -632,20 +634,20 @@ export class SimpleQueueService implements IQueueService {
         }
       });
 
-      console.error(`💥 Bot "${botName}" failed to start (crash count: ${crashCount})`);
+      this.logger.error(`💥 Bot "${botName}" failed to start (crash count: ${crashCount})`);
 
       // Update bot status to error
       await this.updateBotStatusSafe(botId, BotStatus.ERROR);
 
       // Release lock on error
       await this.redisService.releaseLock(lockKey);
-      console.log(`🔓 Released start lock for bot "${botName}" (after error)`);
+      this.logger.log(`🔓 Released start lock for bot "${botName}" (after error)`);
 
       throw error;
       }
     } catch (error) {
       // Outer catch for the entire function (lock acquisition failure, etc.)
-      console.error(`❌ Fatal error starting bot "${botName}":`, error);
+      this.logger.error(`❌ Fatal error starting bot "${botName}":`, error);
       throw error;
     }
   }
@@ -663,7 +665,7 @@ export class SimpleQueueService implements IQueueService {
       const botName = bot?.name || botId;
       const ownerName = bot?.owner?.username || 'unknown';
 
-      console.log(`🛑 Stopping bot "${botName}" (owner: ${ownerName})`);
+      this.logger.log(`🛑 Stopping bot "${botName}" (owner: ${ownerName})`);
 
       // Save user's intention to stop the bot
       await this.redisService.saveBotState(botId, {
@@ -676,7 +678,7 @@ export class SimpleQueueService implements IQueueService {
       const botProcess = this.runningBots.get(botId);
 
       if (!botProcess) {
-        console.log(`⚠️ Bot "${botName}" is not running in process manager - cleaning up and updating status to OFFLINE`);
+        this.logger.log(`⚠️ Bot "${botName}" is not running in process manager - cleaning up and updating status to OFFLINE`);
         // Clean up Redis and local state anyway
         this.runningBots.delete(botId);
         await this.redisService.removeRunningBot(botId);
@@ -687,7 +689,7 @@ export class SimpleQueueService implements IQueueService {
         return;
       }
 
-      console.log(`🔄 Stopping bot "${botName}" process (PID: ${botProcess.pid})`);
+      this.logger.log(`🔄 Stopping bot "${botName}" process (PID: ${botProcess.pid})`);
 
       // Helper function to recursively kill all child processes on Linux
       const killProcessTreeLinux = async (pid: number, signal: string = 'SIGTERM'): Promise<void> => {
@@ -708,15 +710,15 @@ export class SimpleQueueService implements IQueueService {
           // Then kill this process
           try {
             process.kill(pid, signal);
-            console.log(`✅ Killed PID ${pid} with ${signal}`);
+            this.logger.log(`✅ Killed PID ${pid} with ${signal}`);
           } catch (e) {
-            console.log(`⚠️ PID ${pid} already dead`);
+            this.logger.log(`⚠️ PID ${pid} already dead`);
           }
         } catch (error) {
           // No children found - just kill this process
           try {
             process.kill(pid, signal);
-            console.log(`✅ Killed PID ${pid} with ${signal}`);
+            this.logger.log(`✅ Killed PID ${pid} with ${signal}`);
           } catch (e) {
             // Already dead
           }
@@ -729,32 +731,32 @@ export class SimpleQueueService implements IQueueService {
         exec(`taskkill /PID ${botProcess.pid}`, (error: any) => {
           if (error) {
             exec(`taskkill /F /PID ${botProcess.pid} /T`, (forceError: any) => {
-              if (!forceError) console.log(`✅ Force killed with taskkill`);
+              if (!forceError) this.logger.log(`✅ Force killed with taskkill`);
             });
           } else {
-            console.log(`✅ Killed gracefully with taskkill`);
+            this.logger.log(`✅ Killed gracefully with taskkill`);
           }
         });
       } else {
         // Linux: Recursive kill of entire process tree
-        console.log('📤 Killing entire process tree recursively...');
+        this.logger.log('📤 Killing entire process tree recursively...');
         killProcessTreeLinux(botProcess.pid, 'SIGTERM')
-          .then(() => console.log(`✅ Process tree killed`))
-          .catch((e) => console.log(`⚠️ Error:`, e.message));
+          .then(() => this.logger.log(`✅ Process tree killed`))
+          .catch((e) => this.logger.log(`⚠️ Error:`, e.message));
       }
       
       // Timeout to force kill if needed
       const forceKillTimeout = setTimeout(() => {
         if (this.runningBots.has(botId)) {
-          console.log(`💀 Process didn't exit, forcing termination for bot ${botId}`);
+          this.logger.log(`💀 Process didn't exit, forcing termination for bot ${botId}`);
           try {
             if (process.platform === 'win32' && botProcess.pid) {
               const { execSync } = require('child_process');
               try {
                 execSync(`taskkill /F /PID ${botProcess.pid} /T`);
-                console.log(`✅ Force killed with taskkill`);
+                this.logger.log(`✅ Force killed with taskkill`);
               } catch (e) {
-                console.error(`taskkill sync error:`, e);
+                this.logger.error(`taskkill sync error:`, e);
               }
             } else {
               // Linux: Kill entire process tree with SIGKILL
@@ -762,13 +764,13 @@ export class SimpleQueueService implements IQueueService {
               try {
                 execSync(`pkill -KILL -P ${botProcess.pid}`);
                 botProcess.kill('SIGKILL');
-                console.log(`✅ Force killed process tree with SIGKILL`);
+                this.logger.log(`✅ Force killed process tree with SIGKILL`);
               } catch (e) {
-                console.log(`⚠️ Force kill error (may be already dead):`, e.message);
+                this.logger.log(`⚠️ Force kill error (may be already dead):`, e.message);
               }
             }
           } catch (error) {
-            console.log(`⚠️ Process may have already exited`);
+            this.logger.log(`⚠️ Process may have already exited`);
           }
           this.runningBots.delete(botId);
         }
@@ -778,7 +780,7 @@ export class SimpleQueueService implements IQueueService {
       await new Promise<void>((resolve) => {
         const exitHandler = () => {
           clearTimeout(forceKillTimeout);
-          console.log(`📤 Bot ${botId} process exited naturally`);
+          this.logger.log(`📤 Bot ${botId} process exited naturally`);
           resolve();
         };
         
@@ -808,13 +810,13 @@ export class SimpleQueueService implements IQueueService {
         },
       });
 
-      console.log(`✅ Bot "${botName}" stopped successfully and status updated to OFFLINE`);
+      this.logger.log(`✅ Bot "${botName}" stopped successfully and status updated to OFFLINE`);
 
       // Notify console buffer that bot is offline (keeps logs for debugging)
       this.consoleBufferService.onBotOffline(botId);
       
     } catch (error) {
-      console.error(`❌ Failed to stop bot ${botId}:`, error);
+      this.logger.error(`❌ Failed to stop bot ${botId}:`, error);
       // Ensure cleanup even on error
       this.runningBots.delete(botId);
       await this.redisService.removeRunningBot(botId);
@@ -824,7 +826,7 @@ export class SimpleQueueService implements IQueueService {
       try {
         await this.updateBotStatusSafe(botId, BotStatus.OFFLINE);
       } catch (dbError) {
-        console.error(`❌ Failed to update bot status after stop error:`, dbError);
+        this.logger.error(`❌ Failed to update bot status after stop error:`, dbError);
       }
 
       throw error;
@@ -844,7 +846,7 @@ export class SimpleQueueService implements IQueueService {
       const botName = bot?.name || botId;
       const ownerName = bot?.owner?.username || 'unknown';
 
-      console.log(`🔄 Restarting bot "${botName}" (owner: ${ownerName})`);
+      this.logger.log(`🔄 Restarting bot "${botName}" (owner: ${ownerName})`);
 
       // Save restart intention in Redis
       await this.redisService.saveBotState(botId, {
@@ -857,21 +859,21 @@ export class SimpleQueueService implements IQueueService {
       // First, stop the bot if it's running
       const botProcess = this.runningBots.get(botId);
       if (botProcess) {
-        console.log(`🛑 Stopping bot "${botName}" before restart...`);
+        this.logger.log(`🛑 Stopping bot "${botName}" before restart...`);
 
         // Kill the process
         if (process.platform === 'win32' && botProcess.pid) {
           const { exec } = require('child_process');
           exec(`taskkill /F /PID ${botProcess.pid} /T`, (error) => {
             if (error) {
-              console.error(`❌ taskkill error during restart:`, error);
+              this.logger.error(`❌ taskkill error during restart:`, error);
             } else {
-              console.log(`✅ Process ${botProcess.pid} killed for restart`);
+              this.logger.log(`✅ Process ${botProcess.pid} killed for restart`);
             }
           });
         } else {
           // On Linux: Try SIGTERM first, then SIGKILL if it doesn't exit
-          console.log(`📤 Sending SIGTERM to bot process ${botProcess.pid}...`);
+          this.logger.log(`📤 Sending SIGTERM to bot process ${botProcess.pid}...`);
           botProcess.kill('SIGTERM');
         }
 
@@ -880,7 +882,7 @@ export class SimpleQueueService implements IQueueService {
           let resolved = false;
           const exitHandler = () => {
             if (!resolved) {
-              console.log(`✅ Bot ${botId} process exited gracefully`);
+              this.logger.log(`✅ Bot ${botId} process exited gracefully`);
               resolved = true;
               resolve();
             }
@@ -890,11 +892,11 @@ export class SimpleQueueService implements IQueueService {
           // After 3 seconds, escalate to SIGKILL on Linux
           setTimeout(() => {
             if (!resolved && process.platform !== 'win32') {
-              console.log(`⚠️ Bot ${botId} didn't exit gracefully, sending SIGKILL...`);
+              this.logger.log(`⚠️ Bot ${botId} didn't exit gracefully, sending SIGKILL...`);
               try {
                 botProcess.kill('SIGKILL');
               } catch (e) {
-                console.log(`Process already dead: ${e.message}`);
+                this.logger.log(`Process already dead: ${e.message}`);
               }
             }
           }, 3000);
@@ -903,7 +905,7 @@ export class SimpleQueueService implements IQueueService {
           setTimeout(() => {
             botProcess.removeListener('exit', exitHandler);
             if (!resolved) {
-              console.log(`⚠️ Bot ${botId} force killed after timeout`);
+              this.logger.log(`⚠️ Bot ${botId} force killed after timeout`);
               resolved = true;
               resolve();
             }
@@ -918,7 +920,7 @@ export class SimpleQueueService implements IQueueService {
       // Wait a bit for clean shutdown
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      console.log(`🚀 Starting bot "${botName}" after restart...`);
+      this.logger.log(`🚀 Starting bot "${botName}" after restart...`);
 
       // Update Redis state to starting phase
       await this.redisService.saveBotState(botId, {
@@ -931,10 +933,10 @@ export class SimpleQueueService implements IQueueService {
       // Now start the bot (reuse the start logic)
       await this.handleStartBot(data);
 
-      console.log(`✅ Bot "${botName}" restarted successfully`);
+      this.logger.log(`✅ Bot "${botName}" restarted successfully`);
 
     } catch (error) {
-      console.error(`❌ Failed to restart bot ${botId}:`, error);
+      this.logger.error(`❌ Failed to restart bot ${botId}:`, error);
 
       // Clean up on error
       this.runningBots.delete(botId);
@@ -948,20 +950,20 @@ export class SimpleQueueService implements IQueueService {
   }
 
   private async handleDeleteBot(data: JobData): Promise<void> {
-    console.log(`Deleting bot ${data.botId}`);
+    this.logger.log(`Deleting bot ${data.botId}`);
     // Simulate work
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
 
   private async handleUpdateBotConfig(data: JobData): Promise<void> {
     const botId = data.botId;
-    console.log(`Updating config for bot ${botId}`);
+    this.logger.log(`Updating config for bot ${botId}`);
 
     try {
       // Check if bot is running
       const botProcess = this.runningBots.get(botId);
       if (!botProcess) {
-        console.log(`Bot ${botId} is not running - config will be applied on next start`);
+        this.logger.log(`Bot ${botId} is not running - config will be applied on next start`);
         return;
       }
 
@@ -977,7 +979,7 @@ export class SimpleQueueService implements IQueueService {
 
       // For now, we'll restart the bot to apply the new configuration
       // In a more advanced implementation, we could send live config updates via IPC
-      console.log(`Restarting bot ${botId} to apply new configuration...`);
+      this.logger.log(`Restarting bot ${botId} to apply new configuration...`);
       
       // Stop the current process
       botProcess.kill('SIGTERM');
@@ -989,9 +991,9 @@ export class SimpleQueueService implements IQueueService {
       // Restart with new config
       await this.handleStartBot({ botId });
 
-      console.log(`✅ Bot ${botId} configuration updated and restarted`);
+      this.logger.log(`✅ Bot ${botId} configuration updated and restarted`);
     } catch (error) {
-      console.error(`❌ Failed to update config for bot ${botId}:`, error);
+      this.logger.error(`❌ Failed to update config for bot ${botId}:`, error);
       throw error;
     }
   }
@@ -1022,11 +1024,11 @@ export class SimpleQueueService implements IQueueService {
   }
 
   async pauseQueue(): Promise<void> {
-    console.log('Queue paused (simple queue - no-op)');
+    this.logger.log('Queue paused (simple queue - no-op)');
   }
 
   async resumeQueue(): Promise<void> {
-    console.log('Queue resumed (simple queue - no-op)');
+    this.logger.log('Queue resumed (simple queue - no-op)');
   }
 
   async cleanJobs(type: 'completed' | 'failed', olderThan: number = 24 * 60 * 60 * 1000): Promise<void> {
@@ -1034,7 +1036,7 @@ export class SimpleQueueService implements IQueueService {
     this.jobs = this.jobs.filter(job => 
       job.status !== type || job.createdAt.getTime() > cutoff
     );
-    console.log(`Cleaned ${type} jobs older than ${olderThan}ms`);
+    this.logger.log(`Cleaned ${type} jobs older than ${olderThan}ms`);
   }
 
   // Helper method to get running bots for debugging
@@ -1047,13 +1049,13 @@ export class SimpleQueueService implements IQueueService {
   async forceStopBot(botId: string): Promise<void> {
     const botProcess = this.runningBots.get(botId);
     if (botProcess) {
-      console.log(`🚨 Force stopping bot ${botId} (PID: ${botProcess.pid})`);
+      this.logger.log(`🚨 Force stopping bot ${botId} (PID: ${botProcess.pid})`);
       
       // Try SIGKILL first
       try {
         botProcess.kill('SIGKILL');
       } catch (error) {
-        console.log(`⚠️ SIGKILL failed, trying taskkill on Windows...`);
+        this.logger.log(`⚠️ SIGKILL failed, trying taskkill on Windows...`);
         
         // On Windows, use taskkill as backup
         if (process.platform === 'win32') {
@@ -1061,20 +1063,20 @@ export class SimpleQueueService implements IQueueService {
             const { exec } = require('child_process');
             exec(`taskkill /F /PID ${botProcess.pid}`, (error, stdout, stderr) => {
               if (error) {
-                console.error(`taskkill error: ${error}`);
+                this.logger.error(`taskkill error: ${error}`);
               } else {
-                console.log(`✅ Process ${botProcess.pid} killed with taskkill`);
+                this.logger.log(`✅ Process ${botProcess.pid} killed with taskkill`);
               }
             });
           } catch (execError) {
-            console.error(`Failed to execute taskkill: ${execError}`);
+            this.logger.error(`Failed to execute taskkill: ${execError}`);
           }
         }
       }
       
       this.runningBots.delete(botId);
     } else {
-      console.log(`⚠️ Bot ${botId} not found in running processes`);
+      this.logger.log(`⚠️ Bot ${botId} not found in running processes`);
     }
 
     // FORCE DISCORD DISCONNECTION by regenerating token or invalidating session
@@ -1088,7 +1090,7 @@ export class SimpleQueueService implements IQueueService {
         const token = this.encryptionService.decrypt(bot.tokenEncrypted);
         
         // Try to invalidate the Discord session by calling @me/connections endpoint with invalid data
-        console.log(`🔌 Attempting to force Discord disconnection for bot ${bot.name}...`);
+        this.logger.log(`🔌 Attempting to force Discord disconnection for bot ${bot.name}...`);
         
         try {
           // This will fail and potentially invalidate the session
@@ -1100,7 +1102,7 @@ export class SimpleQueueService implements IQueueService {
             }
           });
         } catch (discordError) {
-          console.log(`📤 Discord API error triggered (expected for force disconnect)`);
+          this.logger.log(`📤 Discord API error triggered (expected for force disconnect)`);
         }
 
         // Additional: try to make bot appear invisible immediately
@@ -1116,27 +1118,27 @@ export class SimpleQueueService implements IQueueService {
               activities: []
             })
           });
-          console.log(`👻 Set bot ${bot.name} to invisible status`);
+          this.logger.log(`👻 Set bot ${bot.name} to invisible status`);
         } catch (presenceError) {
-          console.log(`⚠️ Could not set presence to invisible`);
+          this.logger.log(`⚠️ Could not set presence to invisible`);
         }
       }
     } catch (error) {
-      console.error(`❌ Error forcing Discord disconnection:`, error);
+      this.logger.error(`❌ Error forcing Discord disconnection:`, error);
     }
     
     // Update database status
     try {
       await this.updateBotStatusSafe(botId, BotStatus.OFFLINE);
-      console.log(`💾 Bot ${botId} status set to OFFLINE in database`);
+      this.logger.log(`💾 Bot ${botId} status set to OFFLINE in database`);
     } catch (dbError) {
-      console.error(`❌ Failed to update bot status in database:`, dbError);
+      this.logger.error(`❌ Failed to update bot status in database:`, dbError);
     }
   }
 
   // Method to force cleanup all disconnected processes and sync status
   async forceCleanupAndSync(): Promise<void> {
-    console.log('🧹 Starting force cleanup and sync of all bot processes...');
+    this.logger.log('🧹 Starting force cleanup and sync of all bot processes...');
     
     // Get all bots that are marked as ONLINE or ERROR in database
     const activeBots = await this.prisma.bot.findMany({
@@ -1152,7 +1154,7 @@ export class SimpleQueueService implements IQueueService {
       
       if (!isProcessRunning) {
         // Process is not running but DB says it should be - force to OFFLINE
-        console.log(`🔄 Bot ${bot.id} (${bot.name}) marked as ${bot.status} but no process found - forcing to OFFLINE`);
+        this.logger.log(`🔄 Bot ${bot.id} (${bot.name}) marked as ${bot.status} but no process found - forcing to OFFLINE`);
         
         try {
           await this.prisma.bot.update({
@@ -1162,9 +1164,9 @@ export class SimpleQueueService implements IQueueService {
               updatedAt: new Date()
             },
           });
-          console.log(`✅ Bot ${bot.id} status forced to OFFLINE`);
+          this.logger.log(`✅ Bot ${bot.id} status forced to OFFLINE`);
         } catch (error) {
-          console.error(`❌ Failed to force bot ${bot.id} to OFFLINE:`, error);
+          this.logger.error(`❌ Failed to force bot ${bot.id} to OFFLINE:`, error);
         }
       }
     }
@@ -1175,7 +1177,7 @@ export class SimpleQueueService implements IQueueService {
       try {
         const bot = await this.prisma.bot.findUnique({ where: { id: botId } });
         if (!bot) {
-          console.log(`🧟 Found zombie process for deleted bot ${botId} - killing it`);
+          this.logger.log(`🧟 Found zombie process for deleted bot ${botId} - killing it`);
           const process = this.runningBots.get(botId);
           if (process) {
             process.kill('SIGKILL');
@@ -1183,11 +1185,11 @@ export class SimpleQueueService implements IQueueService {
           }
         }
       } catch (error) {
-        console.error(`❌ Error checking bot ${botId}:`, error);
+        this.logger.error(`❌ Error checking bot ${botId}:`, error);
       }
     }
 
-    console.log('✅ Force cleanup and sync completed');
+    this.logger.log('✅ Force cleanup and sync completed');
   }
 
   private getJobPriority(jobType: string): number {

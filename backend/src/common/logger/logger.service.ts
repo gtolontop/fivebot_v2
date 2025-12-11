@@ -22,9 +22,13 @@ const LOG_COLORS = {
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class LoggerService implements NestLoggerService {
-  private context?: string;
+  private context: string;
   private static logLevel: LogLevel = process.env.NODE_ENV === 'production' ? LogLevel.INFO : LogLevel.DEBUG;
   private static isProduction = process.env.NODE_ENV === 'production';
+
+  constructor(context?: string) {
+    this.context = context || 'Application';
+  }
 
   setContext(context: string): void {
     this.context = context;
@@ -34,16 +38,27 @@ export class LoggerService implements NestLoggerService {
     LoggerService.logLevel = level;
   }
 
-  private formatMessage(level: string, message: string, context?: string): string {
+  private formatArgs(...args: unknown[]): string {
+    return args.map(arg => {
+      if (typeof arg === 'string') return arg;
+      if (arg instanceof Error) return `${arg.message}${arg.stack ? '\n' + arg.stack : ''}`;
+      try {
+        return JSON.stringify(arg);
+      } catch {
+        return String(arg);
+      }
+    }).join(' ');
+  }
+
+  private formatMessage(level: string, message: string): string {
     const timestamp = new Date().toISOString();
-    const ctx = context || this.context || 'Application';
 
     if (LoggerService.isProduction) {
       // JSON format for production (easier to parse by log aggregators)
       return JSON.stringify({
         timestamp,
         level,
-        context: ctx,
+        context: this.context,
         message,
       });
     }
@@ -59,55 +74,64 @@ export class LoggerService implements NestLoggerService {
     const color = levelColors[level] || LOG_COLORS.reset;
     const levelPadded = level.padEnd(5);
 
-    return `${LOG_COLORS.dim}${timestamp}${LOG_COLORS.reset} ${color}${levelPadded}${LOG_COLORS.reset} ${LOG_COLORS.cyan}[${ctx}]${LOG_COLORS.reset} ${message}`;
+    return `${LOG_COLORS.dim}${timestamp}${LOG_COLORS.reset} ${color}${levelPadded}${LOG_COLORS.reset} ${LOG_COLORS.cyan}[${this.context}]${LOG_COLORS.reset} ${message}`;
   }
 
-  debug(message: string, context?: string): void {
+  debug(message: string, ...args: unknown[]): void {
     if (LoggerService.logLevel <= LogLevel.DEBUG) {
-      console.log(this.formatMessage('DEBUG', message, context));
+      const fullMessage = args.length > 0 ? `${message} ${this.formatArgs(...args)}` : message;
+      console.log(this.formatMessage('DEBUG', fullMessage));
     }
   }
 
-  log(message: string, context?: string): void {
+  log(message: string, ...args: unknown[]): void {
     if (LoggerService.logLevel <= LogLevel.INFO) {
-      console.log(this.formatMessage('INFO', message, context));
+      const fullMessage = args.length > 0 ? `${message} ${this.formatArgs(...args)}` : message;
+      console.log(this.formatMessage('INFO', fullMessage));
     }
   }
 
-  info(message: string, context?: string): void {
-    this.log(message, context);
+  info(message: string, ...args: unknown[]): void {
+    this.log(message, ...args);
   }
 
-  warn(message: string, context?: string): void {
+  warn(message: string, ...args: unknown[]): void {
     if (LoggerService.logLevel <= LogLevel.WARN) {
-      console.warn(this.formatMessage('WARN', message, context));
+      const fullMessage = args.length > 0 ? `${message} ${this.formatArgs(...args)}` : message;
+      console.warn(this.formatMessage('WARN', fullMessage));
     }
   }
 
-  error(message: string, trace?: string, context?: string): void {
+  error(message: string, ...args: unknown[]): void {
     if (LoggerService.logLevel <= LogLevel.ERROR) {
-      console.error(this.formatMessage('ERROR', message, context));
-      if (trace && !LoggerService.isProduction) {
-        console.error(`${LOG_COLORS.dim}${trace}${LOG_COLORS.reset}`);
+      const fullMessage = args.length > 0 ? `${message} ${this.formatArgs(...args)}` : message;
+      console.error(this.formatMessage('ERROR', fullMessage));
+
+      // Print stack trace for Error objects in development
+      if (!LoggerService.isProduction) {
+        for (const arg of args) {
+          if (arg instanceof Error && arg.stack) {
+            console.error(`${LOG_COLORS.dim}${arg.stack}${LOG_COLORS.reset}`);
+            break;
+          }
+        }
       }
     }
   }
 
-  verbose(message: string, context?: string): void {
-    this.debug(message, context);
+  verbose(message: string, ...args: unknown[]): void {
+    this.debug(message, ...args);
   }
 
   /**
    * Log with additional structured data
    */
-  logWithData(level: 'debug' | 'info' | 'warn' | 'error', message: string, data: Record<string, unknown>, context?: string): void {
-    const ctx = context || this.context || 'Application';
-
+  logWithData(level: 'debug' | 'info' | 'warn' | 'error', message: string, data: Record<string, unknown>): void {
     if (LoggerService.isProduction) {
       const output = JSON.stringify({
         timestamp: new Date().toISOString(),
         level: level.toUpperCase(),
-        context: ctx,
+        context: this.context,
         message,
         ...data,
       });
@@ -120,7 +144,7 @@ export class LoggerService implements NestLoggerService {
         console.log(output);
       }
     } else {
-      const formatted = this.formatMessage(level.toUpperCase(), message, ctx);
+      const formatted = this.formatMessage(level.toUpperCase(), message);
       const dataStr = Object.keys(data).length > 0
         ? `\n${LOG_COLORS.dim}${JSON.stringify(data, null, 2)}${LOG_COLORS.reset}`
         : '';
@@ -140,7 +164,5 @@ export class LoggerService implements NestLoggerService {
  * Create a logger instance with a specific context
  */
 export function createLogger(context: string): LoggerService {
-  const logger = new LoggerService();
-  logger.setContext(context);
-  return logger;
+  return new LoggerService(context);
 }

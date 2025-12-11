@@ -1,6 +1,9 @@
 import { Request } from 'express';
 import { UserRole, CollaboratorRole } from '@prisma/client';
 
+// Re-export validated DTOs for convenient imports
+export * from '../dto';
+
 /**
  * Authenticated user attached to request by JWT strategy
  */

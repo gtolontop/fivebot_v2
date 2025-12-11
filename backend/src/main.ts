@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import * as compression from 'compression';
 import { AppModule } from './app.module';
 import { setupGracefulShutdown } from './graceful-shutdown';
+import { GlobalExceptionFilter } from './common/filters';
 
 // Fix BigInt serialization for JSON
 (BigInt.prototype as any).toJSON = function() {
@@ -39,12 +40,18 @@ async function bootstrap() {
     credentials: true,
   });
 
+  // Global exception filter
+  app.useGlobalFilters(new GlobalExceptionFilter());
+
   // Global pipes
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       transform: true,
       forbidNonWhitelisted: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
     }),
   );
 
