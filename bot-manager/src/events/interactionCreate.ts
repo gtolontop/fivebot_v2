@@ -1,5 +1,42 @@
 import { BaseInteraction, ChatInputCommandInteraction, ButtonInteraction, EmbedBuilder } from 'discord.js';
 import { PrismaClient } from '@prisma/client';
+import { Redis } from 'ioredis';
+
+// Redis client for job queue
+const redis = new Redis({
+  host: process.env.REDIS_HOST || 'localhost',
+  port: parseInt(process.env.REDIS_PORT || '6379'),
+  password: process.env.REDIS_PASSWORD || undefined,
+  maxRetriesPerRequest: 3,
+});
+
+// Helper function to add a job to the queue
+async function addJobToQueue(jobType: string, data: { botId: string }): Promise<string> {
+  const jobId = `${jobType}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  const job = {
+    id: jobId,
+    type: jobType,
+    data,
+    priority: getJobPriority(jobType),
+    createdAt: new Date().toISOString(),
+    status: 'waiting',
+  };
+
+  await redis.rpush('fivebot:jobs', JSON.stringify(job));
+  await redis.publish('fivebot:jobs:notify', jobId);
+
+  return jobId;
+}
+
+// Get job priority based on type
+function getJobPriority(jobType: string): number {
+  const priorities: Record<string, number> = {
+    'start-bot': 8,
+    'stop-bot': 9,
+    'restart-bot': 9,
+  };
+  return priorities[jobType] || 5;
+}
 
 export async function interactionCreate(interaction: BaseInteraction, prisma: PrismaClient) {
   if (interaction.isChatInputCommand()) {
@@ -111,10 +148,12 @@ async function handleButtonInteraction(interaction: ButtonInteraction, prisma: P
           data: { status: 'STARTING' },
         });
 
-        // TODO: Add to queue
-        
-        await interaction.editReply({ 
-          content: `🟡 Démarrage du bot **${bot.name}** en cours...` 
+        // Add job to queue for worker to process
+        const startJobId = await addJobToQueue('start-bot', { botId });
+        console.log(`[Bot Manager] Queued start-bot job ${startJobId} for bot ${bot.name}`);
+
+        await interaction.editReply({
+          content: `🟡 Démarrage du bot **${bot.name}** en cours...`
         });
         break;
 
@@ -129,10 +168,12 @@ async function handleButtonInteraction(interaction: ButtonInteraction, prisma: P
           data: { status: 'STOPPING' },
         });
 
-        // TODO: Add to queue
-        
-        await interaction.editReply({ 
-          content: `🟡 Arrêt du bot **${bot.name}** en cours...` 
+        // Add job to queue for worker to process
+        const stopJobId = await addJobToQueue('stop-bot', { botId });
+        console.log(`[Bot Manager] Queued stop-bot job ${stopJobId} for bot ${bot.name}`);
+
+        await interaction.editReply({
+          content: `🟡 Arrêt du bot **${bot.name}** en cours...`
         });
         break;
 
@@ -142,10 +183,12 @@ async function handleButtonInteraction(interaction: ButtonInteraction, prisma: P
           data: { status: 'STOPPING' },
         });
 
-        // TODO: Add to queue
-        
-        await interaction.editReply({ 
-          content: `🔄 Redémarrage du bot **${bot.name}** en cours...` 
+        // Add job to queue for worker to process
+        const restartJobId = await addJobToQueue('restart-bot', { botId });
+        console.log(`[Bot Manager] Queued restart-bot job ${restartJobId} for bot ${bot.name}`);
+
+        await interaction.editReply({
+          content: `🔄 Redémarrage du bot **${bot.name}** en cours...`
         });
         break;
 

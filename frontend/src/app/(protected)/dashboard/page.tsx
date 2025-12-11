@@ -41,6 +41,8 @@ interface DashboardStats {
   topBots: { name: string; servers: number; users: number }[];
   avgResponseTime?: number;
   uptime?: number;
+  activeModules?: number;
+  totalModulesInstalled?: number;
 }
 
 interface ActivityEvent {
@@ -245,7 +247,8 @@ export default function DashboardPage() {
     ? ((stats.activeBots / stats.totalBots) * 100).toFixed(1)
     : '0.0';
 
-  const activeModules = 0; // TODO: Connect to real data
+  // Use real data from API
+  const activeModules = stats.activeModules || 0;
 
   return (
     <div className="max-w-[1600px] mx-auto space-y-6">
