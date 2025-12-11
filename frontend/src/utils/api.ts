@@ -242,6 +242,7 @@ export const usersAPI = {
   updateMe: (data: { username?: string; email?: string; avatar?: string }) =>
     api.patch('/users/me', data),
   getMyGuilds: () => api.get('/users/me/guilds'),
+  deleteAccount: () => api.delete('/users/me'),
   getAll: (page = 1, limit = 10) =>
     api.get(`/users?page=${page}&limit=${limit}`),
   getById: (id: string) => api.get(`/users/${id}`),
