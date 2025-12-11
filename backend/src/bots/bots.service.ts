@@ -1,9 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Inject } from '@nestjs/common';
 import { Bot, BotStatus, BotConfig, LogLevel } from '@prisma/client';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { EncryptionService } from '../common/encryption/encryption.service';
 import { DiscordService } from '../common/discord/discord.service';
-import { QueueService } from '../queue/queue.service';
+import { IQueueService, QUEUE_SERVICE } from '../queue/queue.interface';
 import { UsersService } from '../users/users.service';
 import { BotLogsService } from './bot-logs.service';
 import { RedisService } from '../common/redis/redis.service';
@@ -59,7 +59,7 @@ export class BotsService {
     private prisma: PrismaService,
     private encryptionService: EncryptionService,
     private discordService: DiscordService,
-    public queueService: QueueService, // Make public for monitor service access
+    @Inject(QUEUE_SERVICE) public queueService: IQueueService, // Make public for monitor service access
     private usersService: UsersService,
     private botLogsService: BotLogsService,
     private redisService: RedisService,
@@ -661,8 +661,8 @@ export class BotsService {
       }
     }
 
-    // Clear console buffer before starting
-    this.consoleBufferService.clearBuffer(botId);
+    // Soft clear console buffer before starting (keeps some history)
+    this.consoleBufferService.softClearBuffer(botId);
 
     // Only add the starting log after validation checks pass
     await this.botLogsService.addLog(
@@ -839,8 +839,8 @@ export class BotsService {
     // Update status to RESTARTING
     await this.updateStatus(botId, BotStatus.RESTARTING);
 
-    // Clear console buffer
-    this.consoleBufferService.clearBuffer(botId);
+    // Soft clear console buffer (keeps some history for debugging)
+    this.consoleBufferService.softClearBuffer(botId);
 
     // Create job log for restart
     await this.prisma.jobLog.create({

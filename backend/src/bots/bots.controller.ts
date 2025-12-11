@@ -10,6 +10,7 @@ import {
   UseGuards,
   Req,
   Res,
+  Inject,
   NotFoundException,
   BadRequestException,
   ForbiddenException,
@@ -21,7 +22,7 @@ import { BotMetricsService, DashboardStats, DailyMetrics } from './bot-metrics.s
 import { SetupMetricsService } from './setup-metrics.service';
 import { BotMonitorService } from './bot-monitor.service';
 import { PrismaService } from '../common/prisma/prisma.service';
-import { QueueService } from '../queue/queue.service';
+import { IQueueService, QUEUE_SERVICE } from '../queue/queue.interface';
 import { BotLogsService } from './bot-logs.service';
 import { TicketService } from './ticket.service';
 import { ConsoleBufferService } from './console-buffer.service';
@@ -29,6 +30,7 @@ import { BotRealtimeMetricsService } from './bot-realtime-metrics.service';
 import { BotProcessMetricsService } from './bot-process-metrics.service';
 import { CollaboratorsService } from './collaborators.service';
 import { EventsService } from '../common/events/events.service';
+import { PermissionsGuard, RequirePermissions, Permissions } from '../common/guards/permissions.guard';
 import { LogLevel } from '@prisma/client';
 
 interface CreateBotDto {
@@ -84,7 +86,7 @@ export class BotsController {
     private setupMetricsService: SetupMetricsService,
     private botMonitorService: BotMonitorService,
     private prisma: PrismaService,
-    private queueService: QueueService,
+    @Inject(QUEUE_SERVICE) private queueService: IQueueService,
     private botLogsService: BotLogsService,
     private consoleBufferService: ConsoleBufferService,
     private botRealtimeMetricsService: BotRealtimeMetricsService,
@@ -306,7 +308,8 @@ export class BotsController {
   }
 
   @Post(':id/start')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+  @RequirePermissions(Permissions.START_BOT)
   async start(@Param('id') id: string, @Req() req: any, @Body() body?: { force?: boolean }) {
     try {
       console.log(`🚀 Starting bot ${id} for user ${req.user.id}${body?.force ? ' (forced)' : ''}`);
@@ -361,13 +364,15 @@ export class BotsController {
   }
 
   @Post(':id/stop')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+  @RequirePermissions(Permissions.STOP_BOT)
   async stop(@Param('id') id: string, @Req() req: any) {
     return this.botsService.stop(id, req.user.id);
   }
 
   @Post(':id/restart')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+  @RequirePermissions(Permissions.RESTART_BOT)
   async restart(@Param('id') id: string, @Req() req: any) {
     return this.botsService.restart(id, req.user.id);
   }
@@ -380,7 +385,8 @@ export class BotsController {
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+  @RequirePermissions(Permissions.DELETE_BOT)
   async delete(@Param('id') id: string, @Req() req: any) {
     await this.botsService.delete(id, req.user.id);
     return { message: 'Bot deleted successfully' };
@@ -459,7 +465,8 @@ export class BotsController {
   }
 
   @Get(':id/metrics')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+  @RequirePermissions(Permissions.VIEW_METRICS)
   async getBotMetrics(
     @Param('id') id: string,
     @Req() req: any,
@@ -592,7 +599,8 @@ export class BotsController {
 
   // Ticket endpoints
   @Get(':id/tickets')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+  @RequirePermissions(Permissions.VIEW_TICKETS)
   async getTickets(@Param('id') id: string, @Req() req: any) {
     const bot = await this.botsService.findOne(id, req.user.id);
     if (!bot) {
@@ -607,7 +615,8 @@ export class BotsController {
   }
 
   @Post(':id/tickets/:ticketId/close')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+  @RequirePermissions(Permissions.CLOSE_TICKETS)
   async closeTicket(
     @Param('id') id: string,
     @Param('ticketId') ticketId: string,
@@ -755,7 +764,8 @@ export class BotsController {
   }
 
   @Delete(':id/tickets/:ticketId')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+  @RequirePermissions(Permissions.DELETE_TICKETS)
   async deleteTicket(
     @Param('id') id: string,
     @Param('ticketId') ticketId: string,
@@ -786,7 +796,8 @@ export class BotsController {
   }
 
   @Post(':id/ticket-categories')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+  @RequirePermissions(Permissions.CONFIGURE_TICKETS)
   async createTicketCategory(
     @Param('id') id: string,
     @Body() data: any,
@@ -801,7 +812,8 @@ export class BotsController {
   }
 
   @Put(':id/ticket-categories/:categoryId')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+  @RequirePermissions(Permissions.CONFIGURE_TICKETS)
   async updateTicketCategory(
     @Param('id') id: string,
     @Param('categoryId') categoryId: string,
@@ -817,7 +829,8 @@ export class BotsController {
   }
 
   @Delete(':id/ticket-categories/:categoryId')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+  @RequirePermissions(Permissions.CONFIGURE_TICKETS)
   async deleteTicketCategory(
     @Param('id') id: string,
     @Param('categoryId') categoryId: string,
@@ -848,7 +861,8 @@ export class BotsController {
   }
 
   @Post(':id/ticket-panels')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+  @RequirePermissions(Permissions.CONFIGURE_TICKETS)
   async createTicketPanel(
     @Param('id') id: string,
     @Body() data: any,
@@ -863,7 +877,8 @@ export class BotsController {
   }
 
   @Put(':id/ticket-panels/:panelId')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+  @RequirePermissions(Permissions.CONFIGURE_TICKETS)
   async updateTicketPanel(
     @Param('id') id: string,
     @Param('panelId') panelId: string,
@@ -879,7 +894,8 @@ export class BotsController {
   }
 
   @Delete(':id/ticket-panels/:panelId')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+  @RequirePermissions(Permissions.CONFIGURE_TICKETS)
   async deleteTicketPanel(
     @Param('id') id: string,
     @Param('panelId') panelId: string,
@@ -895,7 +911,8 @@ export class BotsController {
   }
 
   @Post(':id/ticket-panels/:panelId/send')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+  @RequirePermissions(Permissions.CONFIGURE_TICKETS)
   async sendTicketPanel(
     @Param('id') id: string,
     @Param('panelId') panelId: string,
@@ -1082,7 +1099,8 @@ export class BotsController {
   }
 
   @Get(':id/logs/history')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+  @RequirePermissions(Permissions.VIEW_LOGS)
   async getLogsHistory(
     @Param('id') id: string,
     @Req() req: any,
@@ -1092,13 +1110,12 @@ export class BotsController {
       throw new NotFoundException('Bot not found');
     }
 
-    let logs: string[] = [];
+    // Always try buffer first (now persists even when offline)
+    let logs = this.consoleBufferService.getBuffer(id);
+    const structuredLogs = this.consoleBufferService.getStructuredBuffer(id);
 
-    // If bot is online, get logs from buffer (live process)
-    if (bot.status === 'ONLINE' || bot.status === 'STARTING') {
-      logs = this.consoleBufferService.getBuffer(id);
-    } else {
-      // Bot is offline, get logs from database
+    // If buffer is empty, fall back to database
+    if (logs.length === 0) {
       const recentLogs = await this.botLogsService.getRecentLogs(id, 500);
 
       // Format logs to match the console format
@@ -1128,16 +1145,20 @@ export class BotsController {
 
     return {
       logs,
+      structuredLogs: structuredLogs.slice(-500), // Include structured logs for frontend
       bot: {
         id: bot.id,
         name: bot.name,
         status: bot.status,
-      }
+      },
+      bufferStatus: this.consoleBufferService.getBotStatus(id),
+      totalLogsInBuffer: structuredLogs.length,
     };
   }
 
   @Get(':id/logs/live')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+  @RequirePermissions(Permissions.VIEW_LOGS)
   async getLiveLogs(
     @Param('id') id: string,
     @Req() req: any,
@@ -1147,20 +1168,22 @@ export class BotsController {
       throw new NotFoundException('Bot not found');
     }
 
-    let logs: string[] = [];
-
-    if (bot.status === 'ONLINE' || bot.status === 'STARTING') {
-      // Bot is online - get logs from buffer
-      logs = this.consoleBufferService.getBuffer(id);
-    }
+    // Always return buffer (persists even when offline now)
+    const logs = this.consoleBufferService.getBuffer(id);
+    const structuredLogs = this.consoleBufferService.getStructuredBuffer(id);
+    const bufferStatus = this.consoleBufferService.getBotStatus(id);
 
     return {
       logs,
+      structuredLogs: structuredLogs.slice(-200), // Last 200 for live view
       bot: {
         id: bot.id,
         name: bot.name,
         status: bot.status,
-      }
+      },
+      bufferStatus,
+      isLive: bot.status === 'ONLINE' || bot.status === 'STARTING',
+      totalLogsInBuffer: structuredLogs.length,
     };
   }
 
@@ -1210,23 +1233,11 @@ export class BotsController {
       return message;
     });
 
-    // Add some synthetic logs if no real logs exist
-    if (recentLogs.length === 0) {
-      const syntheticLogs = [
-        `[${new Date().toLocaleTimeString()}] 📋 Bot ${bot.name} initialized`,
-        `[${new Date(Date.now() - 30000).toLocaleTimeString()}] 📊 Current status: ${bot.status}`,
-        `[${new Date(Date.now() - 60000).toLocaleTimeString()}] 🔧 Bot configuration loaded`
-      ];
-      
-      if (bot.status === 'ERROR') {
-        syntheticLogs.unshift(`[${new Date().toLocaleTimeString()}] ❌ Bot encountered an error during startup or operation`);
-      }
-      
-      return { logs: syntheticLogs };
-    }
-
+    // Return empty array if no logs - no more fake synthetic logs
     return {
-      logs: recentLogs
+      logs: recentLogs,
+      isEmpty: recentLogs.length === 0,
+      message: recentLogs.length === 0 ? 'No logs available yet' : null,
     };
   }
 
@@ -1456,7 +1467,8 @@ export class BotsController {
   }
 
   @Get(':id/analytics/:period')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+  @RequirePermissions(Permissions.VIEW_ANALYTICS)
   async getBotAnalytics(
     @Param('id') id: string,
     @Param('period') period: 'daily' | 'weekly' | 'monthly',
@@ -1519,7 +1531,8 @@ export class BotsController {
   // ==================== COLLABORATORS ROUTES ====================
 
   @Get(':id/collaborators')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+  @RequirePermissions(Permissions.MANAGE_COLLABORATORS)
   async getCollaborators(@Param('id') id: string, @Req() req: any) {
     // Vérifier que l'utilisateur a accès au bot
     await this.verifyBotAccess(id, req.user.id);
@@ -1546,7 +1559,8 @@ export class BotsController {
   }
 
   @Post(':id/collaborators/invite')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+  @RequirePermissions(Permissions.MANAGE_COLLABORATORS)
   async inviteCollaborator(
     @Param('id') id: string,
     @Body() dto: { userDiscordId: string; permissions: any },
@@ -1647,7 +1661,8 @@ export class BotsController {
   }
 
   @Delete(':id/collaborators/:collaboratorId')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+  @RequirePermissions(Permissions.MANAGE_COLLABORATORS)
   async removeCollaborator(
     @Param('id') id: string,
     @Param('collaboratorId') collaboratorId: string,

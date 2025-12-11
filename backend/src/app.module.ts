@@ -8,6 +8,7 @@ import { PrismaModule } from './common/prisma/prisma.module';
 import { CacheModule } from './common/cache/cache.module';
 import { RedisModule } from './common/redis/redis.module';
 import { DiscordModule } from './common/discord/discord.module';
+import { WebsocketModule } from './common/websocket/websocket.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { BotsModule } from './bots/bots.module';
@@ -34,6 +35,7 @@ import { AdminModule } from './modules/admin/admin.module';
     CacheModule,
     RedisModule, // Already imported - Redis for shared bot state
     DiscordModule,
+    WebsocketModule, // Real-time log streaming
     AuthModule,
     UsersModule,
     BotsModule,

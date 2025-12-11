@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Cookies from 'js-cookie';
+import { useBotWebSocket, useBotPolling, LogEntry as WSLogEntry } from '../hooks/useBotWebSocket';
 
 interface BotLogsProps {
   botId: string;
@@ -17,19 +18,76 @@ interface LogEntry {
   category?: string;
 }
 
+// Convert WebSocket log entry to display format
+const convertWSLog = (wsLog: WSLogEntry, index: number): LogEntry => {
+  return {
+    id: `ws-${new Date(wsLog.timestamp).getTime()}-${index}`,
+    timestamp: new Date(wsLog.timestamp).toLocaleTimeString(),
+    level: wsLog.level || 'info',
+    message: wsLog.line,
+    category: wsLog.source || 'Bot',
+  };
+};
+
 export default function BotLogs({ botId, botStatus, className = '' }: BotLogsProps) {
-  const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [isConnected, setIsConnected] = useState(false);
+  const [displayLogs, setDisplayLogs] = useState<LogEntry[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [filterLevel, setFilterLevel] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [isAutoScroll, setIsAutoScroll] = useState(true);
+  const [connectionMode, setConnectionMode] = useState<'websocket' | 'polling'>('websocket');
   const logsEndRef = useRef<HTMLDivElement>(null);
   const logsContainerRef = useRef<HTMLDivElement>(null);
-  const lastFetchedLogsRef = useRef<string[]>([]);
   const hasLoadedHistoryRef = useRef(false);
 
-  // Load history once on mount
+  // WebSocket connection
+  const {
+    connected: wsConnected,
+    logs: wsLogs,
+    status: wsStatus,
+  } = useBotWebSocket({
+    botId,
+    enabled: connectionMode === 'websocket',
+    onLog: (log) => {
+      // Real-time log received
+      console.log('[BotLogs] New log via WebSocket:', log.line.substring(0, 50));
+    },
+    onConnect: () => {
+      console.log('[BotLogs] WebSocket connected');
+      setConnectionMode('websocket');
+    },
+    onDisconnect: () => {
+      console.log('[BotLogs] WebSocket disconnected, falling back to polling');
+      // Fall back to polling if WebSocket fails
+      setTimeout(() => {
+        if (!wsConnected) {
+          setConnectionMode('polling');
+        }
+      }, 5000);
+    },
+    onError: (error) => {
+      console.error('[BotLogs] WebSocket error:', error);
+    },
+  });
+
+  // Fallback polling (only used if WebSocket fails)
+  const { logs: pollingLogs, loading: pollingLoading } = useBotPolling(
+    botId,
+    connectionMode === 'polling' ? 2000 : 999999 // Only poll if in polling mode
+  );
+
+  // Convert and merge logs
+  useEffect(() => {
+    const sourceLogs = connectionMode === 'websocket' ? wsLogs : pollingLogs;
+
+    if (sourceLogs.length > 0) {
+      const converted = sourceLogs.map((log, idx) => convertWSLog(log, idx));
+      setDisplayLogs(converted);
+      setIsLoadingHistory(false);
+    }
+  }, [wsLogs, pollingLogs, connectionMode]);
+
+  // Load history on mount
   useEffect(() => {
     if (!hasLoadedHistoryRef.current) {
       loadHistoricalLogs();
@@ -37,31 +95,12 @@ export default function BotLogs({ botId, botStatus, className = '' }: BotLogsPro
     }
   }, [botId]);
 
-  // Fetch logs when bot status changes or component mounts
-  useEffect(() => {
-    if (botStatus !== 'ONLINE') {
-      // Don't clear logs when bot goes offline - keep the history
-      setIsConnected(false);
-      return;
-    }
-
-    // Start polling for new logs
-    fetchLogs();
-    const interval = setInterval(fetchLogs, 3000);
-    setIsConnected(true);
-
-    return () => {
-      clearInterval(interval);
-      setIsConnected(false);
-    };
-  }, [botId, botStatus]);
-
   // Auto-scroll to bottom when new logs arrive
   useEffect(() => {
     if (isAutoScroll && logsEndRef.current) {
       logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [logs, isAutoScroll]);
+  }, [displayLogs, isAutoScroll]);
 
   const loadHistoricalLogs = async () => {
     setIsLoadingHistory(true);
@@ -79,18 +118,19 @@ export default function BotLogs({ botId, botStatus, className = '' }: BotLogsPro
 
       if (response.ok) {
         const data = await response.json();
-        if (data.logs && data.logs.length > 0) {
-          // Convert raw log strings to structured LogEntry objects
+
+        // Use structuredLogs if available (new backend), fall back to logs array
+        if (data.structuredLogs && data.structuredLogs.length > 0) {
+          const converted = data.structuredLogs.map((log: WSLogEntry, idx: number) => convertWSLog(log, idx));
+          setDisplayLogs(converted);
+        } else if (data.logs && data.logs.length > 0) {
+          // Legacy format - convert raw log strings
           const structuredLogs: LogEntry[] = data.logs.map((logString: string, index: number) => {
             const id = `history-${Date.now()}-${index}`;
-
-            // Extract timestamp from log string
             const timestampMatch = logString.match(/\[(\d{2}:\d{2}:\d{2})\]/);
             const timestamp = timestampMatch ? timestampMatch[1] : new Date().toLocaleTimeString();
 
-            // Parse log level from message
             let level: LogEntry['level'] = 'info';
-            let message = logString;
             let category = 'Bot';
 
             if (logString.includes('✅') || logString.toLowerCase().includes('success')) {
@@ -103,112 +143,45 @@ export default function BotLogs({ botId, botStatus, className = '' }: BotLogsPro
               level = 'debug';
             }
 
-            // Extract category from message patterns
             if (logString.includes('discord@')) category = 'Discord';
             else if (logString.includes('cmd@')) category = 'Commands';
             else if (logString.includes('container@')) category = 'System';
 
-            return { id, timestamp, level, message, category };
+            return { id, timestamp, level, message: logString, category };
           });
 
-          setLogs(structuredLogs);
-          lastFetchedLogsRef.current = structuredLogs.map(log => log.message);
+          setDisplayLogs(structuredLogs);
         } else {
-          // No logs found - add a placeholder
-          const placeholderLog: LogEntry = {
-            id: `placeholder-${Date.now()}`,
+          // No logs found
+          setDisplayLogs([{
+            id: `empty-${Date.now()}`,
             timestamp: new Date().toLocaleTimeString(),
             level: 'info',
-            message: 'No recent logs available. Logs from the last hour will appear here.',
+            message: 'No logs available yet. Start the bot to see logs.',
             category: 'System'
-          };
-          setLogs([placeholderLog]);
+          }]);
         }
       }
     } catch (error) {
       console.log('Could not fetch historical logs:', error);
-      // Add error log
-      const errorLog: LogEntry = {
+      setDisplayLogs([{
         id: `error-${Date.now()}`,
         timestamp: new Date().toLocaleTimeString(),
         level: 'error',
         message: 'Failed to load log history',
         category: 'System'
-      };
-      setLogs([errorLog]);
+      }]);
     } finally {
       setIsLoadingHistory(false);
     }
   };
 
-  const fetchLogs = async () => {
-    try {
-      const token = Cookies.get('token');
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/bots/${botId}/logs/live`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.logs && data.logs.length > 0) {
-          // Convert raw log strings to structured LogEntry objects
-          const structuredLogs: LogEntry[] = data.logs.map((logString: string, index: number) => {
-            const id = `${Date.now()}-${index}`;
-            const timestamp = new Date().toLocaleTimeString();
-            
-            // Parse log level from message
-            let level: LogEntry['level'] = 'info';
-            let message = logString;
-            let category = 'Bot';
-
-            if (logString.includes('✅') || logString.toLowerCase().includes('success')) {
-              level = 'success';
-            } else if (logString.includes('❌') || logString.toLowerCase().includes('error')) {
-              level = 'error';
-            } else if (logString.includes('⚠️') || logString.toLowerCase().includes('warn')) {
-              level = 'warn';
-            } else if (logString.includes('🔄') || logString.toLowerCase().includes('debug')) {
-              level = 'debug';
-            }
-
-            // Extract category from message patterns
-            if (logString.includes('Discord')) category = 'Discord';
-            else if (logString.includes('Command')) category = 'Commands';
-            else if (logString.includes('Guild') || logString.includes('Server')) category = 'Guilds';
-            else if (logString.includes('Database') || logString.includes('DB')) category = 'Database';
-
-            return { id, timestamp, level, message, category };
-          });
-
-          // Only add new logs that we haven't seen before
-          const newLogs = structuredLogs.filter(log => 
-            !lastFetchedLogsRef.current.includes(log.message)
-          );
-          
-          if (newLogs.length > 0) {
-            setLogs(prev => [...prev, ...newLogs].slice(-500)); // Keep last 500 logs
-            lastFetchedLogsRef.current = structuredLogs.map(log => log.message);
-          }
-        }
-      }
-    } catch (error) {
-      console.log('Could not fetch bot logs:', error);
-    }
-  };
-
   const clearLogs = () => {
-    setLogs([]);
-    lastFetchedLogsRef.current = [];
+    setDisplayLogs([]);
   };
 
   const downloadLogs = () => {
-    const logText = logs.map(log => `[${log.timestamp}] [${log.level.toUpperCase()}] ${log.message}`).join('\n');
+    const logText = displayLogs.map(log => `[${log.timestamp}] [${log.level.toUpperCase()}] ${log.message}`).join('\n');
     const blob = new Blob([logText], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -226,9 +199,9 @@ export default function BotLogs({ botId, botStatus, className = '' }: BotLogsPro
     }
   };
 
-  const filteredLogs = logs.filter(log => {
+  const filteredLogs = displayLogs.filter(log => {
     const matchesLevel = filterLevel === 'all' || log.level === filterLevel;
-    const matchesSearch = searchTerm === '' || 
+    const matchesSearch = searchTerm === '' ||
       log.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (log.category && log.category.toLowerCase().includes(searchTerm.toLowerCase()));
     return matchesLevel && matchesSearch;
@@ -263,15 +236,20 @@ export default function BotLogs({ botId, botStatus, className = '' }: BotLogsPro
         <div className="flex items-center space-x-3">
           <h3 className="text-lg font-semibold text-gray-900">🔍 Bot Logs</h3>
           <div className="flex items-center space-x-2">
-            {isConnected ? (
+            {wsConnected ? (
               <>
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <span className="text-sm text-green-600 font-medium">Live</span>
               </>
+            ) : connectionMode === 'polling' ? (
+              <>
+                <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                <span className="text-sm text-yellow-600 font-medium">Polling</span>
+              </>
             ) : (
               <>
                 <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                <span className="text-sm text-gray-500">Disconnected</span>
+                <span className="text-sm text-gray-500">Connecting...</span>
               </>
             )}
           </div>
@@ -291,7 +269,7 @@ export default function BotLogs({ botId, botStatus, className = '' }: BotLogsPro
           </button>
           <button
             onClick={downloadLogs}
-            disabled={logs.length === 0}
+            disabled={displayLogs.length === 0}
             className="px-3 py-1 text-xs bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Download
@@ -335,7 +313,7 @@ export default function BotLogs({ botId, botStatus, className = '' }: BotLogsPro
         </div>
 
         <div className="text-xs text-gray-500">
-          {filteredLogs.length} / {logs.length} logs
+          {filteredLogs.length} / {displayLogs.length} logs
         </div>
       </div>
 
@@ -354,7 +332,7 @@ export default function BotLogs({ botId, botStatus, className = '' }: BotLogsPro
           </div>
         ) : filteredLogs.length === 0 ? (
           <div className="text-gray-500 text-center py-8">
-            {logs.length === 0 ? 'No logs available...' : 'No logs match your filters'}
+            {displayLogs.length === 0 ? 'No logs available...' : 'No logs match your filters'}
           </div>
         ) : (
           <div className="space-y-1">
@@ -384,12 +362,18 @@ export default function BotLogs({ botId, botStatus, className = '' }: BotLogsPro
       {/* Stats */}
       <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
         <div className="flex items-center space-x-4 text-xs text-gray-500">
-          <span>Total: {logs.length}</span>
-          <span>Errors: {logs.filter(l => l.level === 'error').length}</span>
-          <span>Warnings: {logs.filter(l => l.level === 'warn').length}</span>
+          <span>Total: {displayLogs.length}</span>
+          <span>Errors: {displayLogs.filter(l => l.level === 'error').length}</span>
+          <span>Warnings: {displayLogs.filter(l => l.level === 'warn').length}</span>
         </div>
         <div className="text-xs text-gray-500">
-          Auto-refresh every 3s
+          {connectionMode === 'websocket' && wsConnected ? (
+            <span className="text-green-600">Live (WebSocket)</span>
+          ) : connectionMode === 'polling' ? (
+            <span>Polling every 2s</span>
+          ) : (
+            <span>Connecting...</span>
+          )}
         </div>
       </div>
     </div>
