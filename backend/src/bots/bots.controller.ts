@@ -10,6 +10,7 @@ import {
   UseGuards,
   Req,
   Res,
+  Inject,
   NotFoundException,
   BadRequestException,
   ForbiddenException,
@@ -21,7 +22,7 @@ import { BotMetricsService, DashboardStats, DailyMetrics } from './bot-metrics.s
 import { SetupMetricsService } from './setup-metrics.service';
 import { BotMonitorService } from './bot-monitor.service';
 import { PrismaService } from '../common/prisma/prisma.service';
-import { QueueService } from '../queue/queue.service';
+import { IQueueService, QUEUE_SERVICE } from '../queue/queue.interface';
 import { BotLogsService } from './bot-logs.service';
 import { TicketService } from './ticket.service';
 import { ConsoleBufferService } from './console-buffer.service';
@@ -85,7 +86,7 @@ export class BotsController {
     private setupMetricsService: SetupMetricsService,
     private botMonitorService: BotMonitorService,
     private prisma: PrismaService,
-    private queueService: QueueService,
+    @Inject(QUEUE_SERVICE) private queueService: IQueueService,
     private botLogsService: BotLogsService,
     private consoleBufferService: ConsoleBufferService,
     private botRealtimeMetricsService: BotRealtimeMetricsService,
