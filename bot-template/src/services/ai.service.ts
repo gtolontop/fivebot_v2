@@ -1,6 +1,7 @@
 import { Client, Message, EmbedBuilder } from 'discord.js';
 import OpenAI from 'openai';
 import { PrismaClient } from '@prisma/client';
+import { decrypt, encrypt } from '../utils/encryption';
 
 interface AIConfig {
   id: string;
@@ -1298,14 +1299,11 @@ Your job is to help users with their FiveLink profiles, Discord bots, and make t
   }
 
   private decryptApiKey(encryptedKey: string): string {
-    // TODO: Implement actual encryption/decryption
-    // For now, return as-is (should be encrypted in production)
-    return encryptedKey;
+    return decrypt(encryptedKey);
   }
 
   private encryptApiKey(plainKey: string): string {
-    // TODO: Implement actual encryption
-    return plainKey;
+    return encrypt(plainKey);
   }
 
   async getUsageStats(configId: string, days: number = 30): Promise<any> {

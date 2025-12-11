@@ -15,6 +15,8 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { CollaboratorsService } from './collaborators.service';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '@prisma/client';
 
 interface InviteCollaboratorDto {
   userDiscordId: string;
@@ -35,6 +37,7 @@ export class CollaboratorsController {
   constructor(
     private readonly collaboratorsService: CollaboratorsService,
     private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   @Get(':botId/collaborators')
@@ -157,7 +160,21 @@ export class CollaboratorsController {
       },
     });
 
-    // TODO: Send notification to invited user
+    // Send notification to invited user
+    await this.notificationsService.createNotification(
+      targetUser.id,
+      NotificationType.INFO,
+      'Bot Collaboration Invitation',
+      `You have been invited to collaborate on bot "${bot.name}" as ${dto.role}`,
+      {
+        type: 'bot_invitation',
+        botId,
+        botName: bot.name,
+        invitedBy: req.user.username || req.user.discordId,
+        role: dto.role,
+        collaboratorId: collaborator.id,
+      }
+    );
 
     return {
       ...collaborator,
