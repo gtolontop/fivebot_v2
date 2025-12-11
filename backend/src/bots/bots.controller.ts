@@ -1092,13 +1092,12 @@ export class BotsController {
       throw new NotFoundException('Bot not found');
     }
 
-    let logs: string[] = [];
+    // Always try buffer first (now persists even when offline)
+    let logs = this.consoleBufferService.getBuffer(id);
+    const structuredLogs = this.consoleBufferService.getStructuredBuffer(id);
 
-    // If bot is online, get logs from buffer (live process)
-    if (bot.status === 'ONLINE' || bot.status === 'STARTING') {
-      logs = this.consoleBufferService.getBuffer(id);
-    } else {
-      // Bot is offline, get logs from database
+    // If buffer is empty, fall back to database
+    if (logs.length === 0) {
       const recentLogs = await this.botLogsService.getRecentLogs(id, 500);
 
       // Format logs to match the console format
@@ -1128,11 +1127,14 @@ export class BotsController {
 
     return {
       logs,
+      structuredLogs: structuredLogs.slice(-500), // Include structured logs for frontend
       bot: {
         id: bot.id,
         name: bot.name,
         status: bot.status,
-      }
+      },
+      bufferStatus: this.consoleBufferService.getBotStatus(id),
+      totalLogsInBuffer: structuredLogs.length,
     };
   }
 
@@ -1147,20 +1149,22 @@ export class BotsController {
       throw new NotFoundException('Bot not found');
     }
 
-    let logs: string[] = [];
-
-    if (bot.status === 'ONLINE' || bot.status === 'STARTING') {
-      // Bot is online - get logs from buffer
-      logs = this.consoleBufferService.getBuffer(id);
-    }
+    // Always return buffer (persists even when offline now)
+    const logs = this.consoleBufferService.getBuffer(id);
+    const structuredLogs = this.consoleBufferService.getStructuredBuffer(id);
+    const bufferStatus = this.consoleBufferService.getBotStatus(id);
 
     return {
       logs,
+      structuredLogs: structuredLogs.slice(-200), // Last 200 for live view
       bot: {
         id: bot.id,
         name: bot.name,
         status: bot.status,
-      }
+      },
+      bufferStatus,
+      isLive: bot.status === 'ONLINE' || bot.status === 'STARTING',
+      totalLogsInBuffer: structuredLogs.length,
     };
   }
 
@@ -1210,23 +1214,11 @@ export class BotsController {
       return message;
     });
 
-    // Add some synthetic logs if no real logs exist
-    if (recentLogs.length === 0) {
-      const syntheticLogs = [
-        `[${new Date().toLocaleTimeString()}] 📋 Bot ${bot.name} initialized`,
-        `[${new Date(Date.now() - 30000).toLocaleTimeString()}] 📊 Current status: ${bot.status}`,
-        `[${new Date(Date.now() - 60000).toLocaleTimeString()}] 🔧 Bot configuration loaded`
-      ];
-      
-      if (bot.status === 'ERROR') {
-        syntheticLogs.unshift(`[${new Date().toLocaleTimeString()}] ❌ Bot encountered an error during startup or operation`);
-      }
-      
-      return { logs: syntheticLogs };
-    }
-
+    // Return empty array if no logs - no more fake synthetic logs
     return {
-      logs: recentLogs
+      logs: recentLogs,
+      isEmpty: recentLogs.length === 0,
+      message: recentLogs.length === 0 ? 'No logs available yet' : null,
     };
   }
 
