@@ -83,3 +83,38 @@ build/
 
 # Prisma
 prisma/migrations/dev.db*
+
+# TypeScript
+*.tsbuildinfo
+
+# Test
+coverage/
+.jest/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Local development
+*.local
+.env.local
+.env.*.local
+
+# Docker volumes
+postgres_data/
+redis_data/
+
+# PM2
+.pm2/
+ecosystem.config.js.local
+
+# Credentials (extra safety)
+**/credentials.json
+**/secrets.json
+**/*.pem
+**/*.key
+
+# Uploads (if stored locally)
+uploads/
+!uploads/.gitkeep

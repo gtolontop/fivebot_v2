@@ -20,10 +20,12 @@ import { EventsService } from '../common/events/events.service';
 import { DiscordModule } from '../common/discord/discord.module';
 import { QueueModule } from '../queue/queue.module';
 import { UsersModule } from '../users/users.module';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { CollaboratorsController } from './collaborators.controller';
 
 @Module({
-  imports: [QueueModule, UsersModule, DiscordModule],
-  controllers: [BotsController, TicketMessagesController, AIController],
+  imports: [QueueModule, UsersModule, DiscordModule, NotificationsModule],
+  controllers: [BotsController, TicketMessagesController, AIController, CollaboratorsController],
   providers: [
     BotsService,
     BotRecoveryService,

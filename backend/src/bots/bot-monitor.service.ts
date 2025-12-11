@@ -4,9 +4,12 @@ import { PrismaService } from '../common/prisma/prisma.service';
 import { DiscordService } from '../common/discord/discord.service';
 import { EncryptionService } from '../common/encryption/encryption.service';
 import { BotsService } from './bots.service';
+import { LoggerService } from '../common/logger/logger.service';
 
 @Injectable()
 export class BotMonitorService {
+  private readonly logger = new LoggerService('BotMonitorService');
+
   constructor(
     private prisma: PrismaService,
     private discordService: DiscordService,
@@ -44,14 +47,14 @@ export class BotMonitorService {
         if (attempt < maxRetries) {
           // Calculate exponential backoff delay
           const delay = initialDelay * Math.pow(2, attempt);
-          console.log(`⚠️ Bot update failed for ${botId}, attempt ${attempt + 1}/${maxRetries + 1}. Retrying in ${delay}ms...`);
+          this.logger.log(`⚠️ Bot update failed for ${botId}, attempt ${attempt + 1}/${maxRetries + 1}. Retrying in ${delay}ms...`);
           await new Promise(resolve => setTimeout(resolve, delay));
         }
       }
     }
     
     // All retries failed
-    console.error(`❌ Failed to update bot ${botId} after ${maxRetries + 1} attempts:`, lastError);
+    this.logger.error(`❌ Failed to update bot ${botId} after ${maxRetries + 1} attempts:`, lastError);
     throw lastError;
   }
 
@@ -63,7 +66,7 @@ export class BotMonitorService {
     }
 
     try {
-      console.log('💓 Heartbeat check starting...');
+      this.logger.log('💓 Heartbeat check starting...');
 
       // Quick check for obvious mismatches
       const allBots = await this.prisma.bot.findMany({
@@ -81,7 +84,7 @@ export class BotMonitorService {
         .filter(b => runningBots.includes(b.id))
         .map(b => `${b.name} (${b.id.substring(0, 8)})`)
         .join(', ');
-      console.log(`💓 Running bots in queue: ${runningBots.length > 0 ? runningBotNames : 'none'}`);
+      this.logger.log(`💓 Running bots in queue: ${runningBots.length > 0 ? runningBotNames : 'none'}`);
 
       for (const bot of allBots) {
         // Get running status from queue service
@@ -102,11 +105,11 @@ export class BotMonitorService {
         // DON'T be too aggressive - only correct if bot is ONLINE but not running
         // Give a grace period by not correcting immediately
         if (bot.status === 'ONLINE' && !isProcessRunning) {
-          console.log(`💓 Heartbeat detected mismatch for "${bot.name}" (owner: ${bot.owner.username}): ONLINE in DB but not in running queue`);
+          this.logger.log(`💓 Heartbeat detected mismatch for "${bot.name}" (owner: ${bot.owner.username}): ONLINE in DB but not in running queue`);
           // Don't correct immediately - let the deeper status check handle it
           // This prevents false positives during reconnections
         } else if (bot.status === 'ERROR' && !isProcessRunning) {
-          console.log(`💓 Heartbeat correcting bot "${bot.name}" (owner: ${bot.owner.username}): ERROR → OFFLINE`);
+          this.logger.log(`💓 Heartbeat correcting bot "${bot.name}" (owner: ${bot.owner.username}): ERROR → OFFLINE`);
           try {
             await this.updateBotWithRetry(bot.id, {
               status: 'OFFLINE',
@@ -114,10 +117,10 @@ export class BotMonitorService {
             });
             corrections++;
           } catch (error) {
-            console.error(`❌ Failed to correct bot "${bot.name}" status in heartbeat check:`, error);
+            this.logger.error(`❌ Failed to correct bot "${bot.name}" status in heartbeat check:`, error);
           }
         } else if (bot.status === 'STARTING' && !isProcessRunning) {
-          console.log(`💓 Heartbeat correcting bot "${bot.name}" (owner: ${bot.owner.username}): STARTING → OFFLINE (stuck in starting state)`);
+          this.logger.log(`💓 Heartbeat correcting bot "${bot.name}" (owner: ${bot.owner.username}): STARTING → OFFLINE (stuck in starting state)`);
           try {
             await this.updateBotWithRetry(bot.id, {
               status: 'OFFLINE',
@@ -125,15 +128,15 @@ export class BotMonitorService {
             });
             corrections++;
           } catch (error) {
-            console.error(`❌ Failed to correct bot "${bot.name}" status in heartbeat check:`, error);
+            this.logger.error(`❌ Failed to correct bot "${bot.name}" status in heartbeat check:`, error);
           }
         } else if (bot.status === 'OFFLINE' && isProcessRunning) {
           // Only auto-correct to ONLINE if user didn't intentionally stop the bot
           if (userAction === 'stop') {
-            console.log(`💓 Heartbeat skipping correction for "${bot.name}": user intentionally stopped the bot`);
+            this.logger.log(`💓 Heartbeat skipping correction for "${bot.name}": user intentionally stopped the bot`);
           } else {
             // Process is running but DB says OFFLINE - resync to ONLINE
-            console.log(`💓 Heartbeat correcting bot "${bot.name}" (owner: ${bot.owner.username}): OFFLINE → ONLINE (process is running)`);
+            this.logger.log(`💓 Heartbeat correcting bot "${bot.name}" (owner: ${bot.owner.username}): OFFLINE → ONLINE (process is running)`);
             try {
               await this.updateBotWithRetry(bot.id, {
                 status: 'ONLINE',
@@ -141,17 +144,17 @@ export class BotMonitorService {
               });
               corrections++;
             } catch (error) {
-              console.error(`❌ Failed to correct bot "${bot.name}" status in heartbeat check:`, error);
+              this.logger.error(`❌ Failed to correct bot "${bot.name}" status in heartbeat check:`, error);
             }
           }
         }
       }
 
       if (corrections > 0) {
-        console.log(`💓 Heartbeat made ${corrections} corrections`);
+        this.logger.log(`💓 Heartbeat made ${corrections} corrections`);
       }
     } catch (error) {
-      console.error('❌ Heartbeat check failed:', error);
+      this.logger.error('❌ Heartbeat check failed:', error);
     }
   }
 
@@ -163,7 +166,7 @@ export class BotMonitorService {
       return;
     }
 
-    console.log('🔍 Starting periodic bot status check...');
+    this.logger.log('🔍 Starting periodic bot status check...');
 
     try {
       const botsMarkedOnline = await this.prisma.bot.findMany({
@@ -178,7 +181,7 @@ export class BotMonitorService {
         }
       });
 
-      console.log(`📊 Checking ${botsMarkedOnline.length} bots marked as ONLINE`);
+      this.logger.log(`📊 Checking ${botsMarkedOnline.length} bots marked as ONLINE`);
 
       // Get running bots from queue
       const queueService = this.botsService.queueService as any;
@@ -197,7 +200,7 @@ export class BotMonitorService {
             // Process not running - definitely offline
             await this.botsService.updateStatus(bot.id, 'OFFLINE');
             foundOffline++;
-            console.log(`❌ Bot "${bot.name}" (owner: ${bot.owner.username}) was marked ONLINE but process not running - status corrected`);
+            this.logger.log(`❌ Bot "${bot.name}" (owner: ${bot.owner.username}) was marked ONLINE but process not running - status corrected`);
           } else {
             // Process is running - verify Discord connection with double check
             const isReallyOnline = await this.verifyBotIsOnlineWithRetry(bot.tokenEncrypted);
@@ -206,13 +209,13 @@ export class BotMonitorService {
               // Double-check failed - bot is offline
               await this.botsService.updateStatus(bot.id, 'OFFLINE');
               foundOffline++;
-              console.log(`❌ Bot "${bot.name}" (owner: ${bot.owner.username}) process running but Discord connection failed - status corrected`);
+              this.logger.log(`❌ Bot "${bot.name}" (owner: ${bot.owner.username}) process running but Discord connection failed - status corrected`);
             } else {
               stillOnline++;
             }
           }
         } catch (error) {
-          console.log(`⚠️ Could not verify bot "${bot.name}": ${error.message}`);
+          this.logger.log(`⚠️ Could not verify bot "${bot.name}": ${error.message}`);
           // Don't change status if we can't verify - might be temporary network issue
         }
 
@@ -221,11 +224,11 @@ export class BotMonitorService {
       }
 
       if (foundOffline > 0 || stillOnline > 0) {
-        console.log(`✅ Bot status check complete: ${stillOnline} confirmed online, ${foundOffline} corrected to offline`);
+        this.logger.log(`✅ Bot status check complete: ${stillOnline} confirmed online, ${foundOffline} corrected to offline`);
       }
 
     } catch (error) {
-      console.error('❌ Error in periodic bot status check:', error);
+      this.logger.error('❌ Error in periodic bot status check:', error);
     }
   }
 
@@ -273,16 +276,16 @@ export class BotMonitorService {
       if (currentBot.status !== expectedStatus) {
         try {
           await this.updateBotWithRetry(botId, { status: expectedStatus });
-          console.log(`🔄 Updated bot "${bot.name}" status to ${expectedStatus}`);
+          this.logger.log(`🔄 Updated bot "${bot.name}" status to ${expectedStatus}`);
         } catch (error) {
-          console.error(`❌ Failed to update bot "${bot.name}" status:`, error);
+          this.logger.error(`❌ Failed to update bot "${bot.name}" status:`, error);
           throw error; // Re-throw to maintain original behavior
         }
       }
 
       return isOnline;
     } catch (error) {
-      console.error(`Error checking bot ${botId}:`, error);
+      this.logger.error(`Error checking bot ${botId}:`, error);
       return false;
     }
   }
@@ -305,7 +308,7 @@ export class BotMonitorService {
 
   // Force refresh all bot statuses (can be called manually)
   async forceRefreshAllStatuses(): Promise<{ updated: number; errors: number }> {
-    console.log('🔄 Force refreshing all bot statuses...');
+    this.logger.log('🔄 Force refreshing all bot statuses...');
     
     const allBots = await this.prisma.bot.findMany({
       select: {
@@ -328,19 +331,19 @@ export class BotMonitorService {
           try {
             await this.updateBotWithRetry(bot.id, { status: expectedStatus });
             updated++;
-            console.log(`🔄 Bot "${bot.name}": ${bot.status} → ${expectedStatus}`);
+            this.logger.log(`🔄 Bot "${bot.name}": ${bot.status} → ${expectedStatus}`);
           } catch (updateError) {
             errors++;
-            console.error(`❌ Failed to update bot "${bot.name}" after retries:`, updateError);
+            this.logger.error(`❌ Failed to update bot "${bot.name}" after retries:`, updateError);
           }
         }
       } catch (error) {
         errors++;
-        console.error(`❌ Error checking bot "${bot.name}":`, error);
+        this.logger.error(`❌ Error checking bot "${bot.name}":`, error);
       }
     }
 
-    console.log(`✅ Force refresh complete: ${updated} updated, ${errors} errors`);
+    this.logger.log(`✅ Force refresh complete: ${updated} updated, ${errors} errors`);
     return { updated, errors };
   }
 }

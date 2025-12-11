@@ -1,122 +1,315 @@
-# FiveBot v2 - Advanced Discord Bot Manager
+# FiveBot v2 - Advanced Discord Bot Management Platform
 
-FiveBot v2 est un système complet de gestion et d'orchestration de bots Discord. Il permet aux utilisateurs de créer, déployer et gérer des bots Discord personnalisés via une interface web intuitive et des commandes Discord.
+FiveBot v2 is a comprehensive Discord bot management and orchestration system. It enables users to create, deploy, and manage custom Discord bots through an intuitive web dashboard and Discord commands.
 
-## 🚀 Fonctionnalités principales
+## Features
 
-- **Création de bots automatisée** : Créez des bots Discord via commandes slash ou dashboard web
-- **Dashboard web complet** : Interface moderne pour gérer vos bots
-- **Système de crédits** : Économie interne pour contrôler l'usage
-- **Messages de bienvenue personnalisés** : Embeds avec logo personnalisé
-- **Sécurité avancée** : Chiffrement des tokens, validation stricte
-- **Orchestration Docker** : Chaque bot s'exécute dans son propre container
-- **Monitoring en temps réel** : Logs, statuts et métriques
+### Core Features
+- **Multi-Bot Management**: Create and manage unlimited Discord bots from a single dashboard
+- **Real-time Dashboard**: Modern Next.js interface with live metrics, logs, and status updates
+- **WebSocket Integration**: Real-time log streaming and instant status updates
+- **Process Orchestration**: Each bot runs as an isolated process with crash recovery
 
-## 🏗️ Architecture
+### Bot Features
+- **AI Integration**: OpenAI-powered conversational AI with memory and context awareness
+- **Ticket System**: Full-featured support ticket system with categories, staff roles, and transcripts
+- **Welcome/Goodbye Messages**: Customizable embed messages for member events
+- **Status Rotation**: Automatic bot status cycling
+- **Custom Commands**: User-defined slash commands with rich embeds
+- **Module System**: Extensible module marketplace
+
+### Security
+- **Token Encryption**: AES-256-CBC encryption for all bot tokens at rest
+- **Discord OAuth2**: Secure authentication via Discord
+- **Granular Permissions**: Role-based access control (VIEWER, MODERATOR, DEVELOPER, ADMIN)
+- **Collaborator System**: Invite team members with specific permissions
+- **Rate Limiting**: Configurable request throttling
+- **Audit Logs**: Complete action traceability
+
+### Integrations
+- **FiveLink Module**: Integration with FiveLink bio platform
+- **Webhook Support**: External integrations via webhooks
+
+## Architecture
 
 ```
-fivebot/
-├── backend/           # API NestJS + Worker Queue
-├── frontend/         # Dashboard Next.js
-├── bot-manager/      # Bot principal Discord
-├── bot-template/     # Template pour bots enfants
-├── docker/          # Configuration Docker
-├── database/        # Migrations Prisma
-└── docs/           # Documentation
+fivebot_v2/
+├── backend/          # NestJS API server (port 8000)
+├── frontend/         # Next.js dashboard (port 3000)
+├── bot-manager/      # Main Discord bot for management commands
+├── bot-template/     # Template spawned for each user bot
+└── docker-compose.yml
 ```
 
-## 🛠️ Technologies
+## Tech Stack
 
-- **Backend**: NestJS, TypeScript, Prisma, MariaDB
-- **Frontend**: Next.js, React, Tailwind CSS
-- **Queue**: BullMQ + Redis
-- **Bots**: discord.js v14
-- **Orchestration**: Docker
-- **Sécurité**: JWT, AES-256, OAuth2
+| Component | Technology |
+|-----------|------------|
+| **Backend** | NestJS 10, TypeScript, Prisma ORM |
+| **Database** | PostgreSQL |
+| **Cache/Queue** | Redis (ioredis) |
+| **Frontend** | Next.js 14, React 18, Tailwind CSS |
+| **Real-time** | Socket.io, WebSocket |
+| **Bots** | discord.js v14 |
+| **Auth** | JWT, Passport, Discord OAuth2 |
+| **AI** | OpenAI API |
 
-## 🚀 Installation
-
-### Prérequis
+## Prerequisites
 
 - Node.js 18+
-- Docker & Docker Compose
+- PostgreSQL 14+
+- Redis 7+
 - Git
 
-### Installation rapide
+## Quick Start
+
+### 1. Clone and Install
 
 ```bash
-# Cloner le repository
 git clone <repository-url>
-cd fivebot
+cd fivebot_v2
 
-# Copier et configurer les variables d'environnement
-cp .env.example .env
-# Éditer .env avec vos valeurs
-
-# Installer les dépendances
+# Install all dependencies
 npm run setup
-
-# Lancer la base de données et les services
-npm run dev
-
-# Appliquer les migrations
-npm run db:migrate
 ```
 
-## 📖 Utilisation
-
-### Dashboard Web
-Accédez au dashboard sur `http://localhost:3000` et connectez-vous avec Discord OAuth2.
-
-### Commandes Discord
-
-Le bot principal propose les commandes suivantes :
-
-- `/createbot token:<bot_token> name:<name>` - Créer un nouveau bot
-- `/listbots` - Lister vos bots
-- `/botinfo id:<id>` - Informations sur un bot
-- `/credit-check user:<@user>` - Vérifier les crédits
-
-### API Endpoints
-
-- `POST /api/bots/create` - Créer un bot
-- `GET /api/bots/:id/status` - Statut d'un bot
-- `PATCH /api/bots/:id/config` - Configurer un bot
-- `POST /api/bots/:id/invite-link` - Générer lien d'invitation
-
-## 🔒 Sécurité
-
-- **Tokens chiffrés** : Tous les tokens Discord sont chiffrés en base
-- **Validation stricte** : Seuls les bot tokens sont acceptés (pas de user tokens)
-- **RBAC** : Contrôle d'accès basé sur les rôles
-- **Rate limiting** : Protection contre les abus
-- **Audit logs** : Traçabilité complète des actions
-
-## 🧪 Tests
+### 2. Configure Environment
 
 ```bash
-# Tests backend
-npm run test:backend
+# Backend
+cp backend/.env.example backend/.env
 
-# Tests frontend
-npm run test:frontend
+# Frontend
+cp frontend/.env.example frontend/.env.local
 
-# Tous les tests
-npm test
+# Bot Manager
+cp bot-manager/.env.example bot-manager/.env
 ```
 
-## 📚 Documentation
+Edit each `.env` file with your configuration.
 
-- [Guide de démarrage](docs/quickstart.md)
-- [Configuration](docs/configuration.md)
-- [API Reference](docs/api.md)
-- [Sécurité](docs/security.md)
-- [Déploiement](docs/deployment.md)
+### 3. Database Setup
 
-## 🤝 Contribution
+```bash
+cd backend
 
-Les contributions sont les bienvenues ! Voir [CONTRIBUTING.md](CONTRIBUTING.md) pour les détails.
+# Generate Prisma client
+npx prisma generate
 
-## 📄 Licence
+# Run migrations
+npx prisma migrate deploy
 
-MIT License - voir [LICENSE](LICENSE) pour les détails.
+# (Optional) Seed initial data
+npx prisma db seed
+```
+
+### 4. Start Development
+
+```bash
+# Terminal 1 - Backend API
+cd backend && npm run start:dev
+
+# Terminal 2 - Worker Process
+cd backend && npm run start:worker
+
+# Terminal 3 - Frontend
+cd frontend && npm run dev
+
+# Terminal 4 - Bot Manager (optional)
+cd bot-manager && npm run dev
+```
+
+Or use Docker:
+
+```bash
+docker-compose up -d
+```
+
+## Configuration
+
+### Backend Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `DATABASE_URL` | PostgreSQL connection string | Yes |
+| `REDIS_HOST` | Redis server host | Yes |
+| `REDIS_PORT` | Redis server port | Yes |
+| `JWT_SECRET` | Secret for JWT tokens (min 32 chars) | Yes |
+| `ENCRYPTION_KEY` | Key for token encryption (base64, 32 bytes) | Yes |
+| `DISCORD_CLIENT_ID` | Discord OAuth application ID | Yes |
+| `DISCORD_CLIENT_SECRET` | Discord OAuth secret | Yes |
+
+See `backend/.env.example` for all options.
+
+### Frontend Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `NEXT_PUBLIC_API_URL` | Backend API URL | Yes |
+| `NEXTAUTH_URL` | Frontend URL | Yes |
+| `NEXTAUTH_SECRET` | NextAuth secret | Yes |
+| `DISCORD_CLIENT_ID` | Discord OAuth application ID | Yes |
+| `DISCORD_CLIENT_SECRET` | Discord OAuth secret | Yes |
+
+## API Endpoints
+
+### Authentication
+- `POST /auth/discord` - Discord OAuth login
+- `GET /auth/me` - Get current user
+
+### Bots
+- `GET /bots` - List user's bots
+- `POST /bots` - Create a new bot
+- `GET /bots/:id` - Get bot details
+- `PUT /bots/:id/config` - Update bot configuration
+- `POST /bots/:id/start` - Start a bot
+- `POST /bots/:id/stop` - Stop a bot
+- `POST /bots/:id/restart` - Restart a bot
+- `GET /bots/:id/logs` - Get bot logs (WebSocket)
+- `GET /bots/:id/metrics` - Get bot metrics
+
+### Collaborators
+- `GET /bots/:id/collaborators` - List collaborators
+- `POST /bots/:id/collaborators` - Invite collaborator
+- `DELETE /bots/:id/collaborators/:userId` - Remove collaborator
+
+### Modules
+- `GET /modules` - Browse available modules
+- `POST /modules/:id/install` - Install module on bot
+
+## Discord Commands (Bot Manager)
+
+| Command | Description |
+|---------|-------------|
+| `/createbot <token> <name>` | Create a new bot |
+| `/listbots` | List your bots |
+| `/botinfo <id>` | Get bot information |
+| `/creditcheck <user>` | Check user credits |
+| `/help` | Show help |
+
+## Project Structure
+
+### Backend (`/backend`)
+```
+src/
+├── auth/              # Authentication (Discord OAuth, JWT)
+├── bots/              # Bot management, metrics, logs
+├── common/            # Shared modules (prisma, redis, cache, logger)
+├── credits/           # Credit system
+├── modules/           # Module marketplace
+├── notifications/     # Real-time notifications
+├── queue/             # Job queue (bot start/stop/restart)
+├── tasks/             # Scheduled tasks
+└── users/             # User management
+```
+
+### Frontend (`/frontend`)
+```
+src/
+├── app/               # Next.js App Router pages
+├── components/        # React components
+├── contexts/          # React Context providers
+├── hooks/             # Custom React hooks
+├── types/             # TypeScript definitions
+└── utils/             # Utility functions
+```
+
+### Bot Template (`/bot-template`)
+```
+src/
+├── commands/          # Slash commands (including FiveLink)
+├── events/            # Discord event handlers
+├── handlers/          # Interaction handlers
+├── services/          # Business logic services
+└── utils/             # Utilities
+```
+
+## Deployment
+
+### Production with PM2
+
+```bash
+# Backend
+cd backend
+npm run build
+pm2 start ecosystem.config.js
+
+# Frontend
+cd frontend
+npm run build
+pm2 start npm --name "frontend" -- start
+```
+
+### Production with Docker
+
+```bash
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+See `DEPLOY.md` for detailed deployment instructions.
+
+## Development
+
+### Running Tests
+
+```bash
+# Backend tests
+cd backend && npm test
+
+# Frontend tests
+cd frontend && npm test
+```
+
+### Database Migrations
+
+```bash
+cd backend
+
+# Create a new migration
+npx prisma migrate dev --name <migration-name>
+
+# Apply migrations
+npx prisma migrate deploy
+
+# Reset database (development only)
+npx prisma migrate reset
+```
+
+### Code Style
+
+The project uses:
+- ESLint for linting
+- Prettier for formatting
+- TypeScript strict mode
+
+## Troubleshooting
+
+### Bot won't start
+1. Verify the bot token is valid in Discord Developer Portal
+2. Check that required intents are enabled (Server Members, Presence, Message Content)
+3. Review logs in the dashboard console
+
+### Connection issues
+1. Ensure Redis is running: `redis-cli ping`
+2. Verify PostgreSQL connection: `psql $DATABASE_URL -c "SELECT 1"`
+3. Check backend logs: `pm2 logs backend`
+
+### Token encryption errors
+1. Ensure `ENCRYPTION_KEY` is set and is a valid 32-byte base64 key
+2. Generate a new key: `openssl rand -base64 32`
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/my-feature`
+3. Commit changes: `git commit -m "feat: add my feature"`
+4. Push to branch: `git push origin feature/my-feature`
+5. Open a Pull Request
+
+## License
+
+MIT License - see LICENSE for details.
+
+---
+
+Built with passion by the FiveBot team.

@@ -49,19 +49,46 @@ export enum BotStatus {
   STOPPING = 'STOPPING',
 }
 
+/**
+ * Discord Embed structure
+ */
+export interface EmbedJson {
+  title?: string;
+  description?: string;
+  color?: number | string;
+  thumbnail?: { url: string };
+  image?: { url: string };
+  footer?: { text: string; icon_url?: string };
+  author?: { name: string; icon_url?: string; url?: string };
+  fields?: Array<{ name: string; value: string; inline?: boolean }>;
+  timestamp?: string;
+}
+
+/**
+ * Custom command structure
+ */
+export interface CustomCommand {
+  name: string;
+  description?: string;
+  response: string;
+  embed?: EmbedJson;
+  ephemeral?: boolean;
+  enabled?: boolean;
+}
+
 export interface BotConfig {
   id: string;
   botId: string;
   welcomeEnabled: boolean;
   welcomeChannelId?: string;
-  welcomeEmbedJson?: any;
+  welcomeEmbedJson?: EmbedJson;
   welcomeLogoUrl?: string;
   moderationEnabled: boolean;
   autoRoleEnabled: boolean;
   autoRoleId?: string;
   autoRoleIds?: string[];
   loggingChannelId?: string;
-  customCommands?: any;
+  customCommands?: CustomCommand[];
   createdAt: string;
   updatedAt: string;
 }
@@ -95,7 +122,7 @@ export interface JobLog {
   jobType: string;
   status: JobStatus;
   message?: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   createdAt: string;
 }
 
@@ -113,7 +140,7 @@ export interface CreditsHistory {
   amount: number;
   reason: string;
   type: CreditType;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   createdAt: string;
   user?: {
     username: string;
@@ -134,7 +161,7 @@ export interface AuditLog {
   botId?: string;
   action: string;
   resource?: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   ipAddress?: string;
   userAgent?: string;
   createdAt: string;
@@ -154,7 +181,7 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   data: T;
   message?: string;
   success: boolean;
@@ -318,4 +345,126 @@ export interface SidebarItem {
   icon: React.ComponentType<{ className?: string }>;
   badge?: string | number;
   isActive?: boolean;
+}
+
+// Notification types
+export enum NotificationType {
+  INFO = 'INFO',
+  SUCCESS = 'SUCCESS',
+  WARNING = 'WARNING',
+  ERROR = 'ERROR',
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  metadata?: Record<string, unknown>;
+  read: boolean;
+  createdAt: string;
+}
+
+// Log entry for real-time logs
+export interface LogEntry {
+  botId: string;
+  line: string;
+  timestamp: Date;
+  level?: 'info' | 'warn' | 'error' | 'debug' | 'success';
+  source?: string;
+}
+
+// Discord types
+export interface DiscordGuild {
+  id: string;
+  name: string;
+  icon?: string;
+  memberCount?: number;
+  permissions?: number;
+}
+
+export interface DiscordChannel {
+  id: string;
+  name: string;
+  type: number;
+  position?: number;
+  parentId?: string;
+}
+
+export interface DiscordRole {
+  id: string;
+  name: string;
+  color: number;
+  position: number;
+  permissions: string;
+  managed: boolean;
+}
+
+// AI Types
+export interface AIConfig {
+  id: string;
+  botId: string;
+  enabled: boolean;
+  model?: string;
+  personality?: string;
+  systemPrompt?: string;
+  temperature?: number;
+  maxTokens?: number;
+  enabledChannels?: string[];
+  requireMention?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AIUsage {
+  id: string;
+  configId: string;
+  tokensUsed: number;
+  cost: number;
+  model: string;
+  createdAt: string;
+}
+
+// Ticket types
+export interface Ticket {
+  id: string;
+  guildId: string;
+  ticketNumber: number;
+  channelId?: string;
+  threadId?: string;
+  creatorId: string;
+  type: string;
+  categoryId?: string;
+  categoryName?: string;
+  priority: 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
+  state: 'OPEN' | 'CLAIMED' | 'CLOSED' | 'LOCKED';
+  activityState: 'ACTIVE' | 'INACTIVE' | 'WARNING';
+  lastActivity?: string;
+  createdAt: string;
+  closedAt?: string;
+  messageCount?: number;
+}
+
+export interface TicketCategory {
+  id: string;
+  name: string;
+  description?: string;
+  emoji?: string;
+  color?: string;
+  staffRoleIds?: string[];
+  maxTicketsPerUser?: number;
+  enabled: boolean;
+}
+
+export interface TicketPanel {
+  id: string;
+  channelId: string;
+  messageId?: string;
+  title: string;
+  description?: string;
+  color?: string;
+  categoryIds?: string[];
+  buttonLabel?: string;
+  buttonEmoji?: string;
 }

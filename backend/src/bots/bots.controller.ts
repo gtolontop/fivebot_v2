@@ -32,54 +32,18 @@ import { CollaboratorsService } from './collaborators.service';
 import { EventsService } from '../common/events/events.service';
 import { PermissionsGuard, RequirePermissions, Permissions } from '../common/guards/permissions.guard';
 import { LogLevel } from '@prisma/client';
-
-interface CreateBotDto {
-  name: string;
-  token: string;
-}
-
-interface UpdateBotConfigDto {
-  welcomeEnabled?: boolean;
-  welcomeChannelId?: string;
-  welcomeEmbedJson?: any;
-  welcomeLogoUrl?: string;
-  welcomeThumbnailUrl?: string;
-  goodbyeEnabled?: boolean;
-  goodbyeChannelId?: string;
-  moderationEnabled?: boolean;
-  autoRoleEnabled?: boolean;
-  autoRoleId?: string;
-  autoRoleIds?: string[];
-  loggingChannelId?: string;
-  customCommands?: any;
-  ticketEnabled?: boolean;
-  ticketCategoryId?: string;
-  ticketStaffRoleId?: string;
-  ticketTranscriptChannelId?: string;
-  ticketNamingFormat?: string;
-  maxTicketsPerUser?: number;
-  autoCloseHours?: number;
-  inactivityWarningHours?: number;
-  ticketThreads?: boolean;
-  ticketMentionStaff?: boolean;
-  ticketDMNotifications?: boolean;
-  ticketRequireReason?: boolean;
-  autoSaveTranscripts?: boolean;
-  sendTranscriptToUser?: boolean;
-  includeAttachments?: boolean;
-  autoWelcomeEnabled?: boolean;
-  autoWelcomeMessage?: string;
-  inactivityWarningEnabled?: boolean;
-  inactivityWarningMessage?: string;
-  autoAssignStaff?: boolean;
-  autoTagUrgent?: boolean;
-  autoEscalate?: boolean;
-  statusRotation?: string;
-  embedV2Commands?: string;
-}
+import { LoggerService } from '../common/logger/logger.service';
+import {
+  AuthenticatedRequest,
+  CreateBotDto,
+  UpdateBotConfigDto,
+  DiscordGuild,
+} from '../common/types';
 
 @Controller('bots')
 export class BotsController {
+  private readonly logger = new LoggerService('BotsController');
+
   constructor(
     private botsService: BotsService,
     private botMetricsService: BotMetricsService,
@@ -121,7 +85,7 @@ export class BotsController {
         res.write(`data: ${JSON.stringify(event)}\n\n`);
       },
       error: (err) => {
-        console.error('SSE error:', err);
+        this.logger.error('SSE error:', err);
         res.end();
       },
     });
@@ -144,7 +108,7 @@ export class BotsController {
       const queueService = this.botsService['queueService'];
       const runningBots = queueService.getRunningBots ? await queueService.getRunningBots() : [];
 
-      console.log(`🔍 Debug: ${runningBots.length} bots currently running in process manager`);
+      this.logger.log(`🔍 Debug: ${runningBots.length} bots currently running in process manager`);
 
       return {
         runningBots,
@@ -152,7 +116,7 @@ export class BotsController {
         message: `Found ${runningBots.length} running bot processes`
       };
     } catch (error) {
-      console.error('Error getting running bots:', error);
+      this.logger.error('Error getting running bots:', error);
       throw error;
     }
   }
@@ -192,7 +156,7 @@ export class BotsController {
         overview.aggregatedMetrics.totalMessages += analytics.summary.totalMessages || 0;
         overview.aggregatedMetrics.totalErrors += analytics.summary.totalErrors || 0;
       } catch (error) {
-        console.error(`Error getting metrics for bot ${bot.id}:`, error);
+        this.logger.error(`Error getting metrics for bot ${bot.id}:`, error);
       }
     }
 
@@ -261,7 +225,7 @@ export class BotsController {
               roles
             };
           } catch (error) {
-            console.error(`Error enriching guild ${guild.id}:`, error);
+            this.logger.error(`Error enriching guild ${guild.id}:`, error);
             return {
               ...guild,
               channels: [],
@@ -276,7 +240,7 @@ export class BotsController {
         guilds: enrichedGuilds
       };
     } catch (error) {
-      console.error('Error fetching guilds:', error);
+      this.logger.error('Error fetching guilds:', error);
       return bot; // Retourner le bot sans les guilds en cas d'erreur
     }
   }
@@ -312,7 +276,7 @@ export class BotsController {
   @RequirePermissions(Permissions.START_BOT)
   async start(@Param('id') id: string, @Req() req: any, @Body() body?: { force?: boolean }) {
     try {
-      console.log(`🚀 Starting bot ${id} for user ${req.user.id}${body?.force ? ' (forced)' : ''}`);
+      this.logger.log(`🚀 Starting bot ${id} for user ${req.user.id}${body?.force ? ' (forced)' : ''}`);
       
       // Get current bot to return immediately
       const bot = await this.botsService.findOne(id, req.user.id);
@@ -327,9 +291,9 @@ export class BotsController {
             await this.botsService.stop(id, req.user.id);
             await new Promise(resolve => setTimeout(resolve, 2000));
             await this.botsService.start(id, req.user.id);
-            console.log(`✅ Bot ${id} force restart completed`);
+            this.logger.log(`✅ Bot ${id} force restart completed`);
           } catch (error) {
-            console.error(`❌ Bot ${id} force restart failed:`, error);
+            this.logger.error(`❌ Bot ${id} force restart failed:`, error);
           }
         });
         
@@ -345,9 +309,9 @@ export class BotsController {
       setImmediate(async () => {
         try {
           await this.botsService.start(id, req.user.id);
-          console.log(`✅ Bot ${id} start completed`);
+          this.logger.log(`✅ Bot ${id} start completed`);
         } catch (error) {
-          console.error(`❌ Bot ${id} start failed:`, error);
+          this.logger.error(`❌ Bot ${id} start failed:`, error);
         }
       });
       
@@ -358,7 +322,7 @@ export class BotsController {
         message: 'Bot start command sent'
       };
     } catch (error) {
-      console.error(`❌ Error initiating bot start ${id}:`, error);
+      this.logger.error(`❌ Error initiating bot start ${id}:`, error);
       throw error;
     }
   }
@@ -423,7 +387,7 @@ export class BotsController {
       const queueService = this.botsService['queueService'];
       if (queueService.forceStopBot) {
         await queueService.forceStopBot(id);
-        console.log(`🚨 Force stopped bot ${bot.name} (${id})`);
+        this.logger.log(`🚨 Force stopped bot ${bot.name} (${id})`);
         
         return {
           message: `Bot ${bot.name} force stopped successfully`,
@@ -433,7 +397,7 @@ export class BotsController {
         throw new Error('Force stop not available in current queue implementation');
       }
     } catch (error) {
-      console.error(`Error force stopping bot ${id}:`, error);
+      this.logger.error(`Error force stopping bot ${id}:`, error);
       throw error;
     }
   }
@@ -565,7 +529,7 @@ export class BotsController {
         uptime: Math.max(uptimeMinutes, 0) // Ensure positive
       };
     } catch (error) {
-      console.error('Error getting real-time metrics:', error);
+      this.logger.error('Error getting real-time metrics:', error);
       // Fallback to safe default values
       return {
         cpu: 0,
@@ -961,7 +925,7 @@ export class BotsController {
     const body = req.body;
     if (body && body.action === 'fix-concurrency') {
       try {
-        console.log('🔧 Fixing concurrency issues...');
+        this.logger.log('🔧 Fixing concurrency issues...');
         
         // Simple approach: reset all bots that might be stuck
         const result = await this.prisma.bot.updateMany({
@@ -975,14 +939,14 @@ export class BotsController {
           }
         });
 
-        console.log(`🔄 Reset ${result.count} stuck bots to OFFLINE`);
+        this.logger.log(`🔄 Reset ${result.count} stuck bots to OFFLINE`);
         
         return {
           message: 'Concurrency fix completed',
           updated: result.count
         };
       } catch (error) {
-        console.error('❌ Error fixing concurrency:', error);
+        this.logger.error('❌ Error fixing concurrency:', error);
         throw error;
       }
     }
@@ -990,7 +954,7 @@ export class BotsController {
     // Check if this is a sync request based on body
     if (body && body.action === 'sync-statuses') {
       try {
-        console.log('🔄 Sync statuses called for user:', req.user?.id);
+        this.logger.log('🔄 Sync statuses called for user:', req.user?.id);
         
         // Get user's bots
         const userBots = await this.prisma.bot.findMany({
@@ -1002,7 +966,7 @@ export class BotsController {
             tokenEncrypted: true
           }
         });
-        console.log(`📊 Found ${userBots.length} bots for user`);
+        this.logger.log(`📊 Found ${userBots.length} bots for user`);
         
         let updated = 0;
         let errors = 0;
@@ -1010,7 +974,7 @@ export class BotsController {
         // Check each bot's real Discord status
         for (const bot of userBots) {
           try {
-            console.log(`🔍 Checking bot: ${bot.name} (currently marked as ${bot.status})`);
+            this.logger.log(`🔍 Checking bot: ${bot.name} (currently marked as ${bot.status})`);
             
             // Get decrypted token
             const decryptedToken = await this.botsService.getDecryptedToken(bot.id);
@@ -1026,39 +990,39 @@ export class BotsController {
             const isReallyOnline = response.status === 200;
             const expectedStatus = isReallyOnline ? 'ONLINE' : 'OFFLINE';
             
-            console.log(`🤖 Bot ${bot.name}: API response ${response.status} -> ${expectedStatus}`);
+            this.logger.log(`🤖 Bot ${bot.name}: API response ${response.status} -> ${expectedStatus}`);
             
             // Update status if different, but respect user intentions
             if (bot.status !== expectedStatus) {
               // Don't override if bot is in STOPPING state
               if (bot.status === 'STOPPING') {
-                console.log(`🚫 ${bot.name} is in STOPPING state - not overriding status`);
+                this.logger.log(`🚫 ${bot.name} is in STOPPING state - not overriding status`);
               } else {
                 const wasUpdated = await this.botsService.updateStatusSafe(bot.id, expectedStatus as any, true);
                 if (wasUpdated) {
                   updated++;
-                  console.log(`✅ Updated ${bot.name}: ${bot.status} -> ${expectedStatus}`);
+                  this.logger.log(`✅ Updated ${bot.name}: ${bot.status} -> ${expectedStatus}`);
                 }
               }
             } else {
-              console.log(`✨ ${bot.name} status is already correct: ${expectedStatus}`);
+              this.logger.log(`✨ ${bot.name} status is already correct: ${expectedStatus}`);
             }
             
           } catch (error) {
-            console.error(`❌ Error checking bot ${bot.name}:`, error.message);
+            this.logger.error(`❌ Error checking bot ${bot.name}:`, error.message);
             // If we can't check the bot, assume it's offline
             if (bot.status !== 'OFFLINE') {
               const wasUpdated = await this.botsService.updateStatusSafe(bot.id, 'OFFLINE', true);
               if (wasUpdated) {
                 updated++;
-                console.log(`🔄 Set ${bot.name} to OFFLINE (couldn't verify)`);
+                this.logger.log(`🔄 Set ${bot.name} to OFFLINE (couldn't verify)`);
               }
             }
             errors++;
           }
         }
 
-        console.log(`✅ Sync complete: ${updated} bots updated, ${errors} errors`);
+        this.logger.log(`✅ Sync complete: ${updated} bots updated, ${errors} errors`);
         
         return {
           message: 'Status sync completed',
@@ -1066,7 +1030,7 @@ export class BotsController {
           errors
         };
       } catch (error) {
-        console.error('❌ Error in sync statuses:', error);
+        this.logger.error('❌ Error in sync statuses:', error);
         throw error;
       }
     }
@@ -1081,11 +1045,11 @@ export class BotsController {
   @UseGuards(AuthGuard('jwt'))
   async syncBotStatuses(@Req() req: any) {
     try {
-      console.log('Sync statuses endpoint called for user:', req.user?.id);
+      this.logger.log('Sync statuses endpoint called for user:', req.user?.id);
       
       // Get user's bots and count them
       const userBots = await this.botsService.findAll(req.user.id);
-      console.log(`Found ${userBots.length} bots for user`);
+      this.logger.log(`Found ${userBots.length} bots for user`);
       
       return {
         message: 'Status sync completed',
@@ -1093,7 +1057,7 @@ export class BotsController {
         errors: 0
       };
     } catch (error) {
-      console.error('Error in sync statuses:', error);
+      this.logger.error('Error in sync statuses:', error);
       throw error;
     }
   }
@@ -1262,7 +1226,7 @@ export class BotsController {
   @UseGuards(AuthGuard('jwt'))
   async verifyAllBotStatuses(@Req() req: any) {
     try {
-      console.log('Verify all statuses endpoint called for user:', req.user?.id);
+      this.logger.log('Verify all statuses endpoint called for user:', req.user?.id);
       
       // Simple inline verification instead of using the service for now
       const userBots = await this.botsService.findAll(req.user.id);
@@ -1273,16 +1237,16 @@ export class BotsController {
         try {
           // For now, let's just refresh their status from the database
           // In a real implementation, you'd verify with Discord API
-          console.log(`Checking bot: ${bot.name} (${bot.status})`);
+          this.logger.log(`Checking bot: ${bot.name} (${bot.status})`);
           updated++;
         } catch (error) {
-          console.error(`Error checking bot ${bot.name}:`, error);
+          this.logger.error(`Error checking bot ${bot.name}:`, error);
           errors++;
         }
       }
 
       const result = { updated, errors };
-      console.log('Verification result:', result);
+      this.logger.log('Verification result:', result);
       
       return {
         message: 'Status verification completed',
@@ -1290,7 +1254,7 @@ export class BotsController {
         errors: result.errors
       };
     } catch (error) {
-      console.error('Error in verify all statuses:', error);
+      this.logger.error('Error in verify all statuses:', error);
       throw error;
     }
   }
@@ -1322,7 +1286,7 @@ export class BotsController {
       const queueService = this.botsService['queueService'];
       const runningBots = queueService.getRunningBots ? await queueService.getRunningBots() : [];
 
-      console.log(`🔪 Killing all ${runningBots.length} running bot processes...`);
+      this.logger.log(`🔪 Killing all ${runningBots.length} running bot processes...`);
 
       let killed = 0;
       for (const botId of runningBots) {
@@ -1330,7 +1294,7 @@ export class BotsController {
           await queueService.forceStopBot(botId);
           killed++;
         } catch (error) {
-          console.error(`Failed to kill bot ${botId}:`, error);
+          this.logger.error(`Failed to kill bot ${botId}:`, error);
         }
       }
       
@@ -1339,9 +1303,9 @@ export class BotsController {
         const { exec } = require('child_process');
         exec('taskkill /F /IM node.exe /FI "WINDOWTITLE eq FiveBot*"', (error, stdout, stderr) => {
           if (error) {
-            console.log('No additional processes to kill');
+            this.logger.log('No additional processes to kill');
           } else {
-            console.log('Killed additional bot processes:', stdout);
+            this.logger.log('Killed additional bot processes:', stdout);
           }
         });
       }
@@ -1352,7 +1316,7 @@ export class BotsController {
         originalCount: runningBots.length
       };
     } catch (error) {
-      console.error('Error killing all processes:', error);
+      this.logger.error('Error killing all processes:', error);
       throw error;
     }
   }
@@ -1378,7 +1342,7 @@ export class BotsController {
         'System'
       );
     } catch (error) {
-      console.error(`Failed to create default logs for bot ${botId}:`, error);
+      this.logger.error(`Failed to create default logs for bot ${botId}:`, error);
     }
   }
 
@@ -1569,7 +1533,7 @@ export class BotsController {
     // Vérifier que l'utilisateur est propriétaire ou admin du bot
     await this.verifyBotOwnerOrAdmin(id, req.user.id);
 
-    console.log('[COLLABORATOR INVITE] Searching for Discord ID:', dto.userDiscordId);
+    this.logger.log('[COLLABORATOR INVITE] Searching for Discord ID:', dto.userDiscordId);
 
     // Normaliser le Discord ID (enlever les espaces)
     const normalizedDiscordId = dto.userDiscordId.trim();
@@ -1592,7 +1556,7 @@ export class BotsController {
       });
     }
 
-    console.log('[COLLABORATOR INVITE] Target user found:', targetUser ? `${targetUser.username} (${targetUser.id})` : 'NOT FOUND');
+    this.logger.log('[COLLABORATOR INVITE] Target user found:', targetUser ? `${targetUser.username} (${targetUser.id})` : 'NOT FOUND');
 
     if (!targetUser) {
       // List all users to help debug
@@ -1600,7 +1564,7 @@ export class BotsController {
         select: { id: true, username: true, discordId: true },
         take: 10,
       });
-      console.log('[COLLABORATOR INVITE] Available users:', allUsers);
+      this.logger.log('[COLLABORATOR INVITE] Available users:', allUsers);
       throw new NotFoundException(`User not found on the platform. Discord ID searched: ${normalizedDiscordId}`);
     }
 

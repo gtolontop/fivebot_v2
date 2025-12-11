@@ -177,7 +177,7 @@ export class TicketService {
     data.panels.push(newPanel);
     await this.saveTicketData(botId, { panels: data.panels });
     
-    // TODO: Send panel message to Discord channel
+    // Send panel message to Discord channel
     this.sendPanelToDiscord(botId, newPanel);
     
     return newPanel;
@@ -194,7 +194,7 @@ export class TicketService {
     data.panels[panelIndex] = { ...data.panels[panelIndex], ...updates };
     await this.saveTicketData(botId, { panels: data.panels });
     
-    // TODO: Update panel message in Discord
+    // Update panel message in Discord
     this.updatePanelInDiscord(botId, data.panels[panelIndex]);
     
     return data.panels[panelIndex];
@@ -205,7 +205,7 @@ export class TicketService {
     const panel = data.panels.find(p => p.id === panelId);
     
     if (panel) {
-      // TODO: Delete panel message from Discord
+      // Delete panel message from Discord
       this.deletePanelFromDiscord(botId, panel);
     }
     
@@ -530,18 +530,52 @@ export class TicketService {
   }
 
   private async updatePanelInDiscord(botId: string, panel: TicketPanel): Promise<void> {
-    // TODO: Update panel message in Discord
-    console.log(`TODO: Update panel ${panel.id} in Discord`);
+    try {
+      const data = await this.getTicketData(botId);
+      const selectedCategories = data.categories.filter(c =>
+        panel.categories?.includes(c.id)
+      );
+
+      await this.botsService.sendCommandToBot(botId, {
+        action: 'UPDATE_TICKET_PANEL',
+        data: {
+          ...panel,
+          categories: selectedCategories
+        }
+      });
+    } catch (error) {
+      console.error(`Failed to update panel ${panel.id} in Discord:`, error);
+    }
   }
 
   private async deletePanelFromDiscord(botId: string, panel: TicketPanel): Promise<void> {
-    // TODO: Delete panel message from Discord
-    console.log(`TODO: Delete panel ${panel.id} from Discord`);
+    try {
+      await this.botsService.sendCommandToBot(botId, {
+        action: 'DELETE_TICKET_PANEL',
+        data: {
+          panelId: panel.id,
+          channelId: panel.channelId,
+          messageId: panel.messageId
+        }
+      });
+    } catch (error) {
+      console.error(`Failed to delete panel ${panel.id} from Discord:`, error);
+    }
   }
 
   private async closeTicketInDiscord(botId: string, ticket: any): Promise<void> {
-    // TODO: Close ticket channel in Discord
-    console.log(`TODO: Close ticket ${ticket.id} in Discord`);
+    try {
+      await this.botsService.sendCommandToBot(botId, {
+        action: 'CLOSE_TICKET',
+        data: {
+          ticketId: ticket.id,
+          channelId: ticket.channelId,
+          threadId: ticket.threadId
+        }
+      });
+    } catch (error) {
+      console.error(`Failed to close ticket ${ticket.id} in Discord:`, error);
+    }
   }
 
   // Commands Management
