@@ -1,6 +1,6 @@
-import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap, Inject } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
-import { QueueService } from '../queue/queue.service';
+import { IQueueService, QUEUE_SERVICE } from '../queue/queue.interface';
 import { RedisService } from '../common/redis/redis.service';
 import { BotStatus } from '@prisma/client';
 import { BotLogsService } from './bot-logs.service';
@@ -12,7 +12,7 @@ export class BotRecoveryService implements OnApplicationBootstrap {
 
   constructor(
     private prisma: PrismaService,
-    private queueService: QueueService,
+    @Inject(QUEUE_SERVICE) private queueService: IQueueService,
     private redisService: RedisService,
     private botLogsService: BotLogsService,
   ) {}

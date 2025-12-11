@@ -13,3 +13,9 @@ export interface IQueueService {
   forceStopBot(botId: string): Promise<void>;
   forceCleanupAndSync(): Promise<void>;
 }
+
+// Injection token for the queue service
+export const QUEUE_SERVICE = 'QueueService';
+
+// Type alias for DI convenience
+export type QueueService = IQueueService;

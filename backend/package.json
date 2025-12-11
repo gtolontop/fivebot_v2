@@ -34,19 +34,19 @@
     "seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {
-    "@nestjs/bullmq": "^10.0.1",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.0.0",
     "@nestjs/core": "^10.0.0",
     "@nestjs/jwt": "^10.1.0",
     "@nestjs/passport": "^10.0.0",
     "@nestjs/platform-express": "^10.0.0",
+    "@nestjs/platform-socket.io": "^10.4.20",
     "@nestjs/schedule": "^3.0.4",
     "@nestjs/throttler": "^4.2.1",
+    "@nestjs/websockets": "^10.4.20",
     "@prisma/client": "^6.15.0",
     "axios": "^1.5.0",
     "bcrypt": "^5.1.1",
-    "bullmq": "^4.18.3",
     "cheerio": "^1.1.2",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
@@ -66,6 +66,7 @@
     "reflect-metadata": "^0.1.13",
     "rimraf": "^5.0.0",
     "rxjs": "^7.8.1",
+    "socket.io": "^4.8.1",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
