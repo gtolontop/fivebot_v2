@@ -26,6 +26,8 @@ export interface DashboardStats {
   topBots: { name: string; servers: number; users: number }[];
   avgResponseTime: number;
   uptime: number;
+  activeModules: number;
+  totalModulesInstalled: number;
 }
 
 @Injectable()
@@ -175,6 +177,8 @@ export class BotMetricsService {
           topBots: [],
           avgResponseTime: 45,
           uptime: 0,
+          activeModules: 0,
+          totalModulesInstalled: 0,
         };
       }
 
@@ -382,6 +386,35 @@ export class BotMetricsService {
     // Frontend will add the current active session time for real-time display
     const totalUptime = user?.cumulativeUptime || 0;
 
+    // Count modules installed on user's bots
+    let totalModulesInstalled = 0;
+    let activeModules = 0;
+
+    if (bots.length > 0) {
+      try {
+        const botIds = bots.map(bot => bot.id);
+
+        // Count all installed modules across user's bots
+        const installedModulesCount = await this.prisma.botModule.count({
+          where: {
+            botId: { in: botIds },
+          },
+        });
+        totalModulesInstalled = installedModulesCount;
+
+        // Count enabled modules on user's bots
+        const enabledModulesCount = await this.prisma.botModule.count({
+          where: {
+            botId: { in: botIds },
+            enabled: true,
+          },
+        });
+        activeModules = enabledModulesCount;
+      } catch (error) {
+        console.log('Failed to count modules:', error.message);
+      }
+    }
+
       return {
         totalBots,
         activeBots,
@@ -394,6 +427,8 @@ export class BotMetricsService {
         topBots,
         avgResponseTime,
         uptime: totalUptime,
+        activeModules,
+        totalModulesInstalled,
       };
     } catch (error) {
       console.error('Error in getDashboardStats:', error);
@@ -410,6 +445,8 @@ export class BotMetricsService {
         topBots: [],
         avgResponseTime: 45,
         uptime: 0,
+        activeModules: 0,
+        totalModulesInstalled: 0,
       };
     }
   }

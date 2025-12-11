@@ -125,6 +125,9 @@ export const botsAPI = {
   getGuildChannels: (id: string, guildId: string) => api.get(`/bots/${id}/guilds/${guildId}/channels`),
   getGuildRoles: (id: string, guildId: string) => api.get(`/bots/${id}/guilds/${guildId}/roles`),
   getDashboardStats: () => api.get('/bots/dashboard/stats'),
+  getHealthOverview: () => api.get('/bots/health/overview'),
+  getAllBotsHealth: () => api.get('/bots/health/all'),
+  getBotHealth: (id: string) => api.get(`/bots/${id}/health`),
   getMetrics: (id: string) => api.get(`/bots/${id}/metrics`),
   setupMetrics: () => api.post('/bots/setup/metrics'),
   refreshAssets: (id: string) => api.post(`/bots/${id}/refresh-assets`),
@@ -242,6 +245,7 @@ export const usersAPI = {
   updateMe: (data: { username?: string; email?: string; avatar?: string }) =>
     api.patch('/users/me', data),
   getMyGuilds: () => api.get('/users/me/guilds'),
+  deleteAccount: () => api.delete('/users/me'),
   getAll: (page = 1, limit = 10) =>
     api.get(`/users?page=${page}&limit=${limit}`),
   getById: (id: string) => api.get(`/users/${id}`),

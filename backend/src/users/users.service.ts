@@ -157,6 +157,85 @@ export class UsersService {
     };
   }
 
+  async deleteAccount(userId: string): Promise<{ success: boolean; message: string }> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Use transaction to ensure all related data is deleted
+    await this.prisma.$transaction(async (tx) => {
+      // 1. Stop all running bots first (mark them as offline)
+      await tx.bot.updateMany({
+        where: { ownerId: userId },
+        data: { status: 'OFFLINE' },
+      });
+
+      // 2. Delete bot collaborators where user is invited
+      await tx.botCollaborator.deleteMany({
+        where: { userId },
+      });
+
+      // 3. Delete audit logs
+      await tx.auditLog.deleteMany({
+        where: { userId },
+      });
+
+      // 4. Delete notifications
+      await tx.notification.deleteMany({
+        where: { userId },
+      });
+
+      // 5. Delete credits history
+      await tx.creditsHistory.deleteMany({
+        where: { userId },
+      });
+
+      // 6. Delete transactions
+      await tx.transaction.deleteMany({
+        where: { userId },
+      });
+
+      // 7. Delete user modules (purchased modules)
+      await tx.userModule.deleteMany({
+        where: { userId },
+      });
+
+      // 8. Delete all bots owned by user (this will cascade to bot configs, modules, tickets, etc.)
+      const userBots = await tx.bot.findMany({
+        where: { ownerId: userId },
+        select: { id: true },
+      });
+
+      for (const bot of userBots) {
+        // Delete bot-related data
+        await tx.botModule.deleteMany({ where: { botId: bot.id } });
+        await tx.botCollaborator.deleteMany({ where: { botId: bot.id } });
+        await tx.botLog.deleteMany({ where: { botId: bot.id } });
+        await tx.jobLog.deleteMany({ where: { botId: bot.id } });
+        await tx.botConfig.deleteMany({ where: { botId: bot.id } });
+      }
+
+      // Delete bots
+      await tx.bot.deleteMany({
+        where: { ownerId: userId },
+      });
+
+      // 9. Finally, delete the user
+      await tx.user.delete({
+        where: { id: userId },
+      });
+    }, {
+      maxWait: 30000,
+      timeout: 60000,
+    });
+
+    return {
+      success: true,
+      message: 'Account and all associated data have been permanently deleted',
+    };
+  }
+
   async getUserGuilds(userId: string): Promise<any[]> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
