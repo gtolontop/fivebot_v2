@@ -4,9 +4,11 @@ import Redis from 'ioredis';
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
   private client: Redis;
+  private isConnected = false;
   private readonly RUNNING_BOTS_KEY = 'fivebot:running_bots';
 
-  async onModuleInit() {
+  constructor() {
+    // Initialize Redis client in constructor to ensure it's available immediately
     this.client = new Redis({
       host: process.env.REDIS_HOST || 'localhost',
       port: parseInt(process.env.REDIS_PORT || '6379'),
@@ -15,17 +17,34 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         const delay = Math.min(times * 50, 2000);
         return delay;
       },
+      lazyConnect: false, // Connect immediately
     });
 
     this.client.on('error', (err) => {
       console.error('Redis Client Error:', err);
+      this.isConnected = false;
     });
 
     this.client.on('connect', () => {
       console.log('✅ Redis connected successfully');
+      this.isConnected = true;
     });
 
-    await this.client.ping();
+    this.client.on('ready', () => {
+      console.log('✅ Redis ready');
+      this.isConnected = true;
+    });
+  }
+
+  async onModuleInit() {
+    // Wait for connection to be established
+    try {
+      await this.client.ping();
+      this.isConnected = true;
+    } catch (error) {
+      console.error('❌ Redis connection failed during init:', error);
+      this.isConnected = false;
+    }
   }
 
   async onModuleDestroy() {
@@ -186,7 +205,15 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     return states;
   }
 
-  getClient(): Redis {
+  getClient(): Redis | null {
+    if (!this.client) {
+      console.warn('⚠️ Redis client not initialized');
+      return null;
+    }
     return this.client;
+  }
+
+  isReady(): boolean {
+    return this.isConnected && this.client !== null;
   }
 }
