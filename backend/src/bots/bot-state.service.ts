@@ -212,11 +212,18 @@ export class BotStateService implements OnModuleInit {
       if (pid) stateInfo.pid = pid;
 
       // Update Redis with new heartbeat
-      await this.redisService.getClient().hset(
-        `fivebot:state:${botId}`,
-        'lastHeartbeat',
-        stateInfo.lastHeartbeat.toISOString()
-      );
+      const client = this.redisService.getClient();
+      if (client) {
+        try {
+          await client.hset(
+            `fivebot:state:${botId}`,
+            'lastHeartbeat',
+            stateInfo.lastHeartbeat.toISOString()
+          );
+        } catch (error) {
+          console.error(`❌ Failed to update heartbeat in Redis for bot ${botId}:`, error);
+        }
+      }
     }
   }
 
@@ -364,6 +371,12 @@ export class BotStateService implements OnModuleInit {
   }
 
   private async updateRedis(botId: string, info: BotStateInfo): Promise<void> {
+    const client = this.redisService.getClient();
+    if (!client) {
+      console.warn(`⚠️ Redis not available, skipping state update for bot ${botId}`);
+      return;
+    }
+
     const key = `fivebot:state:${botId}`;
     const data: Record<string, string> = {
       state: info.state,
@@ -376,40 +389,54 @@ export class BotStateService implements OnModuleInit {
     if (info.workerId) data.workerId = info.workerId;
     if (info.errorMessage) data.errorMessage = info.errorMessage;
 
-    await this.redisService.getClient().hset(key, data);
+    try {
+      await client.hset(key, data);
 
-    // Set expiry for offline bots (cleanup)
-    if (info.state === BotState.OFFLINE) {
-      await this.redisService.getClient().expire(key, 3600); // 1 hour
-    } else {
-      await this.redisService.getClient().persist(key);
-    }
+      // Set expiry for offline bots (cleanup)
+      if (info.state === BotState.OFFLINE) {
+        await client.expire(key, 3600); // 1 hour
+      } else {
+        await client.persist(key);
+      }
 
-    // Update running bots set
-    if (info.state === BotState.ONLINE) {
-      await this.redisService.addRunningBot(botId);
-    } else {
-      await this.redisService.removeRunningBot(botId);
+      // Update running bots set
+      if (info.state === BotState.ONLINE) {
+        await this.redisService.addRunningBot(botId);
+      } else {
+        await this.redisService.removeRunningBot(botId);
+      }
+    } catch (error) {
+      console.error(`❌ Failed to update Redis for bot ${botId}:`, error);
     }
   }
 
   private async loadStateFromRedis(botId: string): Promise<BotStateInfo | null> {
-    const key = `fivebot:state:${botId}`;
-    const data = await this.redisService.getClient().hgetall(key);
-
-    if (!data || !data.state) {
+    const client = this.redisService.getClient();
+    if (!client) {
       return null;
     }
 
-    return {
-      botId,
-      state: data.state as BotState,
-      pid: data.pid ? parseInt(data.pid) : undefined,
-      startedAt: data.startedAt ? new Date(data.startedAt) : undefined,
-      lastHeartbeat: data.lastHeartbeat ? new Date(data.lastHeartbeat) : undefined,
-      workerId: data.workerId,
-      errorMessage: data.errorMessage,
-    };
+    try {
+      const key = `fivebot:state:${botId}`;
+      const data = await client.hgetall(key);
+
+      if (!data || !data.state) {
+        return null;
+      }
+
+      return {
+        botId,
+        state: data.state as BotState,
+        pid: data.pid ? parseInt(data.pid) : undefined,
+        startedAt: data.startedAt ? new Date(data.startedAt) : undefined,
+        lastHeartbeat: data.lastHeartbeat ? new Date(data.lastHeartbeat) : undefined,
+        workerId: data.workerId,
+        errorMessage: data.errorMessage,
+      };
+    } catch (error) {
+      console.error(`❌ Failed to load state from Redis for bot ${botId}:`, error);
+      return null;
+    }
   }
 
   private startHeartbeatChecker(): void {
