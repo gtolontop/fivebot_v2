@@ -2696,24 +2696,51 @@ model SavedEmbed {
 
 // ==================== AFK SYSTEM ====================
 
+model AfkConfig {
+  id      String  @id @default(uuid())
+  guildId String  @unique @map("guild_id")
+  botId   String  @map("bot_id")
+  enabled Boolean @default(true)
+
+  // Settings
+  mentionResponse Boolean @default(true) @map("mention_response")
+  updateNickname  Boolean @default(false) @map("update_nickname")
+  nicknamePrefix  String? @map("nickname_prefix")
+
+  // Ignore
+  ignoredChannels String? @map("ignored_channels") @db.Text
+  ignoredRoles    String? @map("ignored_roles") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  users AfkUser[]
+
+  @@index([botId])
+  @@map("afk_configs")
+}
+
 model AfkUser {
-  id      String @id @default(uuid())
-  guildId String @map("guild_id")
-  botId   String @map("bot_id")
-  userId  String @map("user_id")
+  id       String @id @default(uuid())
+  configId String @map("config_id")
+  guildId  String @map("guild_id")
+  userId   String @map("user_id")
 
   // AFK Info
-  reason   String?
-  nickname String? // Original nickname
+  reason           String?
+  originalNickname String? @map("original_nickname")
 
   // Stats
-  mentions Int @default(0)
+  mentions Int      @default(0)
+  setAt    DateTime @default(now()) @map("set_at")
 
   createdAt DateTime @default(now()) @map("created_at")
 
-  @@unique([guildId, userId])
+  config AfkConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  @@unique([configId, userId])
   @@index([guildId])
-  @@index([botId])
+  @@index([configId])
   @@map("afk_users")
 }
 
@@ -3041,4 +3068,41 @@ model CustomCommand {
   @@unique([configId, name])
   @@index([configId])
   @@map("custom_commands")
+}
+
+// ==================== SERVER STATS ====================
+
+model ServerStatsConfig {
+  id             String               @id @default(uuid())
+  guildId        String               @unique @map("guild_id")
+  botId          String               @map("bot_id")
+  enabled        Boolean              @default(true)
+  updateInterval Int                  @default(10) @map("update_interval")
+  createdAt      DateTime             @default(now()) @map("created_at")
+  updatedAt      DateTime             @updatedAt @map("updated_at")
+  counters       ServerStatsCounter[]
+
+  @@index([botId])
+  @@map("server_stats_configs")
+}
+
+model ServerStatsCounter {
+  id          String            @id @default(uuid())
+  configId    String            @map("config_id")
+  channelId   String            @map("channel_id")
+  guildId     String            @map("guild_id")
+  counterType String            @map("counter_type")
+  template    String            @default("Members: {count}")
+  customValue Int?              @map("custom_value")
+  targetRoleId String?          @map("target_role_id")
+  channelTypes String?          @map("channel_types") @db.Text
+  lastValue   Int               @default(0) @map("last_value")
+  lastUpdated DateTime?         @map("last_updated")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+  config      ServerStatsConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  @@unique([configId, channelId])
+  @@index([configId])
+  @@map("server_stats_counters")
 }
