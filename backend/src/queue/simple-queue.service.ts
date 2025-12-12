@@ -48,7 +48,13 @@ export class SimpleQueueService implements IQueueService {
     // Poll for jobs from Redis every second
     setInterval(async () => {
       try {
-        const jobStr = await this.redisService.getClient().lpop('fivebot:jobs');
+        const client = this.redisService.getClient();
+        if (!client) {
+          // Redis not ready yet, skip this iteration
+          return;
+        }
+
+        const jobStr = await client.lpop('fivebot:jobs');
         if (jobStr) {
           const job: QueuedJob = JSON.parse(jobStr);
           // Convert createdAt from string to Date object
@@ -125,9 +131,14 @@ export class SimpleQueueService implements IQueueService {
 
     // If called from API process, store in Redis for worker to pick up
     if (process.env.PROCESS_TYPE !== 'worker') {
+      const client = this.redisService.getClient();
+      if (!client) {
+        this.logger.error(`❌ Redis not available, cannot forward job: ${jobType}`);
+        throw new Error('Redis not available');
+      }
       this.logger.log(`📤 Forwarding job to worker via Redis: ${jobType}`, data);
-      await this.redisService.getClient().rpush('fivebot:jobs', JSON.stringify(job));
-      await this.redisService.getClient().publish('fivebot:jobs:notify', job.id);
+      await client.rpush('fivebot:jobs', JSON.stringify(job));
+      await client.publish('fivebot:jobs:notify', job.id);
       return;
     }
 
