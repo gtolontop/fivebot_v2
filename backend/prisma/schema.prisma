@@ -951,3 +951,1849 @@ enum ThoughtType {
   CURIOSITY // "I'm curious about this technology"
   ACHIEVEMENT // "I successfully helped solve a complex issue"
 }
+
+// ==================== MODERATION SYSTEM ====================
+
+model ModerationConfig {
+  id      String  @id @default(uuid())
+  guildId String  @unique @map("guild_id")
+  botId   String  @map("bot_id")
+  enabled Boolean @default(true)
+
+  // Auto-Moderation
+  autoModEnabled         Boolean @default(false) @map("auto_mod_enabled")
+  antiSpamEnabled        Boolean @default(false) @map("anti_spam_enabled")
+  antiSpamThreshold      Int     @default(5) @map("anti_spam_threshold")
+  antiSpamInterval       Int     @default(5000) @map("anti_spam_interval")
+  antiRaidEnabled        Boolean @default(false) @map("anti_raid_enabled")
+  antiRaidThreshold      Int     @default(10) @map("anti_raid_threshold")
+  antiRaidInterval       Int     @default(10000) @map("anti_raid_interval")
+  antiLinkEnabled        Boolean @default(false) @map("anti_link_enabled")
+  allowedDomains         String? @map("allowed_domains") @db.Text
+  antiInviteEnabled      Boolean @default(false) @map("anti_invite_enabled")
+  antiMassmentionEnabled Boolean @default(false) @map("anti_massmention_enabled")
+  massMentionThreshold   Int     @default(5) @map("mass_mention_threshold")
+  antiCapsEnabled        Boolean @default(false) @map("anti_caps_enabled")
+  capsThreshold          Int     @default(70) @map("caps_threshold")
+  wordFilterEnabled      Boolean @default(false) @map("word_filter_enabled")
+  filteredWords          String? @map("filtered_words") @db.Text
+  filteredRegex          String? @map("filtered_regex") @db.Text
+
+  // Punishment Escalation
+  warnThresholds  String? @map("warn_thresholds") @db.Text
+  autoMuteOnWarns Int?    @map("auto_mute_on_warns")
+  autoKickOnWarns Int?    @map("auto_kick_on_warns")
+  autoBanOnWarns  Int?    @map("auto_ban_on_warns")
+
+  // Roles & Channels
+  modRoleIds         String? @map("mod_role_ids") @db.Text
+  adminRoleIds       String? @map("admin_role_ids") @db.Text
+  mutedRoleId        String? @map("muted_role_id")
+  modLogChannelId    String? @map("mod_log_channel_id")
+  publicLogChannelId String? @map("public_log_channel_id")
+  appealChannelId    String? @map("appeal_channel_id")
+
+  // Immune Roles/Users
+  immuneRoleIds    String? @map("immune_role_ids") @db.Text
+  immuneChannelIds String? @map("immune_channel_ids") @db.Text
+
+  // DM Settings
+  dmOnWarn Boolean @default(true) @map("dm_on_warn")
+  dmOnMute Boolean @default(true) @map("dm_on_mute")
+  dmOnKick Boolean @default(true) @map("dm_on_kick")
+  dmOnBan  Boolean @default(true) @map("dm_on_ban")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([botId])
+  @@map("moderation_configs")
+}
+
+model ModerationCase {
+  id             String         @id @default(uuid())
+  guildId        String         @map("guild_id")
+  botId          String         @map("bot_id")
+  caseNumber     Int            @map("case_number")
+  type           ModerationType
+  targetId       String         @map("target_id")
+  targetUsername String         @map("target_username")
+  moderatorId    String         @map("moderator_id")
+  moderatorName  String         @map("moderator_name")
+  reason         String?        @db.Text
+  duration       Int? // En secondes
+  expiresAt      DateTime?      @map("expires_at")
+  active         Boolean        @default(true)
+
+  // Références
+  messageId    String? @map("message_id")
+  channelId    String? @map("channel_id")
+  logMessageId String? @map("log_message_id")
+
+  // Appeal
+  appealed         Boolean       @default(false)
+  appealReason     String?       @map("appeal_reason") @db.Text
+  appealStatus     AppealStatus? @map("appeal_status")
+  appealedAt       DateTime?     @map("appealed_at")
+  appealReviewedBy String?       @map("appeal_reviewed_by")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([guildId, caseNumber])
+  @@index([guildId])
+  @@index([botId])
+  @@index([targetId])
+  @@index([moderatorId])
+  @@index([type])
+  @@index([active])
+  @@map("moderation_cases")
+}
+
+model AutoModAction {
+  id        String      @id @default(uuid())
+  guildId   String      @map("guild_id")
+  botId     String      @map("bot_id")
+  userId    String      @map("user_id")
+  type      AutoModType
+  content   String?     @db.Text
+  channelId String      @map("channel_id")
+  messageId String?     @map("message_id")
+  action    String // warn, mute, kick, delete
+  reason    String?     @db.Text
+  metadata  String?     @db.Text
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  @@index([guildId])
+  @@index([userId])
+  @@index([type])
+  @@map("auto_mod_actions")
+}
+
+enum ModerationType {
+  WARN
+  MUTE
+  UNMUTE
+  KICK
+  BAN
+  UNBAN
+  TIMEOUT
+  SOFTBAN
+  TEMPBAN
+  NOTE
+}
+
+enum AppealStatus {
+  PENDING
+  APPROVED
+  DENIED
+}
+
+enum AutoModType {
+  SPAM
+  RAID
+  LINK
+  INVITE
+  MASSMENTION
+  CAPS
+  WORD_FILTER
+  REGEX_FILTER
+  DUPLICATE
+  EMOJI_SPAM
+  NEWLINE_SPAM
+}
+
+// ==================== LEVELING SYSTEM ====================
+
+model LevelingConfig {
+  id      String  @id @default(uuid())
+  guildId String  @unique @map("guild_id")
+  botId   String  @map("bot_id")
+  enabled Boolean @default(true)
+
+  // XP Settings
+  xpPerMessage     Int     @default(15) @map("xp_per_message")
+  xpPerMessageMin  Int     @default(10) @map("xp_per_message_min")
+  xpPerMessageMax  Int     @default(25) @map("xp_per_message_max")
+  xpCooldown       Int     @default(60) @map("xp_cooldown")
+  xpMultiplier     Float   @default(1.0) @map("xp_multiplier")
+  voiceXpEnabled   Boolean @default(false) @map("voice_xp_enabled")
+  voiceXpPerMinute Int     @default(5) @map("voice_xp_per_minute")
+
+  // Level-Up Notifications
+  levelUpEnabled   Boolean @default(true) @map("level_up_enabled")
+  levelUpChannelId String? @map("level_up_channel_id")
+  levelUpMessage   String? @map("level_up_message") @db.Text
+  levelUpEmbed     String? @map("level_up_embed") @db.Text
+  levelUpDM        Boolean @default(false) @map("level_up_dm")
+
+  // Rank Card
+  defaultCardBg    String? @map("default_card_bg")
+  defaultCardColor String? @map("default_card_color")
+  showRankOnCard   Boolean @default(true) @map("show_rank_on_card")
+
+  // Boosts
+  roleMultipliers    String? @map("role_multipliers") @db.Text
+  channelMultipliers String? @map("channel_multipliers") @db.Text
+  weekendMultiplier  Float   @default(1.0) @map("weekend_multiplier")
+
+  // Restrictions
+  ignoredChannels String? @map("ignored_channels") @db.Text
+  ignoredRoles    String? @map("ignored_roles") @db.Text
+
+  // Leaderboard
+  leaderboardPublic    Boolean @default(true) @map("leaderboard_public")
+  leaderboardChannelId String? @map("leaderboard_channel_id")
+
+  // Reset Settings
+  resetOnLeave Boolean @default(false) @map("reset_on_leave")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  rewards LevelReward[]
+
+  @@index([botId])
+  @@map("leveling_configs")
+}
+
+model UserLevel {
+  id            String  @id @default(uuid())
+  guildId       String  @map("guild_id")
+  botId         String  @map("bot_id")
+  userId        String  @map("user_id")
+  username      String?
+  discriminator String?
+  avatar        String?
+
+  // XP & Level
+  xp      Int @default(0)
+  level   Int @default(0)
+  totalXp Int @default(0) @map("total_xp")
+
+  // Stats
+  messageCount Int       @default(0) @map("message_count")
+  voiceMinutes Int       @default(0) @map("voice_minutes")
+  lastXpGain   DateTime? @map("last_xp_gain")
+
+  // Customization
+  cardBackground String? @map("card_background")
+  cardColor      String? @map("card_color")
+  cardOpacity    Int     @default(80) @map("card_opacity")
+
+  // Weekly/Monthly XP
+  weeklyXp  Int @default(0) @map("weekly_xp")
+  monthlyXp Int @default(0) @map("monthly_xp")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([guildId, userId])
+  @@index([guildId])
+  @@index([botId])
+  @@index([userId])
+  @@index([level])
+  @@index([xp])
+  @@map("user_levels")
+}
+
+model LevelReward {
+  id           String     @id @default(uuid())
+  configId     String     @map("config_id")
+  level        Int
+  type         RewardType
+  roleId       String?    @map("role_id")
+  removeRoleId String?    @map("remove_role_id")
+  message      String?    @db.Text
+  credits      Int?
+  badgeId      String?    @map("badge_id")
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  config LevelingConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  @@index([configId])
+  @@index([level])
+  @@map("level_rewards")
+}
+
+enum RewardType {
+  ROLE_ADD
+  ROLE_REMOVE
+  MESSAGE
+  CREDITS
+  BADGE
+}
+
+// ==================== ECONOMY SYSTEM ====================
+
+model EconomyConfig {
+  id      String  @id @default(uuid())
+  guildId String  @unique @map("guild_id")
+  botId   String  @map("bot_id")
+  enabled Boolean @default(true)
+
+  // Currency Settings
+  currencyName   String  @default("Coins") @map("currency_name")
+  currencySymbol String  @default("💰") @map("currency_symbol")
+  currencyEmoji  String? @map("currency_emoji")
+
+  // Starting Balance
+  startingBalance Int @default(100) @map("starting_balance")
+
+  // Daily/Work Settings
+  dailyAmount   Int     @default(100) @map("daily_amount")
+  dailyCooldown Int     @default(86400) @map("daily_cooldown")
+  workMinAmount Int     @default(50) @map("work_min_amount")
+  workMaxAmount Int     @default(200) @map("work_max_amount")
+  workCooldown  Int     @default(3600) @map("work_cooldown")
+  workResponses String? @map("work_responses") @db.Text
+
+  // Crime Settings
+  crimeEnabled     Boolean @default(true) @map("crime_enabled")
+  crimeMinAmount   Int     @default(100) @map("crime_min_amount")
+  crimeMaxAmount   Int     @default(500) @map("crime_max_amount")
+  crimeSuccessRate Int     @default(50) @map("crime_success_rate")
+  crimeFinePercent Int     @default(25) @map("crime_fine_percent")
+  crimeCooldown    Int     @default(7200) @map("crime_cooldown")
+
+  // Robbery Settings
+  robEnabled     Boolean @default(true) @map("rob_enabled")
+  robMinAmount   Int     @default(50) @map("rob_min_amount")
+  robMaxPercent  Int     @default(25) @map("rob_max_percent")
+  robSuccessRate Int     @default(40) @map("rob_success_rate")
+  robCooldown    Int     @default(14400) @map("rob_cooldown")
+
+  // Gambling
+  gamblingEnabled Boolean @default(true) @map("gambling_enabled")
+  gamblingMinBet  Int     @default(10) @map("gambling_min_bet")
+  gamblingMaxBet  Int?    @map("gambling_max_bet")
+
+  // Bank Settings
+  bankEnabled          Boolean @default(true) @map("bank_enabled")
+  bankInterestRate     Float   @default(0.01) @map("bank_interest_rate")
+  bankInterestInterval Int     @default(86400) @map("bank_interest_interval")
+  maxBankBalance       Int?    @map("max_bank_balance")
+
+  // Streaks
+  dailyStreakEnabled Boolean @default(true) @map("daily_streak_enabled")
+  streakBonusPercent Int     @default(10) @map("streak_bonus_percent")
+  maxStreakBonus     Int     @default(100) @map("max_streak_bonus")
+
+  // Taxes
+  taxEnabled   Boolean @default(false) @map("tax_enabled")
+  taxRate      Int     @default(5) @map("tax_rate")
+  taxThreshold Int     @default(10000) @map("tax_threshold")
+
+  // Leaderboard
+  leaderboardChannelId String? @map("leaderboard_channel_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  shopItems ShopItem[]
+
+  @@index([botId])
+  @@map("economy_configs")
+}
+
+model UserEconomy {
+  id      String @id @default(uuid())
+  guildId String @map("guild_id")
+  botId   String @map("bot_id")
+  userId  String @map("user_id")
+
+  // Balance
+  balance     Int @default(0)
+  bankBalance Int @default(0) @map("bank_balance")
+  totalEarned Int @default(0) @map("total_earned")
+  totalSpent  Int @default(0) @map("total_spent")
+
+  // Cooldowns
+  lastDaily    DateTime? @map("last_daily")
+  lastWork     DateTime? @map("last_work")
+  lastCrime    DateTime? @map("last_crime")
+  lastRob      DateTime? @map("last_rob")
+  lastInterest DateTime? @map("last_interest")
+
+  // Streaks
+  dailyStreak   Int @default(0) @map("daily_streak")
+  longestStreak Int @default(0) @map("longest_streak")
+
+  // Stats
+  workCount      Int @default(0) @map("work_count")
+  crimeCount     Int @default(0) @map("crime_count")
+  crimeSuccesses Int @default(0) @map("crime_successes")
+  robCount       Int @default(0) @map("rob_count")
+  robSuccesses   Int @default(0) @map("rob_successes")
+  timesRobbed    Int @default(0) @map("times_robbed")
+  gamblingWins   Int @default(0) @map("gambling_wins")
+  gamblingLosses Int @default(0) @map("gambling_losses")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  inventory    UserInventory[]
+  transactions EconomyTransaction[]
+
+  @@unique([guildId, userId])
+  @@index([guildId])
+  @@index([botId])
+  @@index([userId])
+  @@index([balance])
+  @@map("user_economies")
+}
+
+model ShopItem {
+  id          String       @id @default(uuid())
+  configId    String       @map("config_id")
+  name        String
+  description String?      @db.Text
+  price       Int
+  emoji       String?
+  category    String?
+  type        ShopItemType
+
+  // Item Properties
+  roleId       String? @map("role_id")
+  duration     Int? // En secondes, null = permanent
+  maxOwned     Int     @default(1) @map("max_owned")
+  maxStock     Int?    @map("max_stock")
+  currentStock Int?    @map("current_stock")
+
+  // Requirements
+  requiredLevel  Int?    @map("required_level")
+  requiredRoleId String? @map("required_role_id")
+
+  // Flags
+  isLimited Boolean @default(false) @map("is_limited")
+  isHidden  Boolean @default(false) @map("is_hidden")
+  isActive  Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  config        EconomyConfig   @relation(fields: [configId], references: [id], onDelete: Cascade)
+  userInventory UserInventory[]
+
+  @@index([configId])
+  @@index([category])
+  @@map("shop_items")
+}
+
+model UserInventory {
+  id         String    @id @default(uuid())
+  economyId  String    @map("economy_id")
+  itemId     String    @map("item_id")
+  quantity   Int       @default(1)
+  expiresAt  DateTime? @map("expires_at")
+  acquiredAt DateTime  @default(now()) @map("acquired_at")
+
+  economy UserEconomy @relation(fields: [economyId], references: [id], onDelete: Cascade)
+  item    ShopItem    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([economyId, itemId])
+  @@index([economyId])
+  @@index([itemId])
+  @@map("user_inventory")
+}
+
+model EconomyTransaction {
+  id            String           @id @default(uuid())
+  economyId     String           @map("economy_id")
+  type          EconomyTransType
+  amount        Int
+  balanceBefore Int              @map("balance_before")
+  balanceAfter  Int              @map("balance_after")
+  description   String?
+  targetUserId  String?          @map("target_user_id")
+  metadata      String?          @db.Text
+  createdAt     DateTime         @default(now()) @map("created_at")
+
+  economy UserEconomy @relation(fields: [economyId], references: [id], onDelete: Cascade)
+
+  @@index([economyId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("economy_transactions")
+}
+
+enum ShopItemType {
+  ROLE
+  BADGE
+  COSMETIC
+  CONSUMABLE
+  BOOST
+  CUSTOM
+}
+
+enum EconomyTransType {
+  DAILY
+  WORK
+  CRIME
+  ROB
+  ROBBED
+  GAMBLE_WIN
+  GAMBLE_LOSE
+  SHOP_BUY
+  SHOP_SELL
+  TRANSFER_IN
+  TRANSFER_OUT
+  BANK_DEPOSIT
+  BANK_WITHDRAW
+  INTEREST
+  TAX
+  ADMIN_ADD
+  ADMIN_REMOVE
+  GIFT
+  EVENT
+}
+
+// ==================== MUSIC SYSTEM ====================
+
+model MusicConfig {
+  id      String  @id @default(uuid())
+  guildId String  @unique @map("guild_id")
+  botId   String  @map("bot_id")
+  enabled Boolean @default(true)
+
+  // DJ Settings
+  djRoleId   String? @map("dj_role_id")
+  djOnlyMode Boolean @default(false) @map("dj_only_mode")
+
+  // Playback Settings
+  defaultVolume   Int @default(50) @map("default_volume")
+  maxVolume       Int @default(100) @map("max_volume")
+  maxQueueSize    Int @default(500) @map("max_queue_size")
+  maxSongDuration Int @default(3600) @map("max_song_duration")
+
+  // Channel Settings
+  textChannelId  String? @map("text_channel_id")
+  voiceChannelId String? @map("voice_channel_id")
+
+  // Auto Settings
+  autoPlay           Boolean @default(false) @map("auto_play")
+  autoLeave          Boolean @default(true) @map("auto_leave")
+  autoLeaveDelay     Int     @default(300) @map("auto_leave_delay")
+  announceNowPlaying Boolean @default(true) @map("announce_now_playing")
+  deleteNowPlaying   Boolean @default(false) @map("delete_now_playing")
+
+  // Restrictions
+  allowedChannelIds String? @map("allowed_channel_ids") @db.Text
+  blockedUsers      String? @map("blocked_users") @db.Text
+
+  // 24/7 Mode
+  twentyFourSevenEnabled Boolean @default(false) @map("twenty_four_seven_enabled")
+  twentyFourSevenChannel String? @map("twenty_four_seven_channel")
+
+  // Effects
+  defaultEqualizer String? @map("default_equalizer")
+  bassBoost        Int     @default(0) @map("bass_boost")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  playlists Playlist[]
+
+  @@index([botId])
+  @@map("music_configs")
+}
+
+model Playlist {
+  id            String   @id @default(uuid())
+  configId      String?  @map("config_id")
+  guildId       String?  @map("guild_id")
+  userId        String   @map("user_id")
+  name          String
+  description   String?
+  isPublic      Boolean  @default(false) @map("is_public")
+  trackCount    Int      @default(0) @map("track_count")
+  totalDuration Int      @default(0) @map("total_duration")
+  thumbnail     String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  config MusicConfig?    @relation(fields: [configId], references: [id], onDelete: Cascade)
+  tracks PlaylistTrack[]
+
+  @@index([configId])
+  @@index([userId])
+  @@index([isPublic])
+  @@map("playlists")
+}
+
+model PlaylistTrack {
+  id         String   @id @default(uuid())
+  playlistId String   @map("playlist_id")
+  title      String
+  artist     String?
+  url        String
+  thumbnail  String?
+  duration   Int
+  source     String // youtube, spotify, soundcloud
+  addedBy    String   @map("added_by")
+  position   Int
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+
+  @@index([playlistId])
+  @@map("playlist_tracks")
+}
+
+// ==================== GIVEAWAY SYSTEM ====================
+
+model GiveawayConfig {
+  id      String  @id @default(uuid())
+  guildId String  @unique @map("guild_id")
+  botId   String  @map("bot_id")
+  enabled Boolean @default(true)
+
+  // Permissions
+  managerRoleIds String? @map("manager_role_ids") @db.Text
+
+  // Default Settings
+  defaultDuration Int    @default(86400) @map("default_duration")
+  defaultWinners  Int    @default(1) @map("default_winners")
+  defaultEmoji    String @default("🎉") @map("default_emoji")
+
+  // Embed Settings
+  embedColor String? @map("embed_color")
+
+  // DM Settings
+  dmWinners Boolean @default(true) @map("dm_winners")
+  dmHost    Boolean @default(false) @map("dm_host")
+
+  // Restrictions
+  maxWinners  Int @default(10) @map("max_winners")
+  maxDuration Int @default(604800) @map("max_duration")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  giveaways Giveaway[]
+
+  @@index([botId])
+  @@map("giveaway_configs")
+}
+
+model Giveaway {
+  id        String  @id @default(uuid())
+  configId  String  @map("config_id")
+  guildId   String  @map("guild_id")
+  channelId String  @map("channel_id")
+  messageId String? @map("message_id")
+  hostId    String  @map("host_id")
+
+  // Giveaway Details
+  prize        String
+  description  String? @db.Text
+  winnersCount Int     @default(1) @map("winners_count")
+  emoji        String  @default("🎉")
+  thumbnail    String?
+
+  // Requirements
+  requiredRoleIds    String? @map("required_role_ids") @db.Text
+  requiredLevel      Int?    @map("required_level")
+  requiredMessages   Int?    @map("required_messages")
+  blacklistedRoleIds String? @map("blacklisted_role_ids") @db.Text
+  bonusRoles         String? @map("bonus_roles") @db.Text
+
+  // Timing
+  startAt DateTime @default(now()) @map("start_at")
+  endAt   DateTime @map("end_at")
+
+  // Status
+  status           GiveawayStatus @default(ACTIVE)
+  winners          String?        @db.Text
+  participantCount Int            @default(0) @map("participant_count")
+
+  // Flags
+  isPaused Boolean @default(false) @map("is_paused")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  config  GiveawayConfig  @relation(fields: [configId], references: [id], onDelete: Cascade)
+  entries GiveawayEntry[]
+
+  @@index([configId])
+  @@index([guildId])
+  @@index([status])
+  @@index([endAt])
+  @@map("giveaways")
+}
+
+model GiveawayEntry {
+  id         String   @id @default(uuid())
+  giveawayId String   @map("giveaway_id")
+  userId     String   @map("user_id")
+  entries    Int      @default(1)
+  isWinner   Boolean  @default(false) @map("is_winner")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  giveaway Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
+
+  @@unique([giveawayId, userId])
+  @@index([giveawayId])
+  @@index([userId])
+  @@map("giveaway_entries")
+}
+
+enum GiveawayStatus {
+  SCHEDULED
+  ACTIVE
+  ENDED
+  CANCELLED
+  REROLLING
+}
+
+// ==================== SOCIAL FEEDS SYSTEM ====================
+
+model SocialFeedsConfig {
+  id      String  @id @default(uuid())
+  guildId String  @unique @map("guild_id")
+  botId   String  @map("bot_id")
+  enabled Boolean @default(true)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  feeds SocialFeed[]
+
+  @@index([botId])
+  @@map("social_feeds_configs")
+}
+
+model SocialFeed {
+  id       String @id @default(uuid())
+  configId String @map("config_id")
+  guildId  String @map("guild_id")
+
+  // Feed Details
+  platform    SocialPlatform
+  accountId   String         @map("account_id")
+  accountName String         @map("account_name")
+  accountUrl  String?        @map("account_url")
+
+  // Notification Settings
+  channelId     String  @map("channel_id")
+  roleToMention String? @map("role_to_mention")
+  customMessage String? @map("custom_message") @db.Text
+  embedEnabled  Boolean @default(true) @map("embed_enabled")
+  embedColor    String? @map("embed_color")
+
+  // Filters
+  filterKeywords  String? @map("filter_keywords") @db.Text
+  excludeKeywords String? @map("exclude_keywords") @db.Text
+
+  // Status
+  isActive    Boolean   @default(true) @map("is_active")
+  lastChecked DateTime? @map("last_checked")
+  lastPostId  String?   @map("last_post_id")
+  lastPostUrl String?   @map("last_post_url")
+  errorCount  Int       @default(0) @map("error_count")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  config SocialFeedsConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  @@unique([configId, platform, accountId])
+  @@index([configId])
+  @@index([platform])
+  @@index([isActive])
+  @@map("social_feeds")
+}
+
+enum SocialPlatform {
+  YOUTUBE
+  TWITCH
+  TWITTER
+  INSTAGRAM
+  TIKTOK
+  REDDIT
+  RSS
+}
+
+// ==================== STARBOARD SYSTEM ====================
+
+model StarboardConfig {
+  id      String  @id @default(uuid())
+  guildId String  @unique @map("guild_id")
+  botId   String  @map("bot_id")
+  enabled Boolean @default(true)
+
+  // Main Settings
+  channelId String @map("channel_id")
+  emoji     String @default("⭐")
+  threshold Int    @default(3)
+
+  // Embed Settings
+  embedColor     String? @map("embed_color")
+  showJumpButton Boolean @default(true) @map("show_jump_button")
+
+  // Restrictions
+  ignoredChannels String? @map("ignored_channels") @db.Text
+  selfStarAllowed Boolean @default(false) @map("self_star_allowed")
+  botStarAllowed  Boolean @default(false) @map("bot_star_allowed")
+  nsfwAllowed     Boolean @default(false) @map("nsfw_allowed")
+
+  // Thresholds by Age
+  minMessageAge Int  @default(0) @map("min_message_age")
+  maxMessageAge Int? @map("max_message_age")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  entries StarboardEntry[]
+
+  @@index([botId])
+  @@map("starboard_configs")
+}
+
+model StarboardEntry {
+  id       String @id @default(uuid())
+  configId String @map("config_id")
+  guildId  String @map("guild_id")
+
+  // Original Message
+  messageId   String  @map("message_id")
+  channelId   String  @map("channel_id")
+  authorId    String  @map("author_id")
+  content     String? @db.Text
+  attachments String? @db.Text
+
+  // Starboard Message
+  starboardMessageId String? @map("starboard_message_id")
+
+  // Stats
+  starCount Int     @default(0) @map("star_count")
+  starUsers String? @map("star_users") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  config StarboardConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  @@unique([configId, messageId])
+  @@index([configId])
+  @@index([guildId])
+  @@index([authorId])
+  @@index([starCount])
+  @@map("starboard_entries")
+}
+
+// ==================== SUGGESTIONS SYSTEM ====================
+
+model SuggestionConfig {
+  id      String  @id @default(uuid())
+  guildId String  @unique @map("guild_id")
+  botId   String  @map("bot_id")
+  enabled Boolean @default(true)
+
+  // Channels
+  channelId       String  @map("channel_id")
+  reviewChannelId String? @map("review_channel_id")
+  logChannelId    String? @map("log_channel_id")
+
+  // Settings
+  requireApproval Boolean @default(false) @map("require_approval")
+  allowAnonymous  Boolean @default(false) @map("allow_anonymous")
+
+  // Reactions
+  upvoteEmoji   String @default("👍") @map("upvote_emoji")
+  downvoteEmoji String @default("👎") @map("downvote_emoji")
+
+  // Embed
+  embedColor       String? @map("embed_color")
+  pendingColor     String? @map("pending_color")
+  approvedColor    String? @map("approved_color")
+  deniedColor      String? @map("denied_color")
+  implementedColor String? @map("implemented_color")
+
+  // Thread Settings
+  createThread      Boolean @default(false) @map("create_thread")
+  threadAutoArchive Int     @default(1440) @map("thread_auto_archive")
+
+  // Restrictions
+  cooldownMinutes Int     @default(30) @map("cooldown_minutes")
+  minAccountAge   Int     @default(0) @map("min_account_age")
+  requiredRoleId  String? @map("required_role_id")
+  staffRoleIds    String? @map("staff_role_ids") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  suggestions Suggestion[]
+
+  @@index([botId])
+  @@map("suggestion_configs")
+}
+
+model Suggestion {
+  id               String @id @default(uuid())
+  configId         String @map("config_id")
+  guildId          String @map("guild_id")
+  suggestionNumber Int    @map("suggestion_number")
+
+  // Author
+  authorId    String  @map("author_id")
+  isAnonymous Boolean @default(false) @map("is_anonymous")
+
+  // Content
+  title       String?
+  content     String  @db.Text
+  attachments String? @db.Text
+
+  // Message References
+  messageId String? @map("message_id")
+  channelId String  @map("channel_id")
+  threadId  String? @map("thread_id")
+
+  // Status
+  status          SuggestionStatus @default(PENDING)
+  statusReason    String?          @map("status_reason") @db.Text
+  statusChangedBy String?          @map("status_changed_by")
+  statusChangedAt DateTime?        @map("status_changed_at")
+
+  // Votes
+  upvotes   Int     @default(0)
+  downvotes Int     @default(0)
+  voters    String? @db.Text
+
+  // Admin Response
+  staffResponse    String? @map("staff_response") @db.Text
+  staffResponderId String? @map("staff_responder_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  config   SuggestionConfig    @relation(fields: [configId], references: [id], onDelete: Cascade)
+  comments SuggestionComment[]
+
+  @@unique([configId, suggestionNumber])
+  @@index([configId])
+  @@index([guildId])
+  @@index([authorId])
+  @@index([status])
+  @@map("suggestions")
+}
+
+model SuggestionComment {
+  id           String   @id @default(uuid())
+  suggestionId String   @map("suggestion_id")
+  authorId     String   @map("author_id")
+  content      String   @db.Text
+  isStaff      Boolean  @default(false) @map("is_staff")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  suggestion Suggestion @relation(fields: [suggestionId], references: [id], onDelete: Cascade)
+
+  @@index([suggestionId])
+  @@map("suggestion_comments")
+}
+
+enum SuggestionStatus {
+  PENDING
+  APPROVED
+  DENIED
+  CONSIDERING
+  IMPLEMENTED
+  ARCHIVED
+}
+
+// ==================== POLLS SYSTEM ====================
+
+model PollConfig {
+  id      String  @id @default(uuid())
+  guildId String  @unique @map("guild_id")
+  botId   String  @map("bot_id")
+  enabled Boolean @default(true)
+
+  // Default Settings
+  defaultDuration    Int     @default(86400) @map("default_duration")
+  maxOptions         Int     @default(10) @map("max_options")
+  allowMultipleVotes Boolean @default(false) @map("allow_multiple_votes")
+  showVotersList     Boolean @default(false) @map("show_voters_list")
+
+  // Restrictions
+  createRoleIds         String? @map("create_role_ids") @db.Text
+  maxActivePollsPerUser Int     @default(3) @map("max_active_polls_per_user")
+
+  // Embed
+  embedColor String? @map("embed_color")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  polls Poll[]
+
+  @@index([botId])
+  @@map("poll_configs")
+}
+
+model Poll {
+  id        String  @id @default(uuid())
+  configId  String  @map("config_id")
+  guildId   String  @map("guild_id")
+  channelId String  @map("channel_id")
+  messageId String? @map("message_id")
+
+  // Poll Details
+  creatorId   String  @map("creator_id")
+  question    String
+  description String? @db.Text
+  options     String  @db.Text // JSON array
+
+  // Settings
+  allowMultipleVotes Boolean @default(false) @map("allow_multiple_votes")
+  anonymous          Boolean @default(false)
+  showResultsLive    Boolean @default(true) @map("show_results_live")
+
+  // Timing
+  startAt DateTime  @default(now()) @map("start_at")
+  endAt   DateTime? @map("end_at")
+
+  // Status
+  status     PollStatus @default(ACTIVE)
+  totalVotes Int        @default(0) @map("total_votes")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  config PollConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+  votes  PollVote[]
+
+  @@index([configId])
+  @@index([guildId])
+  @@index([status])
+  @@map("polls")
+}
+
+model PollVote {
+  id          String   @id @default(uuid())
+  pollId      String   @map("poll_id")
+  userId      String   @map("user_id")
+  optionIndex Int      @map("option_index")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  poll Poll @relation(fields: [pollId], references: [id], onDelete: Cascade)
+
+  @@unique([pollId, userId, optionIndex])
+  @@index([pollId])
+  @@index([userId])
+  @@map("poll_votes")
+}
+
+enum PollStatus {
+  ACTIVE
+  ENDED
+  CANCELLED
+}
+
+// ==================== REMINDERS SYSTEM ====================
+
+model Reminder {
+  id        String  @id @default(uuid())
+  guildId   String? @map("guild_id")
+  botId     String  @map("bot_id")
+  userId    String  @map("user_id")
+  channelId String? @map("channel_id")
+
+  // Reminder Content
+  content String @db.Text
+
+  // Timing
+  remindAt  DateTime @map("remind_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Recurring
+  isRecurring    Boolean @default(false) @map("is_recurring")
+  interval       Int? // En secondes
+  repeatCount    Int?    @map("repeat_count")
+  timesTriggered Int     @default(0) @map("times_triggered")
+
+  // Status
+  status      ReminderStatus @default(PENDING)
+  completedAt DateTime?      @map("completed_at")
+
+  // Reference
+  messageUrl String? @map("message_url")
+
+  @@index([userId])
+  @@index([botId])
+  @@index([remindAt])
+  @@index([status])
+  @@map("reminders")
+}
+
+enum ReminderStatus {
+  PENDING
+  SENT
+  FAILED
+  CANCELLED
+}
+
+// ==================== SCHEDULED MESSAGES ====================
+
+model ScheduledMessage {
+  id        String @id @default(uuid())
+  guildId   String @map("guild_id")
+  botId     String @map("bot_id")
+  channelId String @map("channel_id")
+  creatorId String @map("creator_id")
+
+  // Content
+  content   String? @db.Text
+  embedJson String? @map("embed_json") @db.Text
+
+  // Timing
+  sendAt         DateTime? @map("send_at")
+  cronExpression String?   @map("cron_expression")
+  timezone       String    @default("UTC")
+
+  // Recurring
+  isRecurring Boolean   @default(false) @map("is_recurring")
+  nextRunAt   DateTime? @map("next_run_at")
+  lastRunAt   DateTime? @map("last_run_at")
+  runCount    Int       @default(0) @map("run_count")
+  maxRuns     Int?      @map("max_runs")
+
+  // Status
+  status    ScheduledMessageStatus @default(SCHEDULED)
+  lastError String?                @map("last_error") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([guildId])
+  @@index([botId])
+  @@index([status])
+  @@index([nextRunAt])
+  @@map("scheduled_messages")
+}
+
+enum ScheduledMessageStatus {
+  SCHEDULED
+  RUNNING
+  COMPLETED
+  PAUSED
+  FAILED
+  CANCELLED
+}
+
+// ==================== AUTO RESPONDERS ====================
+
+model AutoResponderConfig {
+  id      String  @id @default(uuid())
+  guildId String  @unique @map("guild_id")
+  botId   String  @map("bot_id")
+  enabled Boolean @default(true)
+
+  // Restrictions
+  ignoreBots      Boolean @default(true) @map("ignore_bots")
+  ignoreAdmins    Boolean @default(false) @map("ignore_admins")
+  cooldownSeconds Int     @default(0) @map("cooldown_seconds")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  responders AutoResponder[]
+
+  @@index([botId])
+  @@map("auto_responder_configs")
+}
+
+model AutoResponder {
+  id       String @id @default(uuid())
+  configId String @map("config_id")
+  guildId  String @map("guild_id")
+
+  // Trigger
+  name          String
+  trigger       String
+  triggerType   TriggerType @default(CONTAINS) @map("trigger_type")
+  caseSensitive Boolean     @default(false) @map("case_sensitive")
+
+  // Response
+  response       String? @db.Text
+  embedJson      String? @map("embed_json") @db.Text
+  reactionEmojis String? @map("reaction_emojis") @db.Text
+
+  // Settings
+  deleteOriginal Boolean @default(false) @map("delete_original")
+  replyToMessage Boolean @default(true) @map("reply_to_message")
+  dmResponse     Boolean @default(false) @map("dm_response")
+
+  // Restrictions
+  allowedChannels String? @map("allowed_channels") @db.Text
+  ignoredChannels String? @map("ignored_channels") @db.Text
+  allowedRoles    String? @map("allowed_roles") @db.Text
+  ignoredRoles    String? @map("ignored_roles") @db.Text
+
+  // Stats
+  uses     Int       @default(0)
+  lastUsed DateTime? @map("last_used")
+
+  // Status
+  isActive Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  config AutoResponderConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  @@index([configId])
+  @@index([guildId])
+  @@index([isActive])
+  @@map("auto_responders")
+}
+
+enum TriggerType {
+  EXACT
+  CONTAINS
+  STARTS_WITH
+  ENDS_WITH
+  REGEX
+  WILDCARD
+}
+
+// ==================== TAGS/FAQ SYSTEM ====================
+
+model TagConfig {
+  id      String  @id @default(uuid())
+  guildId String  @unique @map("guild_id")
+  botId   String  @map("bot_id")
+  enabled Boolean @default(true)
+
+  // Settings
+  prefix        String  @default("?")
+  allowUserTags Boolean @default(false) @map("allow_user_tags")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tags Tag[]
+
+  @@index([botId])
+  @@map("tag_configs")
+}
+
+model Tag {
+  id       String @id @default(uuid())
+  configId String @map("config_id")
+  guildId  String @map("guild_id")
+
+  // Tag Details
+  name      String
+  aliases   String? @db.Text
+  content   String  @db.Text
+  embedJson String? @map("embed_json") @db.Text
+
+  // Ownership
+  creatorId String  @map("creator_id")
+  isGlobal  Boolean @default(false) @map("is_global")
+
+  // Stats
+  uses     Int       @default(0)
+  lastUsed DateTime? @map("last_used")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  config TagConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  @@unique([configId, name])
+  @@index([configId])
+  @@index([guildId])
+  @@index([creatorId])
+  @@map("tags")
+}
+
+// ==================== BIRTHDAY SYSTEM ====================
+
+model BirthdayConfig {
+  id      String  @id @default(uuid())
+  guildId String  @unique @map("guild_id")
+  botId   String  @map("bot_id")
+  enabled Boolean @default(true)
+
+  // Channel & Role
+  channelId            String? @map("channel_id")
+  roleId               String? @map("role_id")
+  removeRoleAfterHours Int     @default(24) @map("remove_role_after_hours")
+
+  // Message
+  message   String? @db.Text
+  embedJson String? @map("embed_json") @db.Text
+
+  // Settings
+  announceTime String  @default("00:00") @map("announce_time")
+  timezone     String  @default("UTC")
+  showAge      Boolean @default(false) @map("show_age")
+  allowUserSet Boolean @default(true) @map("allow_user_set")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  birthdays Birthday[]
+
+  @@index([botId])
+  @@map("birthday_configs")
+}
+
+model Birthday {
+  id       String @id @default(uuid())
+  configId String @map("config_id")
+  guildId  String @map("guild_id")
+  userId   String @map("user_id")
+
+  // Birthday
+  day   Int
+  month Int
+  year  Int?
+
+  // Notifications
+  lastAnnounced DateTime? @map("last_announced")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  config BirthdayConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  @@unique([configId, userId])
+  @@index([configId])
+  @@index([guildId])
+  @@index([day, month])
+  @@map("birthdays")
+}
+
+// ==================== REACTION ROLES ====================
+
+model ReactionRoleConfig {
+  id      String  @id @default(uuid())
+  guildId String  @unique @map("guild_id")
+  botId   String  @map("bot_id")
+  enabled Boolean @default(true)
+
+  // Settings
+  dmOnRole     Boolean @default(false) @map("dm_on_role")
+  logChannelId String? @map("log_channel_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  panels ReactionRolePanel[]
+
+  @@index([botId])
+  @@map("reaction_role_configs")
+}
+
+model ReactionRolePanel {
+  id       String @id @default(uuid())
+  configId String @map("config_id")
+  guildId  String @map("guild_id")
+
+  // Message
+  channelId String  @map("channel_id")
+  messageId String? @map("message_id")
+
+  // Panel Settings
+  name String
+  type ReactionRoleType @default(REACTION)
+  mode ReactionRoleMode @default(NORMAL)
+
+  // Content
+  title       String?
+  description String? @db.Text
+  color       String?
+  thumbnail   String?
+  image       String?
+
+  // Requirements
+  requiredRoleId     String? @map("required_role_id")
+  blacklistedRoleIds String? @map("blacklisted_role_ids") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  config ReactionRoleConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+  roles  ReactionRole[]
+
+  @@index([configId])
+  @@index([guildId])
+  @@index([messageId])
+  @@map("reaction_role_panels")
+}
+
+model ReactionRole {
+  id          String  @id @default(uuid())
+  panelId     String  @map("panel_id")
+  roleId      String  @map("role_id")
+  emoji       String
+  label       String?
+  description String?
+  style       Int     @default(2) // Button style
+
+  panel ReactionRolePanel @relation(fields: [panelId], references: [id], onDelete: Cascade)
+
+  @@index([panelId])
+  @@map("reaction_roles")
+}
+
+enum ReactionRoleType {
+  REACTION
+  BUTTON
+  DROPDOWN
+}
+
+enum ReactionRoleMode {
+  NORMAL // Toggle on/off
+  UNIQUE // Only one role at a time
+  VERIFY // Give role on reaction, can't remove
+  REVERSE // Remove role on reaction
+  LIMIT // Max X roles
+}
+
+// ==================== TEMP CHANNELS ====================
+
+model TempChannelConfig {
+  id      String  @id @default(uuid())
+  guildId String  @unique @map("guild_id")
+  botId   String  @map("bot_id")
+  enabled Boolean @default(true)
+
+  // Hub Channel
+  hubChannelId String  @map("hub_channel_id")
+  categoryId   String? @map("category_id")
+
+  // Naming
+  defaultName String @default("{user}'s Channel") @map("default_name")
+
+  // Limits
+  userLimit          Int @default(0) @map("user_limit")
+  maxChannelsPerUser Int @default(1) @map("max_channels_per_user")
+  maxChannelsTotal   Int @default(50) @map("max_channels_total")
+
+  // Auto Delete
+  deleteWhenEmpty    Boolean @default(true) @map("delete_when_empty")
+  deleteAfterSeconds Int     @default(0) @map("delete_after_seconds")
+
+  // Permissions
+  allowRename  Boolean @default(true) @map("allow_rename")
+  allowLimit   Boolean @default(true) @map("allow_limit")
+  allowLock    Boolean @default(true) @map("allow_lock")
+  allowPermit  Boolean @default(true) @map("allow_permit")
+  allowBitrate Boolean @default(false) @map("allow_bitrate")
+
+  // Default Settings
+  defaultBitrate     Int     @default(64000) @map("default_bitrate")
+  inheritPermissions Boolean @default(true) @map("inherit_permissions")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  channels TempChannel[]
+
+  @@index([botId])
+  @@map("temp_channel_configs")
+}
+
+model TempChannel {
+  id        String @id @default(uuid())
+  configId  String @map("config_id")
+  guildId   String @map("guild_id")
+  channelId String @unique @map("channel_id")
+  ownerId   String @map("owner_id")
+
+  // Settings
+  name      String
+  userLimit Int     @default(0) @map("user_limit")
+  bitrate   Int     @default(64000)
+  isLocked  Boolean @default(false) @map("is_locked")
+  isHidden  Boolean @default(false) @map("is_hidden")
+
+  // Permissions
+  trustedUsers String? @map("trusted_users") @db.Text
+  blockedUsers String? @map("blocked_users") @db.Text
+
+  createdAt    DateTime @default(now()) @map("created_at")
+  lastActivity DateTime @default(now()) @map("last_activity")
+
+  config TempChannelConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  @@index([configId])
+  @@index([guildId])
+  @@index([ownerId])
+  @@map("temp_channels")
+}
+
+// ==================== FORMS & APPLICATIONS ====================
+
+model FormConfig {
+  id      String  @id @default(uuid())
+  guildId String  @unique @map("guild_id")
+  botId   String  @map("bot_id")
+  enabled Boolean @default(true)
+
+  // Channels
+  logChannelId String? @map("log_channel_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  forms Form[]
+
+  @@index([botId])
+  @@map("form_configs")
+}
+
+model Form {
+  id       String @id @default(uuid())
+  configId String @map("config_id")
+  guildId  String @map("guild_id")
+
+  // Form Details
+  name        String
+  description String? @db.Text
+  slug        String
+
+  // Channels
+  submissionChannelId String? @map("submission_channel_id")
+
+  // Settings
+  isActive        Boolean @default(true) @map("is_active")
+  requiresReview  Boolean @default(true) @map("requires_review")
+  maxSubmissions  Int?    @map("max_submissions")
+  cooldownMinutes Int     @default(0) @map("cooldown_minutes")
+
+  // Requirements
+  requiredRoleIds    String? @map("required_role_ids") @db.Text
+  blacklistedRoleIds String? @map("blacklisted_role_ids") @db.Text
+
+  // On Approval
+  approvalRoleId  String? @map("approval_role_id")
+  approvalMessage String? @map("approval_message") @db.Text
+  denialMessage   String? @map("denial_message") @db.Text
+
+  // Embed
+  embedColor String? @map("embed_color")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  config      FormConfig       @relation(fields: [configId], references: [id], onDelete: Cascade)
+  questions   FormQuestion[]
+  submissions FormSubmission[]
+
+  @@unique([configId, slug])
+  @@index([configId])
+  @@index([guildId])
+  @@map("forms")
+}
+
+model FormQuestion {
+  id     String @id @default(uuid())
+  formId String @map("form_id")
+
+  // Question
+  question    String
+  description String?      @db.Text
+  type        QuestionType
+  required    Boolean      @default(true)
+  position    Int
+
+  // Options (for choice types)
+  options String? @db.Text
+
+  // Validation
+  minLength   Int?    @map("min_length")
+  maxLength   Int?    @map("max_length")
+  placeholder String?
+
+  form Form @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  @@index([formId])
+  @@map("form_questions")
+}
+
+model FormSubmission {
+  id      String @id @default(uuid())
+  formId  String @map("form_id")
+  guildId String @map("guild_id")
+  userId  String @map("user_id")
+
+  // Answers
+  answers String @db.Text
+
+  // Message
+  messageId String? @map("message_id")
+  threadId  String? @map("thread_id")
+
+  // Status
+  status     FormSubmissionStatus @default(PENDING)
+  reviewerId String?              @map("reviewer_id")
+  reviewNote String?              @map("review_note") @db.Text
+  reviewedAt DateTime?            @map("reviewed_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  form Form @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  @@index([formId])
+  @@index([guildId])
+  @@index([userId])
+  @@index([status])
+  @@map("form_submissions")
+}
+
+enum QuestionType {
+  SHORT_TEXT
+  LONG_TEXT
+  NUMBER
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  DROPDOWN
+  YES_NO
+  DATE
+  TIME
+  URL
+  EMAIL
+  ATTACHMENT
+}
+
+enum FormSubmissionStatus {
+  PENDING
+  APPROVED
+  DENIED
+  ON_HOLD
+}
+
+// ==================== SERVER LOGGING ====================
+
+model LoggingConfig {
+  id      String  @id @default(uuid())
+  guildId String  @unique @map("guild_id")
+  botId   String  @map("bot_id")
+  enabled Boolean @default(true)
+
+  // Default Channel
+  defaultChannelId String? @map("default_channel_id")
+
+  // Message Events
+  messageDeleteChannelId     String? @map("message_delete_channel_id")
+  messageEditChannelId       String? @map("message_edit_channel_id")
+  messageBulkDeleteChannelId String? @map("message_bulk_delete_channel_id")
+
+  // Member Events
+  memberJoinChannelId   String? @map("member_join_channel_id")
+  memberLeaveChannelId  String? @map("member_leave_channel_id")
+  memberUpdateChannelId String? @map("member_update_channel_id")
+  memberBanChannelId    String? @map("member_ban_channel_id")
+
+  // Server Events
+  channelCreateChannelId String? @map("channel_create_channel_id")
+  channelDeleteChannelId String? @map("channel_delete_channel_id")
+  channelUpdateChannelId String? @map("channel_update_channel_id")
+  roleCreateChannelId    String? @map("role_create_channel_id")
+  roleDeleteChannelId    String? @map("role_delete_channel_id")
+  roleUpdateChannelId    String? @map("role_update_channel_id")
+
+  // Voice Events
+  voiceJoinChannelId  String? @map("voice_join_channel_id")
+  voiceLeaveChannelId String? @map("voice_leave_channel_id")
+  voiceMoveChannelId  String? @map("voice_move_channel_id")
+
+  // Invite Events
+  inviteCreateChannelId String? @map("invite_create_channel_id")
+  inviteDeleteChannelId String? @map("invite_delete_channel_id")
+
+  // Emoji Events
+  emojiCreateChannelId String? @map("emoji_create_channel_id")
+  emojiDeleteChannelId String? @map("emoji_delete_channel_id")
+
+  // Ignored
+  ignoredChannels String? @map("ignored_channels") @db.Text
+  ignoredRoles    String? @map("ignored_roles") @db.Text
+  ignoredUsers    String? @map("ignored_users") @db.Text
+
+  // Settings
+  logBotActions   Boolean @default(false) @map("log_bot_actions")
+  includeAuditLog Boolean @default(true) @map("include_audit_log")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([botId])
+  @@map("logging_configs")
+}
+
+// ==================== SERVER BACKUP ====================
+
+model ServerBackup {
+  id        String @id @default(uuid())
+  guildId   String @map("guild_id")
+  botId     String @map("bot_id")
+  creatorId String @map("creator_id")
+
+  // Backup Info
+  name        String
+  description String?
+
+  // Data
+  data String @db.Text // JSON
+
+  // Size Info
+  channels Int @default(0)
+  roles    Int @default(0)
+  emojis   Int @default(0)
+
+  // Status
+  status BackupStatus @default(COMPLETED)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  expiresAt DateTime? @map("expires_at")
+
+  @@index([guildId])
+  @@index([botId])
+  @@index([creatorId])
+  @@map("server_backups")
+}
+
+enum BackupStatus {
+  CREATING
+  COMPLETED
+  FAILED
+  EXPIRED
+}
+
+// ==================== CUSTOM EMBEDS ====================
+
+model SavedEmbed {
+  id        String @id @default(uuid())
+  guildId   String @map("guild_id")
+  botId     String @map("bot_id")
+  creatorId String @map("creator_id")
+
+  // Embed Info
+  name        String
+  description String?
+  embedJson   String  @map("embed_json") @db.Text
+
+  // Stats
+  uses     Int       @default(0)
+  lastUsed DateTime? @map("last_used")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([guildId, name])
+  @@index([guildId])
+  @@index([botId])
+  @@map("saved_embeds")
+}
+
+// ==================== AFK SYSTEM ====================
+
+model AfkUser {
+  id      String @id @default(uuid())
+  guildId String @map("guild_id")
+  botId   String @map("bot_id")
+  userId  String @map("user_id")
+
+  // AFK Info
+  reason   String?
+  nickname String? // Original nickname
+
+  // Stats
+  mentions Int @default(0)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([guildId, userId])
+  @@index([guildId])
+  @@index([botId])
+  @@map("afk_users")
+}
+
+// ==================== INVITE TRACKER ====================
+
+model InviteTrackerConfig {
+  id      String  @id @default(uuid())
+  guildId String  @unique @map("guild_id")
+  botId   String  @map("bot_id")
+  enabled Boolean @default(true)
+
+  // Channel
+  channelId String? @map("channel_id")
+
+  // Message
+  joinMessage  String? @map("join_message") @db.Text
+  leaveMessage String? @map("leave_message") @db.Text
+
+  // Settings
+  trackVanity  Boolean @default(true) @map("track_vanity")
+  trackUnknown Boolean @default(true) @map("track_unknown")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  invites TrackedInvite[]
+
+  @@index([botId])
+  @@map("invite_tracker_configs")
+}
+
+model TrackedInvite {
+  id       String @id @default(uuid())
+  configId String @map("config_id")
+  guildId  String @map("guild_id")
+
+  // Invite Info
+  code      String
+  inviterId String? @map("inviter_id")
+  channelId String? @map("channel_id")
+
+  // Stats
+  uses      Int       @default(0)
+  maxUses   Int?      @map("max_uses")
+  expiresAt DateTime? @map("expires_at")
+
+  // Tracking
+  totalJoins  Int @default(0) @map("total_joins")
+  totalLeaves Int @default(0) @map("total_leaves")
+  fakeJoins   Int @default(0) @map("fake_joins")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  config  InviteTrackerConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+  members InvitedMember[]
+
+  @@unique([guildId, code])
+  @@index([configId])
+  @@index([guildId])
+  @@index([inviterId])
+  @@map("tracked_invites")
+}
+
+model InvitedMember {
+  id       String @id @default(uuid())
+  inviteId String @map("invite_id")
+  guildId  String @map("guild_id")
+  userId   String @map("user_id")
+
+  // Join Info
+  isFake Boolean   @default(false) @map("is_fake")
+  leftAt DateTime? @map("left_at")
+
+  joinedAt DateTime @default(now()) @map("joined_at")
+
+  invite TrackedInvite @relation(fields: [inviteId], references: [id], onDelete: Cascade)
+
+  @@unique([guildId, userId])
+  @@index([inviteId])
+  @@index([guildId])
+  @@map("invited_members")
+}
