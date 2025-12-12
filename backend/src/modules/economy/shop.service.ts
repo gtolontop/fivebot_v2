@@ -64,9 +64,6 @@ export class ShopService {
         ...data,
         configId: config.id,
         isActive: data.isActive ?? true,
-        tradeable: data.tradeable ?? false,
-        refundable: data.refundable ?? false,
-        refundPercent: data.refundPercent ?? 50,
       },
     });
   }
@@ -96,7 +93,7 @@ export class ShopService {
       where: { id: itemId },
       include: {
         _count: {
-          select: { inventory: true },
+          select: { userInventory: true },
         },
       },
     });
@@ -106,7 +103,7 @@ export class ShopService {
     }
 
     // Soft delete if item is owned by users
-    if (item._count.inventory > 0) {
+    if (item._count.userInventory > 0) {
       return this.prisma.shopItem.update({
         where: { id: itemId },
         data: { isActive: false },
@@ -152,13 +149,16 @@ export class ShopService {
         throw new NotFoundException('User economy not found');
       }
 
-      // Check if user has required level
-      if (item.requiredLevel && userEconomy.level < item.requiredLevel) {
-        throw new ForbiddenException(`Requires level ${item.requiredLevel}`);
-      }
+      // Check if user has required level (requires leveling system integration)
+      // TODO: Integrate with LevelingService to check user level
+      // if (item.requiredLevel) {
+      //   const userLevel = await levelingService.getUserLevel(guildId, userId);
+      //   if (userLevel.level < item.requiredLevel) {
+      //     throw new ForbiddenException(`Requires level ${item.requiredLevel}`);
+      //   }
+      // }
 
-      // Check if user has required role (would need guild data)
-      // This would require Discord API integration
+      // Check if user has required role (would need Discord API integration)
 
       // Check balance
       const totalCost = item.price * quantity;
@@ -271,10 +271,6 @@ export class ShopService {
         throw new NotFoundException('Item not found');
       }
 
-      if (!item.refundable) {
-        throw new ForbiddenException('This item cannot be sold');
-      }
-
       // Get user economy
       const userEconomy = await tx.userEconomy.findFirst({
         where: { guildId, userId },
@@ -298,8 +294,8 @@ export class ShopService {
         throw new BadRequestException('Insufficient items in inventory');
       }
 
-      // Calculate sell price (with refund percentage)
-      const refundPercent = item.refundPercent || 50;
+      // Calculate sell price (50% refund)
+      const refundPercent = 50;
       const sellPrice = Math.floor((item.price * refundPercent) / 100);
       const totalRefund = sellPrice * quantity;
 

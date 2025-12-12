@@ -506,17 +506,11 @@ export class EconomyService {
       response = 'You got caught! You had to pay a fine.';
     }
 
-    // Get random response
-    if (config.crimeResponses) {
-      try {
-        const responses = JSON.parse(config.crimeResponses);
-        if (Array.isArray(responses) && responses.length > 0) {
-          response = responses[Math.floor(Math.random() * responses.length)];
-        }
-      } catch (e) {
-        // Use default response
-      }
-    }
+    // Default crime responses
+    const crimeResponses = success
+      ? ['You successfully robbed a store!', 'You hacked into a bank account!', 'You pickpocketed someone!']
+      : ['You got caught by the police!', 'Security caught you!', 'A witness reported you!'];
+    response = crimeResponses[Math.floor(Math.random() * crimeResponses.length)];
 
     return this.prisma.$transaction(async (tx) => {
       const balanceBefore = userEconomy.balance;
@@ -632,8 +626,8 @@ export class EconomyService {
 
         return { success: true, amount: robAmount };
       } else {
-        // Rob failed - pay fine
-        const fine = Math.floor(userEconomy.balance * (config.robFinePercent / 100));
+        // Rob failed - pay fine (use crime fine percent for robbery failures)
+        const fine = Math.floor(userEconomy.balance * (config.crimeFinePercent / 100));
         const userBalanceBefore = userEconomy.balance;
 
         await tx.userEconomy.update({
@@ -791,7 +785,7 @@ export class EconomyService {
       where: { guildId },
     });
 
-    if (!config || config.interestRate <= 0) {
+    if (!config || config.bankInterestRate <= 0) {
       return { processed: 0 };
     }
 
@@ -808,13 +802,13 @@ export class EconomyService {
       // Check if interest interval has passed
       if (user.lastInterest) {
         const timeSince = Date.now() - user.lastInterest.getTime();
-        const interval = config.interestInterval * 1000;
+        const interval = config.bankInterestInterval * 1000;
         if (timeSince < interval) {
           continue;
         }
       }
 
-      const interest = Math.floor(user.bankBalance * (config.interestRate / 100));
+      const interest = Math.floor(user.bankBalance * (config.bankInterestRate / 100));
 
       if (interest > 0) {
         await this.prisma.$transaction(async (tx) => {
@@ -837,7 +831,7 @@ export class EconomyService {
               amount: interest,
               balanceBefore,
               balanceAfter,
-              description: `Bank interest (${config.interestRate}%)`,
+              description: `Bank interest (${config.bankInterestRate}%)`,
             },
           });
         });

@@ -493,11 +493,11 @@ export class AutoModService {
 
       // Handle array fields
       if (dto.immuneRoles) {
-        updateData.immuneRoles = dto.immuneRoles.join(',');
+        updateData.immuneRoleIds = dto.immuneRoles.join(',');
       }
 
       if (dto.exemptChannels) {
-        updateData.exemptChannels = dto.exemptChannels.join(',');
+        updateData.immuneChannelIds = dto.exemptChannels.join(',');
       }
 
       const config = await this.prisma.moderationConfig.upsert({
@@ -507,8 +507,8 @@ export class AutoModService {
           guildId,
           botId,
           ...dto,
-          immuneRoles: dto.immuneRoles?.join(','),
-          exemptChannels: dto.exemptChannels?.join(','),
+          immuneRoleIds: dto.immuneRoles?.join(','),
+          immuneChannelIds: dto.exemptChannels?.join(','),
         },
       });
 
@@ -538,11 +538,11 @@ export class AutoModService {
 
     return {
       ...config,
-      immuneRoles: config.immuneRoles
-        ? config.immuneRoles.split(',').filter((r) => r.length > 0)
+      immuneRoleIds: config.immuneRoleIds
+        ? config.immuneRoleIds.split(',').filter((r) => r.length > 0)
         : [],
-      exemptChannels: config.exemptChannels
-        ? config.exemptChannels.split(',').filter((c) => c.length > 0)
+      immuneChannelIds: config.immuneChannelIds
+        ? config.immuneChannelIds.split(',').filter((c) => c.length > 0)
         : [],
       allowedDomains: config.allowedDomains
         ? config.allowedDomains.split(',').filter((d) => d.length > 0)
