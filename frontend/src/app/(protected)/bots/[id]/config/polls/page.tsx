@@ -678,9 +678,9 @@ function ConfigSection({
             options={roles.map((role) => ({
               value: role.id,
               label: role.name,
-              color: role.color,
+              color: role.color ? `#${Number(role.color).toString(16).padStart(6, '0')}` : undefined,
             }))}
-            value={config.createRoleIds}
+            values={config.createRoleIds}
             onChange={(values) => updateConfig({ createRoleIds: values })}
             placeholder="All roles can create polls"
             searchable={roles.length > 10}
