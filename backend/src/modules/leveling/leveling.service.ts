@@ -23,9 +23,8 @@ export class LevelingService {
     try {
       const userLevel = await this.prisma.userLevel.upsert({
         where: {
-          guildId_botId_userId: {
+          guildId_userId: {
             guildId,
-            botId,
             userId,
           },
         },
@@ -75,9 +74,8 @@ export class LevelingService {
     try {
       const userLevel = await this.prisma.userLevel.findUnique({
         where: {
-          guildId_botId_userId: {
+          guildId_userId: {
             guildId,
-            botId,
             userId,
           },
         },
@@ -92,9 +90,8 @@ export class LevelingService {
 
       return await this.prisma.userLevel.update({
         where: {
-          guildId_botId_userId: {
+          guildId_userId: {
             guildId,
-            botId,
             userId,
           },
         },
@@ -128,9 +125,8 @@ export class LevelingService {
 
       return await this.prisma.userLevel.upsert({
         where: {
-          guildId_botId_userId: {
+          guildId_userId: {
             guildId,
-            botId,
             userId,
           },
         },
@@ -172,9 +168,8 @@ export class LevelingService {
 
       return await this.prisma.userLevel.upsert({
         where: {
-          guildId_botId_userId: {
+          guildId_userId: {
             guildId,
-            botId,
             userId,
           },
         },
@@ -374,9 +369,8 @@ export class LevelingService {
     try {
       const userLevel = await this.prisma.userLevel.findUnique({
         where: {
-          guildId_botId_userId: {
+          guildId_userId: {
             guildId,
-            botId,
             userId,
           },
         },
@@ -391,9 +385,8 @@ export class LevelingService {
       if (newLevel > userLevel.level) {
         const updated = await this.prisma.userLevel.update({
           where: {
-            guildId_botId_userId: {
+            guildId_userId: {
               guildId,
-              botId,
               userId,
             },
           },

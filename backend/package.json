@@ -38,11 +38,12 @@
     "@nestjs/config": "^3.0.0",
     "@nestjs/core": "^10.0.0",
     "@nestjs/jwt": "^10.1.0",
+    "@nestjs/mapped-types": "^2.1.0",
     "@nestjs/passport": "^10.0.0",
     "@nestjs/platform-express": "^10.0.0",
-    "@nestjs/swagger": "^7.1.0",
     "@nestjs/platform-socket.io": "^10.4.20",
     "@nestjs/schedule": "^3.0.4",
+    "@nestjs/swagger": "^7.4.2",
     "@nestjs/throttler": "^4.2.1",
     "@nestjs/websockets": "^10.4.20",
     "@prisma/client": "^6.15.0",
@@ -69,6 +70,7 @@
     "rimraf": "^5.0.0",
     "rxjs": "^7.8.1",
     "socket.io": "^4.8.1",
+    "swagger-ui-express": "^5.0.1",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
