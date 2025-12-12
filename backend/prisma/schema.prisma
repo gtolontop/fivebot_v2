@@ -2797,3 +2797,248 @@ model InvitedMember {
   @@index([guildId])
   @@map("invited_members")
 }
+
+// ==================== VERIFICATION ====================
+
+model VerificationConfig {
+  id      String  @id @default(uuid())
+  guildId String  @unique @map("guild_id")
+  botId   String  @map("bot_id")
+  enabled Boolean @default(false)
+
+  // Verification Type
+  type String @default("BUTTON") // BUTTON, CAPTCHA, REACTION, QUESTIONS
+
+  // Channels & Roles
+  verificationChannelId String? @map("verification_channel_id")
+  verifiedRoleId        String? @map("verified_role_id")
+  unverifiedRoleId      String? @map("unverified_role_id")
+  logChannelId          String? @map("log_channel_id")
+
+  // Button Verification
+  buttonLabel String? @map("button_label")
+  buttonEmoji String? @map("button_emoji")
+  buttonStyle String? @map("button_style")
+
+  // Captcha Settings
+  captchaLength   Int     @default(6) @map("captcha_length")
+  captchaTimeout  Int     @default(60) @map("captcha_timeout")
+  captchaAttempts Int     @default(3) @map("captcha_attempts")
+
+  // Reaction Verification
+  reactionEmoji   String? @map("reaction_emoji")
+  reactionMessage String? @map("reaction_message") @db.Text
+
+  // Questions Verification
+  questions String? @db.Text // JSON array of questions
+
+  // Anti-Bot Settings
+  minAccountAge   Int     @default(0) @map("min_account_age") // In days
+  kickOnFail      Boolean @default(false) @map("kick_on_fail")
+  dmOnVerify      Boolean @default(true) @map("dm_on_verify")
+  welcomeAfterVerify Boolean @default(true) @map("welcome_after_verify")
+
+  // Custom Messages
+  verifyMessage   String? @map("verify_message") @db.Text
+  successMessage  String? @map("success_message") @db.Text
+  failMessage     String? @map("fail_message") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([botId])
+  @@map("verification_configs")
+}
+
+model VerificationLog {
+  id        String   @id @default(uuid())
+  guildId   String   @map("guild_id")
+  botId     String   @map("bot_id")
+  userId    String   @map("user_id")
+  type      String   // BUTTON, CAPTCHA, REACTION, QUESTIONS
+  success   Boolean
+  attempts  Int      @default(1)
+  failReason String? @map("fail_reason")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([guildId])
+  @@index([userId])
+  @@map("verification_logs")
+}
+
+model WelcomeConfig {
+  id      String  @id @default(uuid())
+  guildId String  @unique @map("guild_id")
+  botId   String  @map("bot_id")
+  enabled Boolean @default(true)
+
+  // Welcome Settings
+  welcomeEnabled   Boolean @default(true) @map("welcome_enabled")
+  welcomeChannelId String? @map("welcome_channel_id")
+  welcomeMessage   String? @map("welcome_message") @db.Text
+  welcomeEmbed     String? @map("welcome_embed") @db.Text
+  welcomeDM        Boolean @default(false) @map("welcome_dm")
+  welcomeDMMessage String? @map("welcome_dm_message") @db.Text
+
+  // Welcome Image
+  welcomeImageEnabled Boolean @default(false) @map("welcome_image_enabled")
+  welcomeImageBg      String? @map("welcome_image_bg")
+  welcomeImageColor   String? @map("welcome_image_color")
+  welcomeImageFont    String? @map("welcome_image_font")
+
+  // Auto Role
+  autoRoleEnabled Boolean @default(false) @map("auto_role_enabled")
+  autoRoles       String? @map("auto_roles") @db.Text
+
+  // Leave Settings
+  leaveEnabled   Boolean @default(false) @map("leave_enabled")
+  leaveChannelId String? @map("leave_channel_id")
+  leaveMessage   String? @map("leave_message") @db.Text
+  leaveEmbed     String? @map("leave_embed") @db.Text
+
+  // Leave Image
+  leaveImageEnabled Boolean @default(false) @map("leave_image_enabled")
+  leaveImageBg      String? @map("leave_image_bg")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([botId])
+  @@map("welcome_configs")
+}
+
+// ==================== ANTI-NUKE SYSTEM ====================
+
+model AntiNukeConfig {
+  id      String  @id @default(uuid())
+  guildId String  @unique @map("guild_id")
+  botId   String  @map("bot_id")
+  enabled Boolean @default(false)
+
+  // Whitelisted Users (bypass anti-nuke)
+  whitelistedUsers String? @map("whitelisted_users") @db.Text
+  whitelistedRoles String? @map("whitelisted_roles") @db.Text
+
+  // Channel Protection
+  antiChannelCreate  Boolean @default(false) @map("anti_channel_create")
+  antiChannelDelete  Boolean @default(false) @map("anti_channel_delete")
+  antiChannelUpdate  Boolean @default(false) @map("anti_channel_update")
+  channelActionLimit Int     @default(3) @map("channel_action_limit")
+  channelTimeWindow  Int     @default(10) @map("channel_time_window")
+
+  // Role Protection
+  antiRoleCreate    Boolean @default(false) @map("anti_role_create")
+  antiRoleDelete    Boolean @default(false) @map("anti_role_delete")
+  antiRoleUpdate    Boolean @default(false) @map("anti_role_update")
+  roleActionLimit   Int     @default(3) @map("role_action_limit")
+  roleTimeWindow    Int     @default(10) @map("role_time_window")
+
+  // Member Protection
+  antiMassKick      Boolean @default(false) @map("anti_mass_kick")
+  antiMassBan       Boolean @default(false) @map("anti_mass_ban")
+  kickBanLimit      Int     @default(5) @map("kick_ban_limit")
+  kickBanTimeWindow Int     @default(10) @map("kick_ban_time_window")
+
+  // Bot Protection
+  antiBotAdd        Boolean @default(false) @map("anti_bot_add")
+  allowedBots       String? @map("allowed_bots") @db.Text
+
+  // Webhook Protection
+  antiWebhookCreate Boolean @default(false) @map("anti_webhook_create")
+  antiWebhookSpam   Boolean @default(false) @map("anti_webhook_spam")
+
+  // Server Protection
+  antiServerUpdate  Boolean @default(false) @map("anti_server_update")
+  antiEveryonePing  Boolean @default(false) @map("anti_everyone_ping")
+
+  // Punishment
+  punishment String @default("STRIP_ROLES") // STRIP_ROLES, KICK, BAN, TIMEOUT
+  logChannelId String? @map("log_channel_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([botId])
+  @@map("anti_nuke_configs")
+}
+
+model AntiNukeLog {
+  id         String   @id @default(uuid())
+  guildId    String   @map("guild_id")
+  botId      String   @map("bot_id")
+  actionType String   @map("action_type") // CHANNEL_CREATE, ROLE_DELETE, MASS_BAN, etc.
+  userId     String   @map("user_id")
+  targetId   String?  @map("target_id")
+  targetType String?  @map("target_type")
+  punishment String?
+  details    String?  @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([guildId])
+  @@index([userId])
+  @@map("anti_nuke_logs")
+}
+
+// ==================== CUSTOM COMMANDS SYSTEM ====================
+
+model CustomCommandConfig {
+  id      String  @id @default(uuid())
+  guildId String  @unique @map("guild_id")
+  botId   String  @map("bot_id")
+  enabled Boolean @default(true)
+
+  maxCommands      Int @default(50) @map("max_commands")
+  allowedCreateRoles String? @map("allowed_create_roles") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  commands CustomCommand[]
+
+  @@index([botId])
+  @@map("custom_command_configs")
+}
+
+model CustomCommand {
+  id       String @id @default(uuid())
+  configId String @map("config_id")
+  name     String
+  description String?
+  enabled  Boolean @default(true)
+
+  // Trigger
+  trigger     String // Command name or regex
+  triggerType String @default("COMMAND") @map("trigger_type") // COMMAND, STARTSWITH, CONTAINS, REGEX
+  caseSensitive Boolean @default(false) @map("case_sensitive")
+
+  // Response
+  responseType String @default("TEXT") @map("response_type") // TEXT, EMBED, RANDOM, SEQUENCE
+  responses    String @db.Text // JSON array of responses
+
+  // Actions (JSON array)
+  actions String? @db.Text // ADD_ROLE, REMOVE_ROLE, SEND_DM, REACT, DELETE_TRIGGER
+
+  // Restrictions
+  allowedRoles    String? @map("allowed_roles") @db.Text
+  allowedChannels String? @map("allowed_channels") @db.Text
+  blockedRoles    String? @map("blocked_roles") @db.Text
+  blockedChannels String? @map("blocked_channels") @db.Text
+  nsfw            Boolean @default(false)
+
+  // Cooldowns
+  userCooldown   Int @default(0) @map("user_cooldown")
+  guildCooldown  Int @default(0) @map("guild_cooldown")
+
+  // Stats
+  uses      Int @default(0)
+  createdBy String @map("created_by")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  config CustomCommandConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  @@unique([configId, name])
+  @@index([configId])
+  @@map("custom_commands")
+}

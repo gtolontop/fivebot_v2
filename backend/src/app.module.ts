@@ -35,6 +35,7 @@ import { SuggestionsModule } from './modules/suggestions/suggestions.module';
 import { PollsModule } from './modules/polls/polls.module';
 import { RemindersModule } from './modules/reminders/reminders.module';
 import { AutoRespondersModule } from './modules/auto-responders/auto-responders.module';
+import { TempChannelsModule } from './modules/temp-channels/temp-channels.module';
 
 @Module({
   imports: [
@@ -74,6 +75,7 @@ import { AutoRespondersModule } from './modules/auto-responders/auto-responders.
     PollsModule,
     RemindersModule,
     AutoRespondersModule,
+    TempChannelsModule,
   ],
   controllers: [UrlMetadataController, UploadController],
   providers: [AppService],
