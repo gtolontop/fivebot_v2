@@ -1,4 +1,6 @@
-import { Injectable, LoggerService as NestLoggerService, Scope } from '@nestjs/common';
+import { Injectable, LoggerService as NestLoggerService, Scope, Optional, Inject } from '@nestjs/common';
+
+export const LOGGER_CONTEXT = 'LOGGER_CONTEXT';
 
 export enum LogLevel {
   DEBUG = 0,
@@ -26,7 +28,7 @@ export class LoggerService implements NestLoggerService {
   private static logLevel: LogLevel = process.env.NODE_ENV === 'production' ? LogLevel.INFO : LogLevel.DEBUG;
   private static isProduction = process.env.NODE_ENV === 'production';
 
-  constructor(context?: string) {
+  constructor(@Optional() @Inject(LOGGER_CONTEXT) context?: string) {
     this.context = context || 'Application';
   }
 
