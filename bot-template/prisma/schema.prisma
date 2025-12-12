@@ -951,3 +951,254 @@ enum ThoughtType {
   CURIOSITY // "I'm curious about this technology"
   ACHIEVEMENT // "I successfully helped solve a complex issue"
 }
+
+// ==================== LEVELING SYSTEM ====================
+
+model UserLevel {
+  id              String   @id @default(uuid())
+  guildId         String   @map("guild_id")
+  userId          String   @map("user_id")
+  botId           String   @map("bot_id")
+  xp              Int      @default(0)
+  level           Int      @default(1)
+  totalXp         Int      @default(0) @map("total_xp")
+  messageCount    Int      @default(0) @map("message_count")
+  lastMessageTime DateTime @default(now()) @map("last_message_time")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@unique([guildId, userId, botId])
+  @@index([guildId, botId])
+  @@index([guildId, botId, level])
+  @@index([guildId, botId, xp])
+  @@map("user_levels")
+}
+
+model LevelingConfig {
+  id                  String   @id @default(uuid())
+  guildId             String   @unique @map("guild_id")
+  botId               String   @map("bot_id")
+  enabled             Boolean  @default(true)
+  xpPerMessage        Int      @default(15) @map("xp_per_message")
+  xpMin               Int      @default(10) @map("xp_min")
+  xpMax               Int      @default(25) @map("xp_max")
+  cooldownSeconds     Int      @default(60) @map("cooldown_seconds")
+  levelUpChannelId    String?  @map("level_up_channel_id")
+  levelUpMessage      String?  @map("level_up_message") @db.Text
+  announceInChannel   Boolean  @default(true) @map("announce_in_channel")
+  stackRoles          Boolean  @default(false) @map("stack_roles")
+  ignoredChannels     String?  @map("ignored_channels") @db.Text // JSON array
+  ignoredRoles        String?  @map("ignored_roles") @db.Text // JSON array
+  multiplierRoles     String?  @map("multiplier_roles") @db.Text // JSON object
+  levelRoles          String?  @map("level_roles") @db.Text // JSON object
+  resetOnLeave        Boolean  @default(false) @map("reset_on_leave")
+  allowMultipleLevels Boolean  @default(true) @map("allow_multiple_levels")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@index([botId])
+  @@index([guildId])
+  @@map("leveling_configs")
+}
+
+// ==================== MODERATION SYSTEM ====================
+
+model ModerationConfig {
+  id                  String   @id @default(uuid())
+  guildId             String   @unique @map("guild_id")
+  botId               String   @map("bot_id")
+  enabled             Boolean  @default(true)
+  modLogChannelId     String?  @map("mod_log_channel_id")
+  mutedRoleId         String?  @map("muted_role_id")
+  moderatorRoleIds    String?  @map("moderator_role_ids") @db.Text // JSON array
+  autoModEnabled      Boolean  @default(false) @map("auto_mod_enabled")
+  dmOnAction          Boolean  @default(true) @map("dm_on_action")
+  warnThreshold       Int      @default(3) @map("warn_threshold")
+  warnActionType      String?  @map("warn_action_type") // mute, kick, ban
+  warnActionDuration  Int?     @map("warn_action_duration") // minutes
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@index([botId])
+  @@index([guildId])
+  @@map("moderation_configs")
+}
+
+model ModerationCase {
+  id              String    @id @default(uuid())
+  guildId         String    @map("guild_id")
+  caseNumber      Int       @map("case_number")
+  userId          String    @map("user_id")
+  moderatorId     String    @map("moderator_id")
+  action          String    // warn, mute, kick, ban, unban, etc.
+  reason          String?   @db.Text
+  duration        Int?      // minutes (for temporary actions)
+  expiresAt       DateTime? @map("expires_at")
+  evidence        String?   @db.Text // JSON: message links, screenshots, etc.
+  messagesSent    Boolean   @default(false) @map("messages_sent") // DM sent to user
+  logMessageId    String?   @map("log_message_id")
+  notes           String?   @db.Text
+  resolved        Boolean   @default(false)
+  resolvedBy      String?   @map("resolved_by")
+  resolvedAt      DateTime? @map("resolved_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@unique([guildId, caseNumber])
+  @@index([guildId])
+  @@index([userId])
+  @@index([moderatorId])
+  @@index([action])
+  @@index([resolved])
+  @@map("moderation_cases")
+}
+
+enum ModActionType {
+  WARN
+  MUTE
+  UNMUTE
+  KICK
+  BAN
+  UNBAN
+  SOFTBAN
+  TIMEOUT
+  UNTIMEOUT
+}
+
+// ==================== ECONOMY SYSTEM ====================
+
+model EconomyConfig {
+  id              String   @id @default(uuid())
+  guildId         String   @unique @map("guild_id")
+  botId           String   @map("bot_id")
+  enabled         Boolean  @default(true)
+  currencyName    String   @default("Coins") @map("currency_name")
+  currencySymbol  String   @default("💰") @map("currency_symbol")
+  currencyEmoji   String?  @map("currency_emoji")
+  startingBalance Int      @default(100) @map("starting_balance")
+  dailyAmount     Int      @default(500) @map("daily_amount")
+  workMin         Int      @default(50) @map("work_min")
+  workMax         Int      @default(150) @map("work_max")
+  crimeMin        Int      @default(100) @map("crime_min")
+  crimeMax        Int      @default(500) @map("crime_max")
+  crimeSuccess    Int      @default(50) @map("crime_success")
+  robMin          Int      @default(100) @map("rob_min")
+  robMax          Int      @default(1000) @map("rob_max")
+  robSuccess      Int      @default(40) @map("rob_success")
+  maxBankBalance  Int      @default(10000) @map("max_bank_balance")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([botId])
+  @@map("economy_configs")
+}
+
+model UserEconomy {
+  id           String    @id @default(uuid())
+  guildId      String    @map("guild_id")
+  userId       String    @map("user_id")
+  botId        String    @map("bot_id")
+  balance      Int       @default(0)
+  bankBalance  Int       @default(0) @map("bank_balance")
+  totalEarned  Int       @default(0) @map("total_earned")
+  totalSpent   Int       @default(0) @map("total_spent")
+  lastDaily    DateTime? @map("last_daily")
+  lastWork     DateTime? @map("last_work")
+  lastCrime    DateTime? @map("last_crime")
+  lastRob      DateTime? @map("last_rob")
+  inventory    String?   @db.Text // JSON
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@unique([guildId, userId, botId])
+  @@index([guildId, botId])
+  @@map("user_economy")
+}
+
+// ==================== GIVEAWAY SYSTEM ====================
+
+model Giveaway {
+  id            String    @id @default(uuid())
+  guildId       String    @map("guild_id")
+  botId         String    @map("bot_id")
+  messageId     String    @unique @map("message_id")
+  channelId     String    @map("channel_id")
+  prize         String
+  winnersCount  Int       @map("winners_count")
+  hostId        String    @map("host_id")
+  endTime       DateTime  @map("end_time")
+  entries       String    @default("[]") @db.Text // JSON array of user IDs
+  winners       String?   @db.Text // JSON array of winner user IDs
+  requirements  String?   @db.Text // JSON: role, level, messages
+  bonusEntries  String?   @map("bonus_entries") @db.Text // JSON: roleId, multiplier
+  ended         Boolean   @default(false)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@index([guildId])
+  @@index([botId])
+  @@index([ended])
+  @@map("giveaways")
+}
+
+// ==================== POLLS SYSTEM ====================
+
+model Poll {
+  id          String    @id @default(uuid())
+  guildId     String    @map("guild_id")
+  botId       String    @map("bot_id")
+  messageId   String    @unique @map("message_id")
+  channelId   String    @map("channel_id")
+  creatorId   String    @map("creator_id")
+  question    String
+  options     String    @db.Text // JSON array of option strings
+  votes       String    @default("{}") @db.Text // JSON: {optionIndex: [userIds]}
+  duration    Int?      // Duration in milliseconds
+  endTime     DateTime? @map("end_time")
+  ended       Boolean   @default(false)
+  allowMultiple Boolean @default(false) @map("allow_multiple")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([guildId])
+  @@index([botId])
+  @@index([ended])
+  @@index([messageId])
+  @@map("polls")
+}
+
+// ==================== REMINDERS SYSTEM ====================
+
+model Reminder {
+  id        String   @id @default(uuid())
+  guildId   String?  @map("guild_id")
+  channelId String   @map("channel_id")
+  userId    String   @map("user_id")
+  botId     String   @map("bot_id")
+  message   String   @db.Text
+  remindAt  DateTime @map("remind_at")
+  reminded  Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([botId])
+  @@index([reminded])
+  @@index([remindAt])
+  @@map("reminders")
+}
+
+// ==================== AFK SYSTEM ====================
+
+model AfkStatus {
+  id        String   @id @default(uuid())
+  guildId   String   @map("guild_id")
+  userId    String   @map("user_id")
+  botId     String   @map("bot_id")
+  reason    String?  @db.Text
+  since     DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([guildId, userId, botId])
+  @@index([guildId, botId])
+  @@map("afk_status")
+}
