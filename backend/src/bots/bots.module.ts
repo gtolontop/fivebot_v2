@@ -12,6 +12,7 @@ import { ConsoleBufferService } from './console-buffer.service';
 import { BotRealtimeMetricsService } from './bot-realtime-metrics.service';
 import { BotProcessMetricsService } from './bot-process-metrics.service';
 import { BotStateService } from './bot-state.service';
+import { BotHealthService } from './bot-health.service';
 import { TicketService } from './ticket.service';
 import { CollaboratorsService } from './collaborators.service';
 import { AIService } from './ai.service';
@@ -37,6 +38,7 @@ import { CollaboratorsController } from './collaborators.controller';
     BotRealtimeMetricsService,
     BotProcessMetricsService,
     BotStateService,
+    BotHealthService,
     TicketService,
     CollaboratorsService,
     AIService,
