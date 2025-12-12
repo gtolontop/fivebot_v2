@@ -380,7 +380,7 @@ export default function AutoRespondersConfigPage() {
 
     setTestResults(matches);
     if (matches.length === 0) {
-      toast.info('No auto responders match this message');
+      toast('No auto responders match this message', { icon: 'ℹ️' });
     } else {
       toast.success(`Found ${matches.length} matching responder(s)`);
     }
@@ -905,7 +905,7 @@ function TagsTab({
               options={filteredRoles.map((role) => ({
                 value: role.id,
                 label: role.name,
-                color: role.color ? `#${role.color.toString(16).padStart(6, '0')}` : undefined,
+                color: role.color ? `#${Number(role.color).toString(16).padStart(6, '0')}` : undefined,
               }))}
               values={config.allowedRoleIds}
               onChange={(values) => updateConfig({ allowedRoleIds: values })}
