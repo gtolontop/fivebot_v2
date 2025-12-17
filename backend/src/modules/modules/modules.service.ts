@@ -1,12 +1,66 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { ModuleCategory, Prisma } from '@prisma/client';
+import { ModuleCategory } from '@prisma/client';
+import {
+  PREDEFINED_MODULES,
+  ModuleDefinition,
+  getModuleDefinition,
+  getAllModuleDefinitions
+} from './module-definitions';
+import * as crypto from 'crypto';
+
+/**
+ * Generate a deterministic UUID from a slug
+ * This allows us to have consistent IDs without storing in DB
+ */
+function slugToId(slug: string): string {
+  const hash = crypto.createHash('md5').update(`fivebot-module-${slug}`).digest('hex');
+  return `${hash.slice(0, 8)}-${hash.slice(8, 12)}-${hash.slice(12, 16)}-${hash.slice(16, 20)}-${hash.slice(20, 32)}`;
+}
+
+/**
+ * Convert a ModuleDefinition to API response format
+ */
+function toModuleResponse(def: ModuleDefinition) {
+  return {
+    id: slugToId(def.slug),
+    slug: def.slug,
+    name: def.name,
+    description: def.description,
+    longDescription: def.longDescription,
+    category: def.category,
+    price: def.price,
+    icon: def.icon,
+    banner: null,
+    version: def.version,
+    author: def.author,
+    tags: JSON.stringify(def.tags),
+    features: JSON.stringify(def.features),
+    screenshots: null,
+    dependencies: JSON.stringify(def.dependencies),
+    configSchema: JSON.stringify(def.configSchema),
+    isCore: def.isCore,
+    isActive: true,
+    downloads: 0,
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date(),
+  };
+}
+
+/**
+ * Find module definition by ID (either generated ID or slug)
+ */
+function findModuleDefById(id: string): ModuleDefinition | undefined {
+  let def = getModuleDefinition(id);
+  if (def) return def;
+  return PREDEFINED_MODULES.find(m => slugToId(m.slug) === id);
+}
 
 @Injectable()
 export class ModulesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // ==================== MODULE QUERIES ====================
+  // ==================== MODULE QUERIES (CODE-FIRST) ====================
 
   async findAll(filters?: {
     category?: ModuleCategory;
@@ -15,516 +69,490 @@ export class ModulesService {
     priceMin?: number;
     priceMax?: number;
   }) {
-    const where: Prisma.ModuleWhereInput = {
-      isActive: true,
-    };
+    let modules = getAllModuleDefinitions();
 
     if (filters?.category) {
-      where.category = filters.category;
+      modules = modules.filter(m => m.category === filters.category);
     }
 
     if (filters?.search) {
-      where.OR = [
-        { name: { contains: filters.search, mode: 'insensitive' } },
-        { description: { contains: filters.search, mode: 'insensitive' } },
-        { tags: { contains: filters.search, mode: 'insensitive' } },
-      ];
+      const searchLower = filters.search.toLowerCase();
+      modules = modules.filter(m =>
+        m.name.toLowerCase().includes(searchLower) ||
+        m.description.toLowerCase().includes(searchLower) ||
+        m.tags.some(tag => tag.toLowerCase().includes(searchLower))
+      );
     }
 
     if (filters?.isCore !== undefined) {
-      where.isCore = filters.isCore;
+      modules = modules.filter(m => m.isCore === filters.isCore);
     }
 
-    if (filters?.priceMin !== undefined || filters?.priceMax !== undefined) {
-      where.price = {};
-      if (filters.priceMin !== undefined) {
-        where.price.gte = filters.priceMin;
-      }
-      if (filters.priceMax !== undefined) {
-        where.price.lte = filters.priceMax;
-      }
+    if (filters?.priceMin !== undefined) {
+      modules = modules.filter(m => m.price >= filters.priceMin!);
     }
 
-    return this.prisma.module.findMany({
-      where,
-      orderBy: [
-        { isCore: 'desc' },
-        { downloads: 'desc' },
-        { name: 'asc' },
-      ],
+    if (filters?.priceMax !== undefined) {
+      modules = modules.filter(m => m.price <= filters.priceMax!);
+    }
+
+    modules.sort((a, b) => {
+      if (a.isCore !== b.isCore) return a.isCore ? -1 : 1;
+      return a.name.localeCompare(b.name);
     });
+
+    return modules.map(toModuleResponse);
   }
 
   async findBySlug(slug: string) {
-    const module = await this.prisma.module.findUnique({
-      where: { slug },
-    });
-
-    if (!module) {
+    const def = getModuleDefinition(slug);
+    if (!def) {
       throw new NotFoundException(`Module with slug "${slug}" not found`);
     }
-
-    return module;
+    return toModuleResponse(def);
   }
 
   async findById(id: string) {
-    const module = await this.prisma.module.findUnique({
-      where: { id },
-    });
-
-    if (!module) {
+    const def = findModuleDefById(id);
+    if (!def) {
       throw new NotFoundException(`Module with ID "${id}" not found`);
     }
-
-    return module;
+    return toModuleResponse(def);
   }
 
-  // ==================== USER MODULES ====================
+  getModuleDefinitionBySlug(slug: string): ModuleDefinition | undefined {
+    return getModuleDefinition(slug);
+  }
+
+  getModuleDefinitionById(id: string): ModuleDefinition | undefined {
+    return findModuleDefById(id);
+  }
+
+  getModuleId(slug: string): string {
+    return slugToId(slug);
+  }
+
+  // ==================== USER MODULES (CODE-FIRST) ====================
 
   async getUserModules(userId: string) {
-    // Get user's purchased/claimed modules
-    const userModules = await this.prisma.userModule.findMany({
+    const purchasedModules = await this.prisma.userModule.findMany({
       where: { userId },
-      include: {
-        module: true,
-      },
-      orderBy: {
-        purchasedAt: 'desc',
-      },
+      orderBy: { purchasedAt: 'desc' },
     });
 
-    // Get all free FiveBot modules (auto-owned) - exclude Framework/Core modules
-    const fiveBotFreeModules = await this.prisma.module.findMany({
-      where: {
-        price: 0,
-        author: 'FiveBot',
-        isActive: true,
-        isCore: false, // Exclude core/framework modules
-      },
-    });
+    const purchasedSlugs = new Set<string>();
 
-    // Add free FiveBot modules to the list if not already there
-    const userModuleIds = new Set(userModules.map(um => um.moduleId));
-    const additionalModules = fiveBotFreeModules
-      .filter(m => !userModuleIds.has(m.id))
-      .map(module => ({
-        id: `auto-${module.id}`, // Virtual ID
+    for (const pm of purchasedModules) {
+      const oldModule = await this.prisma.module.findUnique({
+        where: { id: pm.moduleId },
+        select: { slug: true },
+      }).catch(() => null);
+
+      if (oldModule) {
+        purchasedSlugs.add(oldModule.slug);
+      } else {
+        const def = findModuleDefById(pm.moduleId);
+        if (def) {
+          purchasedSlugs.add(def.slug);
+        }
+      }
+    }
+
+    const userModules = PREDEFINED_MODULES
+      .filter(m => !m.isCore)
+      .filter(m => {
+        if (m.price === 0 && m.author === 'FiveBot') return true;
+        return purchasedSlugs.has(m.slug);
+      })
+      .map(def => ({
+        id: `user-${slugToId(def.slug)}`,
         userId,
-        moduleId: module.id,
+        moduleId: slugToId(def.slug),
         purchasedAt: new Date(),
-        paymentAmount: 0,
-        module,
+        paymentAmount: def.price,
+        module: toModuleResponse(def),
       }));
 
-    return [...userModules, ...additionalModules];
+    return userModules;
   }
 
-  async userOwnsModule(userId: string, moduleId: string): Promise<boolean> {
-    // Check if module is core (always owned)
-    const module = await this.prisma.module.findUnique({
-      where: { id: moduleId },
-    });
+  async userOwnsModule(userId: string, moduleIdOrSlug: string): Promise<boolean> {
+    const def = findModuleDefById(moduleIdOrSlug);
+    if (!def) return false;
+    if (def.isCore) return true;
+    if (def.price === 0 && def.author === 'FiveBot') return true;
 
-    if (module?.isCore) {
-      return true;
+    const newModuleId = slugToId(def.slug);
+    const purchaseNew = await this.prisma.userModule.findUnique({
+      where: { userId_moduleId: { userId, moduleId: newModuleId } },
+    });
+    if (purchaseNew) return true;
+
+    const oldModule = await this.prisma.module.findUnique({
+      where: { slug: def.slug },
+      select: { id: true },
+    }).catch(() => null);
+
+    if (oldModule) {
+      const purchaseOld = await this.prisma.userModule.findUnique({
+        where: { userId_moduleId: { userId, moduleId: oldModule.id } },
+      });
+      if (purchaseOld) return true;
     }
 
-    // Check if module is free and from FiveBot (auto-owned)
-    if (module?.price === 0 && module?.author === 'FiveBot') {
-      return true;
-    }
-
-    // Check if user has it in their collection (purchased or claimed)
-    const userModule = await this.prisma.userModule.findUnique({
-      where: {
-        userId_moduleId: { userId, moduleId },
-      },
-    });
-
-    return !!userModule;
+    return false;
   }
 
-  async purchaseModule(userId: string, moduleId: string) {
-    // Get module details
-    const module = await this.findById(moduleId);
-
-    // Check if module is purchasable
-    if (!module.isActive) {
-      throw new BadRequestException('This module is not available for purchase');
+  async purchaseModule(userId: string, moduleIdOrSlug: string) {
+    const def = findModuleDefById(moduleIdOrSlug);
+    if (!def) throw new NotFoundException(`Module not found`);
+    if (def.isCore) throw new BadRequestException('Core modules cannot be purchased');
+    if (def.price === 0 && def.author === 'FiveBot') {
+      throw new BadRequestException('This free FiveBot module is automatically available');
     }
 
-    if (module.isCore) {
-      throw new BadRequestException('Core modules cannot be purchased (they are included by default)');
-    }
+    const alreadyOwned = await this.userOwnsModule(userId, def.slug);
+    if (alreadyOwned) throw new BadRequestException('You already own this module');
 
-    if (module.price === 0 && module.author === 'FiveBot') {
-      throw new BadRequestException('This free FiveBot module is automatically available to all users');
-    }
-
-    // Check if already owned
-    const alreadyOwned = await this.userOwnsModule(userId, moduleId);
-    if (alreadyOwned) {
-      throw new BadRequestException('You already own this module');
-    }
-
-    // Get user credits
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { credits: true },
     });
-
-    if (!user) {
-      throw new NotFoundException('User not found');
+    if (!user) throw new NotFoundException('User not found');
+    if (user.credits < def.price) {
+      throw new ForbiddenException(`Insufficient credits. Required: ${def.price}, Available: ${user.credits}`);
     }
 
-    // Check if user has enough credits
-    if (user.credits < module.price) {
-      throw new ForbiddenException(`Insufficient credits. Required: ${module.price}, Available: ${user.credits}`);
-    }
+    const moduleId = slugToId(def.slug);
 
-    // Perform transaction
     const result = await this.prisma.$transaction(async (tx) => {
-      // Deduct credits
       await tx.user.update({
         where: { id: userId },
-        data: { credits: { decrement: module.price } },
+        data: { credits: { decrement: def.price } },
       });
 
-      // Create purchase record
       const userModule = await tx.userModule.create({
-        data: {
-          userId,
-          moduleId,
-          paymentAmount: module.price,
-        },
-        include: {
-          module: true,
-        },
+        data: { userId, moduleId, paymentAmount: def.price },
       });
 
-      // Create transaction record
       await tx.transaction.create({
         data: {
           userId,
           type: 'MODULE_PURCHASE',
-          amount: -module.price,
-          description: `Purchased module: ${module.name}`,
-          metadata: JSON.stringify({
-            moduleId: module.id,
-            moduleName: module.name,
-            moduleSlug: module.slug,
-          }),
+          amount: -def.price,
+          description: `Purchased module: ${def.name}`,
+          metadata: JSON.stringify({ moduleId, moduleName: def.name, moduleSlug: def.slug }),
           status: 'COMPLETED',
         },
       });
 
-      // Increment module downloads
-      await tx.module.update({
-        where: { id: moduleId },
-        data: { downloads: { increment: 1 } },
-      });
-
-      return userModule;
+      return { ...userModule, module: toModuleResponse(def) };
     });
 
     return result;
   }
 
-  // ==================== BOT MODULES ====================
+  // ==================== BOT MODULES (CODE-FIRST) ====================
 
   async getBotModules(botId: string) {
-    return this.prisma.botModule.findMany({
-      where: { botId },
-      include: {
-        module: true,
-      },
-      orderBy: [
-        { module: { isCore: 'desc' } },
-        { module: { name: 'asc' } },
-      ],
+    const botModuleConfigs = await this.prisma.botModule.findMany({ where: { botId } });
+    const installedMap = new Map<string, { enabled: boolean; config: any; installedAt: Date }>();
+
+    for (const bm of botModuleConfigs) {
+      let slug: string | null = null;
+      const def = findModuleDefById(bm.moduleId);
+      if (def) {
+        slug = def.slug;
+      } else {
+        const oldModule = await this.prisma.module.findUnique({
+          where: { id: bm.moduleId },
+          select: { slug: true },
+        }).catch(() => null);
+        if (oldModule) slug = oldModule.slug;
+      }
+
+      if (slug) {
+        installedMap.set(slug, {
+          enabled: bm.enabled,
+          config: bm.config ? JSON.parse(bm.config) : null,
+          installedAt: bm.installedAt,
+        });
+      }
+    }
+
+    const result = [];
+    for (const [slug, config] of installedMap) {
+      const def = getModuleDefinition(slug);
+      if (def) {
+        result.push({
+          id: `bot-${botId}-${slugToId(slug)}`,
+          botId,
+          moduleId: slugToId(slug),
+          enabled: config.enabled,
+          config: config.config ? JSON.stringify(config.config) : null,
+          installedAt: config.installedAt,
+          updatedAt: new Date(),
+          module: toModuleResponse(def),
+        });
+      }
+    }
+
+    result.sort((a, b) => {
+      if (a.module.isCore !== b.module.isCore) return a.module.isCore ? -1 : 1;
+      return a.module.name.localeCompare(b.module.name);
     });
+
+    return result;
   }
 
-  async getBotModule(botId: string, moduleId: string) {
-    const botModule = await this.prisma.botModule.findUnique({
-      where: {
-        botId_moduleId: { botId, moduleId },
-      },
-      include: {
-        module: true,
-      },
+  async getBotModule(botId: string, moduleIdOrSlug: string) {
+    const def = findModuleDefById(moduleIdOrSlug);
+    if (!def) throw new NotFoundException('Module not found');
+
+    const moduleId = slugToId(def.slug);
+    let botModule = await this.prisma.botModule.findUnique({
+      where: { botId_moduleId: { botId, moduleId } },
     });
 
     if (!botModule) {
-      throw new NotFoundException('Module not installed on this bot');
+      const oldModule = await this.prisma.module.findUnique({
+        where: { slug: def.slug },
+        select: { id: true },
+      }).catch(() => null);
+      if (oldModule) {
+        botModule = await this.prisma.botModule.findUnique({
+          where: { botId_moduleId: { botId, moduleId: oldModule.id } },
+        });
+      }
     }
 
-    return botModule;
+    if (!botModule) throw new NotFoundException('Module not installed on this bot');
+    return { ...botModule, module: toModuleResponse(def) };
   }
 
-  async installModuleOnBot(userId: string, botId: string, moduleId: string) {
-    // Verify bot ownership or collaboration
+  async installModuleOnBot(userId: string, botId: string, moduleIdOrSlug: string) {
     const bot = await this.prisma.bot.findFirst({
       where: {
         id: botId,
         OR: [
           { ownerId: userId },
-          {
-            collaborators: {
-              some: {
-                userId,
-                status: 'ACTIVE',
-                role: { in: ['ADMIN', 'DEVELOPER'] },
-              },
-            },
-          },
+          { collaborators: { some: { userId, status: 'ACTIVE', role: { in: ['ADMIN', 'DEVELOPER'] } } } },
         ],
       },
     });
+    if (!bot) throw new ForbiddenException('You do not have permission to manage this bot');
 
-    if (!bot) {
-      throw new ForbiddenException('You do not have permission to manage this bot');
-    }
+    const def = findModuleDefById(moduleIdOrSlug);
+    if (!def) throw new NotFoundException('Module not found');
 
-    // Verify user owns the module
-    const ownsModule = await this.userOwnsModule(userId, moduleId);
-    if (!ownsModule) {
-      throw new ForbiddenException('You do not own this module. Purchase it first.');
-    }
+    const ownsModule = await this.userOwnsModule(userId, def.slug);
+    if (!ownsModule) throw new ForbiddenException('You do not own this module. Purchase it first.');
 
-    // Check if already installed
-    const existing = await this.prisma.botModule.findUnique({
-      where: {
-        botId_moduleId: { botId, moduleId },
-      },
+    const moduleId = slugToId(def.slug);
+
+    const existingNew = await this.prisma.botModule.findUnique({
+      where: { botId_moduleId: { botId, moduleId } },
     });
+    if (existingNew) throw new BadRequestException('Module is already installed on this bot');
 
-    if (existing) {
-      throw new BadRequestException('Module is already installed on this bot');
+    const oldModule = await this.prisma.module.findUnique({
+      where: { slug: def.slug },
+      select: { id: true },
+    }).catch(() => null);
+
+    if (oldModule) {
+      const existingOld = await this.prisma.botModule.findUnique({
+        where: { botId_moduleId: { botId, moduleId: oldModule.id } },
+      });
+      if (existingOld) throw new BadRequestException('Module is already installed on this bot');
     }
 
-    // Get module to check dependencies
-    const module = await this.findById(moduleId);
-    const dependencies = module.dependencies ? JSON.parse(module.dependencies) : [];
-
-    // Verify dependencies are installed
-    if (dependencies.length > 0) {
-      const installedModules = await this.prisma.botModule.findMany({
-        where: { botId },
-        include: { module: true },
-      });
-
-      const installedSlugs = installedModules.map((bm) => bm.module.slug);
-      const missingDeps = dependencies.filter((dep: string) => !installedSlugs.includes(dep));
-
+    if (def.dependencies.length > 0) {
+      const installedModules = await this.getBotModules(botId);
+      const installedSlugs = installedModules.map(bm => bm.module.slug);
+      const missingDeps = def.dependencies.filter(dep => !installedSlugs.includes(dep));
       if (missingDeps.length > 0) {
         throw new BadRequestException(`Missing dependencies: ${missingDeps.join(', ')}`);
       }
     }
 
-    // Install module
     const botModule = await this.prisma.botModule.create({
-      data: {
-        botId,
-        moduleId,
-        enabled: true,
-      },
-      include: {
-        module: true,
-      },
+      data: { botId, moduleId, enabled: true },
     });
 
-    return botModule;
+    return { ...botModule, module: toModuleResponse(def) };
   }
 
-  async uninstallModuleFromBot(userId: string, botId: string, moduleId: string) {
-    // Verify bot ownership or collaboration
+  async uninstallModuleFromBot(userId: string, botId: string, moduleIdOrSlug: string) {
     const bot = await this.prisma.bot.findFirst({
       where: {
         id: botId,
         OR: [
           { ownerId: userId },
-          {
-            collaborators: {
-              some: {
-                userId,
-                status: 'ACTIVE',
-                role: { in: ['ADMIN', 'DEVELOPER'] },
-              },
-            },
-          },
+          { collaborators: { some: { userId, status: 'ACTIVE', role: { in: ['ADMIN', 'DEVELOPER'] } } } },
         ],
       },
     });
+    if (!bot) throw new ForbiddenException('You do not have permission to manage this bot');
 
-    if (!bot) {
-      throw new ForbiddenException('You do not have permission to manage this bot');
-    }
+    const def = findModuleDefById(moduleIdOrSlug);
+    if (!def) throw new NotFoundException('Module not found');
+    if (def.isCore) throw new BadRequestException('Cannot uninstall core modules');
 
-    // Get module
-    const botModule = await this.prisma.botModule.findUnique({
-      where: {
-        botId_moduleId: { botId, moduleId },
-      },
-      include: { module: true },
-    });
+    const moduleId = slugToId(def.slug);
+    let deleted = false;
 
-    if (!botModule) {
-      throw new NotFoundException('Module not installed on this bot');
-    }
-
-    // Prevent uninstalling core modules
-    if (botModule.module.isCore) {
-      throw new BadRequestException('Cannot uninstall core modules');
-    }
-
-    // Check if other modules depend on this one
-    const installedModules = await this.prisma.botModule.findMany({
-      where: { botId },
-      include: { module: true },
-    });
-
-    for (const installed of installedModules) {
-      if (installed.moduleId === moduleId) continue;
-
-      const deps = installed.module.dependencies ? JSON.parse(installed.module.dependencies) : [];
-      if (deps.includes(botModule.module.slug)) {
-        throw new BadRequestException(
-          `Cannot uninstall: Module "${installed.module.name}" depends on this module`,
-        );
+    try {
+      await this.prisma.botModule.delete({ where: { botId_moduleId: { botId, moduleId } } });
+      deleted = true;
+    } catch {
+      const oldModule = await this.prisma.module.findUnique({
+        where: { slug: def.slug },
+        select: { id: true },
+      }).catch(() => null);
+      if (oldModule) {
+        try {
+          await this.prisma.botModule.delete({ where: { botId_moduleId: { botId, moduleId: oldModule.id } } });
+          deleted = true;
+        } catch { /* not installed */ }
       }
     }
 
-    // Uninstall
-    await this.prisma.botModule.delete({
-      where: {
-        botId_moduleId: { botId, moduleId },
-      },
-    });
+    if (!deleted) throw new NotFoundException('Module not installed on this bot');
+
+    const installedModules = await this.getBotModules(botId);
+    for (const installed of installedModules) {
+      const installedDef = getModuleDefinition(installed.module.slug);
+      if (installedDef && installedDef.dependencies.includes(def.slug)) {
+        await this.toggleModuleOnBot(userId, botId, installed.module.slug, false);
+      }
+    }
 
     return { success: true };
   }
 
-  async toggleModuleOnBot(userId: string, botId: string, moduleId: string, enabled: boolean) {
-    // Verify bot ownership or collaboration
+  async toggleModuleOnBot(userId: string, botId: string, moduleIdOrSlug: string, enabled: boolean) {
     const bot = await this.prisma.bot.findFirst({
       where: {
         id: botId,
         OR: [
           { ownerId: userId },
-          {
-            collaborators: {
-              some: {
-                userId,
-                status: 'ACTIVE',
-                role: { in: ['ADMIN', 'DEVELOPER'] },
-              },
-            },
-          },
+          { collaborators: { some: { userId, status: 'ACTIVE', role: { in: ['ADMIN', 'DEVELOPER'] } } } },
         ],
       },
     });
+    if (!bot) throw new ForbiddenException('You do not have permission to manage this bot');
 
-    if (!bot) {
-      throw new ForbiddenException('You do not have permission to manage this bot');
+    const def = findModuleDefById(moduleIdOrSlug);
+    if (!def) throw new NotFoundException('Module not found');
+    if (def.isCore && !enabled) throw new BadRequestException('Core modules cannot be disabled');
+
+    const moduleId = slugToId(def.slug);
+    let updated = null;
+
+    try {
+      updated = await this.prisma.botModule.update({
+        where: { botId_moduleId: { botId, moduleId } },
+        data: { enabled },
+      });
+    } catch {
+      const oldModule = await this.prisma.module.findUnique({
+        where: { slug: def.slug },
+        select: { id: true },
+      }).catch(() => null);
+      if (oldModule) {
+        try {
+          updated = await this.prisma.botModule.update({
+            where: { botId_moduleId: { botId, moduleId: oldModule.id } },
+            data: { enabled },
+          });
+        } catch { /* not installed */ }
+      }
     }
 
-    // Get bot module
-    const botModule = await this.prisma.botModule.findUnique({
-      where: {
-        botId_moduleId: { botId, moduleId },
-      },
-      include: { module: true },
-    });
-
-    if (!botModule) {
-      throw new NotFoundException('Module not installed on this bot');
-    }
-
-    // Core modules cannot be disabled
-    if (botModule.module.isCore && !enabled) {
-      throw new BadRequestException('Core modules cannot be disabled');
-    }
-
-    // Update status
-    const updated = await this.prisma.botModule.update({
-      where: {
-        botId_moduleId: { botId, moduleId },
-      },
-      data: { enabled },
-      include: { module: true },
-    });
-
-    return updated;
+    if (!updated) throw new NotFoundException('Module not installed on this bot');
+    return { ...updated, module: toModuleResponse(def) };
   }
 
-  async updateBotModuleConfig(userId: string, botId: string, moduleId: string, config: any) {
-    // Verify bot ownership or collaboration
+  async updateBotModuleConfig(userId: string, botId: string, moduleIdOrSlug: string, config: any) {
     const bot = await this.prisma.bot.findFirst({
       where: {
         id: botId,
         OR: [
           { ownerId: userId },
-          {
-            collaborators: {
-              some: {
-                userId,
-                status: 'ACTIVE',
-                role: { in: ['ADMIN', 'DEVELOPER'] },
-              },
-            },
-          },
+          { collaborators: { some: { userId, status: 'ACTIVE', role: { in: ['ADMIN', 'DEVELOPER'] } } } },
         ],
       },
     });
+    if (!bot) throw new ForbiddenException('You do not have permission to manage this bot');
 
-    if (!bot) {
-      throw new ForbiddenException('You do not have permission to manage this bot');
+    const def = findModuleDefById(moduleIdOrSlug);
+    if (!def) throw new NotFoundException('Module not found');
+
+    const moduleId = slugToId(def.slug);
+    const configJson = JSON.stringify(config);
+    let updated = null;
+
+    try {
+      updated = await this.prisma.botModule.update({
+        where: { botId_moduleId: { botId, moduleId } },
+        data: { config: configJson },
+      });
+    } catch {
+      const oldModule = await this.prisma.module.findUnique({
+        where: { slug: def.slug },
+        select: { id: true },
+      }).catch(() => null);
+      if (oldModule) {
+        try {
+          updated = await this.prisma.botModule.update({
+            where: { botId_moduleId: { botId, moduleId: oldModule.id } },
+            data: { config: configJson },
+          });
+        } catch { /* not installed */ }
+      }
     }
 
-    // Get bot module
-    const botModule = await this.prisma.botModule.findUnique({
-      where: {
-        botId_moduleId: { botId, moduleId },
-      },
-    });
+    if (!updated) throw new NotFoundException('Module not installed on this bot');
 
-    if (!botModule) {
-      throw new NotFoundException('Module not installed on this bot');
-    }
-
-    // Get module details to check slug
-    const module = await this.prisma.module.findUnique({
-      where: { id: moduleId },
-    });
-
-    if (!module) {
-      throw new NotFoundException('Module not found');
-    }
-
-    // Update config in bot_modules table
-    const updated = await this.prisma.botModule.update({
-      where: {
-        botId_moduleId: { botId, moduleId },
-      },
-      data: {
-        config: JSON.stringify(config),
-      },
-      include: { module: true },
-    });
-
-    // Sync config to bot_configs table for compatibility
-    if (module.slug === 'auto-role' && config.roles) {
+    if (def.slug === 'auto-role' && config.roles) {
       await this.prisma.botConfig.update({
         where: { botId },
-        data: {
-          autoRoleEnabled: true,
-          autoRoleIds: JSON.stringify(config.roles), // Save role IDs as JSON array
-        },
-      });
-      console.log(`✅ Auto-role config synced to bot_configs for bot ${botId}`);
+        data: { autoRoleEnabled: true, autoRoleIds: JSON.stringify(config.roles) },
+      }).catch(() => {});
     }
 
-    return updated;
+    return { ...updated, module: toModuleResponse(def) };
+  }
+
+  // ==================== MIGRATION HELPER ====================
+
+  async migrateBotModulesToNewIds(botId: string) {
+    const oldBotModules = await this.prisma.botModule.findMany({ where: { botId } });
+    const migrated: string[] = [];
+
+    for (const bm of oldBotModules) {
+      const oldModule = await this.prisma.module.findUnique({
+        where: { id: bm.moduleId },
+        select: { slug: true },
+      }).catch(() => null);
+
+      if (oldModule) {
+        const newId = slugToId(oldModule.slug);
+        const existingNew = await this.prisma.botModule.findUnique({
+          where: { botId_moduleId: { botId, moduleId: newId } },
+        });
+
+        if (!existingNew) {
+          await this.prisma.botModule.create({
+            data: { botId, moduleId: newId, enabled: bm.enabled, config: bm.config, installedAt: bm.installedAt },
+          });
+          await this.prisma.botModule.delete({ where: { id: bm.id } });
+          migrated.push(oldModule.slug);
+        }
+      }
+    }
+
+    return { migrated };
   }
 }

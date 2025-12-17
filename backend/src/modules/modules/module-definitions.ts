@@ -849,6 +849,70 @@ This module is automatically included with every bot and cannot be disabled.`,
     },
     isCore: false,
   },
+
+  // ==================== UTILITY MODULES ====================
+  {
+    slug: 'ghost-ping',
+    name: 'Ghost Ping',
+    description: 'Ping members invisibly - message deletes immediately after pinging',
+    longDescription: `Ghost Ping allows staff to get someone's attention without leaving a trace:
+
+**How it works:**
+1. Staff member uses /ghostping @user
+2. Bot pings the user
+3. Message is immediately deleted
+4. User receives notification but ping is gone
+
+**Use Cases:**
+- Get someone's attention discreetly
+- Alert staff members without cluttering chat
+- Summon users to a channel quietly
+
+**Features:**
+- Instant message deletion
+- Optional reason logging
+- Staff-only command
+- Multiple users at once`,
+    category: 'UTILITY',
+    price: 0,
+    icon: '👻',
+    version: '1.0.0',
+    author: 'FiveBot',
+    tags: ['utility', 'ping', 'ghost', 'staff', 'moderation'],
+    features: [
+      'Instant ping deletion',
+      'Multiple user pings',
+      'Staff-only access',
+      'Optional logging',
+    ],
+    dependencies: [],
+    configSchema: {
+      type: 'object',
+      properties: {
+        logChannel: {
+          type: 'string',
+          title: 'Log Channel ID',
+          description: 'Channel to log ghost pings (optional)',
+        },
+        allowedRoles: {
+          type: 'array',
+          title: 'Allowed Roles',
+          description: 'Roles that can use ghost ping (empty = staff roles)',
+          items: { type: 'string' },
+          default: [],
+        },
+        deleteDelay: {
+          type: 'number',
+          title: 'Delete Delay (ms)',
+          description: 'How long to wait before deleting (0 = instant)',
+          default: 0,
+          minimum: 0,
+          maximum: 5000,
+        },
+      },
+    },
+    isCore: false,
+  },
 ];
 
 /**

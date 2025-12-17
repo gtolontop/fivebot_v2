@@ -80,10 +80,47 @@ export class TicketService {
 
     if (!config) return null;
 
+    // Load categories from JSON field
+    let jsonCategories: TicketCategory[] = [];
+    if (config.categories) {
+      try {
+        jsonCategories = JSON.parse(config.categories);
+      } catch {
+        jsonCategories = [];
+      }
+    }
+
+    // Also load categories from TicketCategory table and merge
+    const dbCategories = await prisma.ticketCategory.findMany({
+      where: { guildId }
+    });
+
+    // Merge DB categories with JSON categories (DB takes priority for same ID)
+    const categoryMap = new Map<string, TicketCategory>();
+
+    // Add JSON categories first
+    for (const cat of jsonCategories) {
+      categoryMap.set(cat.id, cat);
+    }
+
+    // Add/override with DB categories
+    for (const dbCat of dbCategories) {
+      const existing = categoryMap.get(dbCat.id);
+      categoryMap.set(dbCat.id, {
+        ...(existing || {}),
+        id: dbCat.id,
+        name: dbCat.name,
+        emoji: dbCat.emoji,
+        active: dbCat.active,
+      });
+    }
+
+    const mergedCategories = Array.from(categoryMap.values());
+
     // Parse JSON fields and transform data
     const parsed: any = {
       ...config,
-      categories: config.categories ? JSON.parse(config.categories) : [],
+      categories: mergedCategories,
       panels: config.panels ? JSON.parse(config.panels) : [],
       // Load staff roles from JSON array, or fallback to single staffRoleId
       staffRoles: (() => {

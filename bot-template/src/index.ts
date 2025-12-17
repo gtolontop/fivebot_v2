@@ -17,6 +17,9 @@ import { TicketStateManager } from './services/ticketStateManager.service';
 import { StatusService } from './services/status.service';
 import { ModuleLoaderService } from './services/module-loader.service';
 import { AIHandler } from './handlers/ai.handler';
+import { guildMemberUpdate } from './events/guildMemberUpdate';
+import { FiveLinkService } from './services/fivelink.service';
+import { getRedisClient } from './services/redis.service';
 
 dotenv.config();
 
@@ -57,6 +60,7 @@ class ChildBot {
   private statusService?: StatusService;
   private moduleLoader?: ModuleLoaderService;
   private aiHandler?: AIHandler;
+  private fivelinkService?: FiveLinkService;
 
   constructor() {
     // Force immediate console output
@@ -271,6 +275,27 @@ class ChildBot {
           console.error('⚠️ Failed to initialize metrics service:', error);
         }
 
+        // Initialize FiveLink service for badge management
+        if (this.moduleLoader?.isModuleEnabled('fivelink')) {
+          try {
+            const fivelinkConfig = this.moduleLoader.getModuleConfig('fivelink');
+            if (fivelinkConfig && fivelinkConfig.apiKey) {
+              const redis = getRedisClient();
+              this.fivelinkService = new FiveLinkService(
+                {
+                  apiKey: fivelinkConfig.apiKey,
+                  cacheEnabled: true,
+                  cacheTTL: 300,
+                },
+                redis
+              );
+              console.log('✅ FiveLink badge service initialized');
+            }
+          } catch (error) {
+            console.error('⚠️ Failed to initialize FiveLink badge service:', error);
+          }
+        }
+
         // Start status rotation module if enabled
         if (this.moduleLoader?.isModuleEnabled('status-rotation')) {
           try {
@@ -302,7 +327,12 @@ class ChildBot {
       const freshConfig = await this.configService!.getConfig();
       await guildMemberRemove(member, this.welcomeService!, freshConfig as any);
     });
-    
+
+    // Handle member updates (booster status changes)
+    this.client.on('guildMemberUpdate', async (oldMember, newMember) => {
+      await guildMemberUpdate(oldMember, newMember, this.fivelinkService || null);
+    });
+
     this.client.on('interactionCreate', (interaction) => 
       interactionCreate(interaction, this.prisma, this.configService!, this.ticketHandler || undefined)
     );

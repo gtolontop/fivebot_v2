@@ -320,4 +320,112 @@ export class FiveLinkService {
       return false;
     }
   }
+
+
+  /**
+   * Grant a badge to a user by Discord ID
+   * Uses the admin API endpoint (not v1 API)
+   */
+  async grantBadge(discordId: string, badgeKey: string, reason?: string): Promise<{
+    success: boolean;
+    message?: string;
+    error?: string;
+    alreadyHad?: boolean;
+  }> {
+    try {
+      const response = await axios.post(
+        'https://fivelink.lol/api/admin/badges/grant',
+        {
+          discordId,
+          badgeKey,
+          reason: reason || 'Granted automatically by FiveBot',
+          grantedBy: 'FiveBot',
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.config.apiKey}`,
+          },
+          timeout: 10000,
+        }
+      );
+
+      return {
+        success: true,
+        message: response.data.message,
+        alreadyHad: response.data.badge?.alreadyHad,
+      };
+    } catch (error: any) {
+      console.error('[FiveLink] Error granting badge:', error.response?.data || error.message);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Unknown error',
+      };
+    }
+  }
+
+  /**
+   * Revoke a badge from a user by Discord ID
+   * Uses the admin API endpoint (not v1 API)
+   */
+  async revokeBadge(discordId: string, badgeKey: string, reason?: string): Promise<{
+    success: boolean;
+    message?: string;
+    error?: string;
+    hadBadge?: boolean;
+  }> {
+    try {
+      const response = await axios.post(
+        'https://fivelink.lol/api/admin/badges/revoke',
+        {
+          discordId,
+          badgeKey,
+          reason: reason || 'Revoked automatically by FiveBot',
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.config.apiKey}`,
+          },
+          timeout: 10000,
+        }
+      );
+
+      return {
+        success: true,
+        message: response.data.message,
+        hadBadge: response.data.badge?.hadBadge,
+      };
+    } catch (error: any) {
+      console.error('[FiveLink] Error revoking badge:', error.response?.data || error.message);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Unknown error',
+      };
+    }
+  }
+
+  /**
+   * Grant Discord Booster badge
+   */
+  async grantBoosterBadge(discordId: string): Promise<{
+    success: boolean;
+    message?: string;
+    error?: string;
+    alreadyHad?: boolean;
+  }> {
+    return this.grantBadge(discordId, 'discord-booster', 'Boosting the Discord server');
+  }
+
+  /**
+   * Revoke Discord Booster badge
+   */
+  async revokeBoosterBadge(discordId: string): Promise<{
+    success: boolean;
+    message?: string;
+    error?: string;
+    hadBadge?: boolean;
+  }> {
+    return this.revokeBadge(discordId, 'discord-booster', 'No longer boosting the Discord server');
+  }
 }
