@@ -33,7 +33,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     // Find item by name (case insensitive)
     const shopItems = await EconomyService.getShopItems(interaction.guildId);
     const item = shopItems.find(
-      (i) => i.name.toLowerCase() === itemName.toLowerCase()
+      (i: any) => i.name.toLowerCase() === itemName.toLowerCase()
     );
 
     if (!item) {

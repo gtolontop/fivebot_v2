@@ -113,7 +113,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       }
 
       // Add role
-      await member.roles.add(role);
+      await member.roles.add(role.id);
 
       const embed = new EmbedBuilder()
         .setColor(0x00FF00)
@@ -136,7 +136,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       }
 
       // Remove role
-      await member.roles.remove(role);
+      await member.roles.remove(role.id);
 
       const embed = new EmbedBuilder()
         .setColor(0xFF8C00)

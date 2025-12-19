@@ -53,3 +53,7 @@ export async function disconnectPrismaClient(): Promise<void> {
     prismaInstance = null;
   }
 }
+
+// Default export for convenience
+const prisma = getPrismaClient();
+export default prisma;

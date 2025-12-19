@@ -237,7 +237,7 @@ export class GiveawayService {
 
       // Shuffle and pick winners
       const shuffled = uniqueUsers.sort(() => Math.random() - 0.5);
-      const winners = shuffled.slice(0, Math.min(count, shuffled.length));
+      const winners = shuffled.slice(0, Math.min(count, shuffled.length)) as string[];
 
       return winners;
     } catch (error) {

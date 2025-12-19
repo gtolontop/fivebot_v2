@@ -187,7 +187,7 @@ export class PollsService {
         };
       });
 
-      const totalVotes = results.reduce((sum, r) => sum + r.votes, 0);
+      const totalVotes = results.reduce((sum: number, r: { votes: number }) => sum + r.votes, 0);
 
       return {
         poll: pollData,

@@ -132,7 +132,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     let endTime: Date | undefined;
 
     if (durationStr) {
-      duration = parseDuration(durationStr);
+      duration = parseDuration(durationStr) ?? undefined;
       if (!duration) {
         await interaction.editReply({
           content: '❌ Invalid duration format. Use formats like: 1h, 30m, 1d, 1w',

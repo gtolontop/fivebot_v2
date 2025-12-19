@@ -199,8 +199,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       endTime,
       requirements: {
         roleId: requiredRole?.id,
-        level: requiredLevel,
-        messages: requiredMessages,
+        level: requiredLevel ?? undefined,
+        messages: requiredMessages ?? undefined,
       },
       bonusEntries: bonusRole && bonusEntries > 1 ? {
         roleId: bonusRole.id,

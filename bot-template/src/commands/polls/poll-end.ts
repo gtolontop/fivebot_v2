@@ -64,6 +64,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       poll.creatorId !== interaction.user.id &&
       member &&
       'permissions' in member &&
+      typeof member.permissions !== 'string' &&
       !member.permissions.has(PermissionFlagsBits.ManageMessages)
     ) {
       await interaction.editReply({
