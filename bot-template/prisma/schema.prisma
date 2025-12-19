@@ -1077,17 +1077,26 @@ model EconomyConfig {
   currencyEmoji   String?  @map("currency_emoji")
   startingBalance Int      @default(100) @map("starting_balance")
   dailyAmount     Int      @default(500) @map("daily_amount")
+  dailyCooldown   Int      @default(86400) @map("daily_cooldown") // seconds
+  workMinAmount   Int      @default(50) @map("work_min_amount")
+  workMaxAmount   Int      @default(150) @map("work_max_amount")
   workMin         Int      @default(50) @map("work_min")
   workMax         Int      @default(150) @map("work_max")
+  workCooldown    Int      @default(3600) @map("work_cooldown") // seconds
   workResponses   String?  @map("work_responses") @db.Text
+  crimeMinAmount  Int      @default(100) @map("crime_min_amount")
+  crimeMaxAmount  Int      @default(500) @map("crime_max_amount")
   crimeMin        Int      @default(100) @map("crime_min")
   crimeMax        Int      @default(500) @map("crime_max")
   crimeSuccess    Int      @default(50) @map("crime_success")
+  crimeCooldown   Int      @default(7200) @map("crime_cooldown") // seconds
   crimeResponses  String?  @map("crime_responses") @db.Text
   robMin          Int      @default(100) @map("rob_min")
   robMax          Int      @default(1000) @map("rob_max")
   robSuccess      Int      @default(40) @map("rob_success")
+  robCooldown     Int      @default(14400) @map("rob_cooldown") // seconds
   maxBankBalance  Int      @default(10000) @map("max_bank_balance")
+  shopItems       ShopItem[]
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
@@ -1096,21 +1105,29 @@ model EconomyConfig {
 }
 
 model UserEconomy {
-  id           String          @id @default(uuid())
-  guildId      String          @map("guild_id")
-  userId       String          @map("user_id")
-  botId        String          @map("bot_id")
-  balance      Int             @default(0)
-  bankBalance  Int             @default(0) @map("bank_balance")
-  totalEarned  Int             @default(0) @map("total_earned")
-  totalSpent   Int             @default(0) @map("total_spent")
-  lastDaily    DateTime?       @map("last_daily")
-  lastWork     DateTime?       @map("last_work")
-  lastCrime    DateTime?       @map("last_crime")
-  lastRob      DateTime?       @map("last_rob")
-  inventory    UserInventory[]
-  createdAt    DateTime        @default(now()) @map("created_at")
-  updatedAt    DateTime        @updatedAt @map("updated_at")
+  id             String          @id @default(uuid())
+  guildId        String          @map("guild_id")
+  userId         String          @map("user_id")
+  botId          String          @map("bot_id")
+  balance        Int             @default(0)
+  bankBalance    Int             @default(0) @map("bank_balance")
+  totalEarned    Int             @default(0) @map("total_earned")
+  totalSpent     Int             @default(0) @map("total_spent")
+  dailyStreak    Int             @default(0) @map("daily_streak")
+  longestStreak  Int             @default(0) @map("longest_streak")
+  workCount      Int             @default(0) @map("work_count")
+  crimeCount     Int             @default(0) @map("crime_count")
+  robCount       Int             @default(0) @map("rob_count")
+  timesRobbed    Int             @default(0) @map("times_robbed")
+  gamblingWins   Int             @default(0) @map("gambling_wins")
+  gamblingLosses Int             @default(0) @map("gambling_losses")
+  lastDaily      DateTime?       @map("last_daily")
+  lastWork       DateTime?       @map("last_work")
+  lastCrime      DateTime?       @map("last_crime")
+  lastRob        DateTime?       @map("last_rob")
+  inventory      UserInventory[]
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
 
   @@unique([guildId, userId, botId])
   @@index([guildId, botId])
@@ -1121,23 +1138,29 @@ model ShopItem {
   id             String          @id @default(uuid())
   guildId        String          @map("guild_id")
   botId          String          @map("bot_id")
+  configId       String?         @map("config_id")
+  config         EconomyConfig?  @relation(fields: [configId], references: [id], onDelete: Cascade)
   name           String
   description    String?         @db.Text
   emoji          String?
+  category       String?
   price          Int
   type           String          @default("ITEM") // ITEM, ROLE, CONSUMABLE
   roleId         String?         @map("role_id")
+  duration       Int?            // seconds for consumables
   maxOwned       Int             @default(1) @map("max_owned")
   maxStock       Int?            @map("max_stock")
   currentStock   Int?            @map("current_stock")
   requiredLevel  Int?            @map("required_level")
   requiredRoleId String?         @map("required_role_id")
   isActive       Boolean         @default(true) @map("is_active")
+  isHidden       Boolean         @default(false) @map("is_hidden")
   createdAt      DateTime        @default(now()) @map("created_at")
   updatedAt      DateTime        @updatedAt @map("updated_at")
   inventory      UserInventory[]
 
   @@index([guildId, botId])
+  @@index([configId])
   @@map("shop_items")
 }
 
@@ -1146,10 +1169,12 @@ model UserInventory {
   economyId  String      @map("economy_id")
   itemId     String      @map("item_id")
   quantity   Int         @default(1)
+  expiresAt  DateTime?   @map("expires_at")
   acquiredAt DateTime    @default(now()) @map("acquired_at")
   economy    UserEconomy @relation(fields: [economyId], references: [id], onDelete: Cascade)
   item       ShopItem    @relation(fields: [itemId], references: [id], onDelete: Cascade)
 
+  @@unique([economyId, itemId])
   @@index([economyId])
   @@index([itemId])
   @@map("user_inventory")
@@ -1160,6 +1185,7 @@ model EconomyTransaction {
   guildId     String   @map("guild_id")
   botId       String   @map("bot_id")
   userId      String   @map("user_id")
+  economyId   String?  @map("economy_id")
   type        String   // work, crime, rob, daily, transfer, shop, etc.
   amount      Int
   description String?  @db.Text
@@ -1168,10 +1194,12 @@ model EconomyTransaction {
 
   @@index([guildId, botId])
   @@index([userId])
+  @@index([economyId])
   @@index([type])
   @@index([createdAt])
   @@map("economy_transactions")
 }
+
 
 // ==================== GIVEAWAY SYSTEM ====================
 
