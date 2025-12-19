@@ -1068,66 +1068,74 @@ enum ModActionType {
 // ==================== ECONOMY SYSTEM ====================
 
 model EconomyConfig {
-  id              String   @id @default(uuid())
-  guildId         String   @unique @map("guild_id")
-  botId           String   @map("bot_id")
-  enabled         Boolean  @default(true)
-  currencyName    String   @default("Coins") @map("currency_name")
-  currencySymbol  String   @default("💰") @map("currency_symbol")
-  currencyEmoji   String?  @map("currency_emoji")
-  startingBalance Int      @default(100) @map("starting_balance")
-  dailyAmount     Int      @default(500) @map("daily_amount")
-  dailyCooldown   Int      @default(86400) @map("daily_cooldown") // seconds
-  workMinAmount   Int      @default(50) @map("work_min_amount")
-  workMaxAmount   Int      @default(150) @map("work_max_amount")
-  workMin         Int      @default(50) @map("work_min")
-  workMax         Int      @default(150) @map("work_max")
-  workCooldown    Int      @default(3600) @map("work_cooldown") // seconds
-  workResponses   String?  @map("work_responses") @db.Text
-  crimeMinAmount  Int      @default(100) @map("crime_min_amount")
-  crimeMaxAmount  Int      @default(500) @map("crime_max_amount")
-  crimeMin        Int      @default(100) @map("crime_min")
-  crimeMax        Int      @default(500) @map("crime_max")
-  crimeSuccess    Int      @default(50) @map("crime_success")
-  crimeCooldown   Int      @default(7200) @map("crime_cooldown") // seconds
-  crimeResponses  String?  @map("crime_responses") @db.Text
-  robMin          Int      @default(100) @map("rob_min")
-  robMax          Int      @default(1000) @map("rob_max")
-  robSuccess      Int      @default(40) @map("rob_success")
-  robCooldown     Int      @default(14400) @map("rob_cooldown") // seconds
-  maxBankBalance  Int      @default(10000) @map("max_bank_balance")
-  shopItems       ShopItem[]
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id               String     @id @default(uuid())
+  guildId          String     @unique @map("guild_id")
+  botId            String     @map("bot_id")
+  enabled          Boolean    @default(true)
+  currencyName     String     @default("Coins") @map("currency_name")
+  currencySymbol   String     @default("💰") @map("currency_symbol")
+  currencyEmoji    String?    @map("currency_emoji")
+  startingBalance  Int        @default(100) @map("starting_balance")
+  dailyAmount      Int        @default(500) @map("daily_amount")
+  dailyCooldown    Int        @default(86400) @map("daily_cooldown")
+  workEnabled      Boolean    @default(true) @map("work_enabled")
+  workMinAmount    Int        @default(50) @map("work_min_amount")
+  workMaxAmount    Int        @default(150) @map("work_max_amount")
+  workMin          Int        @default(50) @map("work_min")
+  workMax          Int        @default(150) @map("work_max")
+  workCooldown     Int        @default(3600) @map("work_cooldown")
+  workResponses    String?    @map("work_responses") @db.Text
+  crimeEnabled     Boolean    @default(true) @map("crime_enabled")
+  crimeMinAmount   Int        @default(100) @map("crime_min_amount")
+  crimeMaxAmount   Int        @default(500) @map("crime_max_amount")
+  crimeMin         Int        @default(100) @map("crime_min")
+  crimeMax         Int        @default(500) @map("crime_max")
+  crimeSuccess     Int        @default(50) @map("crime_success")
+  crimeSuccessRate Int        @default(50) @map("crime_success_rate")
+  crimeFinePercent Int        @default(25) @map("crime_fine_percent")
+  crimeCooldown    Int        @default(7200) @map("crime_cooldown")
+  crimeResponses   String?    @map("crime_responses") @db.Text
+  robEnabled       Boolean    @default(true) @map("rob_enabled")
+  robMin           Int        @default(100) @map("rob_min")
+  robMax           Int        @default(1000) @map("rob_max")
+  robSuccess       Int        @default(40) @map("rob_success")
+  robSuccessRate   Int        @default(40) @map("rob_success_rate")
+  robCooldown      Int        @default(14400) @map("rob_cooldown")
+  maxBankBalance   Int        @default(10000) @map("max_bank_balance")
+  shopItems        ShopItem[]
+  createdAt        DateTime   @default(now()) @map("created_at")
+  updatedAt        DateTime   @updatedAt @map("updated_at")
 
   @@index([botId])
   @@map("economy_configs")
 }
 
 model UserEconomy {
-  id             String          @id @default(uuid())
-  guildId        String          @map("guild_id")
-  userId         String          @map("user_id")
-  botId          String          @map("bot_id")
-  balance        Int             @default(0)
-  bankBalance    Int             @default(0) @map("bank_balance")
-  totalEarned    Int             @default(0) @map("total_earned")
-  totalSpent     Int             @default(0) @map("total_spent")
-  dailyStreak    Int             @default(0) @map("daily_streak")
-  longestStreak  Int             @default(0) @map("longest_streak")
-  workCount      Int             @default(0) @map("work_count")
-  crimeCount     Int             @default(0) @map("crime_count")
-  robCount       Int             @default(0) @map("rob_count")
-  timesRobbed    Int             @default(0) @map("times_robbed")
-  gamblingWins   Int             @default(0) @map("gambling_wins")
-  gamblingLosses Int             @default(0) @map("gambling_losses")
-  lastDaily      DateTime?       @map("last_daily")
-  lastWork       DateTime?       @map("last_work")
-  lastCrime      DateTime?       @map("last_crime")
-  lastRob        DateTime?       @map("last_rob")
-  inventory      UserInventory[]
-  createdAt      DateTime        @default(now()) @map("created_at")
-  updatedAt      DateTime        @updatedAt @map("updated_at")
+  id              String          @id @default(uuid())
+  guildId         String          @map("guild_id")
+  userId          String          @map("user_id")
+  botId           String          @map("bot_id")
+  balance         Int             @default(0)
+  bankBalance     Int             @default(0) @map("bank_balance")
+  totalEarned     Int             @default(0) @map("total_earned")
+  totalSpent      Int             @default(0) @map("total_spent")
+  dailyStreak     Int             @default(0) @map("daily_streak")
+  longestStreak   Int             @default(0) @map("longest_streak")
+  workCount       Int             @default(0) @map("work_count")
+  crimeCount      Int             @default(0) @map("crime_count")
+  crimeSuccesses  Int             @default(0) @map("crime_successes")
+  robCount        Int             @default(0) @map("rob_count")
+  robSuccesses    Int             @default(0) @map("rob_successes")
+  timesRobbed     Int             @default(0) @map("times_robbed")
+  gamblingWins    Int             @default(0) @map("gambling_wins")
+  gamblingLosses  Int             @default(0) @map("gambling_losses")
+  lastDaily       DateTime?       @map("last_daily")
+  lastWork        DateTime?       @map("last_work")
+  lastCrime       DateTime?       @map("last_crime")
+  lastRob         DateTime?       @map("last_rob")
+  inventory       UserInventory[]
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
 
   @@unique([guildId, userId, botId])
   @@index([guildId, botId])
@@ -1181,16 +1189,18 @@ model UserInventory {
 }
 
 model EconomyTransaction {
-  id          String   @id @default(uuid())
-  guildId     String   @map("guild_id")
-  botId       String   @map("bot_id")
-  userId      String   @map("user_id")
-  economyId   String?  @map("economy_id")
-  type        String   // work, crime, rob, daily, transfer, shop, etc.
-  amount      Int
-  description String?  @db.Text
-  metadata    String?  @db.Text // JSON for extra info
-  createdAt   DateTime @default(now()) @map("created_at")
+  id            String   @id @default(uuid())
+  guildId       String   @map("guild_id")
+  botId         String   @map("bot_id")
+  userId        String   @map("user_id")
+  economyId     String?  @map("economy_id")
+  type          String   // work, crime, rob, daily, transfer, shop, etc.
+  amount        Int
+  balanceBefore Int?     @map("balance_before")
+  balanceAfter  Int?     @map("balance_after")
+  description   String?  @db.Text
+  metadata      String?  @db.Text // JSON for extra info
+  createdAt     DateTime @default(now()) @map("created_at")
 
   @@index([guildId, botId])
   @@index([userId])
