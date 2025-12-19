@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import dynamic from 'next/dynamic';
 import { V2_EMBED_DEFAULTS } from '../data/v2-embed-defaults';
 
-const V2EmbedBuilder = dynamic(() => import('./dashboard/bot-config/V2EmbedBuilder'), { ssr: false });
+const V2EmbedBuilder = dynamic(() => import('./dashboard/bot-config/V2EmbedBuilderNew'), { ssr: false });
 
 interface V2Command {
   name: string;
