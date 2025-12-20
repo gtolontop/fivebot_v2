@@ -112,26 +112,22 @@ export class TicketValidationService {
       }
     }
 
-    // Validate category if specified
+    // Validate category if specified (but don't block if category doesn't exist - use general fallback)
     if (categoryId && categoryId !== 'general') {
       const category = config.categories?.find(c => c.id === categoryId);
       if (!category) {
-        errors.push({
+        // Just warn, don't block - will use general category as fallback
+        warnings.push({
           field: 'category',
-          message: 'The selected category does not exist. Please choose a valid category.',
-          messageFr: 'La catégorie sélectionnée n\'existe pas. Veuillez choisir une catégorie valide.',
-          severity: 'error'
+          message: `Category "${categoryId}" not found, using default settings.`,
+          suggestion: 'Configure categories in the dashboard if needed.'
         });
       } else if (!category.active) {
-        errors.push({
+        warnings.push({
           field: 'category',
-          message: 'The selected category is currently inactive. Please choose another category.',
-          messageFr: 'La catégorie sélectionnée est actuellement inactive. Veuillez choisir une autre catégorie.',
-          severity: 'error'
+          message: 'The selected category is currently inactive. Using default settings.',
+          suggestion: 'Activate this category in the dashboard.'
         });
-      } else {
-        // Note: channelId doesn't exist in TicketCategory schema
-        // Skipping category-specific channel validation
       }
     }
 
