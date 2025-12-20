@@ -237,9 +237,11 @@ export default function ModuleConfigPage() {
     return null;
   }
 
-  const configSchema = botModule.module.configSchema
+  const rawConfigSchema = botModule.module.configSchema
     ? JSON.parse(botModule.module.configSchema)
     : {};
+  // Extract properties from JSON Schema format (type: 'object', properties: {...})
+  const configSchema = rawConfigSchema.properties || rawConfigSchema;
   const features = botModule.module.features ? JSON.parse(botModule.module.features) : [];
 
   return (
@@ -329,10 +331,13 @@ export default function ModuleConfigPage() {
           <div className="space-y-6">
             {Object.entries(configSchema).map(([key, schema]: [string, any]) => (
               <div key={key}>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {schema.label}
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {schema.label || schema.title || key}
                   {schema.required && <span className="text-red-500 ml-1">*</span>}
                 </label>
+                {schema.description && (
+                  <p className="text-xs text-gray-500 mb-2">{schema.description}</p>
+                )}
 
                 {schema.type === 'boolean' && (
                   <div className="flex items-center space-x-3">
