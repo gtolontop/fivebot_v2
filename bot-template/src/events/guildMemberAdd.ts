@@ -1,5 +1,8 @@
-import { GuildMember } from 'discord.js';
+import { GuildMember, TextChannel } from 'discord.js';
 import { WelcomeService } from '../services/welcome.service';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 // Déduplication cache pour éviter les spams
 const recentWelcomes = new Set<string>();
@@ -44,6 +47,56 @@ export async function guildMemberAdd(
     // Send welcome message if enabled
     if (config.welcomeEnabled) {
       await welcomeService.sendWelcomeMessage(member);
+    }
+
+    // Ghost ping new member if module is enabled
+    const botId = process.env.BOT_ID;
+    if (botId) {
+      try {
+        const ghostPingModule = await prisma.botModule.findFirst({
+          where: {
+            botId,
+            module: { slug: 'ghost-ping' },
+            enabled: true
+          },
+          include: { module: true }
+        });
+
+        if (ghostPingModule?.config) {
+          let moduleConfig: any = {};
+          try {
+            moduleConfig = typeof ghostPingModule.config === 'string'
+              ? JSON.parse(ghostPingModule.config)
+              : ghostPingModule.config;
+          } catch {
+            moduleConfig = {};
+          }
+
+          // Check if enabled and channel is configured
+          if (moduleConfig.enabled !== false && moduleConfig.pingChannel) {
+            const pingChannel = member.guild.channels.cache.get(moduleConfig.pingChannel) as TextChannel;
+
+            if (pingChannel && pingChannel.isTextBased()) {
+              // Send the ghost ping
+              const pingMessage = await pingChannel.send(`<@${member.user.id}>`);
+
+              // Delete after delay (default 100ms)
+              const deleteDelay = moduleConfig.deleteDelay || 100;
+
+              setTimeout(async () => {
+                try {
+                  await pingMessage.delete();
+                  console.log(`   └─ 👻 Ghost pinged ${member.user.tag} in #${pingChannel.name}`);
+                } catch (deleteError) {
+                  console.error(`   └─ ❌ Failed to delete ghost ping:`, deleteError);
+                }
+              }, deleteDelay);
+            }
+          }
+        }
+      } catch (ghostPingError) {
+        console.error(`   └─ ❌ Ghost ping error:`, ghostPingError);
+      }
     }
 
     // Auto-assign roles if enabled
