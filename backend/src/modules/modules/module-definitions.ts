@@ -913,6 +913,128 @@ This module is automatically included with every bot and cannot be disabled.`,
     },
     isCore: false,
   },
+
+  // ==================== UTILITY MODULES ====================
+  {
+    slug: 'embed-builder',
+    name: 'Embed Builder',
+    description: 'Create and send beautiful Discord embeds with a visual editor',
+    longDescription: `Design stunning Discord embeds with an intuitive visual builder:
+
+**Features:**
+- Drag-and-drop container/component system
+- Live Discord preview
+- Template library (Rules, Welcome, Info, Pricing)
+- Rich text formatting support
+- Media gallery support
+- Action row buttons with customization
+
+**V2 Container Components:**
+- Text blocks with markdown support
+- Media galleries with images
+- Dividers with custom spacing
+- Action rows with buttons (styles, URLs, emojis)
+
+**Use Cases:**
+- Server rules embeds
+- Welcome messages
+- Announcements
+- Info panels
+- Pricing tables
+- Custom message design`,
+    category: 'UTILITY',
+    price: 0,
+    icon: '📋',
+    version: '2.0.0',
+    author: 'FiveBot',
+    tags: ['utility', 'embeds', 'messages', 'design', 'visual'],
+    features: [
+      'Visual drag-and-drop editor',
+      'Live Discord preview',
+      'Template library',
+      'Container-based design (V2)',
+      'Media gallery support',
+      'Button customization',
+      'Rich markdown support',
+    ],
+    dependencies: ['framework-core'],
+    configSchema: {
+      type: 'object',
+      properties: {
+        defaultColor: {
+          type: 'string',
+          title: 'Default Embed Color',
+          default: '#5865F2',
+        },
+        allowUserTemplates: {
+          type: 'boolean',
+          title: 'Allow users to save custom templates',
+          default: true,
+        },
+      },
+    },
+    isCore: false,
+  },
+
+  // ==================== CUSTOM COMMANDS ====================
+  {
+    slug: 'custom-commands',
+    name: 'Custom Commands',
+    description: 'Create unlimited custom bot commands with responses',
+    longDescription: `Create your own custom commands with powerful features:
+
+**Features:**
+- Unlimited custom commands
+- Text or embed responses
+- Variable support ({user}, {server}, {channel})
+- Permission restrictions
+- Cooldown system per command
+- Aliases support
+
+**Response Types:**
+- Plain text messages
+- Rich embeds with fields
+- Random responses (pick one from list)
+- Conditional responses
+
+**Variables Available:**
+- {user} - Command user
+- {server} - Server name
+- {channel} - Channel name
+- {args} - Command arguments`,
+    category: 'CUSTOM',
+    price: 0,
+    icon: '⚙️',
+    version: '1.2.0',
+    author: 'FiveBot',
+    tags: ['commands', 'custom', 'utility', 'responses'],
+    features: [
+      'Unlimited custom commands',
+      'Text and embed responses',
+      'Variable system',
+      'Permission control',
+      'Cooldown system',
+      'Command aliases',
+    ],
+    dependencies: ['framework-core'],
+    configSchema: {
+      type: 'object',
+      properties: {
+        prefix: {
+          type: 'string',
+          title: 'Command Prefix',
+          default: '!',
+          maxLength: 5,
+        },
+        allowEditing: {
+          type: 'boolean',
+          title: 'Allow moderators to edit commands',
+          default: true,
+        },
+      },
+    },
+    isCore: false,
+  },
 ];
 
 /**
