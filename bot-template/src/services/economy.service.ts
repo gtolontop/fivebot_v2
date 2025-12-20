@@ -161,6 +161,9 @@ export class EconomyService {
     // Record transaction
     await prisma.economyTransaction.create({
       data: {
+        guildId,
+        botId,
+        userId,
         economyId: userEconomy.id,
         type: type as any,
         amount,
@@ -202,6 +205,9 @@ export class EconomyService {
     // Record transaction
     await prisma.economyTransaction.create({
       data: {
+        guildId,
+        botId: userEconomy.botId,
+        userId,
         economyId: userEconomy.id,
         type: type as any,
         amount: -amount,
@@ -250,6 +256,9 @@ export class EconomyService {
       }),
       prisma.economyTransaction.create({
         data: {
+          guildId,
+          botId: fromEconomy.botId,
+          userId: fromUserId,
           economyId: fromEconomy.id,
           type: 'TRANSFER_OUT',
           amount: -amount,
@@ -265,6 +274,9 @@ export class EconomyService {
       }),
       prisma.economyTransaction.create({
         data: {
+          guildId,
+          botId: toEconomy.botId,
+          userId: toUserId,
           economyId: toEconomy.id,
           type: 'TRANSFER_IN',
           amount,
@@ -307,6 +319,9 @@ export class EconomyService {
 
     await prisma.economyTransaction.create({
       data: {
+        guildId,
+        botId: userEconomy.botId,
+        userId,
         economyId: userEconomy.id,
         type: 'BANK_DEPOSIT',
         amount,
@@ -341,6 +356,9 @@ export class EconomyService {
 
     await prisma.economyTransaction.create({
       data: {
+        guildId,
+        botId: userEconomy.botId,
+        userId,
         economyId: userEconomy.id,
         type: 'BANK_WITHDRAW',
         amount,
@@ -504,6 +522,9 @@ export class EconomyService {
       }),
       prisma.economyTransaction.create({
         data: {
+          guildId,
+          botId: userEconomy.botId,
+          userId,
           economyId: userEconomy.id,
           type: 'SHOP_BUY',
           amount: -item.price,

@@ -1107,7 +1107,11 @@ model EconomyConfig {
   gamblingMinBet   Int        @default(10) @map("gambling_min_bet")
   gamblingMaxBet   Int        @default(10000) @map("gambling_max_bet")
   gamblingCooldown Int        @default(30) @map("gambling_cooldown")
+  bankEnabled      Boolean    @default(true) @map("bank_enabled")
   maxBankBalance   Int        @default(10000) @map("max_bank_balance")
+  dailyStreakEnabled   Boolean @default(true) @map("daily_streak_enabled")
+  streakBonusPercent   Int     @default(10) @map("streak_bonus_percent")
+  maxStreakBonus       Int     @default(100) @map("max_streak_bonus")
   shopItems        ShopItem[]
   createdAt        DateTime   @default(now()) @map("created_at")
   updatedAt        DateTime   @updatedAt @map("updated_at")
