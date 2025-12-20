@@ -12,3 +12,6 @@ export type { InputProps, SearchInputProps } from './Input';
 
 export { Avatar } from './Avatar';
 export type { AvatarProps } from './Avatar';
+
+export { Stack, TECH_STACKS } from './Stack';
+export type { StackProps, StackItem } from './Stack';
