@@ -107,6 +107,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         }),
         prisma.economyTransaction.create({
           data: {
+            guildId: interaction.guildId,
+            botId,
+            userId: targetUser.id,
             economyId: targetEconomy.id,
             type: 'ROBBED',
             amount: -amount,
@@ -127,6 +130,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         }),
         prisma.economyTransaction.create({
           data: {
+            guildId: interaction.guildId,
+            botId,
+            userId: interaction.user.id,
             economyId: userEconomy.id,
             type: 'ROB',
             amount,
@@ -165,6 +171,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           }),
           prisma.economyTransaction.create({
             data: {
+              guildId: interaction.guildId,
+              botId,
+              userId: interaction.user.id,
               economyId: userEconomy.id,
               type: 'ROB',
               amount: -actualFine,
@@ -180,6 +189,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           }),
           prisma.economyTransaction.create({
             data: {
+              guildId: interaction.guildId,
+              botId,
+              userId: targetUser.id,
               economyId: targetEconomy.id,
               type: 'ROBBED',
               amount: actualFine,

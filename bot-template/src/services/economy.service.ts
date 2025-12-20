@@ -16,12 +16,14 @@ export interface EconomyConfig {
   workMinAmount: number;
   workMaxAmount: number;
   workCooldown: number;
+  workResponses?: string | null;
   crimeEnabled: boolean;
   crimeMinAmount: number;
   crimeMaxAmount: number;
   crimeSuccessRate: number;
   crimeFinePercent: number;
   crimeCooldown: number;
+  crimeResponses?: string | null;
   robEnabled: boolean;
   robMinAmount: number;
   robMaxPercent: number;
