@@ -120,13 +120,13 @@ export class TicketValidationService {
         warnings.push({
           field: 'category',
           message: `Category "${categoryId}" not found, using default settings.`,
-          suggestion: 'Configure categories in the dashboard if needed.'
+          messageFr: `Catégorie "${categoryId}" non trouvée, paramètres par défaut utilisés.`
         });
       } else if (!category.active) {
         warnings.push({
           field: 'category',
           message: 'The selected category is currently inactive. Using default settings.',
-          suggestion: 'Activate this category in the dashboard.'
+          messageFr: 'La catégorie sélectionnée est inactive. Paramètres par défaut utilisés.'
         });
       }
     }
