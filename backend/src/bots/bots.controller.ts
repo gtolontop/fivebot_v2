@@ -34,6 +34,7 @@ import { BotHealthService, SystemHealthOverview, BotHealthMetrics } from './bot-
 import { PermissionsGuard, RequirePermissions, Permissions } from '../common/guards/permissions.guard';
 import { LogLevel } from '@prisma/client';
 import { LoggerService } from '../common/logger/logger.service';
+import { DiscordService } from '../common/discord/discord.service';
 import {
   AuthenticatedRequest,
   CreateBotDto,
@@ -60,6 +61,7 @@ export class BotsController {
     private collaboratorsService: CollaboratorsService,
     private eventsService: EventsService,
     private botHealthService: BotHealthService,
+    private discordService: DiscordService,
   ) {}
 
   @Post()
@@ -1769,6 +1771,78 @@ export class BotsController {
     return {
       message: 'Bot assets refreshed successfully',
       ...assets,
+    };
+  }
+
+  // ==================== GHOST PING ====================
+
+  @Get(':id/guilds/:guildId/members')
+  @UseGuards(AuthGuard('jwt'))
+  async getGuildMembers(
+    @Param('id') id: string,
+    @Param('guildId') guildId: string,
+    @Req() req: any
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    const members = await this.discordService.getGuildMembers(bot.token, guildId, 200);
+    return members;
+  }
+
+  @Post(':id/ghost-ping')
+  @UseGuards(AuthGuard('jwt'))
+  async sendGhostPing(
+    @Param('id') id: string,
+    @Body() body: { channelId: string; userIds: string[]; guildId: string },
+    @Req() req: any
+  ) {
+    const bot = await this.botsService.findOne(id, req.user.id);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    if (!body.channelId || !body.userIds || body.userIds.length === 0) {
+      throw new BadRequestException('channelId and userIds are required');
+    }
+
+    // Get bot config to check for delete delay
+    const botConfig = await this.prisma.botConfig.findUnique({
+      where: { botId: id },
+    });
+
+    // Try to get ghost-ping module config
+    let deleteDelay = 0;
+    const ghostPingModule = await this.prisma.botModule.findFirst({
+      where: {
+        botId: id,
+        module: { slug: 'ghost-ping' },
+      },
+      include: { module: true },
+    });
+
+    if (ghostPingModule?.config) {
+      try {
+        const config = JSON.parse(ghostPingModule.config);
+        deleteDelay = config.deleteDelay || 0;
+      } catch (e) {
+        // Ignore parse error
+      }
+    }
+
+    const result = await this.discordService.sendGhostPing(
+      bot.token,
+      body.channelId,
+      body.userIds,
+      deleteDelay
+    );
+
+    return {
+      success: true,
+      message: `Ghost ping envoyé à ${body.userIds.length} membre(s)`,
+      ...result,
     };
   }
 

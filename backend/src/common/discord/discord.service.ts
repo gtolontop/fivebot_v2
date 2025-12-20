@@ -497,4 +497,114 @@ export class DiscordService {
   cleanupCache(): void {
     this.cacheService.cleanup();
   }
+
+  /**
+   * Send a ghost ping - sends a message mentioning users and immediately deletes it
+   */
+  async sendGhostPing(
+    botToken: string,
+    channelId: string,
+    userIds: string[],
+    deleteDelay: number = 0
+  ): Promise<{ success: boolean; messageId?: string }> {
+    try {
+      // Build the mention content
+      const mentions = userIds.map(id => `<@${id}>`).join(' ');
+      const content = mentions;
+
+      // Send the message
+      const response = await axios.post(
+        `${this.baseURL}/channels/${channelId}/messages`,
+        { content },
+        {
+          headers: {
+            Authorization: `Bot ${botToken}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 10000,
+        }
+      );
+
+      const messageId = response.data.id;
+
+      // Wait for delay if specified, then delete
+      if (deleteDelay > 0) {
+        await this.delay(deleteDelay);
+      }
+
+      // Delete the message immediately
+      await axios.delete(
+        `${this.baseURL}/channels/${channelId}/messages/${messageId}`,
+        {
+          headers: {
+            Authorization: `Bot ${botToken}`,
+          },
+          timeout: 10000,
+        }
+      );
+
+      return { success: true, messageId };
+    } catch (error) {
+      console.error('Error sending ghost ping:', error);
+
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 403) {
+          throw new HttpException(
+            'Le bot n\'a pas la permission d\'envoyer des messages dans ce channel',
+            HttpStatus.FORBIDDEN
+          );
+        }
+        if (error.response?.status === 404) {
+          throw new HttpException(
+            'Channel non trouvé',
+            HttpStatus.NOT_FOUND
+          );
+        }
+        if (error.response?.status === 429) {
+          throw new HttpException(
+            'Rate limit Discord atteint. Réessaye dans quelques secondes.',
+            HttpStatus.TOO_MANY_REQUESTS
+          );
+        }
+      }
+
+      throw new HttpException(
+        'Erreur lors de l\'envoi du ghost ping',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  /**
+   * Get guild members (limited to first 1000)
+   */
+  async getGuildMembers(botToken: string, guildId: string, limit: number = 100): Promise<any[]> {
+    try {
+      const response = await axios.get(
+        `${this.baseURL}/guilds/${guildId}/members?limit=${Math.min(limit, 1000)}`,
+        {
+          headers: {
+            Authorization: `Bot ${botToken}`,
+          },
+          timeout: 15000,
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching guild members:', error);
+
+      if (axios.isAxiosError(error) && error.response?.status === 403) {
+        throw new HttpException(
+          'Le bot n\'a pas la permission de voir les membres du serveur (Server Members Intent requis)',
+          HttpStatus.FORBIDDEN
+        );
+      }
+
+      throw new HttpException(
+        'Erreur lors de la récupération des membres',
+        HttpStatus.SERVICE_UNAVAILABLE
+      );
+    }
+  }
 }
