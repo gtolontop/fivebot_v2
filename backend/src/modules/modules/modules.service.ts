@@ -348,24 +348,22 @@ export class ModulesService {
     const ownsModule = await this.userOwnsModule(userId, def.slug);
     if (!ownsModule) throw new ForbiddenException('You do not own this module. Purchase it first.');
 
-    const moduleId = slugToId(def.slug);
-
-    const existingNew = await this.prisma.botModule.findUnique({
-      where: { botId_moduleId: { botId, moduleId } },
-    });
-    if (existingNew) throw new BadRequestException('Module is already installed on this bot');
-
-    const oldModule = await this.prisma.module.findUnique({
+    // Get the actual module ID from the database (not the generated one)
+    const dbModule = await this.prisma.module.findUnique({
       where: { slug: def.slug },
       select: { id: true },
-    }).catch(() => null);
+    });
 
-    if (oldModule) {
-      const existingOld = await this.prisma.botModule.findUnique({
-        where: { botId_moduleId: { botId, moduleId: oldModule.id } },
-      });
-      if (existingOld) throw new BadRequestException('Module is already installed on this bot');
+    if (!dbModule) {
+      throw new NotFoundException(`Module "${def.slug}" not found in database. Please restart the server to seed modules.`);
     }
+
+    const moduleId = dbModule.id;
+
+    const existingModule = await this.prisma.botModule.findUnique({
+      where: { botId_moduleId: { botId, moduleId } },
+    });
+    if (existingModule) throw new BadRequestException('Module is already installed on this bot');
 
     if (def.dependencies.length > 0) {
       const installedModules = await this.getBotModules(botId);
