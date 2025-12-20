@@ -8,11 +8,9 @@ export class ModuleSeederService implements OnModuleInit {
   constructor(private readonly prisma: PrismaService) {}
 
   async onModuleInit() {
-    // Only seed in development or when explicitly requested
-    if (process.env.SEED_MODULES === 'true' || process.env.NODE_ENV === 'development') {
-      console.log('🌱 Checking for module seeding...');
-      await this.seedModules();
-    }
+    // Always seed modules to ensure foreign key constraints are satisfied
+    console.log('🌱 Checking for module seeding...');
+    await this.seedModules();
   }
 
   /**
