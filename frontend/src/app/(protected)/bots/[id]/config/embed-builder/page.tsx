@@ -51,8 +51,11 @@ export default function EmbedBuilderPage() {
       const response = await botsAPI.getById(botId);
       setBot(response.data);
       
-      // Load saved templates from config
-      const savedTemplates = response.data.config?.embedTemplates || [];
+      // Load saved templates from config (stored as JSON string)
+      const savedTemplatesRaw = response.data.config?.embedTemplates;
+      const savedTemplates = savedTemplatesRaw ? 
+        (typeof savedTemplatesRaw === 'string' ? JSON.parse(savedTemplatesRaw) : savedTemplatesRaw) 
+        : [];
       setTemplates(savedTemplates);
     } catch (error: any) {
       console.error('Error fetching bot:', error);
@@ -80,7 +83,8 @@ export default function EmbedBuilderPage() {
         updatedTemplates = [...templates, newTemplate];
       }
 
-      await botsAPI.updateConfig(botId, { embedTemplates: updatedTemplates });
+      // Serialize templates to JSON string for storage
+      await botsAPI.updateConfig(botId, { embedTemplates: JSON.stringify(updatedTemplates) });
       setTemplates(updatedTemplates);
       setShowBuilder(false);
       setEditingTemplate(null);
@@ -94,7 +98,8 @@ export default function EmbedBuilderPage() {
   const handleDeleteTemplate = async (templateId: string) => {
     try {
       const updatedTemplates = templates.filter(t => t.id !== templateId);
-      await botsAPI.updateConfig(botId, { embedTemplates: updatedTemplates });
+      // Serialize templates to JSON string for storage
+      await botsAPI.updateConfig(botId, { embedTemplates: JSON.stringify(updatedTemplates) });
       setTemplates(updatedTemplates);
       toast.success('Template deleted');
     } catch (error: any) {
