@@ -59,6 +59,7 @@ export default function EmbedBuilderPage() {
   const [sending, setSending] = useState(false);
   const [selectedGuild, setSelectedGuild] = useState<string>('');
   const [guilds, setGuilds] = useState<any[]>([]);
+  const [channelSearch, setChannelSearch] = useState('');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -101,8 +102,11 @@ export default function EmbedBuilderPage() {
     setLoadingChannels(true);
     try {
       const response = await api.get(`/bots/${botId}/guilds/${guildId}/channels`);
-      // Filter to text channels only (type 0)
-      const textChannels = response.data.filter((c: DiscordChannel) => c.type === 0);
+      // Include text channels (0), announcement channels (5), and voice channels (2) for flexibility
+      const allowedTypes = [0, 5, 2, 13]; // text, announcement, voice, stage
+      const textChannels = response.data
+        .filter((c: DiscordChannel) => allowedTypes.includes(c.type))
+        .sort((a: DiscordChannel, b: DiscordChannel) => a.name.localeCompare(b.name));
       setChannels(textChannels);
     } catch (error: any) {
       console.error('Error fetching channels:', error);
@@ -111,6 +115,10 @@ export default function EmbedBuilderPage() {
       setLoadingChannels(false);
     }
   };
+
+  const filteredChannels = channels.filter(c => 
+    c.name.toLowerCase().includes(channelSearch.toLowerCase())
+  );
 
   const handleSaveEmbed = async (data: any[]) => {
     try {
@@ -174,6 +182,7 @@ export default function EmbedBuilderPage() {
     setSelectedChannel('');
     setSelectedGuild('');
     setChannels([]);
+    setChannelSearch('');
   };
 
   const handleSendEmbed = async () => {
@@ -403,9 +412,9 @@ export default function EmbedBuilderPage() {
       {/* Send Modal */}
       {showSendModal && sendingTemplate && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1a1a24] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl">
+          <div className="bg-[#1a1a24] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-white/10">
+            <div className="flex items-center justify-between p-6 border-b border-white/10 flex-shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center">
                   <PaperAirplaneIcon className="w-5 h-5 text-green-400" />
@@ -424,28 +433,47 @@ export default function EmbedBuilderPage() {
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
               {/* Server Select */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Select Server
                 </label>
-                <select
-                  value={selectedGuild}
-                  onChange={(e) => {
-                    setSelectedGuild(e.target.value);
-                    setSelectedChannel('');
-                    fetchChannels(e.target.value);
-                  }}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors"
-                >
-                  <option value="">Choose a server...</option>
-                  {guilds.map((guild) => (
-                    <option key={guild.id} value={guild.id}>
-                      {guild.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="space-y-1 max-h-40 overflow-y-auto bg-[#0f0f15] rounded-xl p-2">
+                  {guilds.length === 0 ? (
+                    <p className="text-gray-500 text-sm text-center py-3">No servers available</p>
+                  ) : (
+                    guilds.map((guild) => (
+                      <button
+                        key={guild.id}
+                        onClick={() => {
+                          setSelectedGuild(guild.id);
+                          setSelectedChannel('');
+                          setChannelSearch('');
+                          fetchChannels(guild.id);
+                        }}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
+                          selectedGuild === guild.id
+                            ? 'bg-indigo-600/30 text-white border border-indigo-500/50'
+                            : 'text-gray-300 hover:bg-white/5'
+                        }`}
+                      >
+                        {guild.icon ? (
+                          <img
+                            src={`https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png?size=32`}
+                            alt=""
+                            className="w-6 h-6 rounded-full"
+                          />
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center text-xs">
+                            {guild.name?.charAt(0)}
+                          </div>
+                        )}
+                        <span className="truncate">{guild.name}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
               </div>
 
               {/* Channel Select */}
@@ -454,30 +482,56 @@ export default function EmbedBuilderPage() {
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Select Channel
                   </label>
+                  
+                  {/* Search Input */}
+                  <div className="relative mb-2">
+                    <input
+                      type="text"
+                      value={channelSearch}
+                      onChange={(e) => setChannelSearch(e.target.value)}
+                      placeholder="Search channels..."
+                      className="w-full bg-[#0f0f15] border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                    />
+                    <HashtagIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                  </div>
+
                   {loadingChannels ? (
-                    <div className="flex items-center justify-center py-4">
+                    <div className="flex items-center justify-center py-8">
                       <div className="w-6 h-6 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
                     </div>
                   ) : (
-                    <select
-                      value={selectedChannel}
-                      onChange={(e) => setSelectedChannel(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors"
-                    >
-                      <option value="">Choose a channel...</option>
-                      {channels.map((channel) => (
-                        <option key={channel.id} value={channel.id}>
-                          # {channel.name}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="space-y-1 max-h-48 overflow-y-auto bg-[#0f0f15] rounded-xl p-2">
+                      {filteredChannels.length === 0 ? (
+                        <p className="text-gray-500 text-sm text-center py-3">
+                          {channelSearch ? 'No channels match your search' : 'No channels available'}
+                        </p>
+                      ) : (
+                        filteredChannels.map((channel) => (
+                          <button
+                            key={channel.id}
+                            onClick={() => setSelectedChannel(channel.id)}
+                            className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left transition-colors ${
+                              selectedChannel === channel.id
+                                ? 'bg-green-600/30 text-white border border-green-500/50'
+                                : 'text-gray-300 hover:bg-white/5'
+                            }`}
+                          >
+                            <HashtagIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                            <span className="truncate">{channel.name}</span>
+                            {channel.type === 5 && (
+                              <span className="text-xs bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded ml-auto">Annonce</span>
+                            )}
+                          </button>
+                        ))
+                      )}
+                    </div>
                   )}
                 </div>
               )}
             </div>
 
             {/* Modal Footer */}
-            <div className="flex items-center gap-3 p-6 border-t border-white/10">
+            <div className="flex items-center gap-3 p-6 border-t border-white/10 flex-shrink-0">
               <button
                 onClick={() => setShowSendModal(false)}
                 className="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 text-gray-300 rounded-xl font-medium transition-colors"
