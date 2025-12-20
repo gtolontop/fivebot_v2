@@ -452,6 +452,16 @@ export class BotsController {
     return this.botsService.getGuildRoles(id, guildId, req.user.id);
   }
 
+  @Post(':id/send-embed')
+  @UseGuards(AuthGuard('jwt'))
+  async sendEmbed(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Body() body: { channelId: string; embedData: any[] },
+  ) {
+    return this.botsService.sendV2Embed(id, req.user.id, body.channelId, body.embedData);
+  }
+
   @Get(':id/metrics')
   @UseGuards(AuthGuard('jwt'), PermissionsGuard)
   @RequirePermissions(Permissions.VIEW_METRICS)

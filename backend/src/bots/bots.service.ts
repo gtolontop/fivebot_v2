@@ -1227,6 +1227,86 @@ export class BotsService {
     }
   }
 
+  async sendV2Embed(botId: string, ownerId: string, channelId: string, embedData: any[]): Promise<{ success: boolean; messageId?: string }> {
+    const bot = await this.findOne(botId, ownerId);
+    if (!bot) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    if (bot.status !== BotStatus.ONLINE) {
+      throw new BadRequestException('Bot must be online to send messages');
+    }
+
+    try {
+      const decryptedToken = this.encryptionService.decrypt(bot.tokenEncrypted);
+      
+      // Build the message payload with V2 components
+      const messagePayload: any = {
+        components: embedData.map(container => ({
+          type: container.type, // 17 for Container
+          accent_color: container.accent_color,
+          components: container.components?.map((comp: any) => {
+            // Process each component type
+            if (comp.type === 10) { // Text
+              return { type: 10, content: comp.content };
+            } else if (comp.type === 14) { // Divider
+              return { type: 14, divider: true, spacing: comp.spacing || 1 };
+            } else if (comp.type === 12) { // Media Gallery
+              return {
+                type: 12,
+                items: comp.items?.map((item: any) => ({
+                  media: { url: item.media?.url || item.url },
+                  description: item.description,
+                  spoiler: item.spoiler,
+                })) || [],
+              };
+            } else if (comp.type === 1) { // Action Row
+              return {
+                type: 1,
+                components: comp.components?.map((btn: any) => ({
+                  type: 2, // Button
+                  style: btn.style || 1,
+                  label: btn.label,
+                  url: btn.url,
+                  custom_id: btn.custom_id,
+                  emoji: btn.emoji,
+                  disabled: btn.disabled,
+                })) || [],
+              };
+            }
+            return comp;
+          }) || [],
+        })),
+        flags: 32768, // IS_COMPONENTS_V2 flag
+      };
+
+      // Send message via Discord API
+      const response = await fetch(`https://discord.com/api/v10/channels/${channelId}/messages`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bot ${decryptedToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(messagePayload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        this.logger.error('Discord API error:', errorData);
+        throw new BadRequestException(errorData.message || 'Failed to send message to Discord');
+      }
+
+      const messageData = await response.json();
+      
+      this.logger.log(`✅ Sent V2 embed to channel ${channelId} via bot ${bot.name}`);
+      
+      return { success: true, messageId: messageData.id };
+    } catch (error: any) {
+      this.logger.error('Error sending V2 embed:', error);
+      throw new BadRequestException(error.message || 'Failed to send embed');
+    }
+  }
+
   // Method to check if bot is actually connected to Discord
   async checkDiscordConnectionStatus(botId: string): Promise<{ isConnected: boolean; lastSeen?: Date }> {
     try {
