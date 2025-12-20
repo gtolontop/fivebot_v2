@@ -49,11 +49,6 @@ export default function ModuleConfigPage() {
   const [guildChannels, setGuildChannels] = useState<any[]>([]);
   const [uploading, setUploading] = useState(false);
   const [botHighestRole, setBotHighestRole] = useState<number>(0);
-  const [guildMembers, setGuildMembers] = useState<any[]>([]);
-  const [ghostPingChannel, setGhostPingChannel] = useState<string>('');
-  const [ghostPingUsers, setGhostPingUsers] = useState<string[]>([]);
-  const [sendingGhostPing, setSendingGhostPing] = useState(false);
-  const [memberSearch, setMemberSearch] = useState<string>('');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -160,51 +155,8 @@ export default function ModuleConfigPage() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setGuildChannels(channelsRes.data);
-
-      // Fetch members for ghost ping
-      if (moduleSlug === 'ghost-ping') {
-        try {
-          const membersRes = await axios.get(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/bots/${botId}/guilds/${guildId}/members`,
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          setGuildMembers(membersRes.data);
-        } catch (e) {
-          console.error('Error fetching members:', e);
-        }
-      }
     } catch (error) {
       console.error('Error fetching guild data:', error);
-    }
-  };
-
-  const sendGhostPing = async () => {
-    if (!ghostPingChannel || ghostPingUsers.length === 0) {
-      toast.error('Sélectionne un channel et au moins un membre');
-      return;
-    }
-
-    try {
-      setSendingGhostPing(true);
-      const token = Cookies.get('token');
-
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/bots/${botId}/ghost-ping`,
-        {
-          channelId: ghostPingChannel,
-          userIds: ghostPingUsers,
-          guildId: selectedGuild,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      toast.success('Ghost ping envoyé !');
-      setGhostPingUsers([]);
-    } catch (error: any) {
-      const message = error.response?.data?.message || 'Erreur lors de l\'envoi du ghost ping';
-      toast.error(message);
-    } finally {
-      setSendingGhostPing(false);
     }
   };
 
@@ -350,7 +302,7 @@ export default function ModuleConfigPage() {
       )}
 
       {/* Guild Selector */}
-      {guilds.length > 0 && (Object.keys(configSchema).length > 0 || moduleSlug === 'ghost-ping') && (
+      {guilds.length > 0 && Object.keys(configSchema).length > 0 && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <label className="block text-sm font-medium text-blue-900 mb-2">
             Sélectionner un serveur
@@ -372,80 +324,6 @@ export default function ModuleConfigPage() {
         </div>
       )}
 
-      {/* Ghost Ping Action Panel */}
-      {moduleSlug === 'ghost-ping' && selectedGuild && (
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className={designTokens.typography.h4 + ' mb-4'}>👻 Envoyer un Ghost Ping</h3>
-          <p className="text-sm text-gray-500 mb-6">
-            Envoie un ping invisible à un ou plusieurs membres. Le message sera supprimé instantanément après l'envoi.
-          </p>
-
-          <div className="space-y-4">
-            {/* Channel selector */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Channel où envoyer le ping
-              </label>
-              <CustomSelect
-                options={guildChannels
-                  .filter((ch) => ch.type === 0 || ch.type === 5)
-                  .map((channel) => ({
-                    value: channel.id,
-                    label: channel.name,
-                    icon: '#'
-                  }))}
-                value={ghostPingChannel}
-                onChange={setGhostPingChannel}
-                placeholder={guildChannels.length === 0 ? "Chargement..." : "Sélectionner un channel"}
-                searchable={guildChannels.length > 10}
-              />
-            </div>
-
-            {/* Members selector */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Membres à ping
-              </label>
-              <CustomMultiSelect
-                options={guildMembers
-                  .filter(m => !m.user?.bot)
-                  .map((member) => ({
-                    value: member.user?.id || member.id,
-                    label: member.user?.username || member.username || 'Unknown',
-                    icon: member.user?.avatar
-                      ? `https://cdn.discordapp.com/avatars/${member.user.id}/${member.user.avatar}.png?size=32`
-                      : undefined
-                  }))}
-                values={ghostPingUsers}
-                onChange={setGhostPingUsers}
-                placeholder={guildMembers.length === 0 ? "Chargement des membres..." : "Sélectionner des membres"}
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Tu peux sélectionner plusieurs membres
-              </p>
-            </div>
-
-            {/* Send button */}
-            <button
-              onClick={sendGhostPing}
-              disabled={sendingGhostPing || !ghostPingChannel || ghostPingUsers.length === 0}
-              className="w-full px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-            >
-              {sendingGhostPing ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Envoi en cours...</span>
-                </>
-              ) : (
-                <>
-                  <span>👻</span>
-                  <span>Envoyer le Ghost Ping</span>
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Configuration Form */}
       {Object.keys(configSchema).length > 0 ? (

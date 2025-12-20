@@ -854,57 +854,57 @@ This module is automatically included with every bot and cannot be disabled.`,
   {
     slug: 'ghost-ping',
     name: 'Ghost Ping',
-    description: 'Ping members invisibly - message deletes immediately after pinging',
-    longDescription: `Ghost Ping allows staff to get someone's attention without leaving a trace:
+    description: 'Ping automatiquement les nouveaux membres - le message se supprime instantanément',
+    longDescription: `Ghost Ping notifie automatiquement les nouveaux membres quand ils rejoignent:
 
-**How it works:**
-1. Staff member uses /ghostping @user
-2. Bot pings the user
-3. Message is immediately deleted
-4. User receives notification but ping is gone
+**Comment ça marche:**
+1. Un nouveau membre rejoint le serveur
+2. Le bot ping le membre dans le channel configuré
+3. Le message est immédiatement supprimé
+4. Le membre reçoit la notification mais le ping disparaît
 
-**Use Cases:**
-- Get someone's attention discreetly
-- Alert staff members without cluttering chat
-- Summon users to a channel quietly
+**Cas d'utilisation:**
+- Attirer l'attention des nouveaux sur un channel important
+- Notification discrète sans polluer le chat
+- S'assurer que les nouveaux voient les règles/infos
 
-**Features:**
-- Instant message deletion
-- Optional reason logging
-- Staff-only command
-- Multiple users at once`,
+**Fonctionnalités:**
+- Ping automatique à l'arrivée
+- Suppression instantanée du message
+- Channel configurable
+- Délai de suppression personnalisable`,
     category: 'UTILITY',
     price: 0,
     icon: '👻',
-    version: '1.0.0',
+    version: '1.1.0',
     author: 'FiveBot',
-    tags: ['utility', 'ping', 'ghost', 'staff', 'moderation'],
+    tags: ['utility', 'ping', 'ghost', 'welcome', 'nouveaux'],
     features: [
-      'Instant ping deletion',
-      'Multiple user pings',
-      'Staff-only access',
-      'Optional logging',
+      'Ping automatique des nouveaux membres',
+      'Suppression instantanée',
+      'Channel configurable',
+      'Délai personnalisable',
     ],
     dependencies: [],
     configSchema: {
       type: 'object',
       properties: {
-        logChannel: {
-          type: 'channel',
-          label: 'Log Channel',
-          description: 'Channel to log ghost pings (optional)',
+        enabled: {
+          type: 'boolean',
+          label: 'Activer le Ghost Ping',
+          description: 'Activer le ping automatique des nouveaux membres',
+          default: true,
         },
-        allowedRoles: {
-          type: 'roles',
-          multiple: true,
-          label: 'Allowed Roles',
-          description: 'Roles that can use ghost ping (empty = staff roles)',
+        pingChannel: {
+          type: 'channel',
+          label: 'Channel de ping',
+          description: 'Channel où ping les nouveaux membres à leur arrivée',
         },
         deleteDelay: {
           type: 'number',
-          label: 'Delete Delay (ms)',
-          description: 'How long to wait before deleting (0 = instant)',
-          default: 0,
+          label: 'Délai de suppression (ms)',
+          description: 'Temps avant de supprimer le ping (0 = instantané)',
+          default: 100,
           min: 0,
           max: 5000,
         },

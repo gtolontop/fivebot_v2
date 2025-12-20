@@ -1788,7 +1788,8 @@ export class BotsController {
       throw new NotFoundException('Bot not found');
     }
 
-    const members = await this.discordService.getGuildMembers(bot.token, guildId, 200);
+    const decryptedToken = await this.botsService.getDecryptedToken(id);
+    const members = await this.discordService.getGuildMembers(decryptedToken, guildId, 200);
     return members;
   }
 
@@ -1807,11 +1808,6 @@ export class BotsController {
     if (!body.channelId || !body.userIds || body.userIds.length === 0) {
       throw new BadRequestException('channelId and userIds are required');
     }
-
-    // Get bot config to check for delete delay
-    const botConfig = await this.prisma.botConfig.findUnique({
-      where: { botId: id },
-    });
 
     // Try to get ghost-ping module config
     let deleteDelay = 0;
@@ -1832,8 +1828,9 @@ export class BotsController {
       }
     }
 
+    const decryptedToken = await this.botsService.getDecryptedToken(id);
     const result = await this.discordService.sendGhostPing(
-      bot.token,
+      decryptedToken,
       body.channelId,
       body.userIds,
       deleteDelay
