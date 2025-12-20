@@ -975,66 +975,6 @@ This module is automatically included with every bot and cannot be disabled.`,
     },
     isCore: false,
   },
-
-  // ==================== CUSTOM COMMANDS ====================
-  {
-    slug: 'custom-commands',
-    name: 'Custom Commands',
-    description: 'Create unlimited custom bot commands with responses',
-    longDescription: `Create your own custom commands with powerful features:
-
-**Features:**
-- Unlimited custom commands
-- Text or embed responses
-- Variable support ({user}, {server}, {channel})
-- Permission restrictions
-- Cooldown system per command
-- Aliases support
-
-**Response Types:**
-- Plain text messages
-- Rich embeds with fields
-- Random responses (pick one from list)
-- Conditional responses
-
-**Variables Available:**
-- {user} - Command user
-- {server} - Server name
-- {channel} - Channel name
-- {args} - Command arguments`,
-    category: 'CUSTOM',
-    price: 0,
-    icon: '⚙️',
-    version: '1.2.0',
-    author: 'FiveBot',
-    tags: ['commands', 'custom', 'utility', 'responses'],
-    features: [
-      'Unlimited custom commands',
-      'Text and embed responses',
-      'Variable system',
-      'Permission control',
-      'Cooldown system',
-      'Command aliases',
-    ],
-    dependencies: ['framework-core'],
-    configSchema: {
-      type: 'object',
-      properties: {
-        prefix: {
-          type: 'string',
-          title: 'Command Prefix',
-          default: '!',
-          maxLength: 5,
-        },
-        allowEditing: {
-          type: 'boolean',
-          title: 'Allow moderators to edit commands',
-          default: true,
-        },
-      },
-    },
-    isCore: false,
-  },
 ];
 
 /**
