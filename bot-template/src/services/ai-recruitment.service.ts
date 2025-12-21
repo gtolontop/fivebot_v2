@@ -61,7 +61,7 @@ export class AIRecruitmentService {
 
       // Store the config for later use
       this.aiConfig = {
-        model: config.model || 'gpt-4o-mini',
+        model: config.model || 'gpt-5-nano',
         temperature: config.temperature || 0.7,
         maxTokens: config.maxTokens || 500,
         personality: config.personality || 'friendly',
