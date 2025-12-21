@@ -116,13 +116,6 @@ export class SmartAIService {
       return { should: false, reason: 'Bot message' };
     }
 
-    // Check for @everyone or @here - don't respond unless specifically asked
-    if (this.IGNORE_KEYWORDS.some(k => message.content.includes(k))) {
-      if (!message.mentions.has(this.client.user!.id)) {
-        return { should: false, reason: '@everyone/@here without mentioning bot' };
-      }
-    }
-
     // Don't respond in partner/announcement channels unless mentioned
     if (context.isPartnerChannel || context.isAnnouncementChannel) {
       if (!message.mentions.has(this.client.user!.id)) {
@@ -138,6 +131,12 @@ export class SmartAIService {
     // If bot is mentioned, respond
     if (message.mentions.has(this.client.user!.id)) {
       return { should: true, reason: 'Bot mentioned' };
+    }
+
+    // For @everyone/@here - let the AI decide if it should respond based on relevance
+    // The AI will check if the message is relevant and respond accordingly
+    if (this.IGNORE_KEYWORDS.some(k => message.content.includes(k))) {
+      return { should: true, reason: '@everyone/@here - AI will decide if relevant' };
     }
 
     // Default: don't respond to random messages
@@ -242,12 +241,13 @@ YOUR CAPABILITIES:
 
 RULES:
 1. If asked to reply/message in another channel, do it via action
-2. NEVER respond to @everyone/@here unless specifically asked
+2. For @everyone/@here messages: ONLY respond if it's RELEVANT and you can add value (e.g. answering a question). If it's just an announcement, set shouldRespond to false.
 3. NEVER respond in partner/announcement channels unless mentioned
 4. Keep responses SHORT (2-4 sentences max)
 5. Match the user's language (French/English)
 6. Be helpful and proactive
 7. If asked to ping someone in a channel, include the ping in the message
+8. If the message doesn't need a response from you, set shouldRespond to false
 
 RESPONSE FORMAT (JSON):
 {
