@@ -146,6 +146,7 @@ export class AIRecruitmentService {
     description?: string;
     priority?: string;
     createdBy?: string;
+    createdById?: string;
   }> {
     try {
       // Fetch the first few messages to find the ticket embed
@@ -173,7 +174,14 @@ export class AIRecruitmentService {
             // Extract fields
             for (const field of embed.fields || []) {
               if (field.name === 'Priority') result.priority = field.value;
-              if (field.name === 'Created By') result.createdBy = field.value;
+              if (field.name === 'Created By') {
+                result.createdBy = field.value;
+                // Extract user ID from mention format <@123456789> or @username
+                const idMatch = field.value.match(/<@!?(\d+)>/);
+                if (idMatch) {
+                  result.createdById = idMatch[1];
+                }
+              }
             }
 
             return result;
@@ -273,8 +281,13 @@ export class AIRecruitmentService {
 
   /**
    * Check if a message in a ticket is directed at the AI or needs AI response
+   * @param message The message to check
+   * @param ticketOpenerId The ID of the user who opened the ticket (the customer)
    */
-  private async isMessageForTicketAI(message: Message): Promise<boolean> {
+  private async isMessageForTicketAI(message: Message, ticketOpenerId?: string): Promise<boolean> {
+    const isTicketOpener = ticketOpenerId && message.author.id === ticketOpenerId;
+    const isStaff = ticketOpenerId && message.author.id !== ticketOpenerId;
+
     // Direct mention always gets a response
     if (message.mentions.has(this.client.user!.id)) {
       return true;
@@ -297,9 +310,38 @@ export class AIRecruitmentService {
       }
     }
 
+    // STAFF DETECTION: If message is from staff (not ticket opener), be very conservative
+    // Staff are like "colleagues" helping the customer - AI should not respond to them
+    // unless they explicitly ask the AI something
+    if (isStaff) {
+      const content = message.content.toLowerCase();
+
+      // Staff must explicitly address the AI
+      const staffAIIndicators = [
+        'bot', 'ai', 'assistant', 'ia',
+        '@', // Trying to mention
+      ];
+
+      const isAskingAI = staffAIIndicators.some(i => content.includes(i));
+
+      if (!isAskingAI) {
+        console.log(`[TicketAI] Skipping - staff message (not ticket opener), not directed at AI: "${message.content.substring(0, 50)}..."`);
+        return false;
+      }
+
+      // Even if mentioning AI concepts, staff needs to be asking a question
+      if (!content.includes('?')) {
+        console.log(`[TicketAI] Skipping - staff message without question mark`);
+        return false;
+      }
+
+      return true;
+    }
+
+    // From here, message is either from ticket opener OR we don't know who opened it
     const content = message.content.toLowerCase();
 
-    // Check for question words or help-seeking behavior
+    // Check for question words or help-seeking behavior (for ticket opener)
     const helpIndicators = [
       '?', 'help', 'aide', 'problem', 'problème', 'issue', 'error', 'erreur',
       'how', 'comment', 'what', 'quoi', 'why', 'pourquoi', 'can you', 'peux-tu',
@@ -310,24 +352,29 @@ export class AIRecruitmentService {
       return true;
     }
 
+    // If we know this is the ticket opener, be more responsive
+    if (isTicketOpener) {
+      // Ticket opener's messages are usually relevant
+      if (content.length >= 15) {
+        return true;
+      }
+    }
+
     // Check recent messages to see if there's a conversation between users
     try {
       const recentMessages = await message.channel.messages.fetch({ limit: 5 });
       const nonBotMessages = recentMessages.filter(m => !m.author.bot && m.id !== message.id);
       const uniqueUsers = new Set(nonBotMessages.map(m => m.author.id));
 
-      // If there are multiple users chatting, check if message is clearly for the AI
+      // If there are multiple users chatting (staff + customer), be conservative
       if (uniqueUsers.size > 1) {
-        // Multiple users in channel - be more conservative
-        // Only respond if message seems directed at bot
-        const mentionsBotConcept = content.includes('bot') || content.includes('ai') || content.includes('assistant');
-        if (!mentionsBotConcept && content.length < 100) {
-          console.log(`[TicketAI] Skipping - multiple users chatting, message not clearly for AI`);
-          return false;
-        }
+        // Multiple users in channel - check if staff is helping
+        // In this case, AI should stay quiet unless explicitly asked
+        console.log(`[TicketAI] Multiple users in ticket - staying quiet unless explicitly asked`);
+        return false;
       }
     } catch {
-      // Ignore errors, default to responding
+      // Ignore errors
     }
 
     // If the message is long enough, assume it might be relevant
@@ -357,8 +404,15 @@ export class AIRecruitmentService {
       return;
     }
 
+    // Get ticket opener ID to distinguish customer from staff
+    const channel = message.channel as TextChannel | ThreadChannel;
+    const ticketInfo = await this.getTicketEmbedInfo(channel);
+    const ticketOpenerId = ticketInfo.createdById || ticket.creatorId;
+
+    console.log(`[TicketAI] Message from ${message.author.id}, ticket opened by ${ticketOpenerId}`);
+
     // Check if the message is directed at the AI or needs AI response
-    const isForAI = await this.isMessageForTicketAI(message);
+    const isForAI = await this.isMessageForTicketAI(message, ticketOpenerId);
     if (!isForAI) {
       console.log(`[TicketAI] Skipping message - not directed at AI: "${message.content.substring(0, 50)}..."`);
       return;
