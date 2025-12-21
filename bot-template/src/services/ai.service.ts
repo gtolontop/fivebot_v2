@@ -150,14 +150,15 @@ export class AIService {
   private initializeGemini(): void {
     try {
       this.gemini = new GoogleGenerativeAI(this.GEMINI_API_KEY);
+      // Use gemini-1.5-flash which is stable and fast
       this.geminiModel = this.gemini.getGenerativeModel({
-        model: 'gemini-2.0-flash-exp',
+        model: 'gemini-1.5-flash',
         generationConfig: {
           maxOutputTokens: 1000,
           temperature: 0.8,
         }
       });
-      console.log('[AI] ✅ Gemini 2.0 Flash initialized');
+      console.log('[AI] ✅ Gemini 1.5 Flash initialized');
     } catch (error) {
       console.error('[AI] ❌ Failed to initialize Gemini:', error);
     }
@@ -205,7 +206,7 @@ export class AIService {
         // Estimate tokens (Gemini doesn't always return usage)
         const estimatedTokens = Math.ceil((fullPrompt.length + text.length) / 4);
 
-        console.log('[AI] ✅ Gemini response generated successfully');
+        console.log('[AI] ✅ Gemini 1.5 Flash response generated successfully');
         return { text, tokens: estimatedTokens, provider: 'gemini' };
       } catch (error: any) {
         console.error('[AI] ⚠️ Gemini error, falling back to OpenAI:', error.message);
@@ -583,8 +584,8 @@ export class AIService {
 
       const responseTime = Date.now() - startTime;
 
-      // Calculate cost (Gemini is free/very cheap)
-      const modelForCost = usedProvider === 'gemini' ? 'gemini-2.0-flash' : config.model;
+      // Calculate cost (Gemini is very cheap)
+      const modelForCost = usedProvider === 'gemini' ? 'gemini-1.5-flash' : config.model;
       const cost = this.calculateCost(modelForCost, promptTokens, completionTokens);
 
       // Log usage
@@ -592,7 +593,7 @@ export class AIService {
         configId: config.id,
         guildId: effectiveGuildId!,
         userId: message.author.id,
-        model: usedProvider === 'gemini' ? 'gemini-2.0-flash' : config.model,
+        model: usedProvider === 'gemini' ? 'gemini-1.5-flash' : config.model,
         promptTokens,
         completionTokens,
         totalTokens,
@@ -799,22 +800,34 @@ export class AIService {
 
     const content = message.content.toLowerCase();
 
-    // Quick check for question words that indicate someone needs help
-    const questionWords = [
-      // English
+    // Quick check for question/request words
+    const requestWords = [
+      // English questions
       'what', 'why', 'how', 'when', 'where', 'who', 'which', 'whom',
-      'can you', 'could you', 'would you', 'will you', 'do you',
+      // English requests (including "can i", "could i", etc.)
+      'can i', 'can you', 'could i', 'could you', 'would you', 'will you', 'do you',
+      'please', 'pls', 'plz', 'show me', 'tell me', 'give me', 'make me', 'let me',
+      'i want', 'i need', 'i would like',
       'help', 'question', 'problem', 'issue', 'error', 'bug',
-      'need help', 'i need', 'how do i', 'how to',
+      'need help', 'how do i', 'how to',
       // French
       'quoi', 'pourquoi', 'comment', 'quand', 'où', 'qui', 'quel', 'quelle',
       'peux-tu', 'pouvez-vous', 'est-ce que', 'c\'est quoi',
+      'montre', 'montre-moi', 'dis-moi', 'donne-moi', 'fais-moi',
+      'je veux', 'j\'ai besoin', 'j\'aimerais',
       'aide', 'aidez', 'problème', 'erreur', 'bug',
-      'besoin d\'aide', 'j\'ai besoin', 'comment faire'
+      'besoin d\'aide', 'comment faire', 's\'il te plait', 'stp', 'svp'
     ];
 
-    // If message contains question words and ends with ? it's likely a question
-    if (content.includes('?') && questionWords.some(w => content.includes(w))) {
+    // If message contains request words, it's likely directed at the bot
+    if (requestWords.some(w => content.includes(w))) {
+      console.log('[AI] Message contains request words, responding');
+      return true;
+    }
+
+    // If message ends with ? it's likely a question
+    if (content.trim().endsWith('?')) {
+      console.log('[AI] Message ends with ?, responding');
       return true;
     }
 
@@ -825,15 +838,8 @@ export class AIService {
       return true;
     }
 
-    // For short messages without clear direction, skip
-    if (content.length < 50 && !content.includes('?')) {
-      console.log(`[AI] Skipping short non-question message: "${content.substring(0, 50)}..."`);
-      return false;
-    }
-
-    // For longer messages, use AI to determine if it needs a response
-    // This is expensive so only do it for ambiguous cases
-    if (config.apiKey && content.length >= 50) {
+    // For ambiguous longer messages, use AI to determine if it needs a response
+    if (config.apiKey && content.length >= 30) {
       try {
         const decisionResult = await this.askAIToDecideWithReason(message, config);
         console.log(`[AI] AI decision for message "${content.substring(0, 50)}...": ${decisionResult.decision}, reason: ${decisionResult.reason}`);
@@ -846,12 +852,13 @@ export class AIService {
         return decisionResult.decision;
       } catch (error) {
         console.error('[AI] Error asking AI to decide:', error);
-        // Default to not responding on error
-        return false;
+        // Default to responding on error (better to respond than miss a message)
+        return true;
       }
     }
 
-    return false;
+    // Default: respond to any message that passed all filters
+    return true;
   }
 
   /**
