@@ -1,7 +1,8 @@
-import { Client, Message, EmbedBuilder } from 'discord.js';
+import { Client, Message, EmbedBuilder, TextChannel } from 'discord.js';
 import OpenAI from 'openai';
 import { PrismaClient } from '@prisma/client';
 import { decrypt, encrypt } from '../utils/encryption';
+import { RemindersService } from './reminders.service';
 
 interface AIConfig {
   id: string;
@@ -85,6 +86,7 @@ export class AIService {
   private tokenUsageCache: Map<string, { tokens: number; resetAt: number }> = new Map();
   private conversationCache: Map<string, ConversationContext[]> = new Map();
   private processedMessages: Map<string, number> = new Map(); // messageId -> timestamp
+  private remindersService: RemindersService;
 
   // Advanced features
   private userPreferencesCache: Map<string, UserPreferences> = new Map();
@@ -110,6 +112,7 @@ export class AIService {
   constructor(client: Client, prisma?: PrismaClient) {
     this.client = client;
     this.prisma = prisma || new PrismaClient();
+    this.remindersService = new RemindersService();
 
     // Initialize advanced learning features automatically
     this.initializeAdvancedFeatures().catch(err => {
@@ -348,6 +351,28 @@ export class AIService {
       return;
     }
 
+    // Check for action commands (reminders, todos, etc.) BEFORE AI processing
+    const actionResult = await this.checkAndExecuteAction(message, config);
+    if (actionResult) {
+      // Show typing while generating response
+      if ('sendTyping' in message.channel) {
+        await message.channel.sendTyping();
+      }
+
+      // Generate an intelligent, personalized response
+      const aiResponse = await this.generateActionResponse(message, config, actionResult);
+
+      await message.reply({
+        embeds: [
+          new EmbedBuilder()
+            .setColor(actionResult.success ? '#00FF00' : '#FF6600')
+            .setDescription(aiResponse)
+            .setFooter({ text: actionResult.success ? '✅ Done' : '⚠️ Issue' })
+        ]
+      });
+      return;
+    }
+
     // Show typing indicator
     if (config.typingIndicator && 'sendTyping' in message.channel) {
       await message.channel.sendTyping();
@@ -489,12 +514,8 @@ export class AIService {
         await thinkingMessage.delete();
       }
 
-      // Add response delay if configured
-      if (config.responseDelay > 0) {
-        await new Promise(resolve => setTimeout(resolve, config.responseDelay));
-      }
-
-      // Send response
+      // No fake delay - the real AI generation already takes time
+      // Send response immediately
       await this.sendResponse(message, aiResponse, config, {
         tokens: response.usage?.total_tokens || 0,
         cost,
@@ -809,6 +830,314 @@ ${recentContext}`
       reason: 'Décision automatique basée sur le contenu',
       isComplex: false
     };
+  }
+
+  /**
+   * Parse time expression like "dans 2h", "in 30 minutes", "demain", etc.
+   */
+  private parseTimeExpression(text: string): Date | null {
+    const now = new Date();
+    const lowerText = text.toLowerCase();
+
+    // Pattern matching for various time expressions
+    const patterns = [
+      // French patterns
+      { regex: /dans\s+(\d+)\s*(h|heure|heures)/i, unit: 'hours' },
+      { regex: /dans\s+(\d+)\s*(m|min|minute|minutes)/i, unit: 'minutes' },
+      { regex: /dans\s+(\d+)\s*(s|sec|seconde|secondes)/i, unit: 'seconds' },
+      { regex: /dans\s+(\d+)\s*(j|jour|jours)/i, unit: 'days' },
+      // English patterns
+      { regex: /in\s+(\d+)\s*(h|hour|hours)/i, unit: 'hours' },
+      { regex: /in\s+(\d+)\s*(m|min|minute|minutes)/i, unit: 'minutes' },
+      { regex: /in\s+(\d+)\s*(s|sec|second|seconds)/i, unit: 'seconds' },
+      { regex: /in\s+(\d+)\s*(d|day|days)/i, unit: 'days' },
+    ];
+
+    for (const pattern of patterns) {
+      const match = lowerText.match(pattern.regex);
+      if (match) {
+        const value = parseInt(match[1]);
+        const resultDate = new Date(now);
+
+        switch (pattern.unit) {
+          case 'seconds':
+            resultDate.setSeconds(resultDate.getSeconds() + value);
+            break;
+          case 'minutes':
+            resultDate.setMinutes(resultDate.getMinutes() + value);
+            break;
+          case 'hours':
+            resultDate.setHours(resultDate.getHours() + value);
+            break;
+          case 'days':
+            resultDate.setDate(resultDate.getDate() + value);
+            break;
+        }
+        return resultDate;
+      }
+    }
+
+    // Special keywords
+    if (lowerText.includes('demain') || lowerText.includes('tomorrow')) {
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(9, 0, 0, 0); // Default to 9 AM
+      return tomorrow;
+    }
+
+    if (lowerText.includes('ce soir') || lowerText.includes('tonight')) {
+      const tonight = new Date(now);
+      tonight.setHours(20, 0, 0, 0); // 8 PM
+      if (tonight <= now) tonight.setDate(tonight.getDate() + 1);
+      return tonight;
+    }
+
+    return null;
+  }
+
+  /**
+   * Extract reminder content from message
+   */
+  private extractReminderContent(text: string): string {
+    // Remove common phrases
+    const cleanText = text
+      .replace(/rappelle[- ]?moi/gi, '')
+      .replace(/remind me/gi, '')
+      .replace(/dans\s+\d+\s*(h|heure|heures|m|min|minute|minutes|j|jour|jours|s|sec|seconde|secondes)/gi, '')
+      .replace(/in\s+\d+\s*(h|hour|hours|m|min|minute|minutes|d|day|days|s|sec|second|seconds)/gi, '')
+      .replace(/demain|tomorrow|ce soir|tonight/gi, '')
+      .replace(/de\s+|to\s+|pour\s+|about\s+|que\s+/gi, '')
+      .trim();
+
+    return cleanText || 'Rappel';
+  }
+
+  /**
+   * Check if message contains an action command and execute it
+   * Returns the action info if executed (to be confirmed by AI), null otherwise
+   */
+  private async checkAndExecuteAction(message: Message, config: AIConfig): Promise<{
+    type: 'reminder' | 'todo';
+    success: boolean;
+    content: string;
+    timeString?: string;
+    error?: string;
+  } | null> {
+    const content = message.content.toLowerCase();
+
+    // Check for reminder command
+    const isReminderCommand =
+      content.includes('rappelle') ||
+      content.includes('remind') ||
+      content.includes('rappel-moi') ||
+      content.includes('rappelle-moi');
+
+    if (isReminderCommand) {
+      const remindAt = this.parseTimeExpression(message.content);
+
+      if (remindAt) {
+        const reminderContent = this.extractReminderContent(message.content);
+
+        try {
+          // Get bot ID from AI config (linked to guild)
+          const aiConfig = await this.prisma.aIConfig.findUnique({
+            where: { guildId: message.guildId! },
+            select: { id: true }
+          });
+
+          // Use AI config ID as the "bot ID" for reminders
+          const botId = aiConfig?.id || message.guildId!;
+
+          await this.remindersService.createReminder(botId, {
+            guildId: message.guildId,
+            channelId: message.channelId,
+            userId: message.author.id,
+            message: reminderContent,
+            remindAt: remindAt
+          });
+
+          return {
+            type: 'reminder',
+            success: true,
+            content: reminderContent,
+            timeString: this.formatFutureTime(remindAt)
+          };
+        } catch (error) {
+          console.error('[AI] Error creating reminder:', error);
+          return {
+            type: 'reminder',
+            success: false,
+            content: reminderContent,
+            error: 'Database error'
+          };
+        }
+      }
+    }
+
+    // Check for todo command
+    const isTodoCommand =
+      content.includes('ajoute à ma todo') ||
+      content.includes('ajoute a ma todo') ||
+      content.includes('add to my todo') ||
+      content.includes('note ça') ||
+      content.includes('note ca') ||
+      content.includes('n\'oublie pas') ||
+      content.includes('noublie pas');
+
+    if (isTodoCommand) {
+      // Extract todo content
+      let todoContent = message.content
+        .replace(/ajoute\s+(à|a)\s+ma\s+todo:?\s*/gi, '')
+        .replace(/add\s+to\s+my\s+todo:?\s*/gi, '')
+        .replace(/note\s+(ça|ca):?\s*/gi, '')
+        .replace(/n'?oublie\s+pas:?\s*/gi, '')
+        .trim();
+
+      if (todoContent) {
+        try {
+          const aiConfig = await this.prisma.aIConfig.findUnique({
+            where: { guildId: message.guildId! },
+            select: { id: true }
+          });
+
+          const botId = aiConfig?.id || message.guildId!;
+          const tomorrow = new Date();
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          tomorrow.setHours(9, 0, 0, 0);
+
+          await this.remindersService.createReminder(botId, {
+            guildId: message.guildId,
+            channelId: message.channelId,
+            userId: message.author.id,
+            message: `📋 TODO: ${todoContent}`,
+            remindAt: tomorrow
+          });
+
+          return {
+            type: 'todo',
+            success: true,
+            content: todoContent,
+            timeString: 'tomorrow at 9 AM'
+          };
+        } catch (error) {
+          console.error('[AI] Error creating todo:', error);
+          return {
+            type: 'todo',
+            success: false,
+            content: todoContent,
+            error: 'Database error'
+          };
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Generate an intelligent AI response for an action (reminder/todo)
+   */
+  private async generateActionResponse(
+    message: Message,
+    config: AIConfig,
+    action: { type: 'reminder' | 'todo'; success: boolean; content: string; timeString?: string; error?: string }
+  ): Promise<string> {
+    if (!this.openai) {
+      this.openai = new OpenAI({
+        apiKey: this.decryptApiKey(config.apiKey!),
+      });
+    }
+
+    const userName = message.member?.displayName || message.author.username;
+
+    // Get user memory for personalization
+    let userContext = '';
+    try {
+      const memories = await this.prisma.aIMemory.findMany({
+        where: {
+          userId: message.author.id,
+          guildId: message.guildId!,
+        },
+        orderBy: { importance: 'desc' },
+        take: 3
+      });
+      if (memories.length > 0) {
+        userContext = `\nYou remember about ${userName}: ${memories.map(m => m.content).join('; ')}`;
+      }
+    } catch {}
+
+    const actionContext = action.success
+      ? `You just successfully created a ${action.type} for ${userName}. Content: "${action.content}". ${action.timeString ? `Time: ${action.timeString}` : ''}`
+      : `You tried to create a ${action.type} for ${userName} but it failed: ${action.error}`;
+
+    try {
+      const response = await this.openai.chat.completions.create({
+        model: config.model || 'gpt-5-nano',
+        messages: [
+          {
+            role: 'system',
+            content: `You are a helpful AI assistant. You just performed an action for the user.
+${userContext}
+
+${actionContext}
+
+Respond naturally and personally to confirm the action. Be friendly but concise (1-2 sentences).
+- Use the user's name or a friendly term
+- If success: confirm enthusiastically in a personal way
+- If failed: apologize and suggest trying again
+- Match the user's language (French if they wrote in French, English otherwise)
+- Add a relevant emoji
+- Remember details about this user for future interactions`
+          },
+          {
+            role: 'user',
+            content: message.content
+          }
+        ],
+        temperature: 0.8,
+        max_tokens: 150
+      });
+
+      return response.choices[0]?.message?.content || this.getFallbackActionResponse(action);
+    } catch (error) {
+      console.error('[AI] Error generating action response:', error);
+      return this.getFallbackActionResponse(action);
+    }
+  }
+
+  /**
+   * Fallback response if AI generation fails
+   */
+  private getFallbackActionResponse(action: { type: string; success: boolean; content: string; timeString?: string }): string {
+    if (action.success) {
+      return action.type === 'reminder'
+        ? `Got it! I'll remind you about "${action.content}" ${action.timeString} ⏰`
+        : `Noted! "${action.content}" - I'll remind you tomorrow! 📝`;
+    }
+    return `Sorry, I couldn't save that. Please try again! 😅`;
+  }
+
+  /**
+   * Format a future date as a relative time string
+   */
+  private formatFutureTime(date: Date): string {
+    const now = new Date();
+    const diff = date.getTime() - now.getTime();
+
+    const minutes = Math.floor(diff / (1000 * 60));
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    if (days > 0) {
+      return `Dans ${days} jour${days > 1 ? 's' : ''} (${date.toLocaleDateString('fr-FR')} à ${date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })})`;
+    }
+    if (hours > 0) {
+      return `Dans ${hours}h${minutes % 60 > 0 ? (minutes % 60) + 'min' : ''} (à ${date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })})`;
+    }
+    if (minutes > 0) {
+      return `Dans ${minutes} minute${minutes > 1 ? 's' : ''}`;
+    }
+    return `Dans quelques secondes`;
   }
 
   private async shouldRespond(message: Message, config: AIConfig): Promise<boolean> {
