@@ -1,6 +1,11 @@
-import { Client, Events, Message, TextChannel } from 'discord.js';
+import { Client, Events, Message, TextChannel, ThreadChannel } from 'discord.js';
 import { TicketService } from '../services/ticket.service';
 import { TicketStateManager } from '../services/ticketStateManager.service';
+import { AIRecruitmentService } from '../services/ai-recruitment.service';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+let aiRecruitmentService: AIRecruitmentService | null = null;
 
 export default {
   name: Events.MessageCreate,
@@ -8,6 +13,11 @@ export default {
     // Check if message is in a ticket channel/thread
     const ticket = await ticketService.getTicketByChannel(message.channel.id);
     if (!ticket) return;
+
+    // Initialize AI recruitment service if not done
+    if (!aiRecruitmentService) {
+      aiRecruitmentService = new AIRecruitmentService(message.client, prisma);
+    }
 
     // Ignore only webhooks (webhooks are saved by command service with correct userId)
     // Allow normal bot messages to be saved
@@ -122,6 +132,37 @@ export default {
         isStaff,
         hasAttachments: message.attachments.size > 0
       });
+
+      // Process AI recruitment response if applicable (only for non-bot, non-staff messages)
+      if (!message.author.bot && !isStaff && aiRecruitmentService) {
+        try {
+          // Get category to check if AI is configured
+          const dbCategory = await prisma.ticketCategory.findFirst({
+            where: {
+              guildId: message.guildId!,
+              name: ticket.category || undefined
+            }
+          });
+
+          // Only process if category has AI direction configured
+          if (dbCategory?.aiDirection) {
+            // Get the full ticket with aiEnabled flag
+            const fullTicket = await prisma.ticket.findUnique({
+              where: { id: ticket.id }
+            });
+
+            if (fullTicket) {
+              await aiRecruitmentService.processResponse(
+                message,
+                fullTicket,
+                dbCategory
+              );
+            }
+          }
+        } catch (aiError) {
+          console.error('[MessageCreate] Error processing AI recruitment response:', aiError);
+        }
+      }
 
     } catch (error) {
       console.error('[MessageCreate] Error handling ticket message:', error);

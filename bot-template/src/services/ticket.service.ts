@@ -713,7 +713,7 @@ export class TicketService {
   // Cleanup soft-deleted tickets
   async cleanupDeletedTickets(): Promise<number> {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    
+
     const deleted = await prisma.ticket.deleteMany({
       where: {
         deletedAt: { lt: sevenDaysAgo }
@@ -723,5 +723,425 @@ export class TicketService {
     });
 
     return deleted.count;
+  }
+
+  /**
+   * Generate an HTML transcript for a ticket
+   */
+  async generateHTMLTranscript(
+    ticket: Ticket & { messages?: TicketMessage[] },
+    closedBy?: string,
+    reason?: string
+  ): Promise<string> {
+    const messages = ticket.messages || [];
+    const client = (global as any).discordClient;
+
+    // Get creator username
+    let creatorName = ticket.creatorId;
+    try {
+      if (client) {
+        const user = await client.users.fetch(ticket.creatorId);
+        creatorName = user?.username || ticket.creatorId;
+      }
+    } catch {}
+
+    // Get guild name
+    let guildName = 'Unknown Server';
+    try {
+      if (client) {
+        const guild = await client.guilds.fetch(ticket.guildId);
+        guildName = guild?.name || 'Unknown Server';
+      }
+    } catch {}
+
+    // Format messages with usernames
+    const formattedMessages = await Promise.all(
+      messages.map(async (msg) => {
+        let authorName = msg.authorId;
+        let isBot = false;
+        try {
+          if (client) {
+            const user = await client.users.fetch(msg.authorId);
+            authorName = user?.username || msg.authorId;
+            isBot = user?.bot || false;
+          }
+        } catch {}
+
+        return {
+          ...msg,
+          authorName,
+          isBot,
+          formattedTime: new Date(msg.createdAt).toLocaleString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        };
+      })
+    );
+
+    // Sort messages by date (oldest first)
+    formattedMessages.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+    const createdDate = new Date(ticket.createdAt).toLocaleString('fr-FR');
+    const closedDate = new Date().toLocaleString('fr-FR');
+    const duration = Math.floor((Date.now() - new Date(ticket.createdAt).getTime()) / 60000);
+
+    return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ticket #${ticket.ticketNumber} - ${guildName}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #dcddde;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .header {
+      background: linear-gradient(145deg, #2d2d44 0%, #1e1e30 100%);
+      padding: 30px;
+      border-radius: 16px;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .header h1 {
+      color: #fff;
+      font-size: 28px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .header h1::before {
+      content: '';
+      font-size: 24px;
+    }
+    .server-name {
+      color: #7289da;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .info-item {
+      background: rgba(255,255,255,0.05);
+      padding: 12px 16px;
+      border-radius: 8px;
+    }
+    .info-label {
+      color: #72767d;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .info-value {
+      color: #fff;
+      font-size: 15px;
+    }
+    .messages-container {
+      background: #36393f;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    .messages-header {
+      background: #2f3136;
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .messages-header h2 {
+      font-size: 16px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .messages-list {
+      padding: 16px;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+    .message {
+      display: flex;
+      gap: 16px;
+      padding: 12px 8px;
+      border-radius: 8px;
+      transition: background 0.15s ease;
+    }
+    .message:hover {
+      background: rgba(255,255,255,0.02);
+    }
+    .message + .message {
+      margin-top: 4px;
+    }
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #5865f2, #7289da);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 16px;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .avatar.bot {
+      background: linear-gradient(135deg, #5865f2, #9b59b6);
+    }
+    .message-content {
+      flex: 1;
+      min-width: 0;
+    }
+    .message-header {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+    .author-name {
+      font-weight: 600;
+      color: #fff;
+    }
+    .author-name.bot {
+      color: #5865f2;
+    }
+    .bot-tag {
+      background: #5865f2;
+      color: #fff;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .timestamp {
+      color: #72767d;
+      font-size: 12px;
+    }
+    .message-text {
+      color: #dcddde;
+      line-height: 1.5;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+    }
+    .staff-badge {
+      background: #faa61a;
+      color: #000;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .footer {
+      text-align: center;
+      padding: 24px;
+      color: #72767d;
+      font-size: 12px;
+    }
+    .footer a {
+      color: #7289da;
+      text-decoration: none;
+    }
+    @media (max-width: 600px) {
+      body { padding: 12px; }
+      .header { padding: 20px; }
+      .info-grid { grid-template-columns: 1fr; }
+      .message { gap: 12px; }
+      .avatar { width: 36px; height: 36px; font-size: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Ticket #${ticket.ticketNumber}</h1>
+      <div class="server-name">${guildName}</div>
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">Created by</div>
+          <div class="info-value">${creatorName}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Closed by</div>
+          <div class="info-value">${closedBy || 'Unknown'}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Created</div>
+          <div class="info-value">${createdDate}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Closed</div>
+          <div class="info-value">${closedDate}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Duration</div>
+          <div class="info-value">${duration} min</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Messages</div>
+          <div class="info-value">${formattedMessages.length}</div>
+        </div>
+        ${reason ? `<div class="info-item" style="grid-column: 1 / -1;">
+          <div class="info-label">Close Reason</div>
+          <div class="info-value">${reason}</div>
+        </div>` : ''}
+      </div>
+    </div>
+
+    <div class="messages-container">
+      <div class="messages-header">
+        <h2>Conversation</h2>
+      </div>
+      <div class="messages-list">
+        ${formattedMessages.map(msg => `
+        <div class="message">
+          <div class="avatar${msg.isBot ? ' bot' : ''}">${msg.authorName.charAt(0).toUpperCase()}</div>
+          <div class="message-content">
+            <div class="message-header">
+              <span class="author-name${msg.isBot ? ' bot' : ''}">${msg.authorName}</span>
+              ${msg.isBot ? '<span class="bot-tag">BOT</span>' : ''}
+              ${msg.isStaff ? '<span class="staff-badge">STAFF</span>' : ''}
+              <span class="timestamp">${msg.formattedTime}</span>
+            </div>
+            <div class="message-text">${this.escapeHtml(msg.content)}</div>
+          </div>
+        </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <div class="footer">
+      Generated by FiveBot
+    </div>
+  </div>
+</body>
+</html>`;
+  }
+
+  /**
+   * Escape HTML special characters
+   */
+  private escapeHtml(text: string): string {
+    const map: Record<string, string> = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, char => map[char]);
+  }
+
+  /**
+   * Simple close ticket - transcript HTML + delete
+   * This is the simplified version that always sends transcript and deletes
+   */
+  async simpleCloseTicket(
+    ticketId: string,
+    closedBy: string,
+    closedByName: string,
+    reason?: string
+  ): Promise<void> {
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
+      include: { messages: true }
+    });
+
+    if (!ticket) throw new Error('Ticket not found');
+
+    // Update ticket state
+    await this.updateTicket(ticketId, {
+      state: 'CLOSED',
+      closedAt: new Date()
+    });
+
+    await this.logAction(ticketId, 'TICKET_CLOSED', closedBy, { reason });
+
+    const config = await this.getConfig(ticket.guildId);
+    const client = (global as any).discordClient;
+
+    if (!client) {
+      console.error('[TicketService] No Discord client available');
+      return;
+    }
+
+    // Generate HTML transcript
+    const htmlTranscript = await this.generateHTMLTranscript(ticket, closedByName, reason);
+    const buffer = Buffer.from(htmlTranscript, 'utf-8');
+
+    // Send to transcript channel
+    if (config?.transcriptChannelId) {
+      try {
+        const transcriptChannel = await client.channels.fetch(config.transcriptChannelId);
+        if (transcriptChannel?.isTextBased()) {
+          const { EmbedBuilder } = await import('discord.js');
+
+          await transcriptChannel.send({
+            embeds: [
+              new EmbedBuilder()
+                .setColor(0xFF0000)
+                .setTitle(`Ticket #${ticket.ticketNumber} - Closed`)
+                .addFields(
+                  { name: 'Created by', value: `<@${ticket.creatorId}>`, inline: true },
+                  { name: 'Closed by', value: `<@${closedBy}>`, inline: true },
+                  { name: 'Category', value: ticket.category || 'None', inline: true },
+                  { name: 'Reason', value: reason || 'No reason provided', inline: false }
+                )
+                .setTimestamp()
+            ],
+            files: [{
+              attachment: buffer,
+              name: `ticket-${ticket.ticketNumber}.html`
+            }]
+          });
+          console.log(`[TicketService] HTML transcript sent for ticket #${ticket.ticketNumber}`);
+        }
+      } catch (err) {
+        console.error('[TicketService] Error sending transcript:', err);
+      }
+    }
+
+    // Send closing message and delete channel after 3 seconds
+    const channelId = ticket.channelId || ticket.threadId;
+    if (channelId) {
+      try {
+        const channel = await client.channels.fetch(channelId);
+        if (channel && 'send' in channel) {
+          await channel.send({
+            content: '> This ticket has been closed. The channel will be deleted in 3 seconds...'
+          });
+
+          setTimeout(async () => {
+            try {
+              if ('delete' in channel) {
+                await (channel as any).delete();
+                console.log(`[TicketService] Channel deleted for ticket #${ticket.ticketNumber}`);
+              }
+            } catch (deleteErr) {
+              console.error('[TicketService] Error deleting channel:', deleteErr);
+            }
+          }, 3000);
+        }
+      } catch (channelErr) {
+        console.error('[TicketService] Error with channel operations:', channelErr);
+      }
+    }
   }
 }

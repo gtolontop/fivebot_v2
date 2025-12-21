@@ -128,6 +128,18 @@ export class TicketControlsHandler {
       );
     }
 
+    // AI Toggle button - always show for staff
+    if (ticket.state !== TicketState.CLOSED) {
+      const aiEnabled = ticket.aiEnabled !== false; // Default to true if not set
+      buttons.push(
+        new ButtonBuilder()
+          .setCustomId('ticket:ai_toggle')
+          .setLabel(aiEnabled ? 'AI: ON' : 'AI: OFF')
+          .setEmoji('🤖')
+          .setStyle(aiEnabled ? ButtonStyle.Success : ButtonStyle.Secondary)
+      );
+    }
+
     // For closed tickets
     if (ticket.state === TicketState.CLOSED) {
       // Reopen button
@@ -222,6 +234,9 @@ export class TicketControlsHandler {
         break;
       case 'delete':
         await this.handleDelete(interaction, ticket);
+        break;
+      case 'ai_toggle':
+        await this.handleAIToggle(interaction, ticket, config);
         break;
     }
   }
@@ -1024,6 +1039,61 @@ export class TicketControlsHandler {
       await interaction.followUp({
         content: '❌ Failed to close ticket. Please try again.',
         ephemeral: true
+      });
+    }
+  }
+
+  // Handle AI toggle
+  private async handleAIToggle(
+    interaction: ButtonInteraction,
+    ticket: any,
+    config: any
+  ): Promise<void> {
+    // Check if user is staff
+    const isStaff = await this.ticketService.isStaff(ticket.guildId, interaction.user.id);
+    if (!isStaff) {
+      await interaction.reply({
+        content: '> Only staff members can toggle AI for tickets.',
+        ephemeral: true
+      });
+      return;
+    }
+
+    await interaction.deferReply({ ephemeral: true });
+
+    try {
+      // Toggle AI enabled state
+      const currentState = ticket.aiEnabled !== false; // Default to true
+      const newState = !currentState;
+
+      await this.ticketService.updateTicket(ticket.id, {
+        aiEnabled: newState
+      });
+
+      await interaction.editReply({
+        content: newState
+          ? '> AI is now **enabled** for this ticket. The AI will respond to messages.'
+          : '> AI is now **disabled** for this ticket. Only staff will respond.'
+      });
+
+      // Update control buttons
+      const updatedTicket = { ...ticket, aiEnabled: newState };
+      const newButtons = await this.createControlButtons(updatedTicket, config);
+
+      if (interaction.message) {
+        await interaction.message.edit({ components: newButtons });
+      }
+
+      // Log the action
+      await this.ticketService.logAction(
+        ticket.id,
+        newState ? 'AI_ENABLED' : 'AI_DISABLED',
+        interaction.user.id
+      );
+    } catch (error) {
+      console.error('[TicketControls] Error toggling AI:', error);
+      await interaction.editReply({
+        content: '> Failed to toggle AI. Please try again.'
       });
     }
   }

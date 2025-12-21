@@ -2130,7 +2130,7 @@ Your job is to help users with their FiveLink profiles, Discord bots, and make t
       const profile = await this.getUserProfile(userId, guildId ?? undefined);
       if (!profile) return;
 
-      // 🎓 DETECT CORRECTIONS - AI Learning from User Feedback
+      // 🎓 DETECT CORRECTIONS - AI Learning from User Feedback (STAFF ONLY)
       const correctionKeywords = [
         'non', 'no', 'pas vrai', 'not true', 'faux', 'false', 'wrong',
         'actually', 'en fait', 'correction', 'corriger', 'apprend',
@@ -2148,7 +2148,19 @@ Your job is to help users with their FiveLink profiles, Discord bots, and make t
         role.name.toLowerCase().includes('admin')
       );
 
-      if (isCorrection) {
+      // Check if user is staff (can correct AI)
+      const isStaff = message.member?.permissions.has('ManageMessages') ||
+        message.member?.roles.cache.some(role =>
+          ['staff', 'mod', 'moderator', 'admin', 'owner', 'founder'].includes(role.name.toLowerCase())
+        );
+
+      // Only allow staff to correct the AI - ignore corrections from regular users
+      if (isCorrection && !isStaff) {
+        console.log(`[AI Learning] Ignoring correction from non-staff user: ${message.author.username}`);
+        // Non-staff corrections are ignored
+      }
+
+      if (isCorrection && isStaff) {
         const correctionText = message.content;
         const importance = isOwner ? 100 : 90; // Owner corrections are ABSOLUTE TRUTH
         const memoryType = isOwner ? 'FOUNDER_TEACHING' : 'CORRECTION';

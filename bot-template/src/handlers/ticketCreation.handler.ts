@@ -11,13 +11,15 @@ import {
   ChannelType,
   PermissionsBitField,
   TextChannel,
-  CategoryChannel
+  CategoryChannel,
+  ThreadChannel
 } from 'discord.js';
 import { TicketService, TicketConfigWithArrays } from '../services/ticket.service';
 import { TicketStateManager } from '../services/ticketStateManager.service';
 import { TicketPanelService } from '../services/ticketPanel.service';
 import { TicketValidationService } from '../services/ticketValidation.service';
-import { ContainerType, TicketPriority, PrismaClient } from '@prisma/client';
+import { AIRecruitmentService } from '../services/ai-recruitment.service';
+import { ContainerType, TicketPriority, PrismaClient, TicketCategory as PrismaTicketCategory } from '@prisma/client';
 import { getErrorMessage, formatError } from '../utils/ticketErrorMessages';
 
 export class TicketCreationHandler {
@@ -25,12 +27,14 @@ export class TicketCreationHandler {
   private stateManager: TicketStateManager;
   private ticketPanelService: TicketPanelService | null = null;
   private validationService: TicketValidationService;
+  private aiRecruitmentService: AIRecruitmentService;
   private prisma: PrismaClient;
 
   constructor(ticketService: TicketService, stateManager: TicketStateManager, prisma: PrismaClient) {
     this.ticketService = ticketService;
     this.stateManager = stateManager;
     this.validationService = new TicketValidationService(ticketService['client'], ticketService);
+    this.aiRecruitmentService = new AIRecruitmentService(ticketService['client'], prisma);
     this.prisma = prisma;
   }
   
@@ -392,9 +396,29 @@ export class TicketCreationHandler {
         { subject, priority }
       );
 
+      // Start AI recruitment if category has AI direction configured
+      const dbCategory = await this.prisma.ticketCategory.findFirst({
+        where: {
+          guildId: interaction.guildId!,
+          OR: [
+            { id: categoryId },
+            { name: category?.name }
+          ]
+        }
+      });
+
+      if (dbCategory?.aiDirection) {
+        // Start AI recruitment interview
+        await this.aiRecruitmentService.startRecruitment(
+          ticket,
+          dbCategory,
+          container as TextChannel | ThreadChannel
+        );
+      }
+
       // Send confirmation
       await interaction.editReply({
-        content: `✅ Your ticket has been created: <#${container.id}>`,
+        content: `Your ticket has been created: <#${container.id}>`,
         embeds: [{
           color: 0x00FF00,
           title: 'Ticket Created Successfully',
@@ -782,9 +806,29 @@ export class TicketCreationHandler {
         { subject, priority, directCreation: true }
       );
 
+      // Start AI recruitment if category has AI direction configured
+      const dbCategory = await this.prisma.ticketCategory.findFirst({
+        where: {
+          guildId: interaction.guildId!,
+          OR: [
+            { id: categoryId },
+            { name: categoryName }
+          ]
+        }
+      });
+
+      if (dbCategory?.aiDirection) {
+        // Start AI recruitment interview
+        await this.aiRecruitmentService.startRecruitment(
+          ticket,
+          dbCategory,
+          container as TextChannel | ThreadChannel
+        );
+      }
+
       // Send confirmation
       await interaction.editReply({
-        content: `✅ Your ticket has been created: <#${container.id}>`,
+        content: `Your ticket has been created: <#${container.id}>`,
         embeds: [{
           color: 0x00FF00,
           title: 'Ticket Created Successfully',

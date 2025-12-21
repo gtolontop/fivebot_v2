@@ -328,27 +328,29 @@ enum TicketState {
 }
 
 model Ticket {
-  id              String              @id @default(uuid())
-  guildId         String              @map("guild_id")
-  ticketNumber    Int                 @map("ticket_number")
-  channelId       String?             @map("channel_id")
-  threadId        String?             @map("thread_id")
-  creatorId       String              @map("creator_id")
-  assignedStaffId String?             @map("assigned_staff_id")
-  type            String
-  category        String?
-  priority        String              @default("medium")
-  state           String              @default("open")
-  activityState   String              @default("active") @map("activity_state")
-  containerType   String              @default("channel") @map("container_type")
-  lastActivity    DateTime            @default(now()) @map("last_activity")
-  feedbackRating  Int?                @map("feedback_rating")
-  createdAt       DateTime            @default(now()) @map("created_at")
-  closedAt        DateTime?           @map("closed_at")
-  deletedAt       DateTime?           @map("deleted_at")
-  messages        TicketMessage[]
-  participants    TicketParticipant[]
-  logs            TicketLog[]
+  id                 String              @id @default(uuid())
+  guildId            String              @map("guild_id")
+  ticketNumber       Int                 @map("ticket_number")
+  channelId          String?             @map("channel_id")
+  threadId           String?             @map("thread_id")
+  creatorId          String              @map("creator_id")
+  assignedStaffId    String?             @map("assigned_staff_id")
+  type               String
+  category           String?
+  priority           String              @default("medium")
+  state              String              @default("open")
+  activityState      String              @default("active") @map("activity_state")
+  containerType      String              @default("channel") @map("container_type")
+  lastActivity       DateTime            @default(now()) @map("last_activity")
+  feedbackRating     Int?                @map("feedback_rating")
+  aiEnabled          Boolean             @default(true) @map("ai_enabled")
+  aiRecruitmentState String?             @map("ai_recruitment_state") @db.Text
+  createdAt          DateTime            @default(now()) @map("created_at")
+  closedAt           DateTime?           @map("closed_at")
+  deletedAt          DateTime?           @map("deleted_at")
+  messages           TicketMessage[]
+  participants       TicketParticipant[]
+  logs               TicketLog[]
 
   @@index([guildId])
   @@index([creatorId])
@@ -436,14 +438,16 @@ model TicketLog {
 
 // Modèles supplémentaires pour le système de tickets avancé
 model TicketCategory {
-  id        String   @id @default(uuid())
-  guildId   String   @map("guild_id")
-  botId     String   @map("bot_id")
-  name      String
-  emoji     String?
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id             String   @id @default(uuid())
+  guildId        String   @map("guild_id")
+  botId          String   @map("bot_id")
+  name           String
+  emoji          String?
+  active         Boolean  @default(true)
+  aiDirection    String?  @map("ai_direction") @db.Text
+  aiSystemPrompt String?  @map("ai_system_prompt") @db.Text
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
   @@index([guildId])
   @@index([botId])
