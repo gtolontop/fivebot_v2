@@ -109,10 +109,10 @@ export class AIService {
     'gpt-4-turbo': { input: 10, output: 30 },
     'gpt-5-nano': { input: 0.05, output: 0.40 },
     'gpt-3.5-turbo': { input: 0.5, output: 1.5 },
-    // Gemini models (free tier, very cheap)
-    'gemini-2.0-flash': { input: 0, output: 0 }, // Free tier
-    'gemini-1.5-flash': { input: 0.075, output: 0.30 },
-    'gemini-1.5-pro': { input: 1.25, output: 5.0 },
+    // Gemini models (very cheap)
+    'gemini-2.5-flash': { input: 0.015, output: 0.06 }, // Super cheap
+    'gemini-2.5-pro': { input: 0.15, output: 0.60 },
+    'gemini-2.0-flash': { input: 0.01, output: 0.04 },
   };
 
   private readonly PERSONALITY_PROMPTS = {
@@ -150,15 +150,15 @@ export class AIService {
   private initializeGemini(): void {
     try {
       this.gemini = new GoogleGenerativeAI(this.GEMINI_API_KEY);
-      // Use gemini-1.5-flash which is stable and fast
+      // Use gemini-2.5-flash (stable, fast, smart)
       this.geminiModel = this.gemini.getGenerativeModel({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.5-flash',
         generationConfig: {
           maxOutputTokens: 1000,
           temperature: 0.8,
         }
       });
-      console.log('[AI] ✅ Gemini 1.5 Flash initialized');
+      console.log('[AI] ✅ Gemini 2.5 Flash initialized');
     } catch (error) {
       console.error('[AI] ❌ Failed to initialize Gemini:', error);
     }
@@ -585,7 +585,7 @@ export class AIService {
       const responseTime = Date.now() - startTime;
 
       // Calculate cost (Gemini is very cheap)
-      const modelForCost = usedProvider === 'gemini' ? 'gemini-1.5-flash' : config.model;
+      const modelForCost = usedProvider === 'gemini' ? 'gemini-2.5-flash' : config.model;
       const cost = this.calculateCost(modelForCost, promptTokens, completionTokens);
 
       // Log usage
@@ -593,7 +593,7 @@ export class AIService {
         configId: config.id,
         guildId: effectiveGuildId!,
         userId: message.author.id,
-        model: usedProvider === 'gemini' ? 'gemini-1.5-flash' : config.model,
+        model: usedProvider === 'gemini' ? 'gemini-2.5-flash' : config.model,
         promptTokens,
         completionTokens,
         totalTokens,
@@ -1936,9 +1936,9 @@ Your job is to help users with their FiveLink profiles, Discord bots, and make t
 
   private getModelKey(model: string): string {
     // Gemini models
+    if (model.includes('gemini-2.5-flash')) return 'gemini-2.5-flash';
+    if (model.includes('gemini-2.5-pro')) return 'gemini-2.5-pro';
     if (model.includes('gemini-2.0')) return 'gemini-2.0-flash';
-    if (model.includes('gemini-1.5-flash')) return 'gemini-1.5-flash';
-    if (model.includes('gemini-1.5-pro')) return 'gemini-1.5-pro';
     // OpenAI models
     if (model.includes('gpt-4o-mini')) return 'gpt-4o-mini';
     if (model.includes('gpt-4o')) return 'gpt-4o';
