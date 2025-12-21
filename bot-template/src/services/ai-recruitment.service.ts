@@ -267,6 +267,10 @@ export class AIRecruitmentService {
 
       const aiMessage = response.choices[0]?.message?.content;
       if (aiMessage) {
+        // Save AI's greeting to context so it remembers what it said
+        state.context.push(`AI: ${aiMessage}`);
+        await this.updateTicketState(ticket.id, state);
+
         await channel.send({
           embeds: [
             new EmbedBuilder()
@@ -518,6 +522,9 @@ export class AIRecruitmentService {
             currentState.recommendation = 'hesitant';
           }
         }
+
+        // Add AI response to context so it remembers what it said
+        currentState.context.push(`AI: ${aiMessage}`);
 
         await this.updateTicketState(ticket.id, currentState);
 
