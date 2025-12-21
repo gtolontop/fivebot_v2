@@ -97,7 +97,7 @@ export class AIService {
     'gpt-4o': { input: 2.5, output: 10 },
     'gpt-4o-mini': { input: 0.15, output: 0.6 },
     'gpt-4-turbo': { input: 10, output: 30 },
-    'gpt-5-nano': { input: 0.15, output: 0.3 },
+    'gpt-5-nano': { input: 0.05, output: 0.40 },
     'gpt-3.5-turbo': { input: 0.5, output: 1.5 },
   };
 
