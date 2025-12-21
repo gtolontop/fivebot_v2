@@ -60,11 +60,7 @@ export class BotMonitorService {
 
   @Cron('*/15 * * * * *')
   async heartbeatCheck() {
-    // Only run heartbeat in the API process, not in workers
-    if (process.env.PROCESS_TYPE === 'worker') {
-      return;
-    }
-
+    // Run heartbeat in the API process (jobs now execute locally)
     try {
       this.logger.log('💓 Heartbeat check starting...');
 
@@ -161,11 +157,7 @@ export class BotMonitorService {
   // Deep status check every 60 seconds (less frequent to avoid false positives)
   @Cron('*/60 * * * * *')
   async checkAllBotsStatus() {
-    // Only run status check in the API process, not in workers
-    if (process.env.PROCESS_TYPE === 'worker') {
-      return;
-    }
-
+    // Run status check in the API process (jobs now execute locally)
     this.logger.log('🔍 Starting periodic bot status check...');
 
     try {

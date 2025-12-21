@@ -22,20 +22,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { ModulesModule } from './modules/modules/modules.module';
 import { AdminModule } from './modules/admin/admin.module';
 
-// New Feature Modules
-import { ModerationModule } from './modules/moderation/moderation.module';
-import { LevelingModule } from './modules/leveling/leveling.module';
-import { EconomyModule } from './modules/economy/economy.module';
-import { GiveawayModule } from './modules/giveaway/giveaway.module';
-import { MusicModule } from './modules/music/music.module';
-import { SocialFeedsModule } from './modules/social-feeds/social-feeds.module';
-import { LoggingModule } from './modules/logging/logging.module';
-import { StarboardModule } from './modules/starboard/starboard.module';
-import { SuggestionsModule } from './modules/suggestions/suggestions.module';
-import { PollsModule } from './modules/polls/polls.module';
-import { RemindersModule } from './modules/reminders/reminders.module';
-import { AutoRespondersModule } from './modules/auto-responders/auto-responders.module';
-import { TempChannelsModule } from './modules/temp-channels/temp-channels.module';
+// Feature Modules (cleaned up - removed incomplete modules)
 
 @Module({
   imports: [
@@ -62,20 +49,6 @@ import { TempChannelsModule } from './modules/temp-channels/temp-channels.module
     NotificationsModule,
     ModulesModule,
     AdminModule,
-    // Feature Modules
-    ModerationModule,
-    LevelingModule,
-    EconomyModule,
-    GiveawayModule,
-    MusicModule,
-    SocialFeedsModule,
-    LoggingModule,
-    StarboardModule,
-    SuggestionsModule,
-    PollsModule,
-    RemindersModule,
-    AutoRespondersModule,
-    TempChannelsModule,
   ],
   controllers: [UrlMetadataController, UploadController],
   providers: [AppService],

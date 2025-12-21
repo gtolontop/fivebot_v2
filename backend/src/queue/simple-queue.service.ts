@@ -36,42 +36,9 @@ export class SimpleQueueService implements IQueueService {
     @Inject(forwardRef(() => ConsoleBufferService))
     private consoleBufferService: ConsoleBufferService,
   ) {
-    // Worker process: Listen for jobs from Redis
-    if (process.env.PROCESS_TYPE === 'worker') {
-      this.startRedisJobListener();
-    }
-  }
-
-  private async startRedisJobListener(): Promise<void> {
-    this.logger.log('🔧 Worker started and listening for jobs...');
-
-    // Poll for jobs from Redis every second
-    setInterval(async () => {
-      try {
-        const client = this.redisService.getClient();
-        if (!client) {
-          // Redis not ready yet, skip this iteration
-          return;
-        }
-
-        const jobStr = await client.lpop('fivebot:jobs');
-        if (jobStr) {
-          const job: QueuedJob = JSON.parse(jobStr);
-          // Convert createdAt from string to Date object
-          job.createdAt = new Date(job.createdAt);
-
-          this.jobs.push(job);
-          this.jobs.sort((a, b) => b.priority - a.priority);
-          this.logger.log(`📥 Received job from Redis: ${job.type}`, job.data);
-
-          if (!this.processing) {
-            setImmediate(() => this.processJobs());
-          }
-        }
-      } catch (error) {
-        this.logger.error('❌ Error fetching job from Redis:', error);
-      }
-    }, 1000);
+    // Jobs are now executed directly in the API process
+    // No separate worker needed - this ensures logs go to the correct ConsoleBufferService
+    this.logger.log('🚀 SimpleQueueService initialized - executing jobs locally');
   }
 
   // Safe method to update bot status with retry logic
@@ -129,19 +96,7 @@ export class SimpleQueueService implements IQueueService {
       status: 'waiting',
     };
 
-    // If called from API process, store in Redis for worker to pick up
-    if (process.env.PROCESS_TYPE !== 'worker') {
-      const client = this.redisService.getClient();
-      if (!client) {
-        this.logger.error(`❌ Redis not available, cannot forward job: ${jobType}`);
-        throw new Error('Redis not available');
-      }
-      this.logger.log(`📤 Forwarding job to worker via Redis: ${jobType}`, data);
-      await client.rpush('fivebot:jobs', JSON.stringify(job));
-      await client.publish('fivebot:jobs:notify', job.id);
-      return;
-    }
-
+    // Execute jobs locally - no separate worker needed
     this.jobs.push(job);
     this.jobs.sort((a, b) => b.priority - a.priority); // Higher priority first
 
@@ -154,14 +109,8 @@ export class SimpleQueueService implements IQueueService {
   }
 
   private async processJobs(): Promise<void> {
-    // CRITICAL: Only process jobs in worker process
-    // API process should only queue jobs, not execute them
-    if (process.env.PROCESS_TYPE !== 'worker') {
-      this.logger.log('⏭️ Skipping job processing - jobs only execute in worker process');
-      this.processing = false;
-      return;
-    }
-
+    // Execute jobs locally in the API process
+    // This ensures logs go directly to WebSocket via ConsoleBufferService
     if (this.processing) return;
     this.processing = true;
 
