@@ -589,6 +589,57 @@ export class AIService {
   }
 
   /**
+   * Send a notification when AI hesitates or skips a message
+   */
+  private async sendHesitationNotification(
+    message: Message,
+    config: AIConfig,
+    reason: string,
+    isComplex: boolean = false
+  ): Promise<void> {
+    // Only send notifications for interesting cases (not emojis/acknowledgments)
+    if (!config.alertChannelId) return;
+
+    try {
+      const guild = message.guild;
+      if (!guild) return;
+
+      const alertChannel = await guild.channels.fetch(config.alertChannelId);
+      if (!alertChannel || !alertChannel.isTextBased()) return;
+
+      const userName = message.member?.displayName || message.author.username;
+      const channelName = (message.channel as any).name || 'DM';
+
+      const embed = new EmbedBuilder()
+        .setColor(isComplex ? '#FFA500' : '#808080') // Orange for complex, gray for simple skip
+        .setTitle(isComplex ? '⚠️ **IA Hésitante / Question Complexe**' : '🔇 **IA Silencieuse**')
+        .addFields([
+          {
+            name: 'Provenance',
+            value: `<#${message.channelId}> (${userName})`,
+            inline: false
+          },
+          {
+            name: 'Message',
+            value: message.content.length > 200 ? message.content.substring(0, 200) + '...' : message.content || '*[vide]*',
+            inline: false
+          },
+          {
+            name: 'Raison',
+            value: reason,
+            inline: false
+          }
+        ])
+        .setFooter({ text: 'Le bot est resté silencieux pour ne pas dire de bêtise.' })
+        .setTimestamp();
+
+      await (alertChannel as any).send({ embeds: [embed] });
+    } catch (error) {
+      console.error('[AI] Error sending hesitation notification:', error);
+    }
+  }
+
+  /**
    * Use AI to determine if a message is directed at the bot or needs a response
    * This is called for @everyone channels to filter out casual conversations
    */
@@ -648,9 +699,15 @@ export class AIService {
     // This is expensive so only do it for ambiguous cases
     if (config.apiKey && content.length >= 50) {
       try {
-        const decision = await this.askAIToDecide(message, config);
-        console.log(`[AI] AI decision for message "${content.substring(0, 50)}...": ${decision}`);
-        return decision;
+        const decisionResult = await this.askAIToDecideWithReason(message, config);
+        console.log(`[AI] AI decision for message "${content.substring(0, 50)}...": ${decisionResult.decision}, reason: ${decisionResult.reason}`);
+
+        // If AI decides not to respond, send a notification for complex/ambiguous cases
+        if (!decisionResult.decision && decisionResult.isComplex) {
+          await this.sendHesitationNotification(message, config, decisionResult.reason, true);
+        }
+
+        return decisionResult.decision;
       } catch (error) {
         console.error('[AI] Error asking AI to decide:', error);
         // Default to not responding on error
@@ -662,10 +719,14 @@ export class AIService {
   }
 
   /**
-   * Ask the AI if it should respond to a message
-   * Used for ambiguous cases in @everyone channels
+   * Ask the AI if it should respond to a message, with reason
+   * Returns decision, reason, and whether it's a complex case worth notifying
    */
-  private async askAIToDecide(message: Message, config: AIConfig): Promise<boolean> {
+  private async askAIToDecideWithReason(message: Message, config: AIConfig): Promise<{
+    decision: boolean;
+    reason: string;
+    isComplex: boolean;
+  }> {
     if (!this.openai) {
       this.openai = new OpenAI({
         apiKey: this.decryptApiKey(config.apiKey!),
@@ -685,41 +746,69 @@ export class AIService {
       // Ignore
     }
 
+    const userName = message.member?.displayName || message.author.username;
+
     const response = await this.openai.chat.completions.create({
-      model: 'gpt-5-nano', // Use cheapest model for this quick decision
+      model: 'gpt-5-nano',
       messages: [
         {
           role: 'system',
-          content: `You are a decision engine. Your ONLY job is to determine if a message in a Discord server is directed at the AI bot or requires the AI to respond.
+          content: `Tu es un moteur de décision. Tu dois déterminer si un message Discord nécessite une réponse de l'IA.
 
-RESPOND WITH ONLY "YES" OR "NO" - nothing else.
+RÉPONDS EN JSON UNIQUEMENT:
+{"respond": true/false, "reason": "explication courte en français", "complex": true/false}
 
-Respond "YES" if:
-- The message is a question asking for help or information
-- The message is clearly directed at the bot
-- The message asks about the server/platform
-- Someone needs assistance
+respond=true si:
+- C'est une question demandant de l'aide
+- Le message est clairement pour le bot
+- Quelqu'un a besoin d'assistance
 
-Respond "NO" if:
-- It's casual conversation between users
-- It's a greeting between users (not to the bot)
-- It's just reactions/emojis/short acknowledgments
-- Users are chatting with each other
-- The message doesn't need AI assistance
+respond=false si:
+- C'est une conversation entre utilisateurs
+- C'est un salut entre utilisateurs
+- Les utilisateurs discutent entre eux
+
+complex=true si:
+- C'est une question ambiguë
+- L'utilisateur semble tester le bot
+- C'est un staff/admin qui parle
+- La question est sensible ou pourrait avoir plusieurs réponses
 
 ${recentContext}`
         },
         {
           role: 'user',
-          content: `Should I (the AI bot) respond to this message?\n\nMessage from ${message.author.username}: "${message.content}"`
+          content: `Message de ${userName}: "${message.content}"`
         }
       ],
-      max_tokens: 5,
+      max_tokens: 100,
       temperature: 0,
     });
 
-    const answer = response.choices[0]?.message?.content?.trim().toUpperCase();
-    return answer === 'YES';
+    const answer = response.choices[0]?.message?.content?.trim() || '';
+
+    try {
+      // Try to parse JSON response
+      const jsonMatch = answer.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return {
+          decision: parsed.respond === true,
+          reason: parsed.reason || 'Pas de raison fournie',
+          isComplex: parsed.complex === true
+        };
+      }
+    } catch {
+      // Fallback if JSON parsing fails
+    }
+
+    // Fallback to simple yes/no detection
+    const isYes = answer.toUpperCase().includes('YES') || answer.toLowerCase().includes('true');
+    return {
+      decision: isYes,
+      reason: 'Décision automatique basée sur le contenu',
+      isComplex: false
+    };
   }
 
   private async shouldRespond(message: Message, config: AIConfig): Promise<boolean> {
