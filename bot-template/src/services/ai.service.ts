@@ -781,7 +781,7 @@ export class AIService {
    * This is called for @everyone channels to filter out casual conversations
    */
   private async isMessageForAI(message: Message, config: AIConfig): Promise<boolean> {
-    // Direct mention always gets a response
+    // Direct mention of the bot always gets a response
     if (message.mentions.has(this.client.user!.id)) {
       return true;
     }
@@ -793,6 +793,11 @@ export class AIService {
         if (repliedTo.author.id === this.client.user!.id) {
           return true;
         }
+        // If replying to ANOTHER user (not the bot), skip
+        if (!repliedTo.author.bot) {
+          console.log(`[AI] Skipping - reply to another user ${repliedTo.author.username}`);
+          return false;
+        }
       } catch {
         // Ignore if we can't fetch the message
       }
@@ -800,46 +805,76 @@ export class AIService {
 
     const content = message.content.toLowerCase();
 
-    // Quick check for question/request words
-    const requestWords = [
-      // English questions
-      'what', 'why', 'how', 'when', 'where', 'who', 'which', 'whom',
-      // English requests (including "can i", "could i", etc.)
-      'can i', 'can you', 'could i', 'could you', 'would you', 'will you', 'do you',
-      'please', 'pls', 'plz', 'show me', 'tell me', 'give me', 'make me', 'let me',
-      'i want', 'i need', 'i would like',
-      'help', 'question', 'problem', 'issue', 'error', 'bug',
-      'need help', 'how do i', 'how to',
-      // French
-      'quoi', 'pourquoi', 'comment', 'quand', 'où', 'qui', 'quel', 'quelle',
-      'peux-tu', 'pouvez-vous', 'est-ce que', 'c\'est quoi',
-      'montre', 'montre-moi', 'dis-moi', 'donne-moi', 'fais-moi',
-      'je veux', 'j\'ai besoin', 'j\'aimerais',
-      'aide', 'aidez', 'problème', 'erreur', 'bug',
-      'besoin d\'aide', 'comment faire', 's\'il te plait', 'stp', 'svp'
+    // CRITICAL: If message mentions OTHER users (not the bot), it's NOT for the AI
+    // This filters out: "@Gtol fast", "@laksa sorry", "@diego :)", etc.
+    const mentionsOthers = message.mentions.users.size > 0 && !message.mentions.has(this.client.user!.id);
+    const mentionsRoles = message.mentions.roles.size > 0;
+    if (mentionsOthers || mentionsRoles) {
+      console.log(`[AI] Skipping - message mentions other users/roles: "${content.substring(0, 50)}"`);
+      return false;
+    }
+
+    // Check if message is just casual chat (very short, no question, no help request)
+    const contentWithoutMentions = content.replace(/<@!?\d+>/g, '').replace(/<@&\d+>/g, '').replace(/<#\d+>/g, '').trim();
+    if (contentWithoutMentions.length < 15 && !contentWithoutMentions.includes('?')) {
+      console.log(`[AI] Skipping - short casual message: "${content}"`);
+      return false;
+    }
+
+    // Check if it explicitly mentions the bot by name or AI concepts
+    const botName = this.client.user!.username.toLowerCase();
+    const aiTriggers = ['bot', 'ai', 'assistant', 'fivelink', 'ia'];
+    const mentionsBot = content.includes(botName) || aiTriggers.some(t => content.includes(t));
+
+    // If mentioning the bot explicitly, respond
+    if (mentionsBot) {
+      console.log('[AI] Message mentions bot/AI, responding');
+      return true;
+    }
+
+    // Check recent messages to detect if it's a conversation between users
+    try {
+      const recentMessages = await message.channel.messages.fetch({ limit: 5 });
+      const nonBotMessages = recentMessages.filter(m => !m.author.bot && m.id !== message.id);
+      const uniqueUsers = new Set(nonBotMessages.map(m => m.author.id));
+
+      // If there are multiple users chatting, be VERY conservative
+      if (uniqueUsers.size > 1) {
+        console.log(`[AI] Multiple users in channel (${uniqueUsers.size}) - staying quiet unless explicitly asked`);
+        // Only respond if message explicitly asks for help AND ends with ?
+        const isExplicitHelp = content.includes('help') || content.includes('aide');
+        const isQuestion = content.trim().endsWith('?');
+        if (isExplicitHelp && isQuestion) {
+          return true;
+        }
+        return false;
+      }
+    } catch {
+      // Ignore errors
+    }
+
+    // Check for explicit help-seeking patterns (more strict than before)
+    const explicitHelpPatterns = [
+      'how do i', 'how can i', 'how to', 'comment faire',
+      'can you help', 'can you tell', 'peux-tu m\'aider',
+      'i need help', 'j\'ai besoin d\'aide', 'besoin d\'aide',
+      'what is', 'c\'est quoi', 'qu\'est-ce que',
+      'help me', 'aide-moi', 'aidez-moi'
     ];
 
-    // If message contains request words, it's likely directed at the bot
-    if (requestWords.some(w => content.includes(w))) {
-      console.log('[AI] Message contains request words, responding');
+    if (explicitHelpPatterns.some(p => content.includes(p))) {
+      console.log('[AI] Message contains explicit help pattern, responding');
       return true;
     }
 
-    // If message ends with ? it's likely a question
-    if (content.trim().endsWith('?')) {
-      console.log('[AI] Message ends with ?, responding');
-      return true;
-    }
-
-    // Check if it mentions the bot's name or common AI triggers
-    const botName = this.client.user!.username.toLowerCase();
-    const aiTriggers = ['bot', 'ai', 'assistant', 'fivelink'];
-    if (content.includes(botName) || aiTriggers.some(t => content.includes(t))) {
+    // If message is a clear question (ends with ?) AND is long enough to be substantive
+    if (content.trim().endsWith('?') && contentWithoutMentions.length >= 20) {
+      console.log('[AI] Message is a substantive question, responding');
       return true;
     }
 
     // For ambiguous longer messages, use AI to determine if it needs a response
-    if (config.apiKey && content.length >= 30) {
+    if (config.apiKey && contentWithoutMentions.length >= 50) {
       try {
         const decisionResult = await this.askAIToDecideWithReason(message, config);
         console.log(`[AI] AI decision for message "${content.substring(0, 50)}...": ${decisionResult.decision}, reason: ${decisionResult.reason}`);
@@ -852,13 +887,15 @@ export class AIService {
         return decisionResult.decision;
       } catch (error) {
         console.error('[AI] Error asking AI to decide:', error);
-        // Default to responding on error (better to respond than miss a message)
-        return true;
+        // On error, default to NOT responding (safer)
+        return false;
       }
     }
 
-    // Default: respond to any message that passed all filters
-    return true;
+    // Default: DON'T respond to ambiguous messages
+    // Better to stay quiet than to respond inappropriately
+    console.log(`[AI] No clear signal to respond, staying quiet: "${content.substring(0, 50)}"`);
+    return false;
   }
 
   /**
