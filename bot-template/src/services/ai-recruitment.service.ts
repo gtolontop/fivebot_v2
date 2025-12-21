@@ -149,8 +149,8 @@ export class AIRecruitmentService {
     createdById?: string;
   }> {
     try {
-      // Fetch the first few messages to find the ticket embed
-      const messages = await channel.messages.fetch({ limit: 5 });
+      // Fetch more messages to find the ticket embed (it's at the beginning)
+      const messages = await channel.messages.fetch({ limit: 20 });
 
       for (const [, msg] of messages) {
         if (msg.author.bot && msg.embeds.length > 0) {
@@ -347,7 +347,12 @@ export class AIRecruitmentService {
     const helpIndicators = [
       '?', 'help', 'aide', 'problem', 'problème', 'issue', 'error', 'erreur',
       'how', 'comment', 'what', 'quoi', 'why', 'pourquoi', 'can you', 'peux-tu',
-      'please', 'svp', 's\'il vous plait', 'need', 'besoin'
+      'please', 'svp', 's\'il vous plait', 'need', 'besoin',
+      // More patterns for issues
+      'not work', 'doesn\'t work', 'don\'t work', 'won\'t work', 'isn\'t work',
+      'marche pas', 'fonctionne pas', 'ca marche pas', 'ça marche pas',
+      'broken', 'cassé', 'bug', 'crash', 'failed', 'failing', 'stuck',
+      'can\'t', 'cannot', 'unable', 'impossible', 'j\'arrive pas', 'arrive pas'
     ];
 
     if (helpIndicators.some(h => content.includes(h))) {
