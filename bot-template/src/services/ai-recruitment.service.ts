@@ -118,6 +118,74 @@ export class AIRecruitmentService {
   }
 
   /**
+   * Greet user when they open a ticket (non-recruitment)
+   */
+  async greetUser(
+    ticket: Ticket,
+    category: TicketCategory | null,
+    channel: TextChannel | ThreadChannel,
+    userName: string
+  ): Promise<void> {
+    const initialized = await this.initOpenAI(ticket.guildId);
+    if (!initialized) {
+      console.log('[AIRecruitment] OpenAI not configured for guild:', ticket.guildId);
+      return;
+    }
+
+    // Get server name
+    const guild = this.client.guilds.cache.get(ticket.guildId);
+    const serverName = guild?.name || 'this server';
+    const categoryName = category?.name || 'Support';
+
+    // Build greeting prompt
+    const greetingPrompt = `You are a friendly support assistant for ${serverName}.
+
+YOUR ROLE:
+- You are the first point of contact for users opening support tickets
+- You greet users warmly and make them feel welcome
+- You ask what they need help with
+- You are helpful, professional, and concise
+
+CONTEXT:
+- The user just opened a ${categoryName} ticket
+- Their username is: ${userName}
+
+INSTRUCTIONS:
+- Greet the user by name in a friendly way
+- Welcome them to the support
+- Ask how you can help them today
+- Keep it short (2-3 sentences max)
+- Be warm but professional
+- Speak in the same language as the category name (if French category, speak French)`;
+
+    try {
+      const response = await this.openai!.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: greetingPrompt },
+          { role: 'user', content: `A user named ${userName} just opened a ${categoryName} ticket. Greet them.` },
+        ],
+        temperature: 0.8,
+        max_tokens: 200,
+      });
+
+      const aiMessage = response.choices[0]?.message?.content;
+      if (aiMessage) {
+        await channel.send({
+          embeds: [
+            new EmbedBuilder()
+              .setColor('#5865F2')
+              .setDescription(aiMessage)
+              .setFooter({ text: '🤖 AI Assistant' }),
+          ],
+        });
+      }
+    } catch (error) {
+      console.error('[AIRecruitment] Error greeting user:', error);
+    }
+  }
+
+  /**
    * Start a recruitment interview
    */
   async startRecruitment(
