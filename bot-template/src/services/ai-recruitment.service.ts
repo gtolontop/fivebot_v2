@@ -260,7 +260,7 @@ export class AIRecruitmentService {
           { role: 'user', content: userMessage },
         ],
         temperature: this.aiConfig!.temperature,
-        max_tokens: this.aiConfig!.maxTokens,
+        max_completion_tokens: this.aiConfig!.maxTokens,
       });
 
       const aiMessage = response.choices[0]?.message?.content;
@@ -484,7 +484,7 @@ export class AIRecruitmentService {
           ...this.buildConversationHistory(currentState.context),
         ],
         temperature: this.aiConfig!.temperature,
-        max_tokens: this.aiConfig!.maxTokens,
+        max_completion_tokens: this.aiConfig!.maxTokens,
       });
 
       const aiMessage = response.choices[0]?.message?.content;

@@ -961,7 +961,7 @@ ${recentContext}`
           content: `Message de ${userName}: "${message.content}"`
         }
       ],
-      max_tokens: 100,
+      max_completion_tokens: 100,
       temperature: 0,
     });
 
@@ -1254,7 +1254,7 @@ Respond naturally and personally to confirm the action. Be friendly but concise 
           }
         ],
         temperature: 0.8,
-        max_tokens: 150
+        max_completion_tokens: 150
       });
 
       return response.choices[0]?.message?.content || this.getFallbackActionResponse(action);

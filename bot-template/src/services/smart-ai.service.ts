@@ -276,7 +276,7 @@ IMPORTANT: When asked to message another channel, set action.type to "send_messa
           { role: 'user', content: message.content }
         ],
         temperature: 0.7,
-        max_tokens: 1000,
+        max_completion_tokens: 1000,
         response_format: { type: 'json_object' }
       });
 
