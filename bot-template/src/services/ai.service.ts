@@ -1,8 +1,11 @@
 import { Client, Message, EmbedBuilder, TextChannel } from 'discord.js';
 import OpenAI from 'openai';
+import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 import { PrismaClient } from '@prisma/client';
 import { decrypt, encrypt } from '../utils/encryption';
 import { RemindersService } from './reminders.service';
+
+type AIProvider = 'openai' | 'gemini';
 
 interface AIConfig {
   id: string;
@@ -82,11 +85,16 @@ export class AIService {
   private client: Client;
   private prisma: PrismaClient;
   private openai: OpenAI | null = null;
+  private gemini: GoogleGenerativeAI | null = null;
+  private geminiModel: GenerativeModel | null = null;
   private rateLimitCache: Map<string, number[]> = new Map();
   private tokenUsageCache: Map<string, { tokens: number; resetAt: number }> = new Map();
   private conversationCache: Map<string, ConversationContext[]> = new Map();
   private processedMessages: Map<string, number> = new Map(); // messageId -> timestamp
   private remindersService: RemindersService;
+
+  // Gemini API key (hardcoded for now, can be moved to config later)
+  private readonly GEMINI_API_KEY = 'REDACTED_GEMINI_API_KEY';
 
   // Advanced features
   private userPreferencesCache: Map<string, UserPreferences> = new Map();
@@ -94,13 +102,17 @@ export class AIService {
   private userInteractionStats: Map<string, { count: number; lastSeen: Date }> = new Map();
 
   // Model pricing per 1M tokens (input/output)
-  private readonly MODEL_PRICING = {
+  private readonly MODEL_PRICING: { [key: string]: { input: number; output: number } } = {
     'gpt-4': { input: 30, output: 60 },
     'gpt-4o': { input: 2.5, output: 10 },
     'gpt-4o-mini': { input: 0.15, output: 0.6 },
     'gpt-4-turbo': { input: 10, output: 30 },
     'gpt-5-nano': { input: 0.05, output: 0.40 },
     'gpt-3.5-turbo': { input: 0.5, output: 1.5 },
+    // Gemini models (free tier, very cheap)
+    'gemini-2.0-flash': { input: 0, output: 0 }, // Free tier
+    'gemini-1.5-flash': { input: 0.075, output: 0.30 },
+    'gemini-1.5-pro': { input: 1.25, output: 5.0 },
   };
 
   private readonly PERSONALITY_PROMPTS = {
@@ -127,6 +139,82 @@ export class AIService {
         apiKey: this.decryptApiKey(config.apiKey),
       });
     }
+
+    // Initialize Gemini (always available as primary or fallback)
+    this.initializeGemini();
+  }
+
+  /**
+   * Initialize Gemini AI client
+   */
+  private initializeGemini(): void {
+    try {
+      this.gemini = new GoogleGenerativeAI(this.GEMINI_API_KEY);
+      this.geminiModel = this.gemini.getGenerativeModel({
+        model: 'gemini-2.0-flash-exp',
+        generationConfig: {
+          maxOutputTokens: 1000,
+          temperature: 0.8,
+        }
+      });
+      console.log('[AI] ✅ Gemini 2.0 Flash initialized');
+    } catch (error) {
+      console.error('[AI] ❌ Failed to initialize Gemini:', error);
+    }
+  }
+
+  /**
+   * Generate response using Gemini with OpenAI fallback
+   */
+  private async generateWithGemini(
+    systemPrompt: string,
+    userMessage: string,
+    conversationHistory: ConversationContext[] = []
+  ): Promise<{ text: string; tokens: number; provider: AIProvider }> {
+    // Ensure Gemini is initialized
+    if (!this.geminiModel) {
+      this.initializeGemini();
+    }
+
+    if (this.geminiModel) {
+      try {
+        // Build conversation for Gemini
+        const history = conversationHistory
+          .filter(msg => msg.role !== 'system')
+          .map(msg => ({
+            role: msg.role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content) }]
+          }));
+
+        // Start chat with history
+        const chat = this.geminiModel.startChat({
+          history: history as any,
+          generationConfig: {
+            maxOutputTokens: 1000,
+            temperature: 0.8,
+          }
+        });
+
+        // Add system prompt to user message
+        const fullPrompt = `${systemPrompt}\n\nUser message: ${userMessage}`;
+
+        const result = await chat.sendMessage(fullPrompt);
+        const response = result.response;
+        const text = response.text();
+
+        // Estimate tokens (Gemini doesn't always return usage)
+        const estimatedTokens = Math.ceil((fullPrompt.length + text.length) / 4);
+
+        console.log('[AI] ✅ Gemini response generated successfully');
+        return { text, tokens: estimatedTokens, provider: 'gemini' };
+      } catch (error: any) {
+        console.error('[AI] ⚠️ Gemini error, falling back to OpenAI:', error.message);
+        // Fall through to OpenAI fallback
+      }
+    }
+
+    // Fallback to OpenAI
+    throw new Error('Gemini failed, use OpenAI fallback');
   }
 
   async getConfig(guildId: string): Promise<AIConfig | null> {
@@ -426,68 +514,94 @@ export class AIService {
       console.log('[AI] System prompt length:', systemPrompt.length, 'chars');
       console.log('[AI] System prompt preview:', systemPrompt.substring(0, 300) + '...');
 
-      // Call OpenAI
-      if (!this.openai) {
-        this.openai = new OpenAI({
-          apiKey: this.decryptApiKey(config.apiKey!),
-        });
-      }
-
-      // GPT-5-nano has specific requirements
-      const modelName = this.getModelName(config.model);
-      const isGPT5Nano = modelName === 'gpt-5-nano';
-
-      // Build user message with images if vision is enabled
+      // Build user message content
       const userMessageContent = await this.buildMessageContent(message, config);
+      const userMessageText = typeof userMessageContent === 'string'
+        ? userMessageContent
+        : message.content;
 
-      const completionParams: any = {
-        model: modelName,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          ...context,
-          { role: 'user', content: userMessageContent },
-        ],
-      };
+      // TRY GEMINI FIRST, FALLBACK TO OPENAI
+      let aiResponse: string;
+      let totalTokens = 0;
+      let promptTokens = 0;
+      let completionTokens = 0;
+      let usedProvider: AIProvider = 'gemini';
 
-      // GPT-5-nano doesn't support custom temperature (only default value 1)
-      if (!isGPT5Nano) {
-        completionParams.temperature = config.temperature;
+      try {
+        // Try Gemini first (faster and smarter)
+        console.log('[AI] 🚀 Trying Gemini 2.0 Flash...');
+        const geminiResult = await this.generateWithGemini(systemPrompt, userMessageText, context);
+        aiResponse = geminiResult.text;
+        totalTokens = geminiResult.tokens;
+        promptTokens = Math.floor(totalTokens * 0.7);
+        completionTokens = Math.floor(totalTokens * 0.3);
+        usedProvider = 'gemini';
+        console.log('[AI] ✅ Gemini response received');
+      } catch (geminiError) {
+        // Fallback to OpenAI
+        console.log('[AI] ⚠️ Gemini failed, falling back to OpenAI...');
+        usedProvider = 'openai';
+
+        if (!this.openai) {
+          this.openai = new OpenAI({
+            apiKey: this.decryptApiKey(config.apiKey!),
+          });
+        }
+
+        // GPT-5-nano has specific requirements
+        const modelName = this.getModelName(config.model);
+        const isGPT5Nano = modelName === 'gpt-5-nano';
+
+        const completionParams: any = {
+          model: modelName,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            ...context,
+            { role: 'user', content: userMessageContent },
+          ],
+        };
+
+        // GPT-5-nano doesn't support custom temperature (only default value 1)
+        if (!isGPT5Nano) {
+          completionParams.temperature = config.temperature;
+        }
+
+        // Use correct token parameter based on model
+        if (isGPT5Nano) {
+          completionParams.max_completion_tokens = config.maxTokens;
+        } else {
+          completionParams.max_tokens = config.maxTokens;
+        }
+
+        const response = await this.openai.chat.completions.create(completionParams);
+        aiResponse = response.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
+        totalTokens = response.usage?.total_tokens || 0;
+        promptTokens = response.usage?.prompt_tokens || 0;
+        completionTokens = response.usage?.completion_tokens || 0;
+        console.log('[AI] ✅ OpenAI fallback response received');
       }
 
-      // Use correct token parameter based on model
-      if (isGPT5Nano) {
-        completionParams.max_completion_tokens = config.maxTokens;
-      } else {
-        completionParams.max_tokens = config.maxTokens;
-      }
-
-      const response = await this.openai.chat.completions.create(completionParams);
-
-      const aiResponse = response.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
       const responseTime = Date.now() - startTime;
 
-      // Calculate cost
-      const cost = this.calculateCost(
-        config.model,
-        response.usage?.prompt_tokens || 0,
-        response.usage?.completion_tokens || 0
-      );
+      // Calculate cost (Gemini is free/very cheap)
+      const modelForCost = usedProvider === 'gemini' ? 'gemini-2.0-flash' : config.model;
+      const cost = this.calculateCost(modelForCost, promptTokens, completionTokens);
 
       // Log usage
       await this.logUsage({
         configId: config.id,
         guildId: effectiveGuildId!,
         userId: message.author.id,
-        model: config.model,
-        promptTokens: response.usage?.prompt_tokens || 0,
-        completionTokens: response.usage?.completion_tokens || 0,
-        totalTokens: response.usage?.total_tokens || 0,
+        model: usedProvider === 'gemini' ? 'gemini-2.0-flash' : config.model,
+        promptTokens,
+        completionTokens,
+        totalTokens,
         cost,
         responseTime,
       });
 
       // Update token usage for rate limiting
-      this.updateTokenUsage(message.author.id, response.usage?.total_tokens || 0);
+      this.updateTokenUsage(message.author.id, totalTokens);
 
       // Log conversation
       if (config.logConversations) {
@@ -517,10 +631,11 @@ export class AIService {
       // No fake delay - the real AI generation already takes time
       // Send response immediately
       await this.sendResponse(message, aiResponse, config, {
-        tokens: response.usage?.total_tokens || 0,
+        tokens: totalTokens,
         cost,
         responseTime,
         documentsUsed: documentsUsed.length,
+        provider: usedProvider,
       });
 
       // LEARNING: Update user preferences based on this interaction
@@ -1747,7 +1862,7 @@ Your job is to help users with their FiveLink profiles, Discord bots, and make t
     message: Message,
     response: string,
     config: AIConfig,
-    metadata: { tokens: number; cost: number; responseTime: number; documentsUsed: number }
+    metadata: { tokens: number; cost: number; responseTime: number; documentsUsed: number; provider?: AIProvider }
   ): Promise<void> {
     // Truncate if too long
     let truncatedResponse = response;
@@ -1755,12 +1870,16 @@ Your job is to help users with their FiveLink profiles, Discord bots, and make t
       truncatedResponse = response.substring(0, config.maxResponseLength - 3) + '...';
     }
 
+    // Format provider name for display
+    const providerDisplay = metadata.provider === 'gemini' ? '⚡ Gemini' : '🤖 GPT';
+    const costDisplay = metadata.provider === 'gemini' ? 'FREE' : `$${metadata.cost.toFixed(6)}`;
+
     if (config.useEmbeds) {
       const embed = new EmbedBuilder()
         .setDescription(truncatedResponse)
-        .setColor((config.embedColor as any) || '#5865F2')
+        .setColor(metadata.provider === 'gemini' ? '#4285F4' : ((config.embedColor as any) || '#5865F2'))
         .setFooter({
-          text: `${metadata.tokens} tokens • ${metadata.responseTime}ms • $${metadata.cost.toFixed(6)}`,
+          text: `${providerDisplay} • ${metadata.tokens} tokens • ${metadata.responseTime}ms • ${costDisplay}`,
         })
         .setTimestamp();
 
@@ -1809,6 +1928,11 @@ Your job is to help users with their FiveLink profiles, Discord bots, and make t
   }
 
   private getModelKey(model: string): string {
+    // Gemini models
+    if (model.includes('gemini-2.0')) return 'gemini-2.0-flash';
+    if (model.includes('gemini-1.5-flash')) return 'gemini-1.5-flash';
+    if (model.includes('gemini-1.5-pro')) return 'gemini-1.5-pro';
+    // OpenAI models
     if (model.includes('gpt-4o-mini')) return 'gpt-4o-mini';
     if (model.includes('gpt-4o')) return 'gpt-4o';
     if (model.includes('gpt-4-turbo')) return 'gpt-4-turbo';
