@@ -547,8 +547,188 @@ export class AIService {
     }
   }
 
+  // Patterns for messages that should be skipped
+  private readonly SKIP_PATTERNS = [
+    /^(ok|okay|k|kk|oui|yes|yep|yeah|yea|yup|sure|alright|aight|bet|cool|nice|great|good|thanks|thx|ty|merci|np|no problem|lol|lmao|haha|hehe|xd|mdr|ptdr|ah|oh|eh|hmm|hm|mm|uh|um)+$/i,
+    /^\.+$/, // Just dots
+    /^\s*$/, // Empty or whitespace
+  ];
+
+  // Emoji-only pattern (handles multi-codepoint emojis)
+  private readonly EMOJI_ONLY_PATTERN = /^[\p{Emoji}\p{Emoji_Modifier}\p{Emoji_Component}\p{Emoji_Modifier_Base}\p{Emoji_Presentation}\s]+$/u;
+
+  /**
+   * Check if a message should be skipped (emojis, short acknowledgments, etc.)
+   */
+  private shouldSkipMessage(content: string): boolean {
+    const trimmed = content.trim();
+
+    // Skip empty messages
+    if (trimmed.length === 0) return true;
+
+    // Skip very short acknowledgment messages
+    if (trimmed.length <= 15 && this.SKIP_PATTERNS.some(p => p.test(trimmed))) {
+      console.log(`[AI] Skipping acknowledgment message: "${trimmed}"`);
+      return true;
+    }
+
+    // Skip messages that are ONLY emojis (less than 30 chars)
+    if (this.EMOJI_ONLY_PATTERN.test(trimmed) && trimmed.length < 30) {
+      console.log(`[AI] Skipping emoji-only message: "${trimmed}"`);
+      return true;
+    }
+
+    // Skip messages that are just usernames/mentions without content
+    const withoutMentions = trimmed.replace(/<@!?\d+>/g, '').replace(/<@&\d+>/g, '').trim();
+    if (withoutMentions.length === 0) {
+      console.log(`[AI] Skipping mention-only message`);
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Use AI to determine if a message is directed at the bot or needs a response
+   * This is called for @everyone channels to filter out casual conversations
+   */
+  private async isMessageForAI(message: Message, config: AIConfig): Promise<boolean> {
+    // Direct mention always gets a response
+    if (message.mentions.has(this.client.user!.id)) {
+      return true;
+    }
+
+    // If it's a reply to the bot, respond
+    if (message.reference?.messageId) {
+      try {
+        const repliedTo = await message.channel.messages.fetch(message.reference.messageId);
+        if (repliedTo.author.id === this.client.user!.id) {
+          return true;
+        }
+      } catch {
+        // Ignore if we can't fetch the message
+      }
+    }
+
+    const content = message.content.toLowerCase();
+
+    // Quick check for question words that indicate someone needs help
+    const questionWords = [
+      // English
+      'what', 'why', 'how', 'when', 'where', 'who', 'which', 'whom',
+      'can you', 'could you', 'would you', 'will you', 'do you',
+      'help', 'question', 'problem', 'issue', 'error', 'bug',
+      'need help', 'i need', 'how do i', 'how to',
+      // French
+      'quoi', 'pourquoi', 'comment', 'quand', 'où', 'qui', 'quel', 'quelle',
+      'peux-tu', 'pouvez-vous', 'est-ce que', 'c\'est quoi',
+      'aide', 'aidez', 'problème', 'erreur', 'bug',
+      'besoin d\'aide', 'j\'ai besoin', 'comment faire'
+    ];
+
+    // If message contains question words and ends with ? it's likely a question
+    if (content.includes('?') && questionWords.some(w => content.includes(w))) {
+      return true;
+    }
+
+    // Check if it mentions the bot's name or common AI triggers
+    const botName = this.client.user!.username.toLowerCase();
+    const aiTriggers = ['bot', 'ai', 'assistant', 'fivelink'];
+    if (content.includes(botName) || aiTriggers.some(t => content.includes(t))) {
+      return true;
+    }
+
+    // For short messages without clear direction, skip
+    if (content.length < 50 && !content.includes('?')) {
+      console.log(`[AI] Skipping short non-question message: "${content.substring(0, 50)}..."`);
+      return false;
+    }
+
+    // For longer messages, use AI to determine if it needs a response
+    // This is expensive so only do it for ambiguous cases
+    if (config.apiKey && content.length >= 50) {
+      try {
+        const decision = await this.askAIToDecide(message, config);
+        console.log(`[AI] AI decision for message "${content.substring(0, 50)}...": ${decision}`);
+        return decision;
+      } catch (error) {
+        console.error('[AI] Error asking AI to decide:', error);
+        // Default to not responding on error
+        return false;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Ask the AI if it should respond to a message
+   * Used for ambiguous cases in @everyone channels
+   */
+  private async askAIToDecide(message: Message, config: AIConfig): Promise<boolean> {
+    if (!this.openai) {
+      this.openai = new OpenAI({
+        apiKey: this.decryptApiKey(config.apiKey!),
+      });
+    }
+
+    // Get recent context (last 5 messages)
+    let recentContext = '';
+    try {
+      const recentMessages = await message.channel.messages.fetch({ limit: 6 });
+      const context = recentMessages
+        .reverse()
+        .map(m => `${m.author.username}: ${m.content.substring(0, 100)}`)
+        .join('\n');
+      recentContext = `Recent messages:\n${context}`;
+    } catch {
+      // Ignore
+    }
+
+    const response = await this.openai.chat.completions.create({
+      model: 'gpt-5-nano', // Use cheapest model for this quick decision
+      messages: [
+        {
+          role: 'system',
+          content: `You are a decision engine. Your ONLY job is to determine if a message in a Discord server is directed at the AI bot or requires the AI to respond.
+
+RESPOND WITH ONLY "YES" OR "NO" - nothing else.
+
+Respond "YES" if:
+- The message is a question asking for help or information
+- The message is clearly directed at the bot
+- The message asks about the server/platform
+- Someone needs assistance
+
+Respond "NO" if:
+- It's casual conversation between users
+- It's a greeting between users (not to the bot)
+- It's just reactions/emojis/short acknowledgments
+- Users are chatting with each other
+- The message doesn't need AI assistance
+
+${recentContext}`
+        },
+        {
+          role: 'user',
+          content: `Should I (the AI bot) respond to this message?\n\nMessage from ${message.author.username}: "${message.content}"`
+        }
+      ],
+      max_tokens: 5,
+      temperature: 0,
+    });
+
+    const answer = response.choices[0]?.message?.content?.trim().toUpperCase();
+    return answer === 'YES';
+  }
+
   private async shouldRespond(message: Message, config: AIConfig): Promise<boolean> {
     const content = message.content.toLowerCase();
+
+    // FIRST: Check if message should be skipped entirely (emojis, acknowledgments, etc.)
+    if (this.shouldSkipMessage(message.content)) {
+      return false;
+    }
 
     // Check if message starts with ignored prefix
     if (config.ignorePrefixes?.some(prefix => message.content.startsWith(prefix))) {
@@ -583,7 +763,9 @@ export class AIService {
     switch (config.responseMode) {
       case 'always':
       case 'ALWAYS':
-        return true;
+        // SMART ALWAYS: Don't blindly respond to everything
+        // Use AI to decide if the message is directed at us or needs a response
+        return await this.isMessageForAI(message, config);
 
       case 'mention':
       case 'MENTION':
@@ -599,11 +781,8 @@ export class AIService {
 
       case 'smart':
       case 'SMART':
-        // Detect questions or commands
-        const questionWords = ['what', 'why', 'how', 'when', 'where', 'who', 'can you', 'could you', 'would you', 'help'];
-        const hasQuestion = questionWords.some(word => content.includes(word));
-        const hasMention = message.mentions.has(this.client.user!.id);
-        return hasQuestion || hasMention;
+        // Enhanced smart mode with AI decision
+        return await this.isMessageForAI(message, config);
 
       case 'TICKET_ONLY':
         return await this.isTicketThread(message.channel.id);

@@ -110,13 +110,28 @@ export class AIRecruitmentService {
   shouldSkipMessage(content: string): boolean {
     const trimmed = content.trim();
 
-    // Skip very short acknowledgment messages
-    if (trimmed.length <= 10 && this.SKIP_PATTERNS.some(p => p.test(trimmed))) {
+    // Skip empty messages
+    if (trimmed.length === 0) return true;
+
+    // Skip very short acknowledgment messages (expanded list)
+    const shortPatterns = [
+      /^(ok|okay|k|kk|oui|yes|yep|yeah|yea|yup|sure|alright|aight|bet|cool|nice|great|good|thanks|thx|ty|merci|np|no problem|lol|lmao|haha|hehe|xd|mdr|ptdr|ah|oh|eh|hmm|hm|mm|uh|um|nah|nope|non|hm+|a{2,}h*|o{2,}h*)+$/i,
+    ];
+    if (trimmed.length <= 20 && shortPatterns.some(p => p.test(trimmed))) {
+      console.log(`[TicketAI] Skipping acknowledgment: "${trimmed}"`);
       return true;
     }
 
-    // Skip messages that are ONLY emojis (less than 5 emojis)
-    if (this.EMOJI_ONLY_PATTERN.test(trimmed) && trimmed.length < 30) {
+    // Skip messages that are ONLY emojis
+    if (this.EMOJI_ONLY_PATTERN.test(trimmed) && trimmed.length < 50) {
+      console.log(`[TicketAI] Skipping emoji-only: "${trimmed}"`);
+      return true;
+    }
+
+    // Skip messages that are just "heyy" type greetings between users
+    const greetingPattern = /^(hey+|hi+|hello+|yo+|sup+|salut+|coucou+)[\s!]*$/i;
+    if (greetingPattern.test(trimmed)) {
+      console.log(`[TicketAI] Skipping greeting: "${trimmed}"`);
       return true;
     }
 
@@ -124,7 +139,55 @@ export class AIRecruitmentService {
   }
 
   /**
-   * Start the AI on a new ticket - she greets and is ready to help
+   * Extract ticket information from the initial embed
+   */
+  private async getTicketEmbedInfo(channel: TextChannel | ThreadChannel): Promise<{
+    subject?: string;
+    description?: string;
+    priority?: string;
+    createdBy?: string;
+  }> {
+    try {
+      // Fetch the first few messages to find the ticket embed
+      const messages = await channel.messages.fetch({ limit: 5 });
+
+      for (const [, msg] of messages) {
+        if (msg.author.bot && msg.embeds.length > 0) {
+          const embed = msg.embeds[0];
+
+          // Look for ticket embed by checking for typical fields
+          if (embed.title?.includes('Ticket #') || embed.fields?.some(f => f.name === 'Created By')) {
+            const result: any = {};
+
+            // Extract title/subject
+            if (embed.title) {
+              const match = embed.title.match(/Ticket #\d+ - (.+)/);
+              result.subject = match ? match[1] : embed.title;
+            }
+
+            // Extract description
+            if (embed.description) {
+              result.description = embed.description;
+            }
+
+            // Extract fields
+            for (const field of embed.fields || []) {
+              if (field.name === 'Priority') result.priority = field.value;
+              if (field.name === 'Created By') result.createdBy = field.value;
+            }
+
+            return result;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[TicketAI] Error fetching ticket embed:', error);
+    }
+    return {};
+  }
+
+  /**
+   * Start the AI on a new ticket - she reads the embed and responds intelligently
    */
   async startTicket(
     ticket: Ticket,
@@ -143,7 +206,14 @@ export class AIRecruitmentService {
     const serverName = guild?.name || 'this server';
     const categoryName = category?.name || 'Support';
 
-    // Initialize state
+    // Wait a moment for the embed to be posted
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Read the ticket embed to understand what the user needs
+    const ticketInfo = await this.getTicketEmbedInfo(channel);
+    console.log('[TicketAI] Read ticket info:', ticketInfo);
+
+    // Initialize state with ticket context
     const state: TicketAIState = {
       mode: 'greeting',
       context: [],
@@ -151,17 +221,35 @@ export class AIRecruitmentService {
       completed: false,
     };
 
+    // Add ticket info to context if available
+    if (ticketInfo.subject) {
+      state.context.push(`[TICKET INFO] Subject: ${ticketInfo.subject}`);
+    }
+    if (ticketInfo.description) {
+      state.context.push(`[TICKET INFO] Description: ${ticketInfo.description}`);
+    }
+
     await this.updateTicketState(ticket.id, state);
 
-    // Build the intelligent greeting prompt
+    // Build the intelligent greeting prompt with ticket context
     const systemPrompt = this.buildIntelligentPrompt(serverName, categoryName, userName, category?.aiDirection || null, state);
+
+    // Build a context-aware greeting
+    let userMessage = `${userName} just opened a ticket.`;
+    if (ticketInfo.subject && ticketInfo.description) {
+      userMessage = `${userName} opened a ticket about "${ticketInfo.subject}". Their description: "${ticketInfo.description}". Greet them and acknowledge their issue, then ask any clarifying questions if needed.`;
+    } else if (ticketInfo.subject) {
+      userMessage = `${userName} opened a ticket about "${ticketInfo.subject}". Greet them and ask what specifically they need help with.`;
+    } else {
+      userMessage = `${userName} just opened a ${categoryName} ticket. Greet them warmly and ask what they need help with.`;
+    }
 
     try {
       const response = await this.openai!.chat.completions.create({
         model: this.aiConfig!.model,
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `${userName} just opened a ticket. Greet them warmly and ask how you can help.` },
+          { role: 'user', content: userMessage },
         ],
         temperature: this.aiConfig!.temperature,
         max_tokens: this.aiConfig!.maxTokens,
@@ -184,6 +272,69 @@ export class AIRecruitmentService {
   }
 
   /**
+   * Check if a message in a ticket is directed at the AI or needs AI response
+   */
+  private async isMessageForTicketAI(message: Message): Promise<boolean> {
+    // Direct mention always gets a response
+    if (message.mentions.has(this.client.user!.id)) {
+      return true;
+    }
+
+    // If it's a reply to the bot, respond
+    if (message.reference?.messageId) {
+      try {
+        const repliedTo = await message.channel.messages.fetch(message.reference.messageId);
+        if (repliedTo.author.id === this.client.user!.id) {
+          return true;
+        }
+        // If replying to another user, probably not for the AI
+        if (!repliedTo.author.bot) {
+          console.log(`[TicketAI] Skipping - reply to another user`);
+          return false;
+        }
+      } catch {
+        // Ignore if we can't fetch the message
+      }
+    }
+
+    const content = message.content.toLowerCase();
+
+    // Check for question words or help-seeking behavior
+    const helpIndicators = [
+      '?', 'help', 'aide', 'problem', 'problème', 'issue', 'error', 'erreur',
+      'how', 'comment', 'what', 'quoi', 'why', 'pourquoi', 'can you', 'peux-tu',
+      'please', 'svp', 's\'il vous plait', 'need', 'besoin'
+    ];
+
+    if (helpIndicators.some(h => content.includes(h))) {
+      return true;
+    }
+
+    // Check recent messages to see if there's a conversation between users
+    try {
+      const recentMessages = await message.channel.messages.fetch({ limit: 5 });
+      const nonBotMessages = recentMessages.filter(m => !m.author.bot && m.id !== message.id);
+      const uniqueUsers = new Set(nonBotMessages.map(m => m.author.id));
+
+      // If there are multiple users chatting, check if message is clearly for the AI
+      if (uniqueUsers.size > 1) {
+        // Multiple users in channel - be more conservative
+        // Only respond if message seems directed at bot
+        const mentionsBotConcept = content.includes('bot') || content.includes('ai') || content.includes('assistant');
+        if (!mentionsBotConcept && content.length < 100) {
+          console.log(`[TicketAI] Skipping - multiple users chatting, message not clearly for AI`);
+          return false;
+        }
+      }
+    } catch {
+      // Ignore errors, default to responding
+    }
+
+    // If the message is long enough, assume it might be relevant
+    return content.length >= 30;
+  }
+
+  /**
    * Process a user's message in a ticket
    */
   async processMessage(
@@ -201,8 +352,15 @@ export class AIRecruitmentService {
       return;
     }
 
-    // Check if we should skip this message
+    // Check if we should skip this message (emojis, short acknowledgments)
     if (this.shouldSkipMessage(message.content)) {
+      return;
+    }
+
+    // Check if the message is directed at the AI or needs AI response
+    const isForAI = await this.isMessageForTicketAI(message);
+    if (!isForAI) {
+      console.log(`[TicketAI] Skipping message - not directed at AI: "${message.content.substring(0, 50)}..."`);
       return;
     }
 
