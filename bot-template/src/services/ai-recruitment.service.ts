@@ -253,13 +253,15 @@ export class AIRecruitmentService {
     }
 
     try {
+      // GPT-5-nano doesn't support custom temperature, only default (1)
+      const isNanoModel = this.aiConfig!.model.includes('nano');
       const response = await this.openai!.chat.completions.create({
         model: this.aiConfig!.model,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userMessage },
         ],
-        temperature: this.aiConfig!.temperature,
+        ...(isNanoModel ? {} : { temperature: this.aiConfig!.temperature }),
         max_completion_tokens: this.aiConfig!.maxTokens,
       });
 
@@ -477,13 +479,15 @@ export class AIRecruitmentService {
       const channel = message.channel as TextChannel | ThreadChannel;
       await channel.sendTyping();
 
+      // GPT-5-nano doesn't support custom temperature
+      const isNanoModel = this.aiConfig!.model.includes('nano');
       const response = await this.openai!.chat.completions.create({
         model: this.aiConfig!.model,
         messages: [
           { role: 'system', content: systemPrompt },
           ...this.buildConversationHistory(currentState.context),
         ],
-        temperature: this.aiConfig!.temperature,
+        ...(isNanoModel ? {} : { temperature: this.aiConfig!.temperature }),
         max_completion_tokens: this.aiConfig!.maxTokens,
       });
 

@@ -269,13 +269,14 @@ RESPONSE FORMAT (JSON):
 IMPORTANT: When asked to message another channel, set action.type to "send_message" and include channelName and content.`;
 
     try {
+      const isNanoModel = this.model.includes('nano');
       const response = await this.openai!.chat.completions.create({
         model: this.model,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: message.content }
         ],
-        temperature: 0.7,
+        ...(isNanoModel ? {} : { temperature: 0.7 }),
         max_completion_tokens: 1000,
         response_format: { type: 'json_object' }
       });

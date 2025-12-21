@@ -962,7 +962,7 @@ ${recentContext}`
         }
       ],
       max_completion_tokens: 100,
-      temperature: 0,
+      // Note: gpt-5-nano doesn't support custom temperature
     });
 
     const answer = response.choices[0]?.message?.content?.trim() || '';
@@ -1230,8 +1230,10 @@ ${recentContext}`
       : `You tried to create a ${action.type} for ${userName} but it failed: ${action.error}`;
 
     try {
+      const modelToUse = config.model || 'gpt-5-nano';
+      const isNanoModel = modelToUse.includes('nano');
       const response = await this.openai.chat.completions.create({
-        model: config.model || 'gpt-5-nano',
+        model: modelToUse,
         messages: [
           {
             role: 'system',
@@ -1253,7 +1255,7 @@ Respond naturally and personally to confirm the action. Be friendly but concise 
             content: message.content
           }
         ],
-        temperature: 0.8,
+        ...(isNanoModel ? {} : { temperature: 0.8 }),
         max_completion_tokens: 150
       });
 
