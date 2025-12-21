@@ -3,36 +3,39 @@ import OpenAI from 'openai';
 import { PrismaClient, Ticket, TicketCategory } from '@prisma/client';
 import { decrypt } from '../utils/encryption';
 
-interface RecruitmentState {
-  started: boolean;
+interface TicketAIState {
+  mode: 'greeting' | 'support' | 'recruitment' | 'general';
+  context: string[];
   questionCount: number;
-  answers: Array<{
-    question: string;
-    answer: string;
-    timestamp: number;
-  }>;
   completed: boolean;
   summary?: string;
   recommendation?: 'recommended' | 'hesitant' | 'not_recommended';
+}
+
+interface AIConfig {
+  model: string;
+  temperature: number;
+  maxTokens: number;
+  personality: string;
+  customPersonality?: string;
+  systemPrompt?: string;
 }
 
 export class AIRecruitmentService {
   private client: Client;
   private prisma: PrismaClient;
   private openai: OpenAI | null = null;
+  private aiConfig: AIConfig | null = null;
 
   // Messages that don't need a response (just acknowledgments)
   private readonly SKIP_PATTERNS = [
-    /^(ok|okay|k|kk|oui|yes|yep|yeah|yea|yup|sure|alright|aight|bet|cool|nice|great|good|thanks|thx|ty|merci|np|no problem|👍|👌|✅|🙏|😊|😄|🤝|💪|❤️|🔥|✨|😎|🙌|👏)+$/i,
+    /^(ok|okay|k|kk|oui|yes|yep|yeah|yea|yup|sure|alright|aight|bet|cool|nice|great|good|thanks|thx|ty|merci|np|no problem)+$/i,
     /^\.+$/, // Just dots
     /^\s*$/, // Empty or whitespace
   ];
 
-  // Patterns that indicate the conversation should end
-  private readonly END_PATTERNS = [
-    /\b(bye|goodbye|cya|see you|au revoir|à plus|a\+|bonne journée|bonne soirée)\b/i,
-    /^(done|fini|terminé|that's all|c'est tout)$/i,
-  ];
+  // Emoji-only pattern
+  private readonly EMOJI_ONLY_PATTERN = /^[\p{Emoji}\s]+$/u;
 
   constructor(client: Client, prisma?: PrismaClient) {
     this.client = client;
@@ -40,7 +43,7 @@ export class AIRecruitmentService {
   }
 
   /**
-   * Initialize OpenAI with the guild's API key
+   * Initialize OpenAI with the guild's API key and config
    */
   private async initOpenAI(guildId: string): Promise<boolean> {
     const config = await this.prisma.aIConfig.findUnique({
@@ -55,6 +58,17 @@ export class AIRecruitmentService {
       this.openai = new OpenAI({
         apiKey: decrypt(config.apiKey),
       });
+
+      // Store the config for later use
+      this.aiConfig = {
+        model: config.model || 'gpt-4o-mini',
+        temperature: config.temperature || 0.7,
+        maxTokens: config.maxTokens || 500,
+        personality: config.personality || 'friendly',
+        customPersonality: config.customPersonality || undefined,
+        systemPrompt: config.systemPrompt || undefined,
+      };
+
       return true;
     } catch {
       return false;
@@ -62,9 +76,9 @@ export class AIRecruitmentService {
   }
 
   /**
-   * Get the recruitment state for a ticket
+   * Get the ticket AI state
    */
-  async getRecruitmentState(ticketId: string): Promise<RecruitmentState | null> {
+  async getTicketState(ticketId: string): Promise<TicketAIState | null> {
     const ticket = await this.prisma.ticket.findUnique({
       where: { id: ticketId },
     });
@@ -81,9 +95,9 @@ export class AIRecruitmentService {
   }
 
   /**
-   * Update the recruitment state for a ticket
+   * Update the ticket AI state
    */
-  async updateRecruitmentState(ticketId: string, state: RecruitmentState): Promise<void> {
+  async updateTicketState(ticketId: string, state: TicketAIState): Promise<void> {
     await this.prisma.ticket.update({
       where: { id: ticketId },
       data: { aiRecruitmentState: JSON.stringify(state) },
@@ -91,19 +105,18 @@ export class AIRecruitmentService {
   }
 
   /**
-   * Check if a message should be skipped (acknowledgment, emoji, etc.)
+   * Check if a message should be skipped
    */
   shouldSkipMessage(content: string): boolean {
     const trimmed = content.trim();
 
-    // Skip very short messages that are just acknowledgments
-    if (trimmed.length <= 5 && this.SKIP_PATTERNS.some(p => p.test(trimmed))) {
+    // Skip very short acknowledgment messages
+    if (trimmed.length <= 10 && this.SKIP_PATTERNS.some(p => p.test(trimmed))) {
       return true;
     }
 
-    // Skip messages that are ONLY emojis
-    const emojiOnlyPattern = /^[\p{Emoji}\s]+$/u;
-    if (emojiOnlyPattern.test(trimmed) && trimmed.length < 20) {
+    // Skip messages that are ONLY emojis (less than 5 emojis)
+    if (this.EMOJI_ONLY_PATTERN.test(trimmed) && trimmed.length < 30) {
       return true;
     }
 
@@ -111,16 +124,9 @@ export class AIRecruitmentService {
   }
 
   /**
-   * Check if the conversation should end
+   * Start the AI on a new ticket - she greets and is ready to help
    */
-  shouldEndConversation(content: string): boolean {
-    return this.END_PATTERNS.some(p => p.test(content.trim()));
-  }
-
-  /**
-   * Greet user when they open a ticket (non-recruitment)
-   */
-  async greetUser(
+  async startTicket(
     ticket: Ticket,
     category: TicketCategory | null,
     channel: TextChannel | ThreadChannel,
@@ -128,7 +134,7 @@ export class AIRecruitmentService {
   ): Promise<void> {
     const initialized = await this.initOpenAI(ticket.guildId);
     if (!initialized) {
-      console.log('[AIRecruitment] OpenAI not configured for guild:', ticket.guildId);
+      console.log('[TicketAI] OpenAI not configured for guild:', ticket.guildId);
       return;
     }
 
@@ -137,36 +143,28 @@ export class AIRecruitmentService {
     const serverName = guild?.name || 'this server';
     const categoryName = category?.name || 'Support';
 
-    // Build greeting prompt
-    const greetingPrompt = `You are a friendly support assistant for ${serverName}.
+    // Initialize state
+    const state: TicketAIState = {
+      mode: 'greeting',
+      context: [],
+      questionCount: 0,
+      completed: false,
+    };
 
-YOUR ROLE:
-- You are the first point of contact for users opening support tickets
-- You greet users warmly and make them feel welcome
-- You ask what they need help with
-- You are helpful, professional, and concise
+    await this.updateTicketState(ticket.id, state);
 
-CONTEXT:
-- The user just opened a ${categoryName} ticket
-- Their username is: ${userName}
-
-INSTRUCTIONS:
-- Greet the user by name in a friendly way
-- Welcome them to the support
-- Ask how you can help them today
-- Keep it short (2-3 sentences max)
-- Be warm but professional
-- Speak in the same language as the category name (if French category, speak French)`;
+    // Build the intelligent greeting prompt
+    const systemPrompt = this.buildIntelligentPrompt(serverName, categoryName, userName, category?.aiDirection || null, state);
 
     try {
       const response = await this.openai!.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: this.aiConfig!.model,
         messages: [
-          { role: 'system', content: greetingPrompt },
-          { role: 'user', content: `A user named ${userName} just opened a ${categoryName} ticket. Greet them.` },
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `${userName} just opened a ticket. Greet them warmly and ask how you can help.` },
         ],
-        temperature: 0.8,
-        max_tokens: 200,
+        temperature: this.aiConfig!.temperature,
+        max_tokens: this.aiConfig!.maxTokens,
       });
 
       const aiMessage = response.choices[0]?.message?.content;
@@ -181,76 +179,14 @@ INSTRUCTIONS:
         });
       }
     } catch (error) {
-      console.error('[AIRecruitment] Error greeting user:', error);
+      console.error('[TicketAI] Error starting ticket:', error);
     }
   }
 
   /**
-   * Start a recruitment interview
+   * Process a user's message in a ticket
    */
-  async startRecruitment(
-    ticket: Ticket,
-    category: TicketCategory | null,
-    channel: TextChannel | ThreadChannel
-  ): Promise<void> {
-    const initialized = await this.initOpenAI(ticket.guildId);
-    if (!initialized) {
-      console.log('[AIRecruitment] OpenAI not configured for guild:', ticket.guildId);
-      return;
-    }
-
-    // Get server name
-    const guild = this.client.guilds.cache.get(ticket.guildId);
-    const serverName = guild?.name || 'this server';
-
-    // Get the AI direction from category
-    const aiDirection = category?.aiDirection ||
-      `We are recruiting for ${serverName}. Ask relevant questions to evaluate the candidate.`;
-
-    // Initialize recruitment state
-    const state: RecruitmentState = {
-      started: true,
-      questionCount: 0,
-      answers: [],
-      completed: false,
-    };
-
-    await this.updateRecruitmentState(ticket.id, state);
-
-    // Generate the opening message
-    const systemPrompt = this.buildRecruiterPrompt(serverName, aiDirection, state);
-
-    try {
-      const response = await this.openai!.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: 'The candidate just opened a recruitment ticket. Start the interview.' },
-        ],
-        temperature: 0.7,
-        max_tokens: 500,
-      });
-
-      const aiMessage = response.choices[0]?.message?.content;
-      if (aiMessage) {
-        await channel.send({
-          embeds: [
-            new EmbedBuilder()
-              .setColor('#5865F2')
-              .setDescription(aiMessage)
-              .setFooter({ text: 'AI Recruiter' }),
-          ],
-        });
-      }
-    } catch (error) {
-      console.error('[AIRecruitment] Error starting recruitment:', error);
-    }
-  }
-
-  /**
-   * Process a candidate's response
-   */
-  async processResponse(
+  async processMessage(
     message: Message,
     ticket: Ticket,
     category: TicketCategory | null
@@ -270,8 +206,27 @@ INSTRUCTIONS:
       return;
     }
 
-    const state = await this.getRecruitmentState(ticket.id);
-    if (!state || state.completed) {
+    const state = await this.getTicketState(ticket.id);
+    if (!state) {
+      // Initialize state if not exists
+      const newState: TicketAIState = {
+        mode: 'general',
+        context: [],
+        questionCount: 0,
+        completed: false,
+      };
+      await this.updateTicketState(ticket.id, newState);
+    }
+
+    const currentState = state || {
+      mode: 'general' as const,
+      context: [],
+      questionCount: 0,
+      completed: false,
+    };
+
+    // Don't respond if AI work is completed (summary given)
+    if (currentState.completed) {
       return;
     }
 
@@ -283,38 +238,27 @@ INSTRUCTIONS:
     // Get server info
     const guild = this.client.guilds.cache.get(ticket.guildId);
     const serverName = guild?.name || 'this server';
+    const categoryName = category?.name || 'Support';
+    const userName = message.member?.displayName || message.author.username;
 
-    // Get the AI direction
-    const aiDirection = category?.aiDirection ||
-      `We are recruiting for ${serverName}. Ask relevant questions to evaluate the candidate.`;
+    // Add message to context
+    currentState.context.push(`${userName}: ${message.content}`);
 
-    // Check if conversation should end
-    if (this.shouldEndConversation(message.content)) {
-      await this.generateSummary(message, ticket, category, state);
-      return;
+    // Keep only last 20 messages for context
+    if (currentState.context.length > 20) {
+      currentState.context = currentState.context.slice(-20);
     }
 
-    // Add the answer to state
-    state.answers.push({
-      question: 'Previous question', // Will be updated by AI context
-      answer: message.content,
-      timestamp: Date.now(),
-    });
-    state.questionCount++;
+    currentState.questionCount++;
 
-    await this.updateRecruitmentState(ticket.id, state);
-
-    // Check if we have enough answers (5-8 questions typically)
-    if (state.questionCount >= 6) {
-      await this.generateSummary(message, ticket, category, state);
-      return;
-    }
-
-    // Build conversation history for context
-    const conversationHistory = this.buildConversationHistory(state);
-
-    // Generate next response
-    const systemPrompt = this.buildRecruiterPrompt(serverName, aiDirection, state);
+    // Build the intelligent prompt
+    const systemPrompt = this.buildIntelligentPrompt(
+      serverName,
+      categoryName,
+      userName,
+      category?.aiDirection || null,
+      currentState
+    );
 
     try {
       // Show typing indicator
@@ -322,190 +266,162 @@ INSTRUCTIONS:
       await channel.sendTyping();
 
       const response = await this.openai!.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: this.aiConfig!.model,
         messages: [
           { role: 'system', content: systemPrompt },
-          ...conversationHistory,
-          { role: 'user', content: message.content },
+          ...this.buildConversationHistory(currentState.context),
         ],
-        temperature: 0.7,
-        max_tokens: 500,
+        temperature: this.aiConfig!.temperature,
+        max_tokens: this.aiConfig!.maxTokens,
       });
 
       const aiMessage = response.choices[0]?.message?.content;
       if (aiMessage) {
-        // Check if AI wants to conclude
-        if (aiMessage.toLowerCase().includes('summary') ||
-            aiMessage.toLowerCase().includes('conclusion') ||
-            aiMessage.toLowerCase().includes('recommendation')) {
-          state.completed = true;
-          await this.updateRecruitmentState(ticket.id, state);
+        // Detect if AI is providing a summary/conclusion
+        const isSummary = this.detectSummary(aiMessage);
+
+        if (isSummary) {
+          currentState.completed = true;
+          currentState.summary = aiMessage;
+
+          // Determine recommendation
+          if (aiMessage.toLowerCase().includes('not recommended') ||
+              aiMessage.toLowerCase().includes('non recommandé') ||
+              aiMessage.toLowerCase().includes('❌')) {
+            currentState.recommendation = 'not_recommended';
+          } else if (aiMessage.toLowerCase().includes('recommended') ||
+                     aiMessage.toLowerCase().includes('recommandé') ||
+                     aiMessage.toLowerCase().includes('✅')) {
+            currentState.recommendation = 'recommended';
+          } else {
+            currentState.recommendation = 'hesitant';
+          }
+        }
+
+        await this.updateTicketState(ticket.id, currentState);
+
+        // Choose embed color based on context
+        let embedColor = '#5865F2'; // Default blue
+        if (isSummary) {
+          if (currentState.recommendation === 'recommended') {
+            embedColor = '#00FF00'; // Green
+          } else if (currentState.recommendation === 'not_recommended') {
+            embedColor = '#FF0000'; // Red
+          } else {
+            embedColor = '#FFA500'; // Orange
+          }
         }
 
         await message.reply({
           embeds: [
             new EmbedBuilder()
-              .setColor('#5865F2')
+              .setColor(embedColor as any)
               .setDescription(aiMessage)
-              .setFooter({ text: 'AI Recruiter' }),
+              .setFooter({ text: isSummary ? '📋 AI Assessment' : '🤖 AI Assistant' }),
           ],
         });
-      }
-    } catch (error) {
-      console.error('[AIRecruitment] Error processing response:', error);
-    }
-  }
 
-  /**
-   * Generate the final summary and recommendation
-   */
-  private async generateSummary(
-    message: Message,
-    ticket: Ticket,
-    category: TicketCategory | null,
-    state: RecruitmentState
-  ): Promise<void> {
-    const guild = this.client.guilds.cache.get(ticket.guildId);
-    const serverName = guild?.name || 'this server';
-    const aiDirection = category?.aiDirection || 'General recruitment';
-
-    const conversationHistory = this.buildConversationHistory(state);
-
-    const summaryPrompt = `
-You are the recruiter for ${serverName}.
-
-RECRUITMENT CRITERIA:
-${aiDirection}
-
-Based on the interview conversation, provide:
-1. A brief SUMMARY of the candidate's responses
-2. KEY STRENGTHS identified
-3. POTENTIAL CONCERNS (if any)
-4. Your RECOMMENDATION with one of these verdicts:
-   - Recommended - The candidate meets the criteria well
-   - Hesitant - Some concerns but could work out
-   - Not Recommended - Significant concerns or doesn't meet criteria
-
-Format your response clearly with sections. Be honest but professional.
-The staff will make the final decision based on your assessment.
-`;
-
-    try {
-      const channel = message.channel as TextChannel | ThreadChannel;
-      await channel.sendTyping();
-
-      const response = await this.openai!.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: summaryPrompt },
-          ...conversationHistory,
-          { role: 'user', content: 'Please provide your final assessment of this candidate.' },
-        ],
-        temperature: 0.5,
-        max_tokens: 800,
-      });
-
-      const summary = response.choices[0]?.message?.content;
-      if (summary) {
-        // Determine recommendation from summary
-        let recommendation: 'recommended' | 'hesitant' | 'not_recommended' = 'hesitant';
-        let emoji = '';
-        let color: number = 0xFFA500; // Orange for hesitant
-
-        if (summary.toLowerCase().includes('not recommended') ||
-            summary.toLowerCase().includes('non recommandé')) {
-          recommendation = 'not_recommended';
-          emoji = '';
-          color = 0xFF0000; // Red
-        } else if (summary.toLowerCase().includes('recommended') &&
-                   !summary.toLowerCase().includes('not recommended')) {
-          recommendation = 'recommended';
-          emoji = '';
-          color = 0x00FF00; // Green
+        // If summary provided, notify staff
+        if (isSummary) {
+          await channel.send({
+            content: '> ✅ L\'IA a terminé son évaluation. Les staff peuvent maintenant prendre une décision.',
+          });
         }
-
-        state.completed = true;
-        state.summary = summary;
-        state.recommendation = recommendation;
-        await this.updateRecruitmentState(ticket.id, state);
-
-        await channel.send({
-          embeds: [
-            new EmbedBuilder()
-              .setColor(color)
-              .setTitle(`${emoji} AI Assessment Complete`)
-              .setDescription(summary)
-              .addFields(
-                { name: 'Questions Asked', value: `${state.questionCount}`, inline: true },
-                { name: 'Answers Received', value: `${state.answers.length}`, inline: true },
-              )
-              .setFooter({ text: 'Staff will review and make the final decision' })
-              .setTimestamp(),
-          ],
-        });
-
-        // Notify that AI is done and staff should take over
-        await channel.send({
-          content: '> The AI interview is complete. Staff can now review the conversation and make a decision.',
-        });
       }
     } catch (error) {
-      console.error('[AIRecruitment] Error generating summary:', error);
+      console.error('[TicketAI] Error processing message:', error);
     }
   }
 
   /**
-   * Build the recruiter system prompt
+   * Build the intelligent system prompt - the AI figures out what to do
    */
-  private buildRecruiterPrompt(
+  private buildIntelligentPrompt(
     serverName: string,
-    aiDirection: string,
-    state: RecruitmentState
+    categoryName: string,
+    userName: string,
+    aiDirection: string | null,
+    state: TicketAIState
   ): string {
-    return `You are the official recruiter for ${serverName}. You are conducting a recruitment interview.
+    const contextHistory = state.context.length > 0
+      ? `\n\nCONVERSATION HISTORY:\n${state.context.join('\n')}`
+      : '';
 
-YOUR ROLE:
-- You CONDUCT the interview - YOU ask the questions
-- You evaluate the candidate's responses
-- You give a professional assessment at the end
+    const directionInfo = aiDirection
+      ? `\n\nRECRUITMENT DIRECTION (if user mentions they want to join/apply):\n${aiDirection}`
+      : '';
 
-WHAT WE'RE LOOKING FOR:
-${aiDirection}
+    return `You are an intelligent AI assistant for ${serverName}. You handle support tickets with intelligence and adaptability.
 
-BEHAVIOR:
-- Be professional but friendly
-- Generate your own questions based on what we're looking for
-- Ask ONE question at a time
-- Wait for the answer before continuing
-- Adapt your questions based on answers (if someone says they're 14 and we need 16+, explore that)
-- If the answer is vague, ask for clarification
-- YOU ARE THE RECRUITER, not the candidate - NEVER answer questions as if they were for you
+YOUR CAPABILITIES:
+- You greet users and help with any request
+- You DETECT what the user needs from their messages
+- If they mention recruitment/joining/applying, you switch to recruiter mode
+- If they need help/support, you assist them
+- You remember the conversation context and adapt
 
-CURRENT STATE:
-- Questions asked so far: ${state.questionCount}
-- ${state.questionCount === 0 ? 'This is the beginning of the interview' : 'Continue the interview naturally'}
+CURRENT CONTEXT:
+- Server: ${serverName}
+- Category: ${categoryName}
+- User: ${userName}
+- Messages exchanged: ${state.questionCount}
+- Current mode: ${state.mode}
+${directionInfo}
+${contextHistory}
 
-INSTRUCTIONS:
-1. If this is the start, introduce yourself briefly and explain the process
-2. Ask your questions naturally, one at a time
-3. When you have enough information (5-8 questions typically), provide a SUMMARY
-4. Give your VERDICT: Recommended | Hesitant | Not Recommended
-5. Justify your verdict with strengths and concerns
+BEHAVIOR RULES:
+1. Be natural and conversational - not robotic
+2. Keep responses SHORT (2-4 sentences max)
+3. DETECT intent from messages:
+   - "I want to apply" / "je veux postuler" / "recruitment" → Switch to recruiter mode, ask questions
+   - "I need help" / "j'ai un problème" → Support mode, help them
+   - General chat → Be friendly, guide them
+4. If in recruiter mode:
+   - Ask ONE question at a time
+   - Evaluate answers intelligently
+   - After 5-8 questions, give a SUMMARY with recommendation (✅ Recommended / ⚠️ Hesitant / ❌ Not Recommended)
+5. Match the user's language (French/English)
+6. Don't respond to emojis or "ok/thanks" with another full message
 
-Keep responses concise (2-3 sentences max per question). Be natural, not robotic.`;
+PERSONALITY:
+${this.aiConfig?.customPersonality || this.aiConfig?.personality || 'Professional but friendly'}
+
+You are SMART. Figure out what the user needs and adapt.`;
   }
 
   /**
-   * Build conversation history for AI context
+   * Build conversation history for OpenAI
    */
-  private buildConversationHistory(state: RecruitmentState): Array<{ role: 'user' | 'assistant'; content: string }> {
+  private buildConversationHistory(context: string[]): Array<{ role: 'user' | 'assistant'; content: string }> {
     const history: Array<{ role: 'user' | 'assistant'; content: string }> = [];
 
-    for (const answer of state.answers) {
-      history.push({ role: 'user', content: answer.answer });
+    for (const line of context) {
+      // Detect if it's a user or AI message based on content patterns
+      if (line.includes('AI:') || line.includes('🤖')) {
+        history.push({ role: 'assistant', content: line.replace(/^.*?:\s*/, '') });
+      } else {
+        history.push({ role: 'user', content: line });
+      }
     }
 
     return history;
+  }
+
+  /**
+   * Detect if the AI response is a summary/conclusion
+   */
+  private detectSummary(message: string): boolean {
+    const summaryKeywords = [
+      'summary', 'conclusion', 'recommendation', 'assessment', 'verdict',
+      'résumé', 'conclusion', 'recommandation', 'évaluation', 'avis final',
+      '✅ recommended', '⚠️ hesitant', '❌ not recommended',
+      '✅ recommandé', '⚠️ hésitant', '❌ non recommandé',
+      'based on our conversation', 'après notre échange',
+      'my recommendation', 'ma recommandation'
+    ];
+
+    const lowerMessage = message.toLowerCase();
+    return summaryKeywords.some(keyword => lowerMessage.includes(keyword.toLowerCase()));
   }
 
   /**
@@ -527,5 +443,19 @@ Keep responses concise (2-3 sentences max per question). Be natural, not robotic
     });
 
     return newState;
+  }
+
+  // Legacy methods for compatibility
+  async startRecruitment(ticket: Ticket, category: TicketCategory | null, channel: TextChannel | ThreadChannel): Promise<void> {
+    const userName = 'User';
+    await this.startTicket(ticket, category, channel, userName);
+  }
+
+  async greetUser(ticket: Ticket, category: TicketCategory | null, channel: TextChannel | ThreadChannel, userName: string): Promise<void> {
+    await this.startTicket(ticket, category, channel, userName);
+  }
+
+  async processResponse(message: Message, ticket: Ticket, category: TicketCategory | null): Promise<void> {
+    await this.processMessage(message, ticket, category);
   }
 }

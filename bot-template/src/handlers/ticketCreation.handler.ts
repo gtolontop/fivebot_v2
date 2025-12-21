@@ -396,7 +396,7 @@ export class TicketCreationHandler {
         { subject, priority }
       );
 
-      // Start AI greeting or recruitment based on category configuration
+      // Start AI on the ticket (intelligent - adapts to what the user needs)
       const dbCategory = await this.prisma.ticketCategory.findFirst({
         where: {
           guildId: interaction.guildId!,
@@ -407,22 +407,13 @@ export class TicketCreationHandler {
         }
       });
 
-      if (dbCategory?.aiDirection) {
-        // Start AI recruitment interview (for categories with aiDirection)
-        await this.aiRecruitmentService.startRecruitment(
-          ticket,
-          dbCategory,
-          container as TextChannel | ThreadChannel
-        );
-      } else {
-        // Greet user with AI for all other tickets
-        await this.aiRecruitmentService.greetUser(
-          ticket,
-          dbCategory,
-          container as TextChannel | ThreadChannel,
-          interaction.user.displayName || interaction.user.username
-        );
-      }
+      // AI starts and greets - she'll figure out what the user needs
+      await this.aiRecruitmentService.startTicket(
+        ticket,
+        dbCategory,
+        container as TextChannel | ThreadChannel,
+        interaction.user.displayName || interaction.user.username
+      );
 
       // Send confirmation
       await interaction.editReply({
@@ -814,7 +805,7 @@ export class TicketCreationHandler {
         { subject, priority, directCreation: true }
       );
 
-      // Start AI greeting or recruitment based on category configuration
+      // Start AI on the ticket (intelligent - adapts to what the user needs)
       const dbCategory = await this.prisma.ticketCategory.findFirst({
         where: {
           guildId: interaction.guildId!,
@@ -825,22 +816,13 @@ export class TicketCreationHandler {
         }
       });
 
-      if (dbCategory?.aiDirection) {
-        // Start AI recruitment interview (for categories with aiDirection)
-        await this.aiRecruitmentService.startRecruitment(
-          ticket,
-          dbCategory,
-          container as TextChannel | ThreadChannel
-        );
-      } else {
-        // Greet user with AI for all other tickets
-        await this.aiRecruitmentService.greetUser(
-          ticket,
-          dbCategory,
-          container as TextChannel | ThreadChannel,
-          interaction.user.displayName || interaction.user.username
-        );
-      }
+      // AI starts and greets - she'll figure out what the user needs
+      await this.aiRecruitmentService.startTicket(
+        ticket,
+        dbCategory,
+        container as TextChannel | ThreadChannel,
+        interaction.user.displayName || interaction.user.username
+      );
 
       // Send confirmation
       await interaction.editReply({

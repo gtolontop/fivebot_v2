@@ -133,10 +133,15 @@ export default {
         hasAttachments: message.attachments.size > 0
       });
 
-      // Process AI recruitment response if applicable (only for non-bot, non-staff messages)
+      // Process AI response for ALL tickets (only for non-bot, non-staff messages)
       if (!message.author.bot && !isStaff && aiRecruitmentService) {
         try {
-          // Get category to check if AI is configured
+          // Get the full ticket with aiEnabled flag
+          const fullTicket = await prisma.ticket.findUnique({
+            where: { id: ticket.id }
+          });
+
+          // Get category for context (optional)
           const dbCategory = await prisma.ticketCategory.findFirst({
             where: {
               guildId: message.guildId!,
@@ -144,23 +149,16 @@ export default {
             }
           });
 
-          // Only process if category has AI direction configured
-          if (dbCategory?.aiDirection) {
-            // Get the full ticket with aiEnabled flag
-            const fullTicket = await prisma.ticket.findUnique({
-              where: { id: ticket.id }
-            });
-
-            if (fullTicket) {
-              await aiRecruitmentService.processResponse(
-                message,
-                fullTicket,
-                dbCategory
-              );
-            }
+          // Process with AI if ticket exists and AI is enabled
+          if (fullTicket && fullTicket.aiEnabled) {
+            await aiRecruitmentService.processMessage(
+              message,
+              fullTicket,
+              dbCategory
+            );
           }
         } catch (aiError) {
-          console.error('[MessageCreate] Error processing AI recruitment response:', aiError);
+          console.error('[MessageCreate] Error processing AI response:', aiError);
         }
       }
 
