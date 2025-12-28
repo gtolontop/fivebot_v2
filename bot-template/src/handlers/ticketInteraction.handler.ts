@@ -11,6 +11,7 @@ import { TicketStateManager } from '../services/ticketStateManager.service';
 import { TicketPanelService } from '../services/ticketPanel.service';
 import { TicketContainerService } from '../services/ticketContainer.service';
 import { TicketAssignmentService } from '../services/ticketAssignment.service';
+import { TicketReviewService } from '../services/ticketReview.service';
 import { TicketCreationHandler } from './ticketCreation.handler';
 import { TicketControlsHandler } from './ticketControls.handler';
 
@@ -22,16 +23,21 @@ export class TicketInteractionHandler {
   private panelService: TicketPanelService;
   private containerService: TicketContainerService;
   private assignmentService: TicketAssignmentService;
+  private reviewService: TicketReviewService;
   private creationHandler: TicketCreationHandler;
   private controlsHandler: TicketControlsHandler;
+  private client: Client;
 
   constructor(client: Client) {
+    this.client = client;
+
     // Initialize services
     this.ticketService = new TicketService(client);
     this.stateManager = new TicketStateManager(client, this.ticketService);
     this.panelService = new TicketPanelService(this.ticketService);
     this.containerService = new TicketContainerService(this.ticketService);
     this.assignmentService = new TicketAssignmentService(this.ticketService);
+    this.reviewService = new TicketReviewService(client, prisma);
 
     // Initialize handlers
     this.creationHandler = new TicketCreationHandler(this.ticketService, this.stateManager, prisma);
@@ -39,7 +45,8 @@ export class TicketInteractionHandler {
     this.controlsHandler = new TicketControlsHandler(
       this.ticketService,
       this.containerService,
-      this.stateManager
+      this.stateManager,
+      this.reviewService
     );
 
     // Start global timer for state management
@@ -49,23 +56,34 @@ export class TicketInteractionHandler {
   // Main interaction handler
   async handleInteraction(interaction: Interaction): Promise<void> {
     try {
+      // Handle review interactions first (they happen in DMs, not in guild ticket channels)
+      if (interaction.isStringSelectMenu() && interaction.customId.startsWith('ticket_review_rating:')) {
+        await this.reviewService.handleRatingSelect(interaction);
+        return;
+      }
+
+      if (interaction.isModalSubmit() && interaction.customId.startsWith('ticket_review_modal:')) {
+        await this.reviewService.handleReviewModal(interaction);
+        return;
+      }
+
       // Button interactions
       if (interaction.isButton()) {
         await this.handleButtonInteraction(interaction);
       }
-      
+
       // Select menu interactions
       else if (interaction.isStringSelectMenu()) {
         await this.handleSelectMenuInteraction(interaction);
       }
-      
+
       // Modal submissions
       else if (interaction.isModalSubmit()) {
         await this.handleModalSubmit(interaction);
       }
     } catch (error) {
       console.error('[TicketInteractionHandler] Error handling interaction:', error);
-      
+
       if (interaction.isRepliable() && !interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '❌ An error occurred while processing your request.',
@@ -497,7 +515,8 @@ export class TicketInteractionHandler {
       stateManager: this.stateManager,
       panelService: this.panelService,
       containerService: this.containerService,
-      assignmentService: this.assignmentService
+      assignmentService: this.assignmentService,
+      reviewService: this.reviewService
     };
   }
 

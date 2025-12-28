@@ -2,6 +2,7 @@ import { SlashCommandBuilder } from 'discord.js';
 import * as ticketCommand from './ticket';
 import * as ticketExampleCommand from './ticketExample';
 import * as ticketDebugCommand from './ticketDebug';
+import * as ticketStatsCommand from './ticket-stats';
 import * as rulesCommand from './rules';
 import * as pricingCommand from './pricing';
 import * as embedBuilderCommand from './embed-builder';
@@ -88,6 +89,10 @@ export function buildCommands(customCommands: Record<string, any> = {}, v2Comman
     if (ticketCommands.unclaim !== false) commands.push(ticketCommandsModule.ticketCommands.unclaim.data);
     if (ticketCommands.rename !== false) commands.push(ticketCommandsModule.ticketCommands.rename.data);
     if (ticketCommands.priority !== false) commands.push(ticketCommandsModule.ticketCommands.priority.data);
+    if (ticketCommands.ai !== false) commands.push(ticketCommandsModule.ticketCommands.ai.data);
+
+    // Add ticket-stats command (staff only)
+    commands.push(ticketStatsCommand.data);
   }
   
   // Add custom commands

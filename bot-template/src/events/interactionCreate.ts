@@ -141,7 +141,7 @@ export async function interactionCreate(
   }
 
   // Handle ticket moderation commands
-  const ticketModerationCommands = ['close', 'add', 'remove', 'claim', 'unclaim', 'lock', 'unlock', 'rename', 'transfer', 'priority'];
+  const ticketModerationCommands = ['close', 'add', 'remove', 'claim', 'unclaim', 'lock', 'unlock', 'rename', 'transfer', 'priority', 'ai'];
   if (ticketModerationCommands.includes(command) && ticketHandler) {
     try {
       const ticketCommandsModule = await import('../commands/ticket-commands');
@@ -182,6 +182,13 @@ async function handleBuiltInCommands(
   if (commandName === 'ticketdebug') {
     const ticketDebugCommand = await import('../commands/ticketDebug');
     await ticketDebugCommand.execute(interaction);
+    return;
+  }
+
+  // Handle ticket-stats command (staff only)
+  if (commandName === 'ticket-stats') {
+    const ticketStatsCommand = await import('../commands/ticket-stats');
+    await ticketStatsCommand.execute(interaction);
     return;
   }
 

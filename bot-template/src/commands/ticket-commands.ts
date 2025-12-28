@@ -388,6 +388,77 @@ export const priorityCommand: TicketCommand = {
   }
 };
 
+// /ai - Toggle AI in ticket
+export const aiCommand: TicketCommand = {
+  data: new SlashCommandBuilder()
+    .setName('ai')
+    .setDescription('Toggle AI auto-responses in this ticket')
+    .addStringOption(option =>
+      option
+        .setName('state')
+        .setDescription('Enable or disable AI')
+        .setRequired(true)
+        .addChoices(
+          { name: '✅ On - Enable AI', value: 'on' },
+          { name: '❌ Off - Disable AI', value: 'off' }
+        )
+    ) as SlashCommandBuilder,
+
+  async execute(interaction, ticketService) {
+    await interaction.deferReply({ ephemeral: true });
+
+    const state = interaction.options.getString('state', true);
+    const enableAI = state === 'on';
+
+    const ticket = await ticketService.getTicketByChannel(interaction.channelId);
+
+    if (!ticket) {
+      await interaction.editReply('❌ This is not a ticket channel.');
+      return;
+    }
+
+    // Check if user is staff
+    const config = await ticketService.getConfig(ticket.guildId);
+    if (!config) {
+      await interaction.editReply('❌ Ticket system not configured.');
+      return;
+    }
+
+    const member = interaction.member as GuildMember;
+    const hasStaffRole = config.staffRoleId
+      ? member.roles.cache.has(config.staffRoleId)
+      : config.staffRoles.some((roleId: string) => member.roles.cache.has(roleId));
+
+    if (!hasStaffRole && member.id !== ticket.creatorId) {
+      await interaction.editReply('❌ Only staff or the ticket creator can toggle AI.');
+      return;
+    }
+
+    try {
+      await ticketService.updateTicket(ticket.id, { aiEnabled: enableAI });
+
+      const statusEmoji = enableAI ? '🤖' : '🔇';
+      const statusText = enableAI ? 'enabled' : 'disabled';
+
+      await interaction.editReply(`✅ AI has been **${statusText}** for this ticket.`);
+
+      if (interaction.channel && isMessageableChannel(interaction.channel)) {
+        await interaction.channel.send({
+          embeds: [{
+            description: `${statusEmoji} AI auto-responses have been **${statusText}** by <@${interaction.user.id}>.`,
+            color: enableAI ? 0x57f287 : 0xed4245
+          }]
+        });
+      }
+
+      await ticketService.logAction(ticket.id, enableAI ? 'AI_ENABLED' : 'AI_DISABLED', interaction.user.id, {});
+    } catch (error) {
+      console.error('Error toggling AI:', error);
+      await interaction.editReply('❌ Failed to toggle AI.');
+    }
+  }
+};
+
 // Export all commands
 export const ticketCommands = {
   close: closeCommand,
@@ -396,5 +467,6 @@ export const ticketCommands = {
   claim: claimCommand,
   unclaim: unclaimCommand,
   rename: renameCommand,
-  priority: priorityCommand
+  priority: priorityCommand,
+  ai: aiCommand
 };

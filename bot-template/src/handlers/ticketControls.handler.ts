@@ -10,26 +10,31 @@ import {
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
   ComponentType,
-  ModalSubmitInteraction
+  ModalSubmitInteraction,
+  TextChannel
 } from 'discord.js';
 import { TicketService, TicketConfigWithArrays } from '../services/ticket.service';
 import { TicketContainerService } from '../services/ticketContainer.service';
 import { TicketStateManager } from '../services/ticketStateManager.service';
+import { TicketReviewService } from '../services/ticketReview.service';
 import { AssignmentModel, TicketState } from '@prisma/client';
 
 export class TicketControlsHandler {
   private ticketService: TicketService;
   private containerService: TicketContainerService;
   private stateManager: TicketStateManager;
+  private reviewService?: TicketReviewService;
 
   constructor(
     ticketService: TicketService,
     containerService: TicketContainerService,
-    stateManager: TicketStateManager
+    stateManager: TicketStateManager,
+    reviewService?: TicketReviewService
   ) {
     this.ticketService = ticketService;
     this.containerService = containerService;
     this.stateManager = stateManager;
+    this.reviewService = reviewService;
   }
 
   // Create control buttons for ticket
@@ -923,44 +928,54 @@ export class TicketControlsHandler {
     allowReopen: boolean = false
   ): Promise<void> {
     try {
-      // Save transcript if requested
-      if (saveTranscript) {
-        const config = await this.ticketService.getConfig(ticket.guildId);
-        if (config?.transcriptChannelId) {
-          const transcriptChannel = interaction.guild?.channels.cache.get(config.transcriptChannelId);
+      // Save transcript - always save as HTML to transcript channel if configured
+      const transcriptConfig = await this.ticketService.getConfig(ticket.guildId);
+      if (transcriptConfig?.transcriptChannelId && (saveTranscript || transcriptConfig.autoSaveTranscripts)) {
+        try {
+          const transcriptChannel = interaction.guild?.channels.cache.get(transcriptConfig.transcriptChannelId);
           if (transcriptChannel && transcriptChannel.isTextBased()) {
-            // Generate transcript
+            // Generate HTML transcript
             const fullTicket = await this.ticketService.getTicket(ticket.id);
             const messages = fullTicket?.messages || [];
-            
-            let transcript = `Ticket #${ticket.ticketNumber} Transcript\n`;
-            transcript += `Closed by: ${interaction.user.tag}\n`;
-            transcript += `Reason: ${reason}\n\n`;
-            transcript += '='.repeat(50) + '\n\n';
 
-            for (const msg of messages.reverse()) {
-              transcript += `[${msg.createdAt.toLocaleString()}] ${msg.authorId}: ${msg.content}\n`;
-            }
+            const htmlTranscript = await this.ticketService.generateHTMLTranscript(
+              { ...ticket, messages },
+              interaction.user.tag,
+              reason
+            );
 
-            const buffer = Buffer.from(transcript, 'utf-8');
-            
-            await transcriptChannel.send({
+            const buffer = Buffer.from(htmlTranscript, 'utf-8');
+
+            // Calculate duration
+            const createdAt = new Date(ticket.createdAt);
+            const closedAt = new Date();
+            const durationMs = closedAt.getTime() - createdAt.getTime();
+            const hours = Math.floor(durationMs / 3600000);
+            const minutes = Math.floor((durationMs % 3600000) / 60000);
+            const durationStr = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+
+            await (transcriptChannel as TextChannel).send({
               embeds: [{
                 color: 0x5865F2,
-                title: `Ticket #${ticket.ticketNumber} Transcript`,
+                title: `📋 Ticket #${ticket.ticketNumber} Transcript`,
                 fields: [
+                  { name: 'Creator', value: `<@${ticket.creatorId}>`, inline: true },
                   { name: 'Closed By', value: interaction.user.tag, inline: true },
-                  { name: 'Reason', value: reason, inline: true },
-                  { name: 'Messages', value: messages.length.toString(), inline: true }
+                  { name: 'Duration', value: durationStr, inline: true },
+                  { name: 'Messages', value: messages.length.toString(), inline: true },
+                  { name: 'Category', value: ticket.category || 'General', inline: true },
+                  { name: 'Reason', value: reason.substring(0, 100), inline: true }
                 ],
                 timestamp: new Date().toISOString()
               }],
               files: [{
                 attachment: buffer,
-                name: `ticket-${ticket.ticketNumber}-transcript.txt`
+                name: `ticket-${ticket.ticketNumber}-transcript.html`
               }]
             });
           }
+        } catch (transcriptError) {
+          console.error('[TicketControlsHandler] Error saving transcript:', transcriptError);
         }
       }
 
@@ -1011,27 +1026,38 @@ export class TicketControlsHandler {
         }
       }
 
-      // Notify creator if DM notifications are enabled
-      const botConfig = JSON.parse(process.env.CONFIG || '{}');
-      if (botConfig.ticketDMNotifications) {
-        try {
-          const creator = await interaction.client.users.fetch(ticket.creatorId);
-          await creator.send({
-            embeds: [{
-              color: 0xE74C3C,
-              title: '🔒 Ticket Closed',
-              description: `Your ticket #${ticket.ticketNumber} has been closed.`,
-              fields: [
-                { name: 'Closed By', value: interaction.user.tag, inline: true },
-                { name: 'Reason', value: reason, inline: true }
-              ],
-              footer: {
-                text: allowReopen ? 'You can reopen this ticket if needed.' : 'Please create a new ticket if you need further assistance.'
-              }
-            }]
-          });
-        } catch {
-          // User has DMs disabled
+      // Send review request to creator (this replaces the simple close notification)
+      if (this.reviewService) {
+        await this.reviewService.sendReviewRequest({
+          id: ticket.id,
+          guildId: ticket.guildId,
+          ticketNumber: ticket.ticketNumber,
+          creatorId: ticket.creatorId,
+          assignedStaffId: ticket.assignedStaffId,
+        });
+      } else {
+        // Fallback to simple DM if review service not available
+        const botConfig = JSON.parse(process.env.CONFIG || '{}');
+        if (botConfig.ticketDMNotifications) {
+          try {
+            const creator = await interaction.client.users.fetch(ticket.creatorId);
+            await creator.send({
+              embeds: [{
+                color: 0xE74C3C,
+                title: '🔒 Ticket Closed',
+                description: `Your ticket #${ticket.ticketNumber} has been closed.`,
+                fields: [
+                  { name: 'Closed By', value: interaction.user.tag, inline: true },
+                  { name: 'Reason', value: reason, inline: true }
+                ],
+                footer: {
+                  text: allowReopen ? 'You can reopen this ticket if needed.' : 'Please create a new ticket if you need further assistance.'
+                }
+              }]
+            });
+          } catch {
+            // User has DMs disabled
+          }
         }
       }
     } catch (error) {

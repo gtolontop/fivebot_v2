@@ -136,6 +136,13 @@ export default {
       // Process AI response for ALL tickets (only for non-bot, non-staff messages)
       if (!message.author.bot && !isStaff && aiRecruitmentService) {
         try {
+          // Check global ticketAIEnabled config first
+          const ticketConfig = await ticketService.getConfig(message.guildId!);
+          if (!ticketConfig || ticketConfig.ticketAIEnabled === false) {
+            // Global AI is disabled, skip AI processing
+            return;
+          }
+
           // Get the full ticket with aiEnabled flag
           const fullTicket = await prisma.ticket.findUnique({
             where: { id: ticket.id }
@@ -149,7 +156,7 @@ export default {
             }
           });
 
-          // Process with AI if ticket exists and AI is enabled
+          // Process with AI if ticket exists and AI is enabled (both global and per-ticket)
           if (fullTicket && fullTicket.aiEnabled) {
             await aiRecruitmentService.processMessage(
               message,
