@@ -111,9 +111,17 @@ export class TicketStateManager {
     const config = await this.ticketService.getConfig(ticket.guildId);
     if (!config || !config.enabled) return;
 
+    // First check if the channel still exists
+    const channelExists = await this.checkChannelExists(ticket);
+    if (!channelExists) {
+      // Channel was deleted, mark ticket as closed
+      await this.markTicketAsOrphaned(ticket);
+      return;
+    }
+
     const now = Date.now();
     const timeSinceActivity = now - ticket.lastActivity.getTime();
-    
+
     const timerConfig: TimerConfig = {
       idleThreshold: (config.warningHours - 6) * 60 * 60 * 1000, // 6 hours before warning
       warningThreshold: config.warningHours * 60 * 60 * 1000,
@@ -138,6 +146,47 @@ export class TicketStateManager {
     }
   }
 
+  // Check if the ticket channel still exists
+  private async checkChannelExists(ticket: any): Promise<boolean> {
+    try {
+      const guild = this.client.guilds.cache.get(ticket.guildId);
+      if (!guild) return false;
+
+      const channelId = ticket.threadId || ticket.channelId;
+      if (!channelId) return false;
+
+      await guild.channels.fetch(channelId);
+      return true;
+    } catch (error: any) {
+      // Unknown Channel error (10003) means channel was deleted
+      if (error.code === 10003) {
+        return false;
+      }
+      // For other errors, assume channel exists to avoid false positives
+      return true;
+    }
+  }
+
+  // Mark ticket as closed when channel no longer exists
+  private async markTicketAsOrphaned(ticket: any): Promise<void> {
+    try {
+      await this.ticketService.prismaClient.ticket.update({
+        where: { id: ticket.id },
+        data: {
+          state: TicketState.CLOSED,
+          closedAt: new Date()
+        }
+      });
+      // Log the action
+      await this.ticketService.logAction(ticket.id, 'CLOSED', 'SYSTEM', {
+        reason: 'Channel deleted - auto-closed'
+      });
+      console.log(`[TicketStateManager] Marked orphaned ticket ${ticket.id} as closed (channel deleted)`);
+    } catch (error) {
+      console.error(`[TicketStateManager] Error marking orphaned ticket ${ticket.id}:`, error);
+    }
+  }
+
   // Send warning before auto-close
   private async sendWarning(ticket: any): Promise<void> {
     try {
@@ -145,10 +194,19 @@ export class TicketStateManager {
       if (!guild) return;
 
       let channel;
-      if (ticket.threadId) {
-        channel = await guild.channels.fetch(ticket.threadId);
-      } else {
-        channel = await guild.channels.fetch(ticket.channelId);
+      try {
+        if (ticket.threadId) {
+          channel = await guild.channels.fetch(ticket.threadId);
+        } else {
+          channel = await guild.channels.fetch(ticket.channelId);
+        }
+      } catch (fetchError: any) {
+        // Channel was deleted, mark ticket as orphaned
+        if (fetchError.code === 10003) {
+          await this.markTicketAsOrphaned(ticket);
+          return;
+        }
+        throw fetchError;
       }
 
       if (!channel || !channel.isTextBased()) return;
@@ -212,10 +270,19 @@ export class TicketStateManager {
 
       // Send final message
       let channel;
-      if (ticket.threadId) {
-        channel = await guild.channels.fetch(ticket.threadId);
-      } else {
-        channel = await guild.channels.fetch(ticket.channelId);
+      try {
+        if (ticket.threadId) {
+          channel = await guild.channels.fetch(ticket.threadId);
+        } else {
+          channel = await guild.channels.fetch(ticket.channelId);
+        }
+      } catch (fetchError: any) {
+        // Channel was deleted, just mark as orphaned
+        if (fetchError.code === 10003) {
+          await this.markTicketAsOrphaned(ticket);
+          return;
+        }
+        throw fetchError;
       }
 
       if (channel && channel.isTextBased()) {
