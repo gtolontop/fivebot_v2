@@ -11,6 +11,23 @@ export async function interactionCreate(
 ) {
   console.log('[INTERACTION] Received interaction:', interaction.type, 'isCommand:', interaction.isChatInputCommand());
 
+  // Handle autocomplete interactions
+  if (interaction.isAutocomplete()) {
+    const command = interaction.commandName;
+
+    // FiveLink badge autocomplete
+    if (command === 'badge') {
+      try {
+        const { autocomplete } = await import('../commands/fivelink/badge');
+        await autocomplete(interaction);
+      } catch (error) {
+        console.error('[Autocomplete] Badge error:', error);
+        await interaction.respond([]);
+      }
+    }
+    return;
+  }
+
   // Handle button/select menu interactions
   if (!interaction.isChatInputCommand()) {
     // Handle FiveLink button interactions
@@ -108,7 +125,7 @@ export async function interactionCreate(
   }
 
   // Handle FiveLink commands
-  const fivelinkCommands = ['leaderboard', 'profile', 'stats', 'me'];
+  const fivelinkCommands = ['leaderboard', 'profile', 'stats', 'me', 'badge'];
   if (fivelinkCommands.includes(command)) {
     try {
       const commandModule = await import(`../commands/fivelink/${command}`);

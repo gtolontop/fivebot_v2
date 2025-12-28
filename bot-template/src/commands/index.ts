@@ -13,6 +13,7 @@ import * as fivelinkLeaderboardCommand from './fivelink/leaderboard';
 import * as fivelinkProfileCommand from './fivelink/profile';
 import * as fivelinkStatsCommand from './fivelink/stats';
 import * as fivelinkMeCommand from './fivelink/me';
+import * as fivelinkBadgeCommand from './fivelink/badge';
 import * as ghostpingCommand from './ghostping';
 
 // Get ticket enabled status from environment config
@@ -63,6 +64,7 @@ export function buildCommands(customCommands: Record<string, any> = {}, v2Comman
   commands.push(fivelinkProfileCommand.data);
   commands.push(fivelinkStatsCommand.data);
   commands.push(fivelinkMeCommand.data);
+  commands.push(fivelinkBadgeCommand.data);
   
   // Add Ghost Ping command (module check at runtime)
   commands.push(ghostpingCommand.data);

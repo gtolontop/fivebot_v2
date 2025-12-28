@@ -61,6 +61,7 @@ class ChildBot {
   private moduleLoader?: ModuleLoaderService;
   private aiHandler?: AIHandler;
   private fivelinkService?: FiveLinkService;
+  private fivelinkConfig?: { staffRoleId?: string };
 
   constructor() {
     // Force immediate console output
@@ -278,18 +279,25 @@ class ChildBot {
         // Initialize FiveLink service for badge management
         if (this.moduleLoader?.isModuleEnabled('fivelink')) {
           try {
-            const fivelinkConfig = this.moduleLoader.getModuleConfig('fivelink');
-            if (fivelinkConfig && fivelinkConfig.apiKey) {
+            const fivelinkModuleConfig = this.moduleLoader.getModuleConfig('fivelink');
+            if (fivelinkModuleConfig && fivelinkModuleConfig.apiKey) {
               const redis = getRedisClient();
               this.fivelinkService = new FiveLinkService(
                 {
-                  apiKey: fivelinkConfig.apiKey,
+                  apiKey: fivelinkModuleConfig.apiKey,
                   cacheEnabled: true,
                   cacheTTL: 300,
                 },
                 redis
               );
+              // Store config for badge sync (staffRoleId)
+              this.fivelinkConfig = {
+                staffRoleId: fivelinkModuleConfig.staffRoleId,
+              };
               console.log('✅ FiveLink badge service initialized');
+              if (fivelinkModuleConfig.staffRoleId) {
+                console.log(`   └─ Staff role sync enabled`);
+              }
             }
           } catch (error) {
             console.error('⚠️ Failed to initialize FiveLink badge service:', error);
@@ -328,9 +336,9 @@ class ChildBot {
       await guildMemberRemove(member, this.welcomeService!, freshConfig as any);
     });
 
-    // Handle member updates (booster status changes)
+    // Handle member updates (booster and staff role changes)
     this.client.on('guildMemberUpdate', async (oldMember, newMember) => {
-      await guildMemberUpdate(oldMember, newMember, this.fivelinkService || null);
+      await guildMemberUpdate(oldMember, newMember, this.fivelinkService || null, this.fivelinkConfig);
     });
 
     this.client.on('interactionCreate', (interaction) => 

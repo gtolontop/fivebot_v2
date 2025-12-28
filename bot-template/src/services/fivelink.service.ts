@@ -324,7 +324,7 @@ export class FiveLinkService {
 
   /**
    * Grant a badge to a user by Discord ID
-   * Uses the admin API endpoint (not v1 API)
+   * Uses the bot API endpoint
    */
   async grantBadge(discordId: string, badgeKey: string, reason?: string): Promise<{
     success: boolean;
@@ -334,7 +334,7 @@ export class FiveLinkService {
   }> {
     try {
       const response = await axios.post(
-        'https://fivelink.lol/api/admin/badges/grant',
+        'https://fivelink.lol/api/bot/badges/grant',
         {
           discordId,
           badgeKey,
@@ -366,7 +366,7 @@ export class FiveLinkService {
 
   /**
    * Revoke a badge from a user by Discord ID
-   * Uses the admin API endpoint (not v1 API)
+   * Uses the bot API endpoint
    */
   async revokeBadge(discordId: string, badgeKey: string, reason?: string): Promise<{
     success: boolean;
@@ -376,7 +376,7 @@ export class FiveLinkService {
   }> {
     try {
       const response = await axios.post(
-        'https://fivelink.lol/api/admin/badges/revoke',
+        'https://fivelink.lol/api/bot/badges/revoke',
         {
           discordId,
           badgeKey,
@@ -427,5 +427,72 @@ export class FiveLinkService {
     hadBadge?: boolean;
   }> {
     return this.revokeBadge(discordId, 'discord-booster', 'No longer boosting the Discord server');
+  }
+
+  /**
+   * Grant Staff badge
+   */
+  async grantStaffBadge(discordId: string): Promise<{
+    success: boolean;
+    message?: string;
+    error?: string;
+    alreadyHad?: boolean;
+  }> {
+    return this.grantBadge(discordId, 'staff', 'Staff member on the Discord server');
+  }
+
+  /**
+   * Revoke Staff badge
+   */
+  async revokeStaffBadge(discordId: string): Promise<{
+    success: boolean;
+    message?: string;
+    error?: string;
+    hadBadge?: boolean;
+  }> {
+    return this.revokeBadge(discordId, 'staff', 'No longer a staff member');
+  }
+
+  /**
+   * Get list of available badges from FiveLink API (for autocomplete)
+   */
+  async getAvailableBadges(): Promise<{
+    success: boolean;
+    badges?: Array<{ key: string; name: string; description?: string; icon?: string }>;
+    error?: string;
+  }> {
+    const cacheKey = 'fivelink:badges:list';
+
+    try {
+      return await this.getCached(cacheKey, async () => {
+        const response = await axios.get('https://fivelink.lol/api/bot/badges', {
+          headers: {
+            'Authorization': `Bearer ${this.config.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 10000,
+        });
+
+        if (!response.data.success) {
+          throw new Error(response.data.error || 'Failed to fetch badges');
+        }
+
+        return {
+          success: true,
+          badges: response.data.badges.map((b: any) => ({
+            key: b.key,
+            name: b.name,
+            description: b.description,
+            icon: b.icon,
+          })),
+        };
+      });
+    } catch (error: any) {
+      console.error('[FiveLink] Error fetching badges:', error.response?.data || error.message);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Unknown error',
+      };
+    }
   }
 }
