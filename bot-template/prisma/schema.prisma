@@ -84,6 +84,7 @@ model BotConfig {
   ticketData                String?  @map("ticket_data") @db.Text
   statusRotation            String?  @map("status_rotation") @db.Text
   embedV2Commands           String?  @map("embed_v2_commands") @db.Text
+  embedTemplates            String?  @map("embed_templates") @db.Text
   createdAt                 DateTime @default(now()) @map("created_at")
   updatedAt                 DateTime @updatedAt @map("updated_at")
   bot                       Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)

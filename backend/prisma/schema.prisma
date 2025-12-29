@@ -399,6 +399,8 @@ model TicketConfig {
   autoSaveTranscripts  Boolean         @default(false) @map("auto_save_transcripts")
   sendTranscriptToUser Boolean         @default(false) @map("send_transcript_to_user")
   includeAttachments   Boolean         @default(true) @map("include_attachments")
+  reviewChannelId      String?         @map("review_channel_id")
+  ticketAIEnabled      Boolean         @default(true) @map("ticket_ai_enabled")
   categories           String?         @db.Text
   panels               String?         @db.Text
   createdAt            DateTime        @default(now()) @map("created_at")
@@ -471,6 +473,23 @@ model TicketPanel {
   @@index([botId])
   @@index([channelId])
   @@map("ticket_panels")
+}
+
+model TicketReview {
+  id           String   @id @default(uuid())
+  ticketId     String   @unique @map("ticket_id")
+  guildId      String   @map("guild_id")
+  userId       String   @map("user_id")
+  staffId      String?  @map("staff_id")
+  ticketNumber Int      @map("ticket_number")
+  rating       Int
+  review       String?  @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([guildId])
+  @@index([staffId])
+  @@index([createdAt])
+  @@map("ticket_reviews")
 }
 
 model Notification {
