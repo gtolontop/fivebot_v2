@@ -93,8 +93,8 @@ export class AIService {
   private processedMessages: Map<string, number> = new Map(); // messageId -> timestamp
   private remindersService: RemindersService;
 
-  // Gemini API key (hardcoded for now, can be moved to config later)
-  private readonly GEMINI_API_KEY = 'REDACTED_GEMINI_API_KEY';
+  // Gemini API key — supplied by the environment, never committed.
+  private readonly GEMINI_API_KEY = process.env.GEMINI_API_KEY ?? '';
 
   // Advanced features
   private userPreferencesCache: Map<string, UserPreferences> = new Map();
@@ -148,6 +148,10 @@ export class AIService {
    * Initialize Gemini AI client
    */
   private initializeGemini(): void {
+    if (!this.GEMINI_API_KEY) {
+      // No key configured: the bot runs, the AI features stay off.
+      return;
+    }
     try {
       this.gemini = new GoogleGenerativeAI(this.GEMINI_API_KEY);
       // Use gemini-2.5-flash (stable, fast, smart)
