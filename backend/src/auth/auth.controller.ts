@@ -128,11 +128,4 @@ export class AuthController {
       },
     };
   }
-
-  @Get('debug/set-token')
-  async setDebugToken(@Res() res: Response) {
-    const frontendUrl = this.configService.get('FRONTEND_URL') || 'http://localhost:3000';
-    const token = "REDACTED_JWT";
-    res.redirect(`${frontendUrl}/auth/discord/callback?token=${token}`);
-  }
 }
