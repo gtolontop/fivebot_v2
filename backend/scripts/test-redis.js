@@ -9,7 +9,7 @@ async function testRedisConnection() {
   const client = new Redis({
     host: '83.150.218.42',
     port: 40121,
-    password: 'REDACTED_PASSWORD',
+    password: process.env.REDIS_PASSWORD,
     retryStrategy: (times) => {
       if (times > 3) {
         console.error('❌ Failed to connect after 3 retries');
